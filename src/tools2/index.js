@@ -20,10 +20,12 @@ import { zodiac } from './zodiac.js';
 import { relation } from './relation.js';
 import { answerbook } from './answerbook.js';
 import { calendar } from './calendar.js';
+import { exportPdfTool } from './export.js';
 
 [
   wealth, career, date, style, layoff, daily,
   name, oracle, lottery, zodiac, relation, answerbook, calendar,
+  exportPdfTool,
 ].forEach(register);
 
 export function bootstrap() {
