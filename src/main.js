@@ -554,6 +554,8 @@ window.toggleHomeMenu=toggleHomeMenu;
 })();
 
 document.addEventListener('DOMContentLoaded',()=>{
+  /* 开屏动画：逐笔绘制 V5 图标，停留 2 秒后淡出 */
+  playIconDrawAnimation();
   initOnboarding();
   initDB().then(()=>renderProfiles()).catch(e=>console.log('DB init',e));
   const ai=document.getElementById('askInput');
@@ -965,24 +967,19 @@ function toggleDensity(){
     window._tjArm=arm;
     new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilter:['class']});
     sync();
-    /* 彩蛋：长按「输入信息」
-       2 秒 → 图标绘制动画（逐笔绘制 V5 图标）
-       5 秒 → 切换星轨模式 */
-    var HOLD_STAR=5000,HOLD_ICON=2000;
-    var timerStar=null,timerIcon=null,triggeredStar=false,triggeredIcon=false;
+    /* 彩蛋：长按「输入信息」5 秒切换星轨模式 */
+    var HOLD=5000,timer=null,triggered=false;
     var btn=document.querySelector('.home-cta:not(.home-cta-ghost)');
     if(btn){
       btn.addEventListener('pointerdown',function(){
-        triggeredStar=false;triggeredIcon=false;
+        triggered=false;
         btn.style.transition='box-shadow 5s ease,transform 5s ease';
         btn.style.boxShadow='0 0 0 2px rgba(217,119,87,0.4),0 0 40px rgba(217,119,87,0.5)';
         btn.style.transform='scale(0.97)';
-        timerIcon=setTimeout(function(){triggeredIcon=true;timerIcon=null;playIconDrawAnimation();},HOLD_ICON);
-        timerStar=setTimeout(function(){triggeredStar=true;timerStar=null;switchStarMode();},HOLD_STAR);
+        timer=setTimeout(function(){triggered=true;timer=null;switchStarMode();},HOLD);
       });
       function clearHold(){
-        if(timerIcon){clearTimeout(timerIcon);timerIcon=null;}
-        if(timerStar){clearTimeout(timerStar);timerStar=null;}
+        if(timer){clearTimeout(timer);timer=null;}
         btn.style.transition='';
         btn.style.boxShadow='';
         btn.style.transform='';
@@ -990,9 +987,7 @@ function toggleDensity(){
       btn.addEventListener('pointerup',clearHold);
       btn.addEventListener('pointerleave',clearHold);
       btn.addEventListener('pointercancel',clearHold);
-      btn.addEventListener('click',function(e){
-        if(triggeredStar||triggeredIcon){e.preventDefault();e.stopImmediatePropagation();triggeredStar=false;triggeredIcon=false;}
-      },true);
+      btn.addEventListener('click',function(e){if(triggered){e.preventDefault();e.stopImmediatePropagation();triggered=false;}},true);
     }
   });
 })();
