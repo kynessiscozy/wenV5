@@ -485,7 +485,25 @@ async function renderProfiles(){try{const list=await dbGetAll();const zone=docum
 }catch(e){console.log('renderProfiles',e);}}
 async function loadProfile(id){try{const list=await dbGetAll();const p=list.find(x=>x.id===id);if(!p)return;document.getElementById('bDate').value=p.bd||'';document.getElementById('bTime').value=p.timeStr||'09:00';document.getElementById('bPlace').value=p.bp||'';document.getElementById('cInp').value=(CD[p.bp]||{n:''}).n;document.getElementById('bGen').value=p.gen||'male';const styleEl=document.getElementById('bResultStyle');if(styleEl){styleEl.value=p.resultStyle||'companion';document.querySelectorAll('.result-style-option').forEach(btn=>{const on=btn.dataset.style===styleEl.value;btn.classList.toggle('active',on);btn.setAttribute('aria-checked',on?'true':'false');});const loadedStyle=getResultStyle(styleEl.value);const loadedHint=document.getElementById('resultStyleHint');if(loadedHint)loadedHint.textContent=loadedStyle.intro;}document.getElementById('bQ').value=p.q||'';const sw=document.getElementById('swTrueSolar');if(sw){if(p.useTrueSolar)sw.classList.add('on');else sw.classList.remove('on');document.getElementById('swText').textContent=(sw.classList.contains('on')?'开启':'关闭')+'真太阳时（按出生地经度精确换算时辰）';}const chips=document.getElementById('qChips');if(chips){chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.q===p.q));}calc();}catch(e){console.log('loadProfile',e);}}
 async function deleteProfile(id){try{await dbDel(id);renderProfiles();}catch(e){console.log('deleteProfile',e);}}
-function openSaveModal(){document.getElementById('saveModal').classList.add('open');const n=document.getElementById('saveName');n.value='';n.focus();}
+function openSaveModal(){
+  const m=document.getElementById('saveModal');
+  if(!m)return;
+  m.classList.add('open');
+  const n=document.getElementById('saveName');
+  n.value='';
+  setTimeout(()=>n.focus(),100);
+  // 填充命盘预览
+  const d=getCtx();
+  const input=d&&(d._input||d.input);
+  const bdEl=document.getElementById('spBd');
+  const bpEl=document.getElementById('spBp');
+  const genEl=document.getElementById('spGen');
+  if(input){
+    if(bdEl)bdEl.textContent=input.bd||'—';
+    if(bpEl)bpEl.textContent=(CD[input.bp]||{n:'未知'}).n;
+    if(genEl)genEl.textContent=input.gen==='male'?'男':'女';
+  }
+}
 function closeSaveModal(){document.getElementById('saveModal').classList.remove('open');}
 function confirmSaveProfile(){const name=document.getElementById('saveName').value.trim();if(!name){showToast('请输入档案名称');return;}saveCurrentProfile(name).then(()=>{closeSaveModal();renderProfiles();showToast('已保存到档案库');}).catch(e=>showToast('保存失败：'+e));}
 async function exportProfiles(){try{const list=await dbGetAll();const blob=new Blob([JSON.stringify(list,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='问问大师档案_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}catch(e){showToast('导出失败');}}

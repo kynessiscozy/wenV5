@@ -570,8 +570,108 @@ body.report-active .home-menu-drawer{display:none}
 @keyframes wxPulse{0%,100%{opacity:.4}50%{opacity:.9}}
 
 /* ============================================================
-   保存档案弹窗 — 移动端底部加安全距离，避免被 DOCK 栏遮蔽
+   保存档案弹窗
    ============================================================ */
+.save-sheet{
+  text-align:center;
+  width:min(420px,92vw);
+  padding:32px 28px 28px!important;
+  border-radius:24px!important;
+}
+.save-icon{
+  width:72px;height:72px;
+  margin:0 auto 16px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
+  background:var(--c-accent-soft, rgba(217,119,87,.12));
+  animation:saveIconIn .5s cubic-bezier(.2,.8,.3,1.2) both;
+}
+@keyframes saveIconIn{
+  from{transform:scale(0);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+.save-title{
+  font-size:1.2em;
+  font-weight:800;
+  color:var(--c-text-hi, #1a1915);
+  margin-bottom:6px;
+}
+.save-subtitle{
+  font-size:.82em;
+  color:var(--c-text-3, #888);
+  margin-bottom:18px;
+}
+.save-preview{
+  background:var(--c-surface-2, #f8f6f0);
+  border-radius:14px;
+  padding:12px 16px;
+  margin-bottom:18px;
+  text-align:left;
+}
+.save-preview-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;
+  font-size:.82em;
+}
+.save-preview-row + .save-preview-row{
+  border-top:1px dashed var(--c-border, #eee);
+}
+.save-preview-label{
+  color:var(--c-text-3, #888);
+}
+.save-preview-value{
+  color:var(--c-text-hi, #1a1915);
+  font-weight:600;
+}
+.save-input-wrap{
+  margin-bottom:18px;
+}
+.save-input-wrap input{
+  width:100%;
+  padding:14px 18px;
+  border-radius:16px;
+  border:1.5px solid var(--c-border-2, #e8e4da);
+  background:var(--c-surface-3, #fff);
+  color:var(--c-text-hi, #1a1915);
+  font-family:var(--sf, system-ui, sans-serif);
+  font-size:.95em;
+  text-align:center;
+  transition:all .2s;
+  outline:none;
+  box-sizing:border-box;
+}
+.save-input-wrap input:focus{
+  border-color:var(--c-accent-text, #c75a2a);
+  box-shadow:0 0 0 4px rgba(217,119,87,.15);
+}
+.save-input-wrap input::placeholder{
+  color:var(--c-text-4, #bbb);
+}
+.save-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  padding:14px 24px;
+  border-radius:16px;
+  border:0;
+  background:linear-gradient(135deg, #d97757, #c75a2a);
+  color:#fff;
+  font-family:var(--sf, system-ui, sans-serif);
+  font-size:.95em;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .2s;
+  box-shadow:0 4px 16px rgba(217,119,87,.3);
+}
+.save-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(217,119,87,.4);
+}
+.save-btn:active{
+  transform:translateY(0);
+}
 @media(max-width:560px){
   #saveModal .modal-sheet{
     padding-bottom:calc(80px + env(safe-area-inset-bottom, 34px));
