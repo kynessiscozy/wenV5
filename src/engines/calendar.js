@@ -56,8 +56,10 @@ function getMonthPillar(year,month,day,hour=12,minute=0,second=0,birthInstant=nu
   const beforeLichun=birth<lichun;
   const yp=beforeLichun?year-1:year;
   if(beforeLichun){
-    const prevXiaohan=jqInstant(year-1,11);
-    return{mi:prevXiaohan&&birth>=prevXiaohan?11:10,yp};
+    // 立春前的1月出生者，应与当年1月的小寒比较，而非上一年1月的小寒。
+    // SOLAR_TERM_TIMES[year][11] 存的就是该年1月的小寒时刻。
+    const xiaohan=jqInstant(year,11);
+    return{mi:xiaohan&&birth>=xiaohan?11:10,yp};
   }
   let mi=10;
   for(let i=0;i<=10;i++){
@@ -117,4 +119,4 @@ function resolveBirthDateTime(y,m,d,hh,mm,useTrueSolar,lon,tz='Asia/Shanghai'){
 }
 function getDayPillarIndex(y,m,d){const anchor=new Date(Date.UTC(2000,0,1));const target=new Date(Date.UTC(y,m-1,d));const diff=Math.round((target-anchor)/86400000);return((54+diff)%60+60)%60;}
 
-export { _initJq, solarTermDate, jqDate, getMonthPillar, trueSolarTime, resolveBirthDateTime, getDayPillarIndex };
+export { _initJq, solarTermDate, jqDate, jqInstant, getMonthPillar, trueSolarTime, resolveBirthDateTime, getDayPillarIndex };
