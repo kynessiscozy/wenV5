@@ -1455,7 +1455,22 @@ function setUserMode(mode){
 function openCalendarMode(){
   const fab=document.getElementById('calFab');
   if(fab)fab.classList.add('active');
-  /* calendar via tools2 */
+  /* 日历模式：复用 tools2 的 calendar 工具。tools2 加载前会降级到旧版逻辑 */
+  try{
+    if(typeof window.openToolPage==='function'){
+      window.openToolPage('calendar');
+    }else if(typeof window._ensureTools2==='function'){
+      window._ensureTools2().then(()=>window.openToolPage('calendar'));
+    }else{
+      // 兜底：等一下 tools2 加载完再打开
+      let tries=0;
+      const t=setInterval(()=>{
+        tries++;
+        if(typeof window.openToolPage==='function'){clearInterval(t);window.openToolPage('calendar');}
+        else if(tries>40){clearInterval(t);console.warn('[openCalendarMode] tools2 未就绪');}
+      },50);
+    }
+  }catch(e){console.error('[openCalendarMode]',e);}
 }
 function toggleUserMode(){setUserMode(document.body.classList.contains('beginner-mode')?'master':'beginner');}
 (function initUserMode(){
