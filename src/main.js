@@ -186,21 +186,42 @@ initFontSize();
     body.style.maxHeight=expanded?'0':body.scrollHeight+'px';
   };
 
-  // 6. 缺失函数：档案菜单切换
-  window.TJToggleProfileMenu=function(){
+  // 6. 档案菜单切换（使用 IndexedDB）
+  window.TJToggleProfileMenu=async function(){
     const menu=document.getElementById('p2ProfileMenu');
     const btn=document.getElementById('p2ProfileBtn');
     if(!menu)return;
     const isOpen=menu.classList.toggle('open');
     if(btn)btn.setAttribute('aria-expanded',isOpen?'true':'false');
-    // 如果菜单打开且内容为空，填充档案列表
-    if(isOpen&&!menu.innerHTML.trim()){
-      const profiles=[];try{const raw=localStorage.getItem('tj_profiles');if(raw)profiles.push(...JSON.parse(raw))}catch(e){}
-      if(profiles.length===0){
-        menu.innerHTML='<div class="profile-empty">还没有保存的档案</div>';
+    if(!isOpen)return;
+    try{
+      const list=await dbGetAll();
+      let html='';
+      html+='<button class="profile-item" style="color:var(--c-accent-text,#c75a2a);font-weight:600" onclick="openSaveModal();document.getElementById(\'p2ProfileMenu\').classList.remove(\'open\')">＋ 保存当前命盘</button>';
+      html+='<div class="p2-profile-sep" style="height:1px;background:var(--c-border,#eee);margin:6px 0"></div>';
+      if(list.length===0){
+        html+='<div class="profile-empty">还没有保存的档案</div>';
       }else{
-        menu.innerHTML=profiles.map((p,i)=>`<button class="profile-item" onclick="loadProfile(${i})">${p.name||'未命名'}</button>`).join('');
+        html+=list.slice(0,10).map(p=>{
+          const city=CD[p.bp]||{n:'未知'};
+          return `<div class="profile-item" style="cursor:pointer" onclick="loadProfile(${p.id});document.getElementById('p2ProfileMenu').classList.remove('open')">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-weight:600;font-size:.9em">${(p.name||'未命名').replace(/</g,'&lt;')}</span>
+              <span style="font-size:.7em;color:var(--c-text-4,#aaa);cursor:pointer" onclick="event.stopPropagation();deleteProfile(${p.id});TJToggleProfileMenu()">×</span>
+            </div>
+            <div style="font-size:.72em;color:var(--c-text-3,#999);margin-top:2px">${p.bd||''} · ${city.n} · ${p.gen==='male'?'男':'女'}</div>
+          </div>`;
+        }).join('');
       }
+      html+='<div class="p2-profile-sep" style="height:1px;background:var(--c-border,#eee);margin:6px 0"></div>';
+      html+='<div style="display:flex;gap:8px;padding:0 4px">';
+      html+='<button class="profile-item" style="flex:1;font-size:.78em;padding:6px" onclick="exportProfiles();document.getElementById(\'p2ProfileMenu\').classList.remove(\'open\')">导出</button>';
+      html+='<button class="profile-item" style="flex:1;font-size:.78em;padding:6px" onclick="document.getElementById(\'impFile2\').click();document.getElementById(\'p2ProfileMenu\').classList.remove(\'open\')">导入</button>';
+      html+='</div>';
+      html+='<input type="file" id="impFile2" style="display:none" accept=".json" onchange="handleImport(this)">';
+      menu.innerHTML=html;
+    }catch(e){
+      menu.innerHTML='<div class="profile-empty">加载失败</div>';
     }
   };
 })();
