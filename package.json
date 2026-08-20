@@ -1,0 +1,19 @@
+{
+  "name": "wendi",
+  "version": "1.0.0-beta",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test:unit": "node tools/test-liuri.mjs && node tools/test-synastry.mjs",
+    "test:e2e": "node tools/test-gloss.mjs && node tools/test-firstscreen.mjs && node tools/test-explain.mjs && node tools/test-daily.mjs && node tools/test-partners.mjs && node tools/test-persist.mjs && node tools/test-flat-tabs.mjs",
+    "test:a11y": "node tools/contrast.mjs"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.43.1",
+    "vite": "^7.0.0"
+  },
+  "dependencies": {}
+}

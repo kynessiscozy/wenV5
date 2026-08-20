@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>问问大师 · 八月星盘 Demo v2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#06060d;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+canvas{display:block;position:fixed;top:0;left:0;width:100%;height:100%}
+.label{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:10;text-align:center;pointer-events:none}
+.label h1{font-size:1.4em;font-weight:800;color:rgba(255,225,190,.95);letter-spacing:3px;text-shadow:0 0 24px rgba(217,119,87,.4)}
+.label p{font-size:.72em;color:rgba(255,210,170,.45);letter-spacing:6px;margin-top:6px}
+.badge{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:10;pointer-events:none}
+.badge span{display:inline-block;padding:6px 18px;border-radius:999px;border:1px solid rgba(255,200,120,.18);background:rgba(255,200,120,.05);color:rgba(255,210,160,.55);font-size:.68em;letter-spacing:2px;backdrop-filter:blur(8px)}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="label">
+  <h1>问问大师</h1>
+  <p>八月星盘 · 天璇漩涡</p>
+</div>
+<div class="badge"><span>Spiral Galaxy · 28 Mansions · August Exclusive v2</span></div>
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+let W, H, CX, CY, R;
+
+function resize() {
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  CX = W / 2; CY = H * 0.44;
+  R = Math.min(W, H) * 0.40;
+}
+resize();
+window.addEventListener('resize', resize);
+
+/* ===== 配色：八月金 + 深空蓝 ===== */
+const PAL = {
+  goldA: 'rgba(255,200,120,',   /* 近端金 */
+  goldB: 'rgba(180,140,80,',    /* 远端金 */
+  amber: '#d97757',              /* 品牌琥珀 */
+  amberGlow: 'rgba(217,119,87,', /* 琥珀光晕 */
+  nebulaA: 'rgba(60,40,90,',     /* 紫色星云 */
+  nebulaB: 'rgba(30,60,80,',     /* 青色星云 */
+  white: 'rgba(255,250,240,',   /* 星白 */
+  trail: 'rgba(255,220,160,',   /* 轨迹金 */
+  meteor: 'rgba(255,240,210,',  /* 流星 */
+};
+
+/* ===== 鼠标视差 ===== */
+let mx=0, my=0, tx=0, ty=0;
+window.addEventListener('pointermove', e => {
+  tx = (e.clientX / W - 0.5) * 2;
+  ty = (e.clientY / H - 0.5) * 2;
+}, {passive:true});
+
+/* ===== 背景星空 ===== */
+const bgStars = [];
+for (let i = 0; i < 200; i++) {
+  bgStars.push({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: 0.2 + Math.random() * 0.9,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.3 + Math.random() * 1.0
+  });
+}
+
+/* ===== 星云团 ===== */
+const nebulae = [
+  { x: 0.25, y: 0.30, r: 0.35, color: PAL.nebulaA, drift: 0.03 },
+  { x: 0.75, y: 0.65, r: 0.40, color: PAL.nebulaB, drift: -0.02 },
+  { x: 0.60, y: 0.15, r: 0.25, color: PAL.nebulaA, drift: 0.04 },
+];
+
+/* ===== 漂浮光尘 ===== */
+const motes = [];
+for (let i = 0; i < 50; i++) {
+  motes.push({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    vx: (Math.random() - 0.5) * 0.25,
+    vy: -0.15 - Math.random() * 0.35,
+    r: 0.4 + Math.random() * 1.3,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.4 + Math.random() * 1.2
+  });
+}
+
+/* ===== 流星 ===== */
+const meteors = [];
+function spawnMeteor() {
+  const angle = Math.PI * 0.18 + Math.random() * Math.PI * 0.15;
+  const speed = 7 + Math.random() * 5;
+  meteors.push({
+    x: Math.random() * W * 1.2 - W * 0.1,
+    y: -40 - Math.random() * 80,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    life: 1.0,
+    decay: 0.005 + Math.random() * 0.004,
+    len: 60 + Math.random() * 100,
+    width: 1.2 + Math.random() * 1.2
+  });
+}
+let meteorTimer = 0;
+
+/* ===== 二十八宿外环 ===== */
+const STARS_28 = [
+  '角','亢','氐','房','心','尾','箕',
+  '斗','牛','女','虚','危','室','壁',
+  '奎','娄','胃','昴','毕','觜','参',
+  '井','鬼','柳','星','张','翼','轸'
+];
+
+/* ===== 轨道天体 ===== */
+const orbitals = [
+  { a: 0.75, b: 0.42, tilt: 0.3, speed: 0.35, phase: 0,    size: 2.2, trail: [] },
+  { a: 0.58, b: 0.33, tilt: -0.5, speed: -0.55, phase: 1.2, size: 1.8, trail: [] },
+  { a: 0.90, b: 0.50, tilt: 0.15, speed: 0.22, phase: 2.8, size: 1.5, trail: [] },
+];
+
+/* ===== 螺旋臂参数 ===== */
+const SPIRAL_ARMS = 2;
+const SPIRAL_TURNS = 1.3;
+const SPIRAL_STARS = 120;
+
+/* ===== 螺旋臂星点（预计算极坐标） ===== */
+const spiralPoints = [];
+for (let arm = 0; arm < SPIRAL_ARMS; arm++) {
+  for (let i = 0; i < SPIRAL_STARS; i++) {
+    const t = i / SPIRAL_STARS;
+    const angle = arm * (Math.PI * 2 / SPIRAL_ARMS) + t * Math.PI * 2 * SPIRAL_TURNS;
+    const radius = 0.15 + t * 0.85;
+    spiralPoints.push({
+      angle, radius,
+      size: 0.5 + Math.random() * 1.8,
+      phase: Math.random() * Math.PI * 2,
+      twinkle: 0.5 + Math.random() * 1.5
+    });
+  }
+}
+
+/* ===== 3D 投影 ===== */
+const F = 900;
+function rotY(p, a) { const c = Math.cos(a), s = Math.sin(a); return [p[0]*c + p[2]*s, p[1], -p[0]*s + p[2]*c]; }
+function rotX(p, a) { const c = Math.cos(a), s = Math.sin(a); return [p[0], p[1]*c - p[2]*s, p[1]*s + p[2]*c]; }
+function project(p) { const z = p[2] + F + R * 2; const k = F / z; return [CX + p[0]*k, CY + p[1]*k, p[2], k]; }
+
+/* 将极坐标(角度,半径)转为3D点(在XZ平面) */
+function polar3D(angle, radius) {
+  return [Math.cos(angle) * R * radius, 0, Math.sin(angle) * R * radius];
+}
+
+const t0 = performance.now() / 1000;
+const tBase = () => performance.now() / 1000 - t0;
+let gAngle = 0, lastT = null;
+
+function draw(t) {
+  const dt = lastT === null ? 0.016 : Math.min(0.05, t - lastT);
+  lastT = t;
+  mx += (tx - mx) * 0.04;
+  my += (ty - my) * 0.04;
+  gAngle += dt * 0.10;
+
+  /* ===== 1. 深空背景渐变 ===== */
+  const bg = ctx.createRadialGradient(CX, CY, 0, CX, CY, Math.max(W, H) * 0.75);
+  bg.addColorStop(0, 'rgba(14,10,26,1)');
+  bg.addColorStop(0.4, 'rgba(9,7,20,1)');
+  bg.addColorStop(1, 'rgba(4,3,12,1)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  /* ===== 2. 星云团 ===== */
+  for (const neb of nebulae) {
+    const nx = neb.x * W + Math.sin(t * neb.drift) * 30;
+    const ny = neb.y * H + Math.cos(t * neb.drift * 0.7) * 20;
+    const nr = neb.r * R;
+    const ng = ctx.createRadialGradient(nx, ny, 0, nx, ny, nr);
+    ng.addColorStop(0, neb.color + '0.18)');
+    ng.addColorStop(0.5, neb.color + '0.06)');
+    ng.addColorStop(1, neb.color + '0)');
+    ctx.fillStyle = ng;
+    ctx.fillRect(nx - nr, ny - nr, nr * 2, nr * 2);
+  }
+
+  /* ===== 3. 闪烁星空 ===== */
+  for (const s of bgStars) {
+    const tw = 0.3 + 0.7 * Math.abs(Math.sin(t * s.speed + s.phase));
+    ctx.fillStyle = PAL.white + (tw * 0.5).toFixed(3) + ')';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /* ===== 4. 漂浮光尘 ===== */
+  for (const m of motes) {
+    m.x += m.vx;
+    m.y += m.vy;
+    m.phase += dt * m.speed;
+    if (m.y < -10) { m.y = H + 10; m.x = Math.random() * W; }
+    if (m.x < -10) m.x = W + 10;
+    if (m.x > W + 10) m.x = -10;
+    const alpha = 0.12 + 0.20 * Math.abs(Math.sin(m.phase));
+    ctx.fillStyle = PAL.goldA + alpha.toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = PAL.goldA + (alpha * 0.15).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(m.x, m.y, m.r * 3.5, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /* ===== 全局3D姿态 ===== */
+  const gY = gAngle + mx * 0.30;
+  const gX = -0.22 + my * 0.25;
+
+  /* ===== 5. 螺旋臂（顺时针旋转） ===== */
+  const spiralRot = gAngle * 1.2;  /* 螺旋臂比外环快 */
+  const spiralTilt = rotX([0,0,1], 0.35); /* 螺旋臂面倾斜 */
+  const spStars = [];
+  for (const sp of spiralPoints) {
+    const ang = sp.angle + spiralRot;
+    let p = polar3D(ang, sp.radius);
+    /* 螺旋臂自身倾斜 */
+    p = rotX(p, 0.35);
+    /* 全局旋转 */
+    p = rotY(p, gY);
+    p = rotX(p, gX);
+    const q = project(p);
+    spStars.push({ x: q[0], y: q[1], z: p[2], k: q[3], size: sp.size, phase: sp.phase, twinkle: sp.twinkle });
+  }
+  /* 按深度排序 */
+  spStars.sort((a, b) => a.z - b.z);
+  for (const s of spStars) {
+    const depth = (s.z + R) / (2 * R);
+    const tw = 0.4 + 0.6 * Math.abs(Math.sin(t * s.twinkle + s.phase));
+    const r = s.size * (0.5 + depth * 0.8) * tw;
+    /* 光晕 */
+    ctx.fillStyle = PAL.goldA + (0.06 + depth * 0.10).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(s.x, s.y, r * 3, 0, Math.PI * 2); ctx.fill();
+    /* 核心 */
+    ctx.fillStyle = (depth > 0.45 ? PAL.goldA : PAL.goldB) + (0.25 + depth * 0.60).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /* ===== 6. 二十八宿外环（逆时针旋转） ===== */
+  const ringRot = -gAngle * 0.55;  /* 外环逆时针，比螺旋臂慢 */
+  const ringTilt = 0.45;  /* 外环倾斜角 */
+  const ringR = 0.95;
+  /* 环线 */
+  const ringSegs = 80;
+  for (let i = 0; i < ringSegs; i++) {
+    const a1 = i / ringSegs * Math.PI * 2;
+    const a2 = (i + 1) / ringSegs * Math.PI * 2;
+    let p1 = polar3D(a1, ringR);
+    let p2 = polar3D(a2, ringR);
+    p1 = rotX(p1, ringTilt); p1 = rotY(p1, ringRot); p1 = rotX(p1, gX * 0.5);
+    p2 = rotX(p2, ringTilt); p2 = rotY(p2, ringRot); p2 = rotX(p2, gX * 0.5);
+    const q1 = project(p1), q2 = project(p2);
+    const depth = ((p1[2] + p2[2]) / 2 + R) / (2 * R);
+    const alpha = 0.08 + depth * 0.25;
+    ctx.strokeStyle = (depth > 0.5 ? PAL.goldA : PAL.goldB) + alpha.toFixed(3) + ')';
+    ctx.lineWidth = 0.8 + depth * 0.6;
+    ctx.beginPath(); ctx.moveTo(q1[0], q1[1]); ctx.lineTo(q2[0], q2[1]); ctx.stroke();
+  }
+  /* 二十八宿星点+刻度 */
+  for (let i = 0; i < 28; i++) {
+    const a = i / 28 * Math.PI * 2 + ringRot;
+    let p = polar3D(a, ringR);
+    p = rotX(p, ringTilt); p = rotY(p, ringRot); p = rotX(p, gX * 0.5);
+    const q = project(p);
+    const depth = (p[2] + R) / (2 * R);
+    const r = 1.5 + depth * 2.5;
+    /* 刻度短线 */
+    let pIn = polar3D(a, ringR * 0.92);
+    pIn = rotX(pIn, ringTilt); pIn = rotY(pIn, ringRot); pIn = rotX(pIn, gX * 0.5);
+    const qIn = project(pIn);
+    ctx.strokeStyle = PAL.goldA + (0.15 + depth * 0.30).toFixed(3) + ')';
+    ctx.lineWidth = 1.0 + depth * 0.5;
+    ctx.beginPath(); ctx.moveTo(qIn[0], qIn[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+    /* 宿星点光晕 */
+    ctx.fillStyle = PAL.goldA + (0.08 + depth * 0.12).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(q[0], q[1], r * 2.5, 0, Math.PI * 2); ctx.fill();
+    /* 宿星点核心 */
+    ctx.fillStyle = PAL.goldA + (0.30 + depth * 0.55).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /* ===== 7. 轨道天体 ===== */
+  for (const orb of orbitals) {
+    orb.phase += dt * orb.speed;
+    /* 计算椭圆轨道上的位置 */
+    const ex = Math.cos(orb.phase) * R * orb.a;
+    const ez = Math.sin(orb.phase) * R * orb.b;
+    let p = [ex, 0, ez];
+    p = rotX(p, orb.tilt);
+    p = rotY(p, gY);
+    p = rotX(p, gX);
+    const q = project(p);
+    /* 记录轨迹 */
+    orb.trail.push({ x: q[0], y: q[1], z: p[2] });
+    if (orb.trail.length > 40) orb.trail.shift();
+    /* 绘制轨迹 */
+    for (let i = 0; i < orb.trail.length - 1; i++) {
+      const tr = orb.trail[i];
+      const trN = orb.trail[i + 1];
+      const a = (i / orb.trail.length) * 0.5;
+      ctx.strokeStyle = PAL.trail + a.toFixed(3) + ')';
+      ctx.lineWidth = (i / orb.trail.length) * orb.size * 0.8;
+      ctx.beginPath(); ctx.moveTo(tr.x, tr.y); ctx.lineTo(trN.x, trN.y); ctx.stroke();
+    }
+    /* 天体光晕 */
+    const depth = (p[2] + R) / (2 * R);
+    ctx.fillStyle = PAL.white + (0.06 + depth * 0.08).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(q[0], q[1], orb.size * 4, 0, Math.PI * 2); ctx.fill();
+    /* 天体核心 */
+    ctx.fillStyle = PAL.white + (0.50 + depth * 0.40).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(q[0], q[1], orb.size * (0.7 + depth * 0.4), 0, Math.PI * 2); ctx.fill();
+  }
+
+  /* ===== 8. 中心光晕 ===== */
+  const pulse = 0.85 + 0.15 * Math.sin(t * 1.4);
+  const gs = R * 0.50 * pulse;
+  const g = ctx.createRadialGradient(CX, CY, 0, CX, CY, gs);
+  g.addColorStop(0, PAL.amberGlow + '0.42)');
+  g.addColorStop(0.4, PAL.amberGlow + '0.12)');
+  g.addColorStop(1, PAL.amberGlow + '0)');
+  ctx.fillStyle = g; ctx.fillRect(CX - gs, CY - gs, gs * 2, gs * 2);
+
+  /* ===== 9. 中心放射光线（8 道） ===== */
+  ctx.save();
+  ctx.translate(CX, CY);
+  ctx.rotate(t * 0.08);
+  const rayCount = 8;
+  const rayLen = R * 0.35 * pulse;
+  for (let i = 0; i < rayCount; i++) {
+    const ang = i * (Math.PI * 2 / rayCount);
+    const gx = Math.cos(ang), gy = Math.sin(ang);
+    const rg = ctx.createLinearGradient(0, 0, gx * rayLen, gy * rayLen);
+    rg.addColorStop(0, PAL.amberGlow + '0.30)');
+    rg.addColorStop(0.5, PAL.amberGlow + '0.08)');
+    rg.addColorStop(1, PAL.amberGlow + '0)');
+    ctx.strokeStyle = rg;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(gx * R * 0.05, gy * R * 0.05);
+    ctx.lineTo(gx * rayLen, gy * rayLen);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  /* ===== 10. 中心核心：六瓣莲花 ===== */
+  ctx.save();
+  ctx.translate(CX, CY);
+  const lotusR = R * (0.14 + 0.008 * Math.sin(t * 1.4));
+  /* 外层花瓣（缓慢逆时针） */
+  ctx.rotate(-t * 0.15);
+  const petals = 6;
+  for (let i = 0; i < petals; i++) {
+    const ang = i * (Math.PI * 2 / petals);
+    ctx.save();
+    ctx.rotate(ang);
+    /* 花瓣形状 */
+    const pg = ctx.createLinearGradient(0, 0, 0, -lotusR);
+    pg.addColorStop(0, PAL.amber);
+    pg.addColorStop(0.6, 'rgba(217,119,87,0.7)');
+    pg.addColorStop(1, 'rgba(255,200,120,0.15)');
+    ctx.fillStyle = pg;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(lotusR * 0.35, -lotusR * 0.5, 0, -lotusR);
+    ctx.quadraticCurveTo(-lotusR * 0.35, -lotusR * 0.5, 0, 0);
+    ctx.fill();
+    /* 花瓣边缘高光 */
+    ctx.strokeStyle = PAL.goldA + '0.3)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    ctx.restore();
+  }
+  /* 内层花瓣（顺时针，偏移半角） */
+  ctx.rotate(t * 0.30);
+  const lotusR2 = lotusR * 0.62;
+  for (let i = 0; i < petals; i++) {
+    const ang = i * (Math.PI * 2 / petals) + Math.PI / petals;
+    ctx.save();
+    ctx.rotate(ang);
+    ctx.fillStyle = 'rgba(255,200,120,0.55)';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(lotusR2 * 0.3, -lotusR2 * 0.5, 0, -lotusR2);
+    ctx.quadraticCurveTo(-lotusR2 * 0.3, -lotusR2 * 0.5, 0, 0);
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+
+  /* 中心光球 */
+  ctx.save();
+  ctx.translate(CX, CY);
+  const coreR = lotusR * 0.32 * pulse;
+  const cg = ctx.createRadialGradient(0, 0, 0, 0, 0, coreR * 2);
+  cg.addColorStop(0, 'rgba(255,250,235,0.95)');
+  cg.addColorStop(0.3, 'rgba(255,220,160,0.7)');
+  cg.addColorStop(1, 'rgba(217,119,87,0)');
+  ctx.fillStyle = cg;
+  ctx.beginPath(); ctx.arc(0, 0, coreR * 2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,250,0.9)';
+  ctx.beginPath(); ctx.arc(0, 0, coreR * 0.6, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  /* ===== 11. 流星雨（偶尔出现） ===== */
+  meteorTimer += dt;
+  if (meteorTimer > 1.5 + Math.random() * 2.5) {
+    meteorTimer = 0;
+    spawnMeteor();
+  }
+  for (let i = meteors.length - 1; i >= 0; i--) {
+    const m = meteors[i];
+    m.x += m.vx;
+    m.y += m.vy;
+    m.life -= m.decay;
+    if (m.life <= 0 || m.x > W + 200 || m.y > H + 200) {
+      meteors.splice(i, 1);
+      continue;
+    }
+    const tailX = m.x - m.vx * m.len / 10;
+    const tailY = m.y - m.vy * m.len / 10;
+    const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+    grad.addColorStop(0, PAL.meteor + m.life.toFixed(3) + ')');
+    grad.addColorStop(0.4, PAL.meteor + (m.life * 0.4).toFixed(3) + ')');
+    grad.addColorStop(1, PAL.meteor + '0)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = m.width;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(m.x, m.y);
+    ctx.lineTo(tailX, tailY);
+    ctx.stroke();
+    ctx.fillStyle = PAL.meteor + m.life.toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(m.x, m.y, m.width * 1.1, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = PAL.meteor + (m.life * 0.15).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(m.x, m.y, m.width * 3.5, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function frame() {
+  draw(tBase());
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>

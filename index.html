@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>问问大师</title>
+
+<meta name="theme-color" content="#faf9f5">
+<meta name="description" content="问问大师">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icon.svg?v=31">
+<link rel="apple-touch-icon" href="./icon-192.png">
+
+<script>
+  /* 首屏前置写入主题，避免明暗闪烁 */
+  (function () {
+    try {
+      var p = localStorage.getItem('tj_theme') || 'system';
+      var m = (p === 'light' || p === 'dark') ? p
+            : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', m);
+      document.documentElement.style.colorScheme = m;
+    } catch (e) {}
+  })();
+</script>
+
+<link rel="stylesheet" href="/src/theme-claude.css">
+<link rel="stylesheet" href="/src/styles.css">
+<link rel="stylesheet" href="/src/ig-dock.css">
+<link rel="stylesheet" href="/src/claude-ui.css">
+<link rel="stylesheet" href="/src/claude-refine.css">
+<link rel="stylesheet" href="/src/enhance.css">
+</head>
+<body>
+
+<div class="mesh"></div>
+<canvas class="particles" id="tjParticles"></canvas>
+<canvas class="brand3d" id="brand3d" aria-hidden="true"></canvas>
+<div class="cursor-ring" id="tjCursorRing"></div>
+<div class="cursor-dot" id="tjCursorDot"></div>
+
+<div class="ld-ov" id="ldov">
+  <div class="ld-sp"></div>
+  <div class="ld-t">推演中</div>
+  <div class="ld-br"><div class="ld-bf" id="ldbf"></div></div>
+  <div class="ld-st" id="ldst">排列四柱…</div>
+</div>
+
+<!-- 推演过渡：页面淡出后，仅在底部显示极简提示 -->
+<div class="tj-calc-hint" id="tjCalcHint" aria-live="polite">推演中</div>
+
+<!-- 首页汉堡菜单按钮 -->
+<button class="home-menu-btn" id="homeMenuBtn" type="button" onclick="toggleHomeMenu()" aria-label="菜单" title="菜单">
+  <span class="home-menu-bars"></span>
+  <span class="home-menu-bars"></span>
+  <span class="home-menu-bars"></span>
+</button>
+
+<!-- 首页汉堡菜单抽屉 -->
+<div class="home-menu-overlay" id="homeMenuOverlay" onclick="toggleHomeMenu(false)"></div>
+<aside class="home-menu-drawer" id="homeMenuDrawer" aria-label="菜单面板">
+  <div class="home-menu-header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <img src="./icon.svg?v=31" alt="" class="home-menu-icon" style="width:40px;height:40px;flex-shrink:0;border-radius:10px">
+      <div>
+        <span class="home-menu-title" style="font-weight:800">问问大师</span>
+        <small style="display:block;font-size:.62em;letter-spacing:2px;color:var(--c-text-4);margin-top:2px">BY COZYmade</small>
+      </div>
+    </div>
+    <button class="home-menu-close" type="button" onclick="toggleHomeMenu(false)" aria-label="关闭">×</button>
+  </div>
+  <div class="home-menu-body">
+    <!-- 每日建议 -->
+    <div class="home-menu-section">
+      <div class="home-menu-section-hd">每日建议</div>
+      <div id="todayCard" class="today-card" style="display:none"></div>
+      <div id="todayCardEmpty" class="home-menu-empty" style="display:none">暂无建议，推演后可查看每日运势提示</div>
+    </div>
+    <!-- 最近推演 -->
+    <div class="home-menu-section">
+      <div class="home-menu-section-hd">最近推演</div>
+      <div id="recentZone" style="display:none">
+        <div class="recent-grid" id="recentGrid"></div>
+      </div>
+      <div id="recentEmpty" class="home-menu-empty" style="display:none">暂无推演记录</div>
+    </div>
+    <!-- 命盘档案 -->
+    <div class="home-menu-section">
+      <div class="home-menu-section-hd">
+        <span>命盘档案</span>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="pf-io-btn" onclick="exportProfiles()">导出</button>
+          <button type="button" class="pf-io-btn" onclick="document.getElementById('impFile').click()">导入</button>
+          <input type="file" id="impFile" style="display:none" accept=".json" onchange="handleImport(this)">
+        </div>
+      </div>
+      <div id="profileZone" style="display:none">
+        <div id="profileGrid" class="recent-grid"></div>
+        <div id="profileEmpty" class="pf-empty" style="display:none;color:var(--c-text-4);font-size:.78em;text-align:center;padding:14px 0">暂无档案，推算后点击「保存」即可收藏命盘</div>
+      </div>
+      <div id="profileZoneEmpty" class="home-menu-empty" style="display:none">暂无档案</div>
+    </div>
+  </div>
+  <!-- 天气模块 -->
+  <div class="wx-card" id="wxLine" style="display:none">
+    <div class="wx-card-inner">
+      <div class="wx-icon-box" id="wxIcon"></div>
+      <div class="wx-info">
+        <div class="wx-temp-line" id="wxPrimary"></div>
+        <div class="wx-meta-line" id="wxSecondary"></div>
+      </div>
+    </div>
+  </div>
+  <!-- 关于问问大师 / 免责声明：固定在菜单底部 -->
+  <div class="home-menu-footer" style="padding:12px 16px;border-top:1px solid var(--c-border);display:flex;flex-direction:column;gap:8px">
+    <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleHomeMenu(false);openAboutModal()">关于问问大师</button>
+    <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleHomeMenu(false);openDisclaimerModal()">免责声明</button>
+  </div>
+</aside>
+
+<div class="page" id="page1">
+  <div class="p1-scroll">
+    <div class="p1-inner">
+      <!-- 首页主视觉：欢迎语在上，双胶囊按钮下沉，不遮盖背景星环动画 -->
+      <div class="home-hero anim-in d1">
+        <div class="home-hero-copy">
+          <h1 class="home-hero-title" style="font-weight:800">问问大师</h1>
+          <p class="home-hero-sub">八字推演，辅助决策</p>
+        </div>
+        <div class="home-hero-actions">
+          <button class="home-cta" id="homeCtaMain" type="button" onclick="TJOpenForm()">输入信息</button>
+          <button class="home-cta home-cta-ghost home-cta-cal" id="homeCtaCal" type="button" onclick="openCalendarMode()" aria-label="日历模式" title="日历模式">日历模式</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 出生信息表单弹窗：浮于按钮上方，覆盖星轨动画区域 -->
+<div class="form-modal" id="formModal" role="dialog" aria-label="输入出生信息">
+  <div class="form-modal-sheet">
+    <button class="form-modal-close" type="button" onclick="TJCloseForm()" aria-label="关闭表单">×</button>
+    <div class="home-card" id="formCard">
+      <div class="form-modal-tt">填写信息</div>
+      <div class="form-grid">
+        <div class="fd"><label>出生日期</label><input type="date" id="bDate" value="1990-06-15"></div>
+        <div class="fd"><label>出生时间</label><input type="time" id="bTime" value="09:00" style="font-family:var(--sf)"></div>
+        <div class="fd"><label>出生地点</label><div class="cw"><input type="text" id="cInp" placeholder="搜索城市…" autocomplete="off" value="上海"><input type="hidden" id="bPlace" value="shanghai"><div class="cdd" id="cDD"></div></div></div>
+        <div class="fd"><label>性别</label><select id="bGen"><option value="male">男（乾造）</option><option value="female">女（坤造）</option></select></div>
+      </div>
+      <input type="hidden" id="bQ" value="">
+      <div class="switch-row" style="margin-top:6px"><div class="switch" id="swTrueSolar" onclick="this.classList.toggle('on');document.getElementById('swText').textContent=(this.classList.contains('on')?'开启':'关闭')+'真太阳时（按出生地经度精确换算时辰）'"></div><span id="swText">关闭真太阳时（按出生地经度精确换算时辰）</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="page hidden" id="page2">
+  <div class="p2-top">
+    <button class="p2-back" onclick="goBack()">
+      <span>重新推演</span>
+    </button>
+    <div class="mode-top-group" role="tablist" aria-label="报告阅读模式"><button class="mode-top-switch" id="modeBeginner" type="button" role="tab" aria-selected="true" onclick="setUserMode('beginner')">新手</button><button class="mode-top-switch" id="modeMaster" type="button" role="tab" aria-selected="false" onclick="setUserMode('master')">大师</button></div>
+    <div class="p2-actions"><button class="p2-act cal-fab" id="calFab" type="button" onclick="openCalendarMode()" title="日历模式" aria-label="日历模式"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button><div class="p2-profile-wrap"><button class="p2-act p2-profile-btn" type="button" id="p2ProfileBtn" onclick="TJToggleProfileMenu()" title="档案" aria-label="档案"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button><div class="p2-profile-menu" id="p2ProfileMenu" role="menu" aria-label="档案"></div></div>
+    </div>
+  </div>
+  <div class="p2-scroll" id="p2Scroll"><button class="back-to-top" id="backToTop" onclick="document.getElementById('p2Scroll').scrollTo({top:0,behavior:'smooth'})"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg></button>
+    <div class="p2-inner" id="p2Inner"></div>
+  </div>
+</div>
+
+<div class="ig-dock tab-bar" id="tabBar">
+  <div class="tab-bar-inner">
+    <div class="tab-indicator" id="tabIndicator"></div>
+    <div class="tab-item active" data-sec="s-ming" onclick="switchTab(this)" aria-label="命盘"><svg class="ig-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="4.1"/><path d="M12 3.4v2.1M12 18.5v2.1M3.4 12h2.1M18.5 12h2.1M5.9 5.9l1.5 1.5m9.2 9.2 1.5 1.5m0-12.3-1.5 1.5m-9.2 9.2-1.5 1.5"/><path d="M9.6 12a2.4 2.4 0 1 0 4.8 0 2.4 2.4 0 1 1-4.8 0Z"/></svg><span class="ig-nav-label">命盘</span></div>
+    <div class="tab-item" data-sec="s-yun" onclick="switchTab(this)" aria-label="运势"><svg class="ig-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17.6c4.9.15 7.5-3.3 9-8.7"/><path d="M6.2 13.4c1.25-.05 2.2-.45 2.9-1.15M4.7 15.5h.9"/><path d="M14.2 4.1c.48 3.48 1.86 4.9 5.18 5.36-3.32.46-4.7 1.88-5.18 5.36-.48-3.48-1.86-4.9-5.18-5.36 3.32-.46 4.7-1.88 5.18-5.36Z"/></svg><span class="ig-nav-label">运势</span></div>
+    <button class="ai-fab" id="aiFab" type="button" onclick="openAsk()" aria-label="打开问问大师" title="问问大师">
+      <span class="ai-fab-icon"><svg class="ig-ai-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11.7 3.2c.65 4.8 2.55 6.75 7.1 7.38-4.55.63-6.45 2.58-7.1 7.38-.65-4.8-2.55-6.75-7.1-7.38 4.55-.63 6.45-2.58 7.1-7.38Z"/><path d="M18.5 16.1c.22 1.6.85 2.25 2.36 2.46-1.51.21-2.14.86-2.36 2.46-.22-1.6-.85-2.25-2.36-2.46 1.51-.21 2.14-.86 2.36-2.46Z"/></svg></span><span class="ai-fab-text">问问</span><span class="ai-badge" aria-hidden="true">AI</span><span class="ai-beta-badge" aria-hidden="true">BETA</span>
+    </button>
+    <div class="tab-item" data-sec="s-rel" onclick="switchTab(this)" aria-label="关系"><svg class="ig-nav-icon ig-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 8.4c0 4.7-8.2 9.9-8.2 9.9S3.8 13.1 3.8 8.4A4.3 4.3 0 0 1 12 6.2a4.3 4.3 0 0 1 8.2 2.2Z"/></svg><span class="ig-nav-label">关系</span></div>
+    <div class="tab-item" data-sec="s-adv" onclick="switchTab(this)" aria-label="工具"><svg class="ig-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.4" height="6.4" rx="1.4"/><rect x="13.6" y="4" width="6.4" height="6.4" rx="1.4"/><rect x="4" y="13.6" width="6.4" height="6.4" rx="1.4"/><rect x="13.6" y="13.6" width="6.4" height="6.4" rx="1.4"/></svg><span class="ig-nav-label">工具</span></div>
+  </div>
+</div>
+
+<div class="lg-panel" id="lgPanel">
+  <div class="lg-panel-tt">玻璃质感强度</div>
+  <div class="lg-opts">
+    <div class="lg-opt" data-mode="clear" onclick="setGlassMode('clear')">清澈</div>
+    <div class="lg-opt active" data-mode="standard" onclick="setGlassMode('standard')">标准</div>
+    <div class="lg-opt" data-mode="tinted" onclick="setGlassMode('tinted')">凝重</div>
+  </div>
+</div>
+
+<div class="ai-overlay" id="aiOverlay" onclick="closeAsk()"></div>
+<div class="ai-sheet" id="aiSheet">
+  <div class="ai-actions">
+    <button class="ai-new" type="button" onclick="newAskChat()" title="新对话" aria-label="新对话">＋</button>
+    <button class="ai-settings" type="button" onclick="toggleAISettings()" title="AI 设置" aria-label="AI 设置"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg></button>
+    <button class="ai-close" type="button" onclick="closeAsk()" title="关闭" aria-label="关闭">×</button>
+  </div>
+  <div class="ai-handle"></div>
+  <div class="ai-head">
+    <div class="ai-title">问问大师 <span class="ai-subtitle">命盘解读 · 行动建议</span></div>
+    <div class="ai-context" id="aiContext"><span>✦ 智能定位</span><b>输入你的问题，获取结合命盘的具体建议</b></div>
+    <div class="ai-free-prompt">可以问职业选择、关系困惑、近期计划，或任意命理术语。</div>
+  </div>
+  <!-- 自由提问 + 实时联想 -->
+  <div class="ai-input-row">
+    <div class="ai-input-wrap">
+      <textarea class="ai-input" id="askInput" placeholder="例如：我现在适合换工作吗？" autocomplete="off" rows="1"></textarea>
+      <div class="ai-suggest" id="aiSuggest"></div>
+    </div>
+    <button class="ai-send" onclick="doAskCustom()" title="发送"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+  </div>
+  <div class="ai-body" id="askResult"></div>
+</div>
+
+<div class="modal" id="saveModal">
+  <div class="modal-bg" onclick="closeSaveModal()"></div>
+  <div class="modal-sheet glass" style="text-align:center">
+    <div class="modal-close" onclick="closeSaveModal()">×</div>
+    <div class="modal-title">保存命盘档案</div>
+    <input type="text" id="saveName" style="width:100%;padding:12px 16px;border-radius:100px;border:1px solid var(--c-border-2);background:var(--c-surface-3);color:var(--c-text-hi);font-family:var(--sf);font-size:.9em;margin:12px 0;text-align:center" placeholder="输入档案名称…" maxlength="20" autocomplete="off">
+    <button class="cta" style="padding:12px 32px;font-size:.9em" onclick="confirmSaveProfile()">保存</button>
+  </div>
+</div>
+
+<div class="modal" id="rqModal">
+  <div class="modal-bg" onclick="closeRq()"></div>
+  <div class="modal-sheet glass">
+    <div class="modal-close" onclick="closeRq()">×</div>
+    <div class="modal-title">今日日签</div>
+    <div id="rqResult" style="font-size:.85em;line-height:1.9;color:var(--c-text);padding-top:8px"></div>
+  </div>
+</div>
+
+<div class="tool-modal" id="toolModal" role="dialog" aria-modal="true" aria-label="工具详情">
+  <div class="tool-modal-bg" onclick="closeToolPage()"></div>
+  <div class="tool-sheet">
+    <button class="tool-sheet-close" type="button" onclick="closeToolPage()" aria-label="关闭" title="关闭">×</button>
+    <div id="toolModalContent"></div>
+  </div>
+</div>
+
+<div class="modal-month" id="monthModal">
+  <div class="mm-bg" onclick="closeMonthModal()"></div>
+  <div class="mm-sheet">
+    <div class="modal-close" onclick="closeMonthModal()">×</div>
+    <div id="monthModalContent"></div>
+  </div>
+</div>
+
+<!-- 关于问问大师 弹窗 -->
+<div class="modal" id="aboutModal">
+  <div class="modal-bg" onclick="closeAboutModal()"></div>
+  <div class="modal-sheet glass" style="max-width:440px;max-height:80vh;overflow-y:auto;text-align:left">
+    <div class="modal-close" onclick="closeAboutModal()">×</div>
+    <div class="modal-title" style="text-align:center;margin-bottom:16px">关于问问大师</div>
+
+    <div style="font-size:.82em;line-height:1.85;color:var(--c-text)">
+      <p style="margin-bottom:14px">问问大师是一款基于传统八字命理的智能推演工具。输入出生日期、时辰与地点，即可生成个人专属命盘，并获得多维度的人生分析与决策辅助。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:18px 0 8px;color:var(--c-text-hi)">核心功能</div>
+
+      <div style="font-weight:600;margin:12px 0 4px;color:var(--c-text-hi)">一、八字排盘与命理分析</div>
+      <p style="margin-bottom:10px">根据出生信息排列四柱八字，推算五行旺衰、十神格局与用神取向。报告涵盖命盘结构、人格特质、三式（紫微斗数 · 奇门遁甲 · 梅花易数）多维分析，每一项均标注判读依据，术语可点击查看解释。</p>
+
+      <div style="font-weight:600;margin:12px 0 4px;color:var(--c-text-hi)">二、运势追踪</div>
+      <p style="margin-bottom:10px">自动计算大运流转与流年流月走势，提供当年运势总览、本周运势、今日日签与每日宜忌。日签基于「当日干支 × 个人命盘」实时推演，每日更新，可生成分享卡片。</p>
+
+      <div style="font-weight:600;margin:12px 0 4px;color:var(--c-text-hi)">三、关系合盘</div>
+      <p style="margin-bottom:10px">支持双人八字合盘，逐柱比对日主、五行互补与干支刑冲合害。覆盖亲密关系、朋友合作、家人沟通三大场景，用于理解性格差异与相处方式，而非预测关系结局。</p>
+
+      <div style="font-weight:600;margin:12px 0 4px;color:var(--c-text-hi)">四、决策工具箱</div>
+      <p style="margin-bottom:6px">提供十余款实用工具，将命理洞察转化为可执行的行动方案：</p>
+      <ul style="padding-left:18px;margin-bottom:10px">
+        <li style="margin-bottom:4px"><b>财运与理财罗盘</b> — 结合命盘趋势与个人现金流，生成理财优先级建议</li>
+        <li style="margin-bottom:4px"><b>转行与副业测评</b> — 评估事业阶段与现实准备度，输出转行或副业方案</li>
+        <li style="margin-bottom:4px"><b>裁员风险检测</b> — 综合风险信号、现金流缓冲与求职准备度，生成预案</li>
+        <li style="margin-bottom:4px"><b>重要事项择日</b> — 选择事项与目标日期，生成准备清单与沟通提醒</li>
+        <li style="margin-bottom:4px"><b>能量穿搭与工位风水</b> — 按场景推荐穿搭颜色与方位建议</li>
+        <li style="margin-bottom:4px"><b>智能起名</b> — 输入姓氏与风格偏好，生成用字方向与名称灵感</li>
+        <li style="margin-bottom:4px"><b>摇签问卜</b> — 聚焦一件可行动的事，随机签文辅助自我反思</li>
+        <li style="margin-bottom:4px"><b>生肖合冲分析</b> — 查看与不同生肖的相处提醒</li>
+      </ul>
+
+      <div style="font-weight:600;margin:12px 0 4px;color:var(--c-text-hi)">五、AI 智能问答</div>
+      <p style="margin-bottom:10px">内置 AI 助手，可针对个人命盘自由提问。支持上下文多轮对话、意图识别与工具调用，能根据问题自动匹配最合适的工具或报告章节，给出有依据的回答。</p>
+
+      <div style="font-weight:600;margin:12px 0 4px;color:var(--c-text-hi)">六、命盘档案管理</div>
+      <p style="margin-bottom:10px">支持保存多个命盘档案，可随时加载重新推演。档案支持 JSON 格式导出与导入，方便备份与迁移。首页菜单中的「最近推演」会展示最近三条记录，「命盘档案」展示全部已保存档案。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:18px 0 8px;color:var(--c-text-hi)">技术特性</div>
+      <ul style="padding-left:18px;margin-bottom:10px">
+        <li style="margin-bottom:4px">支持真太阳时换算，按出生地经度精确校正时辰</li>
+        <li style="margin-bottom:4px">内置全国城市数据库，自动匹配出生地经纬度</li>
+        <li style="margin-bottom:4px">所有数据本地存储，不上传服务器，保护隐私</li>
+        <li style="margin-bottom:4px">报告卡片支持术语点击解释，降低理解门槛</li>
+        <li style="margin-bottom:4px">日签、运势分享卡片一键生成，支持原生分享与复制兜底</li>
+      </ul>
+
+      <div style="font-weight:700;font-size:1.05em;margin:18px 0 8px;color:var(--c-text-hi)">使用说明</div>
+      <ul style="padding-left:18px;margin-bottom:10px">
+        <li style="margin-bottom:4px">点击首页「输入信息」填写出生日期、时辰与地点，即可生成命盘报告</li>
+        <li style="margin-bottom:4px">点击首页「日历」可直接把应用当作日历使用（干支、节假日、心情与待办）</li>
+        <li style="margin-bottom:4px">报告生成后可点击「保存」收藏命盘，下次从菜单直接加载</li>
+        <li style="margin-bottom:4px">报告页底部标签栏可快速切换：命盘 · 运势 · 关系 · 工具</li>
+        <li style="margin-bottom:4px">任意带下划线的术语均可点击查看解释</li>
+      </ul>
+
+      <div style="font-weight:700;font-size:1.05em;margin:18px 0 8px;color:var(--c-text-hi)">关于开发</div>
+      <p style="margin-bottom:10px">问问大师是一款基于 AI 自主开发的应用。从命理引擎推演、报告渲染、交互设计到 AI 问答系统，均由 AI 编程助手完成开发与迭代，无需人工编写代码。项目探索了「AI 驱动全栈开发」的实践路径——AI 不仅是辅助工具，更是核心开发者，负责架构设计、功能实现、调试优化与持续演进。</p>
+
+      <div style="margin-top:18px;padding:12px 14px;border-radius:12px;background:var(--c-surface-3);border:1px solid var(--c-border);font-size:.9em;color:var(--c-text-2);line-height:1.7">
+        <b style="color:var(--c-text-hi)">温馨提示：</b>本应用基于传统文化体系推演，内容仅供文化体验与自我反思参考，不构成任何专业建议。人生选择请结合实际情况理性判断。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 免责声明 弹窗 -->
+<div class="modal" id="disclaimerModal">
+  <div class="modal-bg" onclick="closeDisclaimerModal()"></div>
+  <div class="modal-sheet glass" style="max-width:440px;max-height:80vh;overflow-y:auto;text-align:left">
+    <div class="modal-close" onclick="closeDisclaimerModal()">×</div>
+    <div class="modal-title" style="text-align:center;margin-bottom:16px">免责声明</div>
+    <div style="font-size:.82em;line-height:1.85;color:var(--c-text)">
+      <p style="margin-bottom:12px">欢迎使用问问大师。在使用本应用前，请仔细阅读以下免责声明。使用本应用即表示您已充分理解并同意本声明的全部内容。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">一、内容仅供参考</div>
+      <p style="margin-bottom:10px">问问大师提供的所有命理推演、运势分析、关系合盘、决策建议等内容，均基于中国传统文化中的八字命理体系进行算法推演，仅供文化体验、娱乐消遣与自我反思参考，不构成任何形式的专业建议（包括但不限于法律、医疗、金融、心理咨询、职业规划等领域）。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">二、不构成决策依据</div>
+      <p style="margin-bottom:10px">本应用的推演结果不应作为人生重大决策（如投资、择业、婚恋、医疗、法律事务等）的唯一或主要依据。用户在做出任何重要决定前，应结合实际情况、咨询相关领域专业人士并独立判断。因依赖本应用内容而产生的任何直接或间接损失，本应用及开发者不承担任何责任。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">三、AI 生成内容说明</div>
+      <p style="margin-bottom:10px">本应用的部分内容由 AI 模型自动生成，包括但不限于命盘解读文本、运势描述、建议文案等。AI 生成内容可能存在偏差、不完整或不准确的情况，用户应理性看待。开发者不对 AI 生成内容的准确性、完整性和时效性做任何保证。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">四、隐私保护</div>
+      <p style="margin-bottom:10px">本应用所有数据（包括出生信息、命盘档案、推演记录等）均存储在用户本地设备，不会上传至任何服务器。开发者无法访问、收集或使用用户的个人数据。用户应自行妥善保管设备及数据安全。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">五、知识产权</div>
+      <p style="margin-bottom:10px">本应用的界面设计、算法逻辑、图标素材及所有原创内容的知识产权归开发者所有。未经书面许可，不得复制、修改、传播或用于商业目的。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">六、免责范围</div>
+      <p style="margin-bottom:10px">在法律允许的最大范围内，本应用及开发者对以下情况不承担责任：</p>
+      <ul style="padding-left:18px;margin-bottom:10px">
+        <li style="margin-bottom:4px">用户因依赖推演结果而做出的任何决策及其后果</li>
+        <li style="margin-bottom:4px">AI 生成内容的不准确、遗漏或误导</li>
+        <li style="margin-bottom:4px">因设备故障、网络问题等不可抗力导致的服务中断</li>
+        <li style="margin-bottom:4px">用户数据因设备丢失、损坏或未授权访问导致的泄露</li>
+      </ul>
+
+      <div style="margin-top:4px;padding:12px 14px;border-radius:12px;background:var(--c-surface-3);border:1px solid var(--c-border);font-size:.9em;color:var(--c-text-2);line-height:1.7">
+        <b style="color:var(--c-text-hi)">如您不同意以上声明：</b>请立即停止使用本应用。继续使用即视为您已仔细阅读并完全接受本声明的全部条款。
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* 部署平台会在顶部注入 48px 品牌栏，并把所有 position:fixed 元素强行下移 48px（内联 top）。
+     以 bottom 定位的 Dock / 回顶按钮等会因此沉出可视区。
+     关闭品牌栏时平台还会把当初记录的旧 top 写回这些元素；Dock 注入时处于隐藏状态，
+     记录的旧值是 0，会被钉到视口顶部。因此在注入后、关闭后各恢复一次。 */
+  (function () {
+    var sel = '#tabBar,.back-to-top,#aiSheet,.ai-sheet,.cursor-dot,.cursor-ring';
+    function fix() {
+      document.querySelectorAll(sel).forEach(function (el) { el.style.top = ''; });
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      requestAnimationFrame(function () { requestAnimationFrame(fix); });
+    });
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      if (t.closest('#mulepage-bar-close')) {
+        setTimeout(fix, 0);
+        requestAnimationFrame(fix);
+      }
+    }, true);
+  })();
+</script>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

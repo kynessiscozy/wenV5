@@ -1,0 +1,1248 @@
+/* ============================================================
+   Claude 风格 · 细节精修层（最后加载）
+   ------------------------------------------------------------
+   解决改造后暴露的四类系统性问题：
+     1. 字号失控 —— 原设计用 em 层层相乘，最小到 8.7px（中文不可读）
+     2. 触控目标 —— 多处按钮 < 44×44（iOS HIG / WCAG 2.5.8 标准）
+     3. 圆角混乱 —— 同屏出现 9 种圆角（6/8/12/15/16/17/50%/100/999px）
+     4. 节奏不齐 —— 卡片内距 14~28px 混用，栅格间距不统一
+   ============================================================ */
+
+/* ---------- 1. 字阶：统一为 px，杜绝 em 相乘 ---------- */
+:root {
+  --fs-micro: calc(11px * var(--font-scale, 1));   /* 徽章、角标——中文可读下限 */
+  --fs-xs:    calc(12px * var(--font-scale, 1));   /* 辅助标签 */
+  --fs-sm:    calc(13px * var(--font-scale, 1));   /* 次要正文、元信息 */
+  --fs-base:  calc(14px * var(--font-scale, 1));   /* 正文 */
+  --fs-md:    calc(15px * var(--font-scale, 1));   /* 强调正文 */
+  --fs-lg:    calc(17px * var(--font-scale, 1));   /* 卡片标题 */
+  --fs-xl:    calc(20px * var(--font-scale, 1));   /* 区块标题 */
+  --fs-2xl:   calc(24px * var(--font-scale, 1));   /* 页面标题 */
+  --fs-3xl:   calc(30px * var(--font-scale, 1));   /* 命盘天干地支等展示型数字 */
+
+  /* 间距刻度（8pt 栅格） */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px;
+}
+
+body { font-size: var(--fs-md); line-height: 1.6; }
+
+/* 微型标签：原先 .58em~.68em → 统一 11~12px，并收窄 CJK 字距 */
+.qr-badge, .ai-kb-badge, .adv-tag, .tool-tag, .tr-tag, .mm-tag,
+.ai-sugg-tag, .tl-ms-pill, .sstag, .risk-pill, .ai-conn-text,
+.bb-eyebrow, .tj-tool-kicker, .tj-result-page-kicker, .tool-banner-kicker,
+.ai-sum-label, .fine-section-label, .tools-intro-sub, .recent-hd-title {
+  font-size: var(--fs-micro) !important;
+  letter-spacing: .02em !important;   /* 中文不宜大字距 */
+  text-transform: none !important;    /* 中文无大小写，uppercase 无意义 */
+  line-height: 1.5 !important;
+}
+
+/* 数据标签（命盘一览、信息格）：原 .6em/.62em → 12px */
+.qr-l, .il, .port-label, .tr-row-label, .mm-label, .pl-l,
+.tl-meta, .tl-ss, .tl-stage, .god-location, .lym-jq, .basic-term,
+.beginner-basic span, .card-st, .ai-subtitle, .r-meta,
+.tj-history-item, .layoff-period, .layoff-method-weight {
+  font-size: var(--fs-xs) !important;
+  letter-spacing: .01em !important;
+  line-height: 1.55 !important;
+}
+
+/* 说明性小字：原 .66em~.72em → 13px */
+.demo-report-note, .demo-report-note b, .demo-report-note em,
+.mini-note, .tj-disclaimer, .god-disclaimer, .layoff-disclaimer,
+.ai-settings-note, .ai-free-prompt, .ai-compose-hint, .tj-oracle-hint,
+.tool-page-note, .tool-panel-note, .three-styles-note, .god-method-note,
+.tj-chart-basis, .answerbook-disclaimer, .tj-date-note {
+  font-size: var(--fs-sm) !important;
+  line-height: 1.7 !important;
+}
+
+/* 正文 */
+.at, .at p, .ai-sum-body, .tj-tool-desc, .bb-text, .port-val,
+.god-meaning, .reason-list span, .tr-text-body, .beginner-intro {
+  font-size: var(--fs-base) !important;
+  line-height: 1.75 !important;
+}
+
+/* 数值 / 标题 */
+.qr-v, .iv, .tr-row-value, .mm-value, .bb-label { font-size: var(--fs-base) !important; }
+.card-tt, .qr-title, .tool-page-title, .tj-tool-title { font-size: var(--fs-lg) !important; }
+.bb-title, .tr-hero-value, .tj-result-title { font-size: var(--fs-xl) !important; }
+.modal-title, .mm-title, .ai-title { font-size: var(--fs-xl) !important; }
+.pl-g, .pl-z { font-size: var(--fs-3xl) !important; line-height: 1.15 !important; }
+
+/* 分数类大数字保持视觉重量，但收敛字重 */
+.tj-score, .layoff-index, .y-hero-score, .bs-score-grid b {
+  font-family: var(--display) !important;
+  font-weight: 500 !important;
+}
+
+/* 顶栏模式切换：原 10.5px → 13px */
+.mode-top-switch { font-size: var(--fs-sm) !important; }
+.p2-back, .tool-back-btn { font-size: var(--fs-sm) !important; }
+
+/* 藏干等密集小字保底 11px */
+.pl-xd, .pl-xd *, .fine-hidden, .fine-table td, .fine-table th,
+.god-table td, .god-table th {
+  font-size: var(--fs-micro) !important;
+  line-height: 1.6 !important;
+}
+
+/* ---------- 2. 触控目标（iOS HIG 44pt / WCAG 2.5.8） ---------- */
+/* 图标按钮给到 40px 实体尺寸，再靠间距保证有效热区 ≥44px */
+.theme-toggle, .p2-act, .ai-new, .ai-settings, .ai-close,
+.modal-close, .tool-sheet-close, .back-to-top,
+.tj-level-back, .tj-result-back {
+  width: 40px !important; min-width: 40px !important;
+  height: 40px !important; min-height: 40px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto;
+}
+.ai-send {
+  width: 40px !important; min-width: 40px !important;
+  height: 40px !important; min-height: 40px !important;
+}
+/* 覆盖 styles.css 中 #aiSheet 高优先级的 29/30px 收缩规则 */
+#aiSheet .ai-new, #aiSheet .ai-settings, #aiSheet .ai-close,
+.ai-sheet .ai-new, .ai-sheet .ai-settings, .ai-sheet .ai-close {
+  width: 40px !important; min-width: 40px !important;
+  height: 40px !important; min-height: 40px !important;
+}
+@media (max-width: 560px) {
+  #aiSheet .ai-new, #aiSheet .ai-settings, #aiSheet .ai-close,
+  .ai-sheet .ai-new, .ai-sheet .ai-settings, .ai-sheet .ai-close {
+    width: 40px !important; min-width: 40px !important;
+    height: 40px !important; min-height: 40px !important;
+  }
+}
+
+/* 图标按钮相邻时留 8px，避免误触 */
+.ai-actions, .p2-actions { gap: var(--sp-2) !important; }
+
+/* 分段控件与胶囊按钮给足高度 */
+.mode-top-switch { min-height: 34px !important; padding: 0 14px !important; }
+.mode-top-group  { min-height: 40px !important; }
+.chip { min-height: 40px !important; display: inline-flex; align-items: center; }
+.p2-back { min-height: 40px !important; }
+.ai-fab { min-width: 56px !important; }
+
+/* 开关滑块放大到易点尺寸 */
+.switch { width: 44px !important; height: 26px !important; border-radius: 999px !important; }
+.switch::after, .switch span {
+  width: 20px !important; height: 20px !important;
+  border-radius: 50% !important;
+}
+.switch-row { gap: 10px !important; align-items: center; }
+.switch-row span { font-size: var(--fs-sm) !important; line-height: 1.5; }
+
+/* ---------- 3. 圆角：收敛为 4 档 ---------- */
+.glass, .home-card, .modal-sheet, .mm-sheet, .tool-sheet,
+.qr-card, .ai-sum, .beginner-brief, .tool-panel, .ai-settings-panel {
+  border-radius: var(--c-r-lg) !important;   /* 16px 容器 */
+}
+.ii, .pl, .port-item, .qr-item, .qr-summary, .tl-card, .tl-q,
+.y-hero-item, .rel-mode-item, .adv-card, .relation-block, .god-item,
+.layoff-result-box, .tj-result-list > div, .tj-date-choice,
+.r-card, .pf-card, .tool-tile, .lym-item, .beginner-basic,
+.ai-context, .tj-ai-box, .ai-user-bubble, .tool-banner {
+  border-radius: var(--c-r) !important;      /* 12px 内容块 */
+}
+input, select, textarea, .ai-input-row, .tools-search input,
+.cta, .tj-submit, .tool-primary, .ai-btn-go, .ai-send, .bb-master {
+  border-radius: 10px !important;            /* 10px 控件 */
+}
+.chip, .preview-cta, .p2-back, .lg-opt, .structure-tab, .focus-tab,
+.ai-cat, .ai-chip, .mode-top-switch, .ai-route-btn, .ai-tool-link,
+.sstag, .tg, .tg2, .adv-tag, .tool-tag, .tr-tag, .mm-tag,
+.qr-badge, .tl-ms-pill, .risk-pill, .ai-sugg-tag {
+  border-radius: 999px !important;           /* 全圆胶囊 */
+}
+.card-ic, .r-ava, .ai-dialogue-avatar, .chat-avatar {
+  border-radius: 10px !important;
+}
+.theme-toggle, .p2-act, .ai-new, .ai-settings, .ai-close,
+.modal-close, .tool-sheet-close, .back-to-top { border-radius: 50% !important; }
+
+/* ---------- 4. 间距节奏：统一到 8pt 栅格 ---------- */
+.card-1 { padding: var(--sp-6) !important; margin-bottom: var(--sp-4) !important; }
+.card-2 { padding: var(--sp-5) !important; margin-bottom: var(--sp-3) !important; }
+.card-3 { padding: var(--sp-4) !important; margin-bottom: var(--sp-3) !important; }
+.home-card { padding: var(--sp-6) !important; margin-bottom: var(--sp-5) !important; }
+
+.card-hd { margin-bottom: var(--sp-4) !important; gap: var(--sp-3) !important; }
+.form-grid { gap: var(--sp-4) !important; }
+.chip-wrap { gap: var(--sp-2) !important; margin-top: var(--sp-2) !important; }
+.ig, .qr-grid, .portrait-grid, .structure-grid { gap: var(--sp-2) !important; }
+.cta-row { gap: var(--sp-3) !important; margin-top: var(--sp-5) !important; }
+.ii, .qr-item, .port-item { padding: var(--sp-3) !important; }
+.pl { padding: var(--sp-4) var(--sp-2) var(--sp-3) !important; }
+
+/* 报告页左右留白与安全区 */
+.p2-inner { padding-left: var(--sp-4) !important; padding-right: var(--sp-4) !important; }
+
+/* ---------- 5. 中文排版细节 ---------- */
+/* 中文不适用大字距；仅拉丁文与数字保留轻微字距 */
+body, p, span, div, b, em, h1, h2, h3, button, input, select, textarea {
+  letter-spacing: 0;
+}
+.pl-g, .pl-z, .tj-score, .layoff-index, .y-hero-score { letter-spacing: .01em; }
+
+/* 段落之间留呼吸，Claude 的长文可读性来自行高与段距 */
+.at p + p, .ai-sum-body p + p, .bb-text + .bb-text { margin-top: var(--sp-3); }
+
+/* 数字使用等宽字形，避免跳动 */
+.tj-score, .layoff-index, .y-hero-score, .qr-v, .iv,
+.wxv, .bs-score-grid, .tl-year-r, .tl-age-r {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ---------- 6. 交互反馈：轻、快、一致 ---------- */
+button, .chip, .tab-item, .tool-tile, .r-card, .pf-card, .ii, .pl {
+  transition: background-color .15s ease, border-color .15s ease,
+              color .15s ease, opacity .15s ease !important;
+}
+button:active, .chip:active, .tool-tile:active, .r-card:active {
+  opacity: .85;
+}
+.cta:active, .tj-submit:active, .tool-primary:active { opacity: .9; }
+
+/* 禁用态统一 */
+button:disabled, .cta:disabled, .tj-submit:disabled {
+  opacity: .4 !important; cursor: not-allowed !important;
+}
+
+/* ---------- 7. 细节修补 ---------- */
+/* 卡片标题与副标题的基线对齐 */
+.card-hd > div:last-child { display: flex; flex-direction: column; gap: 2px; }
+.card-st { margin-top: 0 !important; }
+
+/* 分隔线统一淡度 */
+hr, .tr-divider, .ai-divider { border: 0; border-top: 1px solid var(--c-border); }
+
+/* 术语下划线：改为更细、更淡的虚线，减少噪点 */
+.glossary-term, .term, .basic-term {
+  text-decoration: none !important;
+  border-bottom: 1px dashed var(--c-border-3) !important;
+  padding-bottom: 1px;
+}
+
+/* 顶栏按钮组间距 */
+.p2-actions { gap: var(--sp-2) !important; align-items: center; }
+.p2-top { gap: var(--sp-3) !important; padding: 10px var(--sp-4) !important; }
+
+/* 首页浮动按钮只在首页出现：必须放在通用 display:inline-flex 之后 */
+body:not(.home) .theme-toggle-home { display: none !important; }
+
+/* 首页浮动主题按钮：保持固定定位（通用图标按钮规则会覆盖 position） */
+.theme-toggle-home {
+  position: fixed !important;
+  top: max(14px, env(safe-area-inset-top)) !important;
+  right: 14px !important;
+  z-index: 60 !important;
+  width: 42px !important; height: 42px !important;
+  background: var(--c-surface) !important;
+  box-shadow: var(--c-shadow-1) !important;
+}
+
+/* 底栏图标视觉重量一致 */
+body .ig-dock .ig-nav-icon { stroke-width: 1.8 !important; }
+body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; transform: none !important; }
+
+/* 滚动条在浅色下过重，收细 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+
+/* 空状态文案居中留白 */
+.pf-empty, .tool-empty, .ai-empty, .focus-empty {
+  padding: var(--sp-6) var(--sp-4) !important;
+  font-size: var(--fs-sm) !important;
+  color: var(--c-text-3) !important;
+}
+
+/* ---------- 8. 收口：残余的非标字号与圆角 ---------- */
+/* 这些元素被内联 em 或旧规则遗漏，逐项归位到字阶 */
+.qr-act            { font-size: var(--fs-xs) !important; border-radius: 999px !important; }
+.qr-card           { border-radius: var(--c-r-lg) !important; }
+.mode-top-switch   { border-radius: 999px !important; }
+.p2-act            { font-size: var(--fs-base) !important; }
+.glossary-term, .term { font-size: inherit !important; }
+
+/* 命盘一览的强调值与新手页基础项 */
+.qr-summary b, .qr-summary span,
+.beginner-basic b, .beginner-basic > div > b { font-size: var(--fs-base) !important; }
+.beginner-basic .basic-term i,
+.basic-term i { font-size: var(--fs-micro) !important; }
+
+/* 示例徽标 */
+.demo-report-note span, .demo-report-note .qr-badge { font-size: var(--fs-micro) !important; }
+
+/* 更高优先级收口：这些选择器在 styles.css 中带 !important */
+.p2-top .mode-top-switch,
+.mode-top-switch, .mode-top-switch.active { border-radius: 999px !important; }
+.p2-top .mode-top-group, .mode-top-group  { border-radius: 999px !important; }
+.glass .qr-card, .qr-card                 { border-radius: var(--c-r-lg) !important; }
+
+/* 新手报告 / 速读卡内的说明性文字 */
+.bb-note, .bs-head, .bs-head *, .tj-score small,
+.beginner-score, .beginner-score * { font-size: var(--fs-sm) !important; }
+.qr-act, .sstag, .glossary-term.sstag { font-size: var(--fs-micro) !important; }
+
+/* 五行能量条：标签与百分比 */
+.wxl { font-size: var(--fs-base) !important; }
+.wxv { font-size: var(--fs-xs) !important; }
+.wxf { font-size: var(--fs-micro) !important; }
+
+/* 术语在小字容器内不再二次缩小 */
+.glossary-term, .term, .basic-term { font-size: inherit !important; }
+
+/* ---------- 9. 阻断 em 相乘链 ----------
+   旧设计里 .qr-summary(.84em) > b(.74em)、.structure-mini-bd(.84em) > .fine-table(.7em)
+   这类嵌套会把中文压到 8~9px。这里把「中间层容器」重置为 rem 基准，
+   使其子元素的 em 从固定基线计算，而不是层层相乘。                     */
+.qr-summary, .structure-mini-bd, .fine-table-wrap, .god-table-wrap,
+.pro-wrap, .reason-list, .tool-page-data, .tool-answer,
+.relation-data, .flow-now, .fine-summary, .fine-extra, .god-core-grid {
+  font-size: var(--fs-base) !important;
+}
+
+/* 这些块内的所有后代不得低于 11px（中文可读下限） */
+.qr-summary *, .structure-mini-bd *, .fine-table *, .god-table *,
+.pl-i, .pl-i *, .tg, .tg2, .full-gods-btn, .structure-tab,
+.structure-mini-tt, .fine-section-label, .qr-act, .sstag {
+  font-size: var(--fs-micro) !important;
+}
+/* 但表格与摘要中的「值」保持正文大小，形成层级 */
+.qr-summary b, .fine-summary b, .fine-extra b,
+.structure-mini-bd b:not(.fine-hidden) { font-size: var(--fs-sm) !important; }
+
+/* ---------- 10. 图标按钮统一为线性 SVG ---------- */
+.p2-act svg, .theme-toggle svg, .back-to-top svg {
+  width: 18px; height: 18px;
+  fill: none; stroke: currentColor;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+/* 主题按钮的图标略小，与相邻保存图标视觉等重 */
+.theme-toggle svg { width: 17px; height: 17px; }
+
+/* 合盘结果：条目内的 <strong> 保持内联强调，避免 <b> 被块级化后断句 */
+.tj-result-list span strong { font-weight: 600; color: var(--c-text); }
+
+/* ---------- 11. 合盘：最近对象快捷选择 ---------- */
+.tj-partner-picker-wrap { margin: 0 0 var(--sp-4); }
+.tj-partner-picker-title {
+  font-size: var(--fs-micro);
+  color: var(--c-text-3);
+  margin-bottom: var(--sp-2);
+}
+.tj-partner-list { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.tj-partner-chip {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 40px;
+  padding: 7px 30px 7px 12px;
+  border: 1px solid var(--c-border-2);
+  border-radius: 999px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-family: var(--sf);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.tj-partner-chip:hover { background: var(--c-surface-3); border-color: var(--c-border-3); }
+.tj-partner-name  { font-size: var(--fs-sm); font-weight: 500; }
+.tj-partner-meta  { font-size: var(--fs-micro); color: var(--c-text-3); }
+.tj-partner-score {
+  font-size: var(--fs-micro); font-weight: 600;
+  color: var(--c-accent-text);
+  background: var(--c-accent-soft);
+  border-radius: 999px; padding: 2px 7px;
+  font-variant-numeric: tabular-nums;
+}
+.tj-partner-del {
+  position: absolute; right: 6px; top: 50%;
+  width: 20px; height: 20px; margin-top: -10px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  color: var(--c-text-4); font-size:calc(14px * var(--font-scale, 1)); line-height: 1;
+}
+.tj-partner-del:hover { background: var(--c-surface-4); color: var(--c-text); }
+
+/* 合盘结果底部操作条：与日签保持同一形态 */
+.tj-sign-actions { display: flex; gap: var(--sp-2); margin-top: var(--sp-4); }
+.tj-sign-actions button { flex: 1; min-height: 44px; border-radius: 10px !important; font: 500 var(--fs-sm) var(--sf); cursor: pointer; }
+.tj-sign-share {
+  background: var(--c-accent) !important; border: 1px solid var(--c-accent) !important;
+  color: var(--c-on-accent) !important;
+}
+.tj-sign-share:hover { background: var(--c-accent-hover) !important; }
+.tj-sign-refresh {
+  background: transparent !important; border: 1px solid var(--c-border-2) !important;
+  color: var(--c-text-2) !important;
+}
+.tj-sign-refresh:hover { background: var(--c-surface-3) !important; color: var(--c-text) !important; }
+
+/* 分享兜底弹层：剪贴板不可用时，让用户能手动复制 */
+.tj-share-fallback { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: var(--sp-4); }
+.tj-share-fallback-bg { position: absolute; inset: 0; background: var(--c-overlay); }
+.tj-share-fallback-sheet {
+  position: relative; width: min(420px, 100%);
+  padding: var(--sp-5);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-r-lg);
+  box-shadow: var(--c-shadow-3);
+}
+.tj-share-fallback-title { font-size: var(--fs-sm); color: var(--c-text-2); margin-bottom: var(--sp-3); }
+.tj-share-fallback-text {
+  width: 100%; resize: none;
+  font: var(--fs-sm)/1.7 var(--sf);
+  color: var(--c-text);
+  background: var(--c-surface-2) !important;
+  border: 1px solid var(--c-border) !important;
+  border-radius: 10px !important;
+  padding: var(--sp-3) !important;
+}
+.tj-share-fallback-close {
+  width: 100%; min-height: 44px; margin-top: var(--sp-3);
+  border-radius: 10px !important;
+  background: var(--c-accent) !important; border: 1px solid var(--c-accent) !important;
+  color: var(--c-on-accent) !important; font: 500 var(--fs-sm) var(--sf); cursor: pointer;
+}
+
+/* ---------- 12. 首页「今日一句」 ---------- */
+.today-card {
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-5);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-r-lg);
+  box-shadow: var(--c-shadow-1);
+}
+.today-card-top { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+.today-card-date { font-size: var(--fs-micro); color: var(--c-text-3); font-variant-numeric: tabular-nums; }
+.today-card-tone {
+  font-size: var(--fs-micro); font-weight: 600;
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--c-surface-2);
+}
+.today-card-headline {
+  font-family: var(--display);
+  font-size: var(--fs-lg); line-height: 1.5; font-weight: 500;
+  color: var(--c-text);
+  margin-bottom: var(--sp-3);
+}
+.today-card-body { font-size: var(--fs-sm); line-height: 1.75; color: var(--c-text-2); }
+.today-card-body b { display: block; font-size: var(--fs-micro); color: var(--c-text-3); font-weight: 500; margin-bottom: 2px; }
+.today-card-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2);
+  margin-top: var(--sp-4); padding-top: var(--sp-3);
+  border-top: 1px solid var(--c-border);
+}
+.today-card-who { font-size: var(--fs-micro); color: var(--c-text-3); }
+.today-card-more {
+  min-height: 36px; padding: 0 var(--sp-3);
+  border: 1px solid var(--c-border-2); border-radius: 999px;
+  background: transparent; color: var(--c-text-2);
+  font: 500 var(--fs-sm) var(--sf); cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.today-card-more:hover { background: var(--c-surface-3); color: var(--c-text); }
+.tj-daily-meta { font-size: var(--fs-micro); color: var(--c-text-3); margin-top: 4px; }
+
+/* 首页滚动容器：justify-content:center 在内容超高时会把顶部溢出到
+   scrollTop=0 之上（flex 已知问题），导致「今日一句」永远滚不到。
+   改用 auto margin 实现居中——内容不足时依然居中，超高时正常从顶部开始。 */
+.p1-scroll { justify-content: flex-start !important; }
+.p1-scroll > .p1-inner { margin-top: auto !important; margin-bottom: auto !important; }
+
+/* ---------- 13. 术语可供性：让用户知道「这里能点」 ----------
+   原设计只有 1px 虚线 + cursor:help，移动端没有 hover，
+   用户根本不知道术语可以点开解释。 */
+.glossary-term, .term, .basic-term {
+  position: relative;
+  display: inline;
+  color: var(--c-accent-text) !important;
+  border-bottom: 1px dashed color-mix(in srgb, var(--c-accent) 55%, transparent) !important;
+  cursor: pointer !important;
+  padding-bottom: 1px;
+  /* 触控目标：中文字号偏小，扩大可点区域 */
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--c-accent) 18%, transparent);
+}
+/* 问号只加在「每张卡片的第一个术语」上：
+   大师模式一屏可有 10+ 个术语，全部加问号会变成视觉噪音。
+   其余术语靠虚线下划线 + 强调色即可辨识。 */
+.glossary-term.has-hint::after {
+  content: '?';
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  width: 12px; height: 12px;
+  margin-left: 2px;
+  vertical-align: super;
+  font-size:calc(8px * var(--font-scale, 1)); font-weight: 700; line-height: 1;
+  border-radius: 50%;
+  background: var(--c-accent-soft);
+  color: var(--c-accent-text);
+  opacity: .9;
+}
+/* 标签/胶囊内的术语不加问号，避免把小标签撑变形 */
+.sstag::after, .tg::after, .tg2::after,
+.qr-badge .glossary-term::after,
+.tl-ms-pill .glossary-term::after { content: none !important; }
+
+.glossary-term:active { background: var(--c-accent-soft); border-radius: 3px; }
+
+/* 首次进入报告时的一次性引导 */
+.gloss-hint {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 var(--sp-3);
+  padding: 10px var(--sp-3);
+  background: var(--c-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--c-accent) 26%, transparent);
+  border-radius: var(--c-r);
+  font-size: var(--fs-sm);
+  color: var(--c-accent-text);
+  line-height: 1.6;
+}
+.gloss-hint-close {
+  margin-left: auto; flex: 0 0 auto;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%;
+  background: transparent; color: var(--c-accent-text);
+  font-size:calc(16px * var(--font-scale, 1)); line-height: 1; cursor: pointer;
+}
+.gloss-hint-close:hover { background: color-mix(in srgb, var(--c-accent) 16%, transparent); }
+
+/* ---------- 14. 新手首屏数据位：值 + 一句话含义 ---------- */
+.beginner-basic { align-items: stretch !important; }
+.beginner-basic > div {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: var(--sp-3) var(--sp-2) !important;
+  text-align: center;
+}
+.beginner-basic > div > span { font-size: var(--fs-micro) !important; color: var(--c-text-3) !important; }
+.beginner-basic > div > b   { font-size: var(--fs-base) !important; color: var(--c-text) !important; font-weight: 600; }
+.bb-cell-note {
+  display: block;
+  font-style: normal;
+  font-size: var(--fs-micro);
+  line-height: 1.5;
+  color: var(--c-text-3);
+  margin-top: 2px;
+}
+/* 四列在窄屏挤成两列，保证每格能放下一句说明 */
+@media (max-width: 480px) {
+  .beginner-basic { grid-template-columns: 1fr 1fr !important; }
+}
+
+/* ---------- 15. 「这段是什么意思」入口 ---------- */
+#page2 [data-card], #page2 .beginner-brief { position: relative; }
+.explain-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: var(--sp-3);
+  min-height: 34px; padding: 0 12px;
+  border: 1px dashed var(--c-border-2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-text-3);
+  font: 500 var(--fs-micro) var(--sf);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.explain-btn::before {
+  content: '?';
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--c-accent-soft); color: var(--c-accent-text);
+  font-size:calc(9px * var(--font-scale, 1)); font-weight: 700;
+}
+.explain-btn:hover {
+  background: var(--c-accent-soft);
+  border-color: color-mix(in srgb, var(--c-accent) 40%, transparent);
+  border-style: solid;
+  color: var(--c-accent-text);
+}
+
+/* 新手首屏标签：术语与标签同行显示，避免括号被换行拆散 */
+.beginner-basic > div > span {
+  display: block;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+.beginner-basic > div > span .glossary-term {
+  display: inline-block;
+  margin-left: 2px;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   16. UI 修复（依据 360/430/768 三档实测）
+   ============================================================ */
+
+/* ---- 16.1 工具中心：360px 下塌成单列，116px 高的卡只放两行短文字 ---- */
+#s-adv .tool-grid,
+#s-adv .tool-grid-full {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: var(--sp-2) !important;
+}
+#s-adv .tool-tile {
+  min-height: 92px !important;
+  padding: var(--sp-3) !important;
+  justify-content: center !important;
+  gap: 4px !important;
+}
+#s-adv .tool-tile .tool-label {
+  font-size: var(--fs-base) !important;
+  line-height: 1.4 !important;
+}
+#s-adv .tool-tile .tool-tag {
+  font-size: var(--fs-micro) !important;
+  color: var(--c-text-3) !important;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  line-height: 1.45 !important;
+}
+@media (max-width: 380px) {
+  #s-adv .tool-tile { min-height: 86px !important; padding: 10px !important; }
+  #s-adv .tool-tile .tool-label { font-size: var(--fs-sm) !important; }
+}
+
+/* ---- 16.2 筛选条：360px 下末项被截断且无滚动提示 ---- */
+.tools-filter {
+  overflow-x: auto !important;
+  flex-wrap: nowrap !important;
+  scroll-snap-type: x proximity;
+  /* 右侧渐隐，暗示还能横滑 */
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+          mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+  padding-right: 20px !important;
+}
+.tools-filter::-webkit-scrollbar { display: none; }
+.tools-filter > * { scroll-snap-align: start; flex: 0 0 auto; }
+
+/* ---- 16.3 工具弹层：关闭按钮压在简介卡上（实测重叠） ---- */
+#toolModal .tj-tool-intro {
+  padding-right: 52px !important;
+  /* 原深蓝金 WEBP 会让文字对比度不稳定，已换成随主题着色的 SVG 纹理：
+     用 currentColor 绘制，浅色/深色下都保持低对比，不与文字抢注意力 */
+  position: relative;
+  background-color: var(--c-surface-2) !important;
+  background-repeat: no-repeat !important;
+  background-position: right -10px center !important;
+  background-size: auto 150% !important;
+  border: 1px solid var(--c-border) !important;
+  border-radius: var(--c-r) !important;
+  overflow: hidden;
+}
+/* 同磁贴：用一层 ::after 承载纹理并控制透明度 */
+#toolModal .tj-tool-intro::after {
+  content: ''; position: absolute; inset: 0; z-index: 0;
+  background: inherit; background-color: transparent !important;
+  opacity: .16; pointer-events: none;
+}
+[data-theme="dark"] #toolModal .tj-tool-intro::after { opacity: .22; }
+#toolModal .tj-tool-intro > * { position: relative; z-index: 1; }
+#toolModal .tj-tool-intro > * { color: var(--c-text); }
+#toolModal .tj-tool-intro .tj-tool-kicker { color: var(--c-accent-text); }
+#toolModal .tool-sheet-close {
+  background: var(--c-surface) !important;
+  border: 1px solid var(--c-border-2) !important;
+  box-shadow: var(--c-shadow-1) !important;
+}
+
+/* ---- 16.4 触控目标补齐到 ≥36px（WCAG 2.5.8 / iOS HIG） ---- */
+/* styles.css 里有 max-height:30px!important 钳住高度，
+   只写 min-height 无效，必须三个属性一起覆盖 */
+.p2-top .mode-top-switch,
+.mode-top-switch,
+.mode-top-switch.active {
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+}
+.p2-top .mode-top-group,
+.p2-top .p2-back,
+.p2-top .p2-act { height: 40px !important; min-height: 40px !important; max-height: 40px !important; }
+.gloss-hint-close { width: 36px !important; height: 36px !important; }
+.card-toggle { width: 36px !important; height: 36px !important; }
+.qr-act, .explain-btn, .structure-tab, .focus-tab { min-height: 36px !important; }
+/* 首页开关：26px 高不易点，扩到 44×28 并留出热区 */
+.switch { height: 28px !important; }
+.switch-row { min-height: 44px; }
+
+/* ---- 16.5 术语行内元素：不因下划线而被切掉基线 ---- */
+.glossary-term { line-height: 1.7 !important; }
+
+/* ---- 16.6 360px 顶栏：三组元素间距过紧 ---- */
+@media (max-width: 380px) {
+  .p2-top { padding-left: 10px !important; padding-right: 10px !important; gap: 6px !important; }
+  .p2-back { padding: 0 10px !important; }
+  .mode-top-switch { padding: 0 10px !important; }
+  .p2-actions { gap: 4px !important; }
+}
+
+/* ---- 16.7 命盘档案的导出/导入：原为内联样式，仅 48×29 ---- */
+.pf-io-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid var(--c-border-2);
+  color: var(--c-text-2);
+  font: 500 var(--fs-sm) var(--sf);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.pf-io-btn:hover { background: var(--c-surface-3); color: var(--c-text); }
+
+/* ---- 16.8 术语是行内文本，无法靠尺寸达标；改为扩大触控热区 ---- */
+.glossary-term {
+  padding: 4px 1px;
+  margin: -4px 0;
+}
+
+/* ---- 16.9 工具卡内部间距：隐藏的 .tool-icon 仍占 12px 外边距 ---- */
+#s-adv .tool-tile .tool-icon { display: none !important; margin: 0 !important; }
+#s-adv .tool-tile > b,
+#s-adv .tool-tile .tool-label {
+  margin: 0 !important;
+  line-height: 1.35 !important;
+}
+#s-adv .tool-tile > small,
+#s-adv .tool-tile .tool-tag {
+  margin-top: 2px !important;
+}
+
+/* ============================================================
+   17. 合盘结果：折叠分组
+   原本 9 个小节平铺 1170px（约 1.4 屏），用户必须一路滚到底。
+   现在结论常驻，细节按需展开。
+   ============================================================ */
+.syn-verdict {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--sp-2);
+  padding: 0 0 var(--sp-3);
+}
+.syn-verdict-label { font-size: var(--fs-base); font-weight: 600; }
+.syn-verdict-meta { font-size: var(--fs-micro); color: var(--c-text-3); font-variant-numeric: tabular-nums; }
+
+/* 双方命盘：两行紧凑对照，不用 tj-result-list 的大内距 */
+.syn-charts { display: flex; flex-direction: column; gap: 6px; }
+.syn-charts > div { display: flex; align-items: baseline; gap: var(--sp-2); }
+.syn-charts span { flex: 0 0 32px; font-size: var(--fs-micro); color: var(--c-text-3); }
+.syn-charts b {
+  font-family: var(--display); font-size: var(--fs-base);
+  letter-spacing: .04em; color: var(--c-text);
+}
+
+.syn-summary {
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-3);
+  background: var(--c-surface-2);
+  border-radius: var(--c-r);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  color: var(--c-text-2);
+}
+
+.syn-group {
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-r);
+  margin-bottom: var(--sp-2);
+  overflow: hidden;
+  background: var(--c-surface);
+}
+.syn-group-hd {
+  display: flex; align-items: center; gap: var(--sp-2);
+  width: 100%; min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: 0; background: transparent;
+  color: var(--c-text);
+  font: 600 var(--fs-sm) var(--sf);
+  text-align: left; cursor: pointer;
+  transition: background .15s ease;
+}
+.syn-group-hd:hover { background: var(--c-surface-2); }
+.syn-group-tt { flex: 1 1 auto; min-width: 0; }
+.syn-group-sub {
+  flex: 0 0 auto;
+  font-size: var(--fs-micro); font-weight: 500;
+  color: var(--c-text-3);
+}
+.syn-group-arrow {
+  flex: 0 0 auto;
+  width: 8px; height: 8px;
+  border-right: 1.6px solid var(--c-text-3);
+  border-bottom: 1.6px solid var(--c-text-3);
+  transform: rotate(45deg); margin-top: -3px;
+  transition: transform .2s ease;
+}
+.syn-group.open .syn-group-arrow { transform: rotate(-135deg); margin-top: 3px; }
+
+/* 折叠：用 grid 行高动画，避免写死 max-height */
+.syn-group-bd {
+  display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows .22s ease;
+}
+.syn-group.open .syn-group-bd { grid-template-rows: 1fr; }
+.syn-group-inner { overflow: hidden; min-height: 0; }
+.syn-group.open .syn-group-inner { padding: 0 var(--sp-3) var(--sp-3); }
+
+/* 组内条目去掉重复外框 */
+.syn-group .tj-result-list { background: transparent !important; border: 0 !important; }
+.syn-group .tj-result-list > div { padding: 10px 0 !important; border-bottom: 1px solid var(--c-border) !important; }
+.syn-group .tj-result-list > div:last-child { border-bottom: 0 !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .syn-group-bd, .syn-group-arrow { transition: none !important; }
+}
+
+/* 组内条目：默认 tj-result-list 的行距是为整页阅读设计的，
+   放进折叠卡后显得过松（单组 270px）。这里收紧到卡片尺度。 */
+.syn-group .tj-result-list > div { padding: 8px 0 !important; }
+.syn-group .tj-result-list > div > b {
+  font-size: var(--fs-micro) !important;
+  color: var(--c-text-3) !important;
+  font-weight: 500 !important;
+  margin-bottom: 2px !important;
+  display: block;
+}
+.syn-group .tj-result-list > div > span {
+  font-size: var(--fs-sm) !important;
+  line-height: 1.65 !important;
+  color: var(--c-text) !important;
+}
+.syn-group + .syn-group { margin-top: var(--sp-2); }
+.syn-summary { padding: 10px var(--sp-3); margin-bottom: var(--sp-3); }
+
+/* ============================================================
+   18. 细节打磨（逐项实测复现后修复）
+   ============================================================ */
+
+/* ---- 18.1 问问大师：发送按钮贴边、输入框里再套一层灰框 ----
+   实测 .ai-input-row padding:0，按钮右缘距边框仅 1px，视觉上"挂在框外"；
+   .ai-input 又有自己的灰底，形成框中框。 */
+#aiSheet .ai-input-row,
+.ai-sheet .ai-input-row {
+  padding: 6px !important;
+  gap: 6px !important;
+  align-items: flex-end !important;
+  overflow: hidden;            /* 圆角内收，按钮不会溢出描边 */
+}
+/* :focus 态另有一条 #aiSheet .ai-input:focus{background:var(--c-surface-3)!important}
+   会在聚焦时把灰底加回来，必须一并覆盖 */
+#aiSheet .ai-input,
+.ai-sheet .ai-input,
+#aiSheet .ai-input:focus,
+.ai-sheet .ai-input:focus {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  padding: 9px 8px !important;
+  box-shadow: none !important;
+}
+#aiSheet .ai-input-wrap { flex: 1 1 auto; min-width: 0; }
+#aiSheet .ai-send,
+.ai-sheet .ai-send {
+  flex: 0 0 auto;
+  width: 38px !important; min-width: 38px !important;
+  height: 38px !important; min-height: 38px !important;
+  margin: 0 !important;
+  border-radius: 10px !important;
+}
+
+/* ---- 18.2 工具页顶部多出的方形外框 ----
+   .tools-toolbar 是纯白实心块，与下方卡片之间形成一条突兀的方形边界。 */
+#s-adv .tools-toolbar {
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--c-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 0 var(--sp-3) !important;
+  margin-bottom: var(--sp-3) !important;
+}
+#s-adv .tools-toolbar::before,
+#s-adv .tools-toolbar::after { display: none !important; }
+/* 搜索框自己保留描边即可 */
+#s-adv .tools-search input {
+  background: var(--c-surface) !important;
+  border: 1px solid var(--c-border-2) !important;
+  border-radius: 10px !important;
+}
+
+/* ---- 18.3 梅花易数：卦象格被 stretch 拉高，「动」标记悬在空白里 ----
+   左格改为内容高度并居中，与右列顶部对齐。 */
+[data-card="meihua"] .mh-grid,
+[data-card="meihua"] > div[style*="grid-template-columns"] {
+  align-items: start !important;
+}
+/* 卦象格：六爻线仅约 110px，格子却被右列撑到 220px+，
+   导致爻线堆在上方、「动」标记孤零零悬在下方空白里。
+   改为整体垂直居中，并给爻线足够的行高。 */
+.mh-hex { display: flex; flex-direction: column; }
+.mh-hex .mh-lines {
+  flex: 1 1 auto;
+  align-content: center;
+  gap: 5px !important;
+}
+/* 六爻线：span 无宽度时在 flex 行内塌成 0（实测 0x8），
+   容器又限死 180px，卦象几乎不可辨。 */
+.mh-lines { width: 100%; }
+.mh-line { width: 100%; min-height: 18px; }
+.mh-bar { min-width: 0; }
+
+/* ---- 18.4 当年运势四维：flex 溢出且无法滑动（424 > 348，健康被切掉） ----
+   四项固定 2×2 网格，不再横向溢出。 */
+.y-hero {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: var(--sp-2) !important;
+  align-items: stretch;
+}
+.y-hero-item { padding: 12px 8px !important; min-width: 0; }
+.y-hero-stars { font-size: 1em !important; white-space: nowrap; }
+.y-hero-label { letter-spacing: .02em !important; }
+@media (min-width: 560px) {
+  .y-hero { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+}
+
+/* ---- 18.5 连接状态：只显示「离线」不解释含义，用户不知还能不能用 ---- */
+.ai-conn-bar { flex-wrap: wrap; row-gap: 2px; }
+.ai-conn-hint {
+  flex: 1 1 100%;
+  font-size: var(--fs-micro);
+  line-height: 1.5;
+  color: var(--c-text-3);
+}
+
+/* ============================================================
+   19. 问问大师聊天面板
+   ============================================================ */
+
+/* ---- 19.1 输入框与发送键等高（实测差 6px：44 vs 38）---- */
+#aiSheet .ai-input-row,
+.ai-sheet .ai-input-row {
+  align-items: center !important;      /* 原为 flex-end，单行时两者不对齐 */
+}
+#aiSheet .ai-input,
+.ai-sheet .ai-input {
+  min-height: 40px !important;
+  max-height: 132px !important;
+  padding: 9px 10px !important;
+  line-height: 22px !important;
+}
+#aiSheet .ai-send,
+.ai-sheet .ai-send {
+  width: 40px !important; min-width: 40px !important;
+  height: 40px !important; min-height: 40px !important;
+  align-self: center !important;
+}
+
+/* ---- 19.2 底部圆角：面板并未贴到屏幕底（实测悬空 87~92px），
+        却用了「上圆下方」的贴底样式，看起来像被截断 ---- */
+#aiSheet, .ai-sheet {
+  border-radius: var(--c-r-xl) !important;
+  bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  overflow: hidden;
+}
+
+/* ---- 19.3 桌面端放大：原固定 430px 宽、56% 屏高，
+        大屏上浪费了大量空间 ---- */
+@media (min-width: 768px) {
+  #aiSheet, .ai-sheet {
+    width: min(720px, calc(100vw - 48px)) !important;
+    max-width: min(720px, calc(100vw - 48px)) !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    height: min(78vh, 760px) !important;
+    max-height: min(78vh, 760px) !important;
+    bottom: 24px !important;
+    border-radius: var(--c-r-xl) !important;
+  }
+  /* 打开动画同样要带上 translateX，否则会先跳到左侧 */
+  #aiSheet:not(.open), .ai-sheet:not(.open) {
+    transform: translateX(-50%) translateY(24px) !important;
+  }
+  #askResult { max-height: none !important; }
+  .ai-overlay { backdrop-filter: blur(3px); }
+}
+@media (min-width: 1200px) {
+  #aiSheet, .ai-sheet {
+    width: min(860px, calc(100vw - 64px)) !important;
+    max-width: min(860px, calc(100vw - 64px)) !important;
+    height: min(82vh, 880px) !important;
+    max-height: min(82vh, 880px) !important;
+  }
+}
+
+/* ---- 19.4 工具卡文字阴影过重 ----
+   styles.css 有 `text-shadow: 0 1px 8px rgba(0,0,0,.75)`，
+   那是为「白字压在深色 WEBP 上」设计的。底图已换成浅色 SVG 纹理，
+   这层黑色投影在亮色模式下变成明显的脏边。 */
+#s-adv .tool-tile b,
+#s-adv .tool-tile small,
+#s-adv .tool-tile[data-group] b,
+#s-adv .tool-tile[data-group] small,
+#s-adv .tool-tile .tool-label,
+#s-adv .tool-tile .tool-tag {
+  text-shadow: none !important;
+}
+
+/* ---- 19.5 全局：不使用彩色 emoji ----
+   保留卦象（☰☱☲☳☴☵☶☷）与评分星号，它们是内容而非装饰。
+   其余图标一律走线性 SVG 或单字，保证跨平台一致。 */
+.tool-icon, .card-ic, .adv-hd, .focus-tab-ic {
+  font-variant-emoji: text;   /* 支持的浏览器强制文字形态 */
+}
+
+/* ============================================================
+   20. 分区标签页：速读常驻 + 其余卡片切换
+   实测「关系」需滚 3.2 屏、「命盘」2.5 屏，用户要不断下滑找内容。
+   ============================================================ */
+.sec-tabs-wrap { margin-top: var(--sp-3); }
+
+.sec-tabs {
+  display: flex; gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 var(--sp-3);
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  position: sticky; top: 0; z-index: 12;
+  background: linear-gradient(var(--c-bg) 72%, transparent);
+}
+.sec-tabs::-webkit-scrollbar { display: none; }
+
+.sec-tab {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--c-border-2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-text-2);
+  font: 500 var(--fs-sm) var(--sf);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.sec-tab:hover { background: var(--c-surface-3); color: var(--c-text); }
+.sec-tab.active {
+  background: var(--c-accent-soft);
+  border-color: color-mix(in srgb, var(--c-accent) 45%, transparent);
+  color: var(--c-accent-text);
+  font-weight: 600;
+}
+
+.sec-pane { display: none; }
+.sec-pane.active { display: block; animation: secPaneIn .2s ease; }
+@keyframes secPaneIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* 标签页内的卡片不再需要自己的外边距 */
+.sec-pane > .glass { margin-bottom: 0 !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sec-pane.active { animation: none; }
+}
+
+/* ============================================================
+   21. 速读折叠 + 分区标签改下划线式
+   ============================================================ */
+
+/* ---- 21.1 速读卡折叠 ---- */
+.qr-card > .qr-head {
+  display: flex !important;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 44px;
+  padding: 0 !important;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.qr-toggle {
+  margin-left: auto;
+  flex: 0 0 auto;
+  width: 9px; height: 9px;
+  border-right: 1.7px solid var(--c-text-3);
+  border-bottom: 1.7px solid var(--c-text-3);
+  transform: rotate(-135deg);      /* 展开：向上 */
+  margin-top: 4px;
+  transition: transform .2s ease;
+}
+.qr-card.qr-collapsed .qr-toggle { transform: rotate(45deg); margin-top: -3px; }
+
+/* 用 grid 行高做折叠，避免写死 max-height */
+.qr-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows .22s ease;
+}
+.qr-card.qr-collapsed .qr-body { grid-template-rows: 0fr; }
+/* grid-template-rows:0fr 只压第一行；qr-body 下有 4 个直接子元素时
+   grid 会自动创建 4 行，导致收不起来（实测收起后仍有 153px）。
+   必须包一层单一子元素。 */
+.qr-body-inner { min-height: 0; overflow: hidden; }
+/* 收起时去掉头部下方留白 */
+.qr-card.qr-collapsed > .qr-head { margin-bottom: 0 !important; }
+/* 「这段是什么意思」是在卡片末尾另行注入的，不在 qr-body 内，
+   收起时需一并隐藏，否则会孤零零留在空卡片里 */
+.qr-card.qr-collapsed > .explain-btn { display: none !important; }
+.qr-card.qr-collapsed { padding-bottom: 10px !important; }
+
+/* ---- 21.2 分区标签：去外框，改居中下划线 ---- */
+.sec-tabs {
+  justify-content: center;
+  gap: 0 !important;
+  padding: 2px 0 0 !important;
+  border-bottom: 1px solid var(--c-border);
+  margin-bottom: var(--sp-4);
+}
+.sec-tab {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0 14px !important;
+  min-height: 40px !important;
+  color: var(--c-text-3) !important;
+  font-weight: 500 !important;
+  position: relative;
+}
+.sec-tab::after {
+  content: '';
+  position: absolute;
+  left: 12px; right: 12px; bottom: -1px;
+  height: 2px; border-radius: 2px 2px 0 0;
+  background: transparent;
+  transition: background .18s ease;
+}
+.sec-tab:hover { background: transparent !important; color: var(--c-text-2) !important; }
+.sec-tab.active {
+  background: transparent !important;
+  color: var(--c-accent-text) !important;
+  font-weight: 600 !important;
+}
+.sec-tab.active::after { background: var(--c-accent); }
+
+/* 标签多到放不下时仍可横滑，此时靠左起始更自然 */
+@media (max-width: 420px) {
+  .sec-tabs { justify-content: flex-start; }
+  .sec-tab { padding: 0 11px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qr-body, .qr-toggle, .sec-tab::after { transition: none !important; }
+}
+
+/* ============================================================
+   22. 标签页内容去卡片化 + 精简标头
+   实测：标签「亲密关系画像」下面紧接着又是一张写着「亲密关系画像」
+   的白卡（24px 内边距 + 1px 描边 + 16px 圆角），
+   等于「一个容器里再套一个同名容器」，同一句话说了两遍。
+   标签栏已经承担了容器与标题的职责，面板内容改为直接贴在页面上。
+   ============================================================ */
+.sec-pane > .sec-plain,
+.sec-pane > .glass.sec-plain {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* 悬浮高光是给卡片做的，去壳后会变成一块无边界的色斑 */
+.sec-pane > .sec-plain::before,
+.sec-pane > .sec-plain::after { display: none !important; }
+.sec-pane > .sec-plain:hover { transform: none !important; }
+
+/* 标头被移除后，用副标题充当一行说明 */
+.sec-pane-desc {
+  margin: -2px 0 var(--sp-4);
+  color: var(--c-text-3);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+/* 没被精简掉的标头（标题与标签不同源）缩小一档，避免与标签抢层级 */
+.sec-pane > .sec-plain > .card-hd { margin-bottom: var(--sp-3) !important; }
+
+/* 去壳后内容直接贴边，标签栏下留白改由这里给 */
+.sec-panes { padding-top: 2px; }
+
+/* 面板内部若还有子卡片（如三式合参的分栏），保留它们自己的边界 */
+.sec-pane .glass:not(.sec-plain) { margin-bottom: var(--sp-3) !important; }
+
+/* ---- 22.2 标签栏：内容不再有卡片描边，标签栏需要自己站住 ---- */
+.sec-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  background: var(--c-bg) !important;
+}
+
+/* ============================================================
+   23. 问问大师：面板置于 Dock 之上，不遮蔽 Dock
+   实测（430×932）：面板 bottom=922、Dock top=858 —— 面板整整压住
+   Dock 64px，Dock 只剩一条边露在外面，切分区必须先关面板。
+   ============================================================ */
+:root { --ai-dock-gap: 10px; }
+
+#aiSheet, .ai-sheet {
+  /* Dock 高度 + 安全区 + Dock 自身的 12px 底距 + 间隙 */
+  bottom: calc(var(--ig-dock-height, 66px) + env(safe-area-inset-bottom, 0px) + 12px + var(--ai-dock-gap)) !important;
+  max-height: calc(100dvh - var(--ig-dock-height, 66px) - env(safe-area-inset-bottom, 0px) - 12px - var(--ai-dock-gap) - 16px) !important;
+}
+/* Dock 必须浮在遮罩之上才能点得到 */
+body .ig-dock.tab-bar { z-index: 210 !important; }
+#aiSheet, .ai-sheet { z-index: 301 !important; }
+
+@media (min-width: 768px) {
+  #aiSheet, .ai-sheet {
+    bottom: calc(var(--ig-dock-height, 66px) + env(safe-area-inset-bottom, 0px) + 12px + var(--ai-dock-gap)) !important;
+    height: auto !important;
+    max-height: calc(100dvh - var(--ig-dock-height, 66px) - env(safe-area-inset-bottom, 0px) - 12px - var(--ai-dock-gap) - 24px) !important;
+    /* 高度由 max-height 约束，min-height 保证大屏不至于过扁 */
+    min-height: min(620px, calc(100dvh - 220px)) !important;
+  }
+}
+@media (min-width: 1200px) {
+  #aiSheet, .ai-sheet {
+    height: auto !important;
+    min-height: min(700px, calc(100dvh - 220px)) !important;
+  }
+}
+
+/* ---- 22.3 二级子卡同样去壳 ----
+   标签页里还嵌着 .structure-subcard 这类灰底方块，
+   相当于「标签 → 卡片 → 再一张卡片」三层容器套同一段内容。 */
+/* 注意选择器要带 #page2：claude-ui.css 里有一条
+   `#page2 .glass .glass{background:var(--c-surface-2)!important}`
+   带 id，优先级更高，不加 #page2 这条会被它压回灰底（实测）。 */
+#page2 .sec-pane > .sec-plain .structure-subcard,
+#page2 .sec-pane > .sec-plain .glass,
+.sec-pane > .sec-plain .structure-subcard,
+.sec-pane > .sec-plain .three-styles-panes > .structure-pane > .glass {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 0 var(--sp-3) !important;
+  box-shadow: none !important;
+}
+
+/* ---- 22.4 被精简的标头用隐藏而非删除 ----
+   新手模式要把卡片原样还回 .sec（见 section-tabs.js 的层级契约说明），
+   删除掉的标头无法还原，因此改为加 class 隐藏，teardown 时撤销。 */
+.card-hd.sec-head-hidden { display: none !important; }

@@ -1,0 +1,823 @@
+/* ============================================================
+   enhance.css — 竞品差距补齐新增组件的样式
+   周运势卡 / 卡片分享按钮 / 档案快切 / 收藏面板
+   全部使用既有主题变量，自动适配明暗模式。
+   ============================================================ */
+
+/* ---- 卡片头部的分享小按钮 ---- */
+body .card-share{
+  margin-left:auto;flex:0 0 auto;
+  display:inline-flex;align-items:center;justify-content:center;
+  width:30px;height:30px;border-radius:999px;
+  border:1px solid var(--c-border);
+  background:var(--c-surface-2);color:var(--c-text-3);
+  cursor:pointer;transition:all .18s ease;
+}
+body .card-share:hover{color:var(--c-accent-text);border-color:var(--c-accent);background:var(--c-accent-soft)}
+body .card-share:active{transform:scale(.92)}
+
+/* ---- 周运势 ---- */
+.wk-grid{
+  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:6px;margin:10px 0 12px;
+}
+.wk-day{
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:9px 2px 7px;border-radius:10px;
+  background:var(--c-surface-2);border:1px solid var(--c-border);
+  text-align:center;min-width:0;
+}
+.wk-day-label{font-size:.62em;color:var(--c-text-3);letter-spacing:.5px}
+.wk-day-date{font-size:.6em;color:var(--c-text-4)}
+.wk-day-gz{font-size:.72em;font-weight:600;color:var(--c-text-2);font-family:var(--serif)}
+.wk-day-tone{font-size:.6em;padding:1px 6px;border-radius:999px;background:var(--c-surface-3);color:var(--c-text-2)}
+.wk-day-energy{font-size:.6em;color:var(--c-text-4)}
+.wk-day.is-today{border-color:var(--c-accent);background:var(--c-accent-soft)}
+.wk-day.is-today .wk-day-label{color:var(--c-accent-text);font-weight:600}
+.wk-flow .wk-day-tone{background:color-mix(in srgb,var(--c-green) 16%,transparent);color:var(--c-green)}
+.wk-steady .wk-day-tone{background:color-mix(in srgb,var(--c-teal) 16%,transparent);color:var(--c-teal)}
+.wk-friction .wk-day-tone{background:color-mix(in srgb,var(--c-orange) 16%,transparent);color:var(--c-orange)}
+.wk-rest .wk-day-tone{background:var(--c-surface-3);color:var(--c-text-3)}
+.wk-highlights{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.wk-hl{
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  padding:9px 12px;border-radius:10px;background:var(--c-surface-2);
+  border:1px solid var(--c-border);font-size:.8em;
+}
+.wk-hl-k{flex:0 0 auto;font-weight:600}
+.wk-hl-good .wk-hl-k{color:var(--c-green)}
+.wk-hl-warn .wk-hl-k{color:var(--c-orange)}
+.wk-hl-v{color:var(--c-text-2)}
+.wk-foot{font-size:.68em;color:var(--c-text-4);margin-top:8px;line-height:1.7}
+@media(max-width:640px){
+  .wk-day{padding:7px 1px 6px}
+  .wk-day-gz{font-size:.66em}
+  .wk-day-tone{font-size:.56em;padding:1px 4px}
+}
+
+/* ---- 报告页顶栏：档案快切 ---- */
+.p2-profile-wrap{position:relative}
+.p2-profile-btn{gap:5px;display:inline-flex;align-items:center}
+.p2-profile-name{font-size:.82em;max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p2-profile-menu{
+  display:none;position:absolute;top:calc(100% + 8px);right:0;z-index:400;
+  min-width:220px;max-width:78vw;max-height:60vh;overflow:auto;
+  padding:6px;border-radius:14px;
+  background:var(--c-surface);border:1px solid var(--c-border-2);
+  box-shadow:var(--c-shadow-3);
+}
+.p2-profile-menu.show{display:block}
+.p2-profile-item{
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  width:100%;padding:9px 12px;border:0;border-radius:10px;
+  background:transparent;color:var(--c-text);text-align:left;
+  font-family:inherit;cursor:pointer;transition:background .15s ease;
+}
+.p2-profile-item:hover{background:var(--c-surface-3)}
+.p2-profile-item.current{background:var(--c-accent-soft)}
+.p2-profile-item-name{font-size:.86em;font-weight:600}
+.p2-profile-item-meta{font-size:.68em;color:var(--c-text-3)}
+.p2-profile-new{color:var(--c-accent-text)}
+.p2-profile-sep{height:1px;background:var(--c-border);margin:6px 8px}
+.p2-profile-empty{padding:14px 12px;font-size:.8em;color:var(--c-text-3);text-align:center}
+
+/* ---- 答案之书：收藏入口与收藏列表 ---- */
+.answerbook-saved-entry{
+  margin-top:10px;padding:9px 18px;border-radius:999px;
+  border:1px dashed var(--c-border-2);background:transparent;
+  color:var(--c-text-2);font-size:.84em;font-family:inherit;
+  cursor:pointer;transition:all .18s ease;
+}
+.answerbook-saved-entry:hover{border-color:var(--c-accent);color:var(--c-accent-text);background:var(--c-accent-soft)}
+.answerbook-saved-list{display:flex;flex-direction:column;gap:12px;margin:14px 0}
+.answerbook-saved-item{
+  position:relative;padding:16px;border-radius:12px;
+  background:var(--c-surface-2);border:1px solid var(--c-border);
+}
+.answerbook-saved-item blockquote{
+  margin:0;font-family:var(--serif);font-size:1.02em;line-height:1.9;
+  color:var(--c-text);
+}
+.answerbook-saved-item blockquote::before{content:'「';color:var(--c-accent)}
+.answerbook-saved-item blockquote::after{content:'」';color:var(--c-accent)}
+.answerbook-saved-q{margin:8px 0 0;font-size:.76em;color:var(--c-text-3)}
+.answerbook-saved-meta{margin:6px 0 0;font-size:.68em;color:var(--c-text-4)}
+.answerbook-saved-acts{display:flex;gap:8px;margin-top:10px}
+.answerbook-saved-acts button{
+  padding:5px 14px;border-radius:999px;font-size:.76em;
+  border:1px solid var(--c-border-2);background:var(--c-surface);
+  color:var(--c-text-2);cursor:pointer;font-family:inherit;
+}
+.answerbook-saved-acts button:hover{border-color:var(--c-accent);color:var(--c-accent-text)}
+.answerbook-saved-acts button.danger:hover{border-color:var(--c-red);color:var(--c-red)}
+.answerbook-saved-empty{
+  padding:28px 16px;border-radius:12px;background:var(--c-surface-2);
+  border:1px dashed var(--c-border-2);color:var(--c-text-3);
+  font-size:.85em;text-align:center;line-height:1.9;
+}
+
+/* ---- 答案之书：多重内容库（主题句库） ---- */
+.answerbook-themes{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 4px}
+.answerbook-themes::before{content:'句库';flex:0 0 100%;font-size:.68em;letter-spacing:1px;color:var(--c-text-3)}
+.answerbook-theme-btn{
+  padding:6px 13px;border-radius:999px;font-size:.78em;font-family:inherit;
+  border:1px solid var(--c-border-2);background:var(--c-surface-2);
+  color:var(--c-text-2);cursor:pointer;transition:all .16s ease;
+}
+.answerbook-theme-btn:hover{border-color:var(--c-accent);color:var(--c-accent-text)}
+.answerbook-theme-btn.active{background:var(--c-accent);border-color:var(--c-accent);color:#fff}
+#answerBookThemeHint{font-weight:400;color:var(--c-accent-text);margin-left:4px}
+
+/* ---- 择日候选：首选高亮 ---- */
+.tj-date-choice.best{border-color:var(--c-accent)!important;background:var(--c-accent-soft)!important;box-shadow:0 2px 10px color-mix(in srgb,var(--c-accent) 14%,transparent)!important}
+.tj-date-choice.best::before{content:'首选';position:absolute;top:-9px;left:14px;padding:1px 10px;border-radius:999px;background:var(--c-accent);color:#fff;font-size:.62em;letter-spacing:2px}
+.tj-date-choice{position:relative}
+.tj-date-choice p b{color:var(--c-accent-text);font-weight:600;margin-right:4px}
+
+/* ---- 首页 3D 品牌特效画布 ---- */
+.brand3d{
+  position:fixed;inset:0;z-index:2;width:100%;height:100%;
+  pointer-events:none;display:none;
+}
+body.home .brand3d{display:block}
+
+/* ---- 首页主视觉：欢迎语在上，胶囊按钮下沉，中央留给星环动画 ---- */
+.home-hero{
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;
+  min-height:calc(100svh - 60px);
+  padding:0 18px;
+  box-sizing:border-box;
+}
+.home-hero-copy{ text-align:center; padding-top:calc(9vh + 12px); }
+.home-hero-title{
+  font-family:var(--serif);font-weight:700;
+  font-size:clamp(1.5em,4.6vw,2.05em);letter-spacing:2px;color:var(--c-text-hi);
+  margin-bottom:10px;line-height:1.25;
+}
+.home-hero-sub{
+  font-size:.86em;letter-spacing:6px;color:var(--c-text-3);
+}
+/* 按钮位于中央星环动画与视口底部之间的中间位置 */
+.home-hero-actions{
+  display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+  margin-top:clamp(360px, calc(56vh - 20px), 600px);
+  padding-bottom:calc(6vh + 20px);
+}
+.home-cta{
+  min-width:169px;padding:14px 28.5px;border-radius:999px;border:1px solid transparent;
+  font:600 .95em var(--sf);letter-spacing:2px;cursor:pointer;
+  transition:transform .16s ease,box-shadow .2s ease,background .2s ease,border-color .2s ease;
+  background:var(--c-accent);color:#fff;
+  box-shadow:0 6px 20px color-mix(in srgb,var(--c-accent) 30%,transparent);
+}
+.home-cta:hover{transform:translateY(-1px);box-shadow:0 9px 26px color-mix(in srgb,var(--c-accent) 36%,transparent)}
+.home-cta:active{transform:translateY(0) scale(.985)}
+.home-cta-ghost{
+  background:var(--c-surface-3);color:var(--c-text-2);
+  border-color:var(--c-border-2);box-shadow:none;
+}
+.home-cta-ghost:hover{border-color:var(--c-text-4);box-shadow:none;background:var(--c-surface-4)}
+/* 按钮切换为「开始推演」后的强调样式 */
+.home-cta-go{
+  background:linear-gradient(135deg,var(--c-accent),color-mix(in srgb,var(--c-accent) 70%,#f0c76e));
+  box-shadow:0 6px 22px color-mix(in srgb,var(--c-accent) 40%,transparent);
+  animation:ctaPulse 2.4s ease-in-out infinite;
+}
+@keyframes ctaPulse{0%,100%{box-shadow:0 6px 22px color-mix(in srgb,var(--c-accent) 40%,transparent)}50%{box-shadow:0 8px 30px color-mix(in srgb,var(--c-accent) 55%,transparent)}}
+/* 推演过渡：整个首页淡出，画面只留星环与粒子 */
+#page1.tj-fade{opacity:0;pointer-events:none;transition:opacity .4s ease}
+/* 过渡期间极简提示，上移至屏幕中下部 */
+.tj-calc-hint{
+  position:fixed;left:50%;bottom:calc(30vh + 14px);
+  transform:translateX(-50%) translateY(10px);
+  z-index:1300;
+  font:500 .82em var(--sf);letter-spacing:7px;text-indent:7px;color:var(--c-text-3);
+  opacity:0;pointer-events:none;white-space:nowrap;
+  transition:opacity .55s ease,transform .55s ease;
+}
+.tj-calc-hint.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---- 出生信息表单：悬浮面板，浮于按钮上方，不模糊底部 ---- */
+.form-modal{
+  position:fixed;left:50%;bottom:170px;z-index:550;
+  transform:translateX(-50%);
+  width:min(560px,92vw);
+  display:none;pointer-events:none;
+}
+.form-modal.open{display:block;pointer-events:auto}
+.form-modal-sheet{
+  padding:24px 22px 20px;border-radius:22px;
+  background:var(--c-surface);border:1px solid var(--c-border-2);
+  box-shadow:0 20px 54px rgba(0,0,0,.22),0 3px 10px rgba(0,0,0,.07);
+  animation:fmSlideUp .32s cubic-bezier(.22,.8,.22,1) both;
+  position:relative;
+}
+@keyframes fmSlideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+/* 弹层里的表单卡去掉自身的"卡片"外观 */
+.form-modal-sheet .home-card{
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  padding:0!important;margin:0!important;border-radius:0!important;
+}
+.form-modal-sheet .home-card::before,.form-modal-sheet .home-card::after{display:none!important}
+.form-modal-tt{
+  font-family:var(--serif);font-size:1.15em;font-weight:700;letter-spacing:1px;
+  color:var(--c-text-hi);margin:0 0 18px;
+}
+.form-modal-close{
+  position:absolute;top:12px;right:12px;z-index:2;width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;border-radius:999px;
+  border:1px solid var(--c-border);background:var(--c-surface-2);
+  color:var(--c-text-3);font-size:calc(18px * var(--font-scale, 1));line-height:1;cursor:pointer;
+  transition:all .15s ease;
+}
+.form-modal-close:hover{color:var(--c-text);border-color:var(--c-border-2);background:var(--c-surface-3)}
+
+/* 移动端：表单保持双列并排 */
+@media(max-width:520px){
+  .form-grid{grid-template-columns:1fr 1fr!important;gap:9px}
+  .fd input,.fd select,.cw input{font-size:calc(14px * var(--font-scale, 1))!important;padding-left:10px;padding-right:10px}
+  .form-modal-tt{font-size:1.05em;margin-bottom:14px}
+  .form-modal-sheet{padding:20px 16px 16px;border-radius:18px}
+}
+@media(max-width:480px){
+  .home-cta{min-width:0;flex:0 0 auto;white-space:nowrap;padding:14px 18px}
+  .home-hero-actions{flex-direction:row;align-items:center;flex-wrap:nowrap;gap:9px;justify-content:center}
+  .form-modal{width:94vw}
+  .form-modal-sheet{padding:18px 14px 14px;border-radius:16px}
+}
+@media(max-width:380px){
+  .home-cta{
+    min-width:0;flex:0 0 auto;white-space:nowrap;
+    padding:12px 14px;font-size:.82em;
+    line-height:1.55;letter-spacing:1px;
+    text-align:center;
+  }
+  .home-hero-actions{gap:7px;padding-left:6px;padding-right:6px}
+  .form-modal{width:96vw}
+}
+
+/* ---- 运势页 年/月/周/日 档位（下划线式样式见文件底部"改动6"）---- */
+.yun-panes{position:relative}
+.yun-pane{display:none}
+.yun-pane.active{display:block;animation:tjResultPageIn .3s cubic-bezier(.2,.8,.2,1)}
+.yun-pane .glass+.glass{margin-top:12px}
+
+/* ---- 人格画像扩充块 ---- */
+.ps-block{margin-top:12px;padding-top:10px;border-top:1px dashed var(--c-border)}
+.ps-block-tt{font-size:.7em;font-weight:600;letter-spacing:1.5px;color:var(--c-text-3);margin-bottom:9px}
+.ps-tags{display:flex;flex-wrap:wrap;gap:6px}
+.ps-tag{
+  display:inline-flex;align-items:baseline;gap:4px;
+  padding:4px 10px;border-radius:9px;font-size:.76em;color:var(--c-text);
+  background:var(--c-surface-2);border:1px solid var(--c-border);
+}
+.ps-tag i{font-style:normal;font-size:.86em;color:var(--c-text-4)}
+.ps-line{display:flex;gap:10px;font-size:.8em;line-height:1.7;margin-bottom:6px}
+.ps-line b{flex:0 0 auto;min-width:3.2em;font-weight:600}
+.ps-line span{color:var(--c-text-2)}
+.ps-foot{margin-top:10px;font-size:.66em;color:var(--c-text-4);line-height:1.6}
+
+/* ============================================================
+   改动5：大师/新手分段控件精修——去粗糙外框，选中用主题色实心
+   ============================================================ */
+.p2-top .mode-top-group{
+  background:var(--c-surface-2)!important;
+  border:1px solid var(--c-border)!important;
+  border-radius:999px!important;
+  padding:3px!important;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.05)!important;
+}
+.p2-top .mode-top-switch{
+  border:0!important;border-radius:999px!important;
+  background:transparent!important;color:var(--c-text-3)!important;
+  box-shadow:none!important;
+}
+.p2-top .mode-top-switch:hover{background:var(--c-surface-3)!important;color:var(--c-text)!important}
+.p2-top .mode-top-switch.active{
+  background:var(--c-accent)!important;color:#fff!important;
+  box-shadow:0 2px 6px color-mix(in srgb,var(--c-accent) 34%,transparent)!important;
+}
+
+/* ============================================================
+   改动6：运势 年/月/周/日 改下划线式（同命盘分区标签），去卡片外框；
+   新手版不显示档位切换，四档内容纵向铺开
+   ============================================================ */
+.yun-tabs{
+  position:sticky;top:0;z-index:20;
+  display:flex;justify-content:center;gap:0;
+  padding:2px 0 0;margin:2px 0 14px;
+  background:var(--c-bg)!important;
+  border-radius:0;border:0;border-bottom:1px solid var(--c-border);
+}
+.yun-tab{
+  position:relative;flex:0 0 auto;
+  min-height:40px;padding:0 14px;
+  border:0;border-radius:0;background:transparent!important;
+  color:var(--c-text-3);font:500 .84em var(--sf);letter-spacing:2px;cursor:pointer;
+  transition:color .2s ease;box-shadow:none;
+}
+.yun-tab::after{
+  content:'';position:absolute;left:12px;right:12px;bottom:-1px;
+  height:2px;border-radius:2px 2px 0 0;background:transparent;transition:background .2s ease;
+}
+.yun-tab:hover{color:var(--c-text-2)}
+.yun-tab.active{color:var(--c-accent-text);font-weight:600}
+.yun-tab.active::after{background:var(--c-accent)}
+/* 运势档位内的卡片去掉外框 */
+#s-yun .glass{
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+#s-yun .glass::before,#s-yun .glass::after{display:none!important}
+/* 新手版：隐藏档位切换 + 隐藏详细卡片（速读卡与新手摘要已覆盖核心信息） */
+body.beginner-mode .yun-tabs{display:none}
+body.beginner-mode .yun-panes{display:none!important}
+/* 速读卡中的跳转链接指向大师版卡片，新手版隐藏 */
+body.beginner-mode .qr-acts{display:none!important}
+
+/* ============================================================
+   改动9：工具页隐藏「最近使用」记录
+   ============================================================ */
+.tj-history{display:none!important}
+
+/* ============================================================
+   改动7：工具页顶部筛选条——滚动时去掉突兀的底框/色块
+   ============================================================ */
+#s-adv .tools-toolbar{
+  background:var(--c-bg)!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  border:0!important;border-bottom:1px solid var(--c-border)!important;
+  border-radius:0!important;box-shadow:none!important;
+  margin-left:0!important;margin-right:0!important;
+}
+#s-adv .tools-toolbar::before,#s-adv .tools-toolbar::after{display:none!important}
+
+/* ============================================================
+   改动8：新手版精简——隐藏与顶部模式切换重复的冗余元素
+   ============================================================ */
+/* "新手解读报告"标签：与顶部 新手/大师 切换重复 */
+.beginner-brief .bb-eyebrow{display:none!important}
+/* "查看完整专业依据 →"按钮：与顶部切换到大师重复 */
+.beginner-brief .bb-master{display:none!important}
+/* 底部提醒小字：精简信息密度 */
+.beginner-brief .bb-note{display:none!important}
+
+/* ============================================================
+   改动10：首页汉堡菜单
+   ============================================================ */
+/* 汉堡按钮 */
+.home-menu-btn{
+  position:fixed;top:max(14px,env(safe-area-inset-top));left:14px;z-index:1100;
+  width:42px;height:42px;border-radius:50%;
+  border:1px solid var(--c-border);
+  background:var(--c-surface-2);
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;
+  cursor:pointer;transition:all .2s ease;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.home-menu-btn:hover{background:var(--c-surface-3);box-shadow:0 2px 12px rgba(0,0,0,.1)}
+.home-menu-bars{
+  display:block;width:18px;height:2px;border-radius:1px;
+  background:var(--c-text-hi);transition:all .3s ease;
+}
+.home-menu-btn.active .home-menu-bars:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.home-menu-btn.active .home-menu-bars:nth-child(2){opacity:0;transform:scaleX(0)}
+.home-menu-btn.active .home-menu-bars:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* 遮罩层 */
+.home-menu-overlay{
+  position:fixed;inset:0;z-index:1090;
+  background:rgba(0,0,0,.35);backdrop-filter:blur(2px);
+  opacity:0;pointer-events:none;transition:opacity .3s ease;
+}
+.home-menu-overlay.open{opacity:1;pointer-events:auto}
+
+/* 抽屉面板 */
+.home-menu-drawer{
+  position:fixed;top:0;left:0;bottom:0;z-index:1100;
+  width:min(340px,85vw);
+  background:var(--c-bg);
+  border-right:1px solid var(--c-border);
+  transform:translateX(-100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+  box-shadow:4px 0 24px rgba(0,0,0,.08);
+  overflow:hidden;
+}
+.home-menu-drawer.open{transform:translateX(0)}
+
+/* 抽屉头部 */
+.home-menu-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 20px;border-bottom:1px solid var(--c-border);
+  flex-shrink:0;
+}
+.home-menu-title{
+  font-size:1em;font-weight:600;color:var(--c-text-hi);letter-spacing:2px;
+}
+.home-menu-icon{
+  filter:drop-shadow(0 2px 6px rgba(180,140,100,.25));
+}
+.home-menu-close{
+  width:32px;height:32px;border-radius:8px;border:none;
+  background:transparent;font-size:1.4em;color:var(--c-text-3);
+  cursor:pointer;transition:all .15s ease;
+  display:flex;align-items:center;justify-content:center;
+}
+.home-menu-close:hover{background:var(--c-surface-3);color:var(--c-text-hi)}
+
+/* 抽屉内容区 */
+.home-menu-body{
+  flex:1;overflow-y:auto;padding:12px 16px 24px;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* 分区 */
+.home-menu-section{margin-bottom:24px}
+.home-menu-section:last-child{margin-bottom:0}
+
+/* 分区标题 */
+.home-menu-section-hd{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:.78em;color:var(--c-text-3);letter-spacing:1px;
+  margin-bottom:10px;padding-bottom:8px;
+  border-bottom:1px solid var(--c-border);
+}
+.home-menu-section-hd span{font-weight:500}
+
+/* 空状态提示 */
+.home-menu-empty{
+  font-size:.78em;color:var(--c-text-4);text-align:center;
+  padding:20px 0;line-height:1.6;
+}
+
+/* 抽屉内卡片适配 */
+.home-menu-drawer .today-card{margin-bottom:0}
+.home-menu-drawer .r-card{margin-bottom:8px}
+.home-menu-drawer .pf-io-btn{
+  font-size:.72em;padding:4px 12px;border-radius:999px;
+  border:1px solid var(--c-border);background:var(--c-surface-2);
+  color:var(--c-text-2);cursor:pointer;transition:all .15s ease;
+}
+.home-menu-drawer .pf-io-btn:hover{background:var(--c-surface-3)}
+
+/* page2 显示时（report-active）汉堡按钮隐藏 */
+body.report-active .home-menu-btn,
+body.report-active .home-menu-overlay,
+body.report-active .home-menu-drawer{display:none}
+
+/* ============================================================
+   天气模块 — 精致卡片式展示
+   ============================================================ */
+.wx-card{
+  margin:6px 4px 0;
+  position:relative;
+}
+.wx-card-inner{
+  display:flex; align-items:center; gap:14px;
+  padding:14px 16px;
+}
+.wx-icon-box{
+  flex-shrink:0; width:42px; height:42px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:10px;
+  background:var(--c-accent-soft);
+  color:var(--c-accent-text);
+}
+.wx-icon-box svg{
+  width:26px; height:26px;
+  filter:drop-shadow(0 1px 3px rgba(180,135,65,.25));
+}
+.wx-info{
+  flex:1; min-width:0;
+}
+.wx-temp-line{
+  font-family:var(--display);
+  font-size:.92em; font-weight:500; letter-spacing:-.01em;
+  line-height:1.25; color:var(--c-text-hi);
+}
+.wx-temp-line .t{
+  font-size:1.35em; font-weight:600;
+  font-variant-numeric:tabular-nums;
+  margin-right:6px;
+}
+.wx-meta-line{
+  font-family:var(--sf);
+  font-size:.7em; letter-spacing:.01em;
+  line-height:1.3; color:var(--c-text-3);
+  margin-top:3px;
+  display:flex; flex-wrap:wrap; align-items:center; gap:2px 5px;
+}
+.wx-meta-line .wx-meta-item{
+  display:inline-flex; align-items:center; gap:2px;
+  white-space:nowrap;
+}
+.wx-meta-line .wx-meta-sep{
+  color:var(--c-border-3); font-size:.85em;
+  user-select:none;
+}
+.wx-meta-line svg{
+  vertical-align:-1px; opacity:.65; flex-shrink:0;
+}
+.wx-meta-line .wx-meta-item:first-child svg{opacity:.75}
+.wx-meta-line .wx-meta-item:first-child{color:var(--c-text-2)}
+
+/* 加载态 — 呼吸动画 */
+.wx-card.is-loading .wx-icon-box{animation:wxBreath 1.8s ease-in-out infinite}
+.wx-card.is-loading .wx-temp-line{opacity:.55}
+.wx-card.is-loading .wx-meta-line{opacity:.4}
+@keyframes wxBreath{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes wxPulse{0%,100%{opacity:.4}50%{opacity:.9}}
+
+/* ============================================================
+   保存档案弹窗 — 移动端底部加安全距离，避免被 DOCK 栏遮蔽
+   ============================================================ */
+@media(max-width:560px){
+  #saveModal .modal-sheet{
+    padding-bottom:calc(80px + env(safe-area-inset-bottom, 34px));
+  }
+}
+
+
+/* ============================================================
+   术语解释 v2：选中文字 → 右键/长按菜单
+   （取消自动下划线标注后，右键/选区浮动 chip 提供解释）
+   ============================================================ */
+.gloss-ctx{
+  position:fixed;z-index:999;min-width:160px;
+  background:var(--c-surface);
+  border:1px solid var(--c-border-2);
+  border-radius:12px;
+  box-shadow:0 10px 34px rgba(0,0,0,.16),0 2px 8px rgba(0,0,0,.08);
+  padding:6px;display:flex;flex-direction:column;
+  animation:glossCtxIn .16s ease;
+}
+.gloss-ctx-item{
+  display:block;width:100%;text-align:left;
+  padding:10px 12px;background:transparent;border:none;border-radius:8px;
+  color:var(--c-text);font-size:calc(13px * var(--font-scale, 1));font-family:var(--sf);cursor:pointer;
+  transition:background .15s;
+}
+.gloss-ctx-item:hover{background:var(--c-surface-3)}
+.gloss-chip{
+  position:fixed;z-index:998;padding:0;
+  display:flex;align-items:stretch;overflow:hidden;
+  background:var(--c-surface);border:1px solid var(--c-border-2);
+  border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.14);
+  font-size:calc(12.5px * var(--font-scale, 1));font-weight:600;
+  font-family:var(--sf);cursor:pointer;
+  animation:glossChipIn .18s ease;
+}
+.gloss-chip:hover{border-color:var(--c-accent)}
+.gloss-chip-x{display:flex;align-items:center;padding:7px 6px 7px 14px;color:var(--c-text-hi);white-space:nowrap}
+.gloss-chip-ai{
+  display:flex;align-items:center;justify-content:center;
+  padding:0 11px;background:var(--c-accent);color:var(--c-accent-text);
+  transition:opacity .15s;
+}
+.gloss-chip-ai:hover{opacity:.85}
+@keyframes glossCtxIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes glossChipIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+
+/* —— 术语解释 v3：问问大师 AI 入口（选中解释弹窗 / 右键菜单 / 双胶囊）—— */
+.gloss-ctx-item.ai{color:var(--ac-text);display:flex;align-items:center;justify-content:center;padding:9px 10px}
+.gloss-ctx-item.ai svg{display:block}
+.gloss-ctx-item.ai:hover{background:color-mix(in srgb,var(--ac-text) 10%,var(--c-surface-3))}
+.gloss-pop-ai{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:100%;margin-top:10px;padding:10px 12px;
+  background:var(--c-accent);color:var(--c-accent-text);
+  border:none;border-radius:10px;
+  font-family:var(--sf);font-size:.8em;font-weight:600;letter-spacing:.4px;
+  cursor:pointer;
+  transition:opacity .15s,transform .15s;
+}
+.gloss-pop-ai svg{display:block}
+.gloss-pop-ai-txt{white-space:nowrap}
+.gloss-pop-ai:hover{opacity:.9;transform:translateY(-1px)}
+.gloss-pop-ai:active{transform:scale(.98)}
+
+
+/* —— 移动端：选中术语后操作按钮融入 Dock 栏 —— */
+body .ig-dock .tab-bar-inner.dock-gloss-mode{
+  position:relative;
+  display:flex!important;align-items:center;justify-content:center;gap:8px;
+  padding:0 46px!important;
+  grid-template-columns:none!important;
+}
+body .ig-dock .dock-gloss{
+  flex:0 1 auto;min-width:96px;padding:0 16px;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  height:44px;border:none;border-radius:999px;
+  background:var(--c-surface-3);color:var(--c-text-hi);
+  font-size:calc(13px * var(--font-scale, 1));font-weight:600;font-family:var(--sf);cursor:pointer;
+  white-space:nowrap;transition:opacity .15s,transform .15s;
+}
+body .ig-dock .dock-gloss:active{transform:scale(.94)}
+body .ig-dock .dock-gloss svg{display:block}
+body .ig-dock .dock-gloss-ai{background:var(--c-accent);color:var(--c-accent-text)}
+body .ig-dock .dock-gloss-close{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--c-border-3);border-radius:50%;background:transparent;color:var(--c-text);
+  font-size:calc(20px * var(--font-scale, 1));line-height:1;cursor:pointer;
+  transition:opacity .15s,border-color .15s;
+}
+body .ig-dock .dock-gloss-close:active{opacity:.6;border-color:var(--c-accent)}
+
+/* 防误触冷却期：Dock 操作按钮短暂置灰，避免滑选抬手误触 */
+body .ig-dock .tab-bar-inner.dock-gloss-arm .dock-gloss,
+body .ig-dock .tab-bar-inner.dock-gloss-arm .dock-gloss-close{
+  opacity:.55;pointer-events:none;
+  transition:opacity .15s;
+}
+
+/* ============================================================
+   全局动效润色层：统一缓动曲线，让过渡更流畅自然
+   ============================================================ */
+:root{
+  --c-ease:cubic-bezier(.22,.78,.25,1);
+  --c-ease-out:cubic-bezier(.16,1,.3,1);
+  --c-ease-spring:cubic-bezier(.34,1.4,.4,1);
+  --c-dur:.3s;
+}
+
+/* 1) 工具弹窗：遮罩淡入 + 面板弹性上浮 */
+.tool-modal{animation:twModalBg .26s ease both}
+.tool-modal .tool-sheet{
+  animation:twModalSheet .42s var(--c-ease-spring) both;
+  transform-origin:50% 96%;
+}
+@keyframes twModalBg{from{opacity:0}to{opacity:1}}
+@keyframes twModalSheet{from{opacity:0;transform:translateY(20px) scale(.965)}to{opacity:1;transform:none}}
+
+/* 2) Dock 指示条：切换 tab 平滑滑动（覆盖旧版 .001ms 取消动画） */
+body .ig-dock .tab-indicator{transition:transform .34s var(--c-ease),width .3s var(--c-ease),opacity .2s ease!important}
+
+/* 3) 问问大师面板：取消生硬跳变，改弹簧滑入 */
+.ai-sheet{transition:transform .42s var(--c-ease-spring),opacity .32s ease!important}
+
+/* 4) 工具中心卡片 hover 上浮 */
+.tool-tile{
+  transition:transform .26s var(--c-ease-out),box-shadow .26s var(--c-ease-out),background .2s ease,border-color .2s ease!important;
+  will-change:transform;
+}
+.tool-tile:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.16)}
+.tool-tile:active{transform:translateY(-1px) scale(.98)}
+
+/* 5) 全局按钮按压反馈（轻缩放） */
+button:active{transform:scale(.97)}
+
+/* 6) 玻璃卡片 hover 微响应 */
+.glass{transition:transform .3s var(--c-ease-out),box-shadow .3s var(--c-ease-out)}
+.glass:hover{transform:translateY(-2px)}
+.glass:active{transform:scale(.99)}
+
+/* 7) 返回顶部按钮过渡 */
+.back-to-top{transition:opacity .25s ease,transform .25s var(--c-ease-out),background .2s ease}
+.back-to-top:hover{transform:translateY(-2px)}
+
+/* 8) 减少动态偏好：全局关闭非必要动效 */
+@media (prefers-reduced-motion: reduce){
+  .tool-modal,.tool-modal .tool-sheet,.tool-tile,.glass,.ai-sheet{animation:none!important;transition:none!important}
+}
+
+/* 顶部右侧圆形日历按钮（常驻入口，非模式） */
+.cal-fab{position:relative}
+.cal-fab.active{
+  color:var(--c-accent-text)!important;
+  background:var(--c-accent)!important;
+  border-color:var(--c-accent)!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.18)!important;
+}
+.cal-fab.active svg{stroke:var(--c-accent-text)!important}
+.cal-fab:active{transform:scale(.9)}
+
+
+/* —— 未推演保护：确认弹窗 —— */
+.tj-confirm{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:24px}
+.tj-confirm-bg{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.tj-confirm-card{
+  position:relative;z-index:1;width:min(320px,calc(100vw - 48px));
+  background:var(--c-surface);border:1px solid var(--c-border-2);border-radius:18px;
+  padding:20px 18px 14px;box-shadow:0 20px 60px rgba(0,0,0,.3);
+  animation:tjConfirmIn .28s var(--c-ease-spring) both;
+}
+.tj-confirm-card .tt{font-size:calc(16px * var(--font-scale, 1));font-weight:800;color:var(--c-text-hi);margin-bottom:8px;font-family:var(--serif);letter-spacing:.02em}
+.tj-confirm-card .tx{font-size:calc(13px * var(--font-scale, 1));line-height:1.75;color:var(--c-text);margin-bottom:16px}
+.tj-confirm-card .acts{display:flex;gap:8px}
+.tj-confirm-card .acts button{
+  flex:1;padding:10px 0;border-radius:12px;font-size:calc(13.5px * var(--font-scale, 1));font-weight:600;cursor:pointer;
+  font-family:var(--sf);transition:transform .15s,opacity .15s;
+}
+.tj-confirm-card .acts button:active{transform:scale(.96)}
+.tj-confirm-card .acts .ghost{border:1px solid var(--c-border-2);background:transparent;color:var(--c-text)}
+.tj-confirm-card .acts .primary{border:1px solid var(--c-accent);background:var(--c-accent);color:var(--c-accent-text)}
+@keyframes tjConfirmIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:none}}
+
+/* 首页按钮：输入信息 + 日历 等宽并排（flex 均分，随容器自适应） */
+.home-hero-actions .home-cta{flex:1 1 0 !important;min-width:0 !important}
+.home-cta-cal{
+  width:auto !important;min-width:0 !important;
+  height:51px !important;min-height:51px !important;
+  padding:0 18px !important;
+  display:inline-flex;align-items:center;justify-content:center;
+  border-radius:999px !important;
+}
+.home-cta-cal svg{display:block}
+.home-cta-cal:hover{transform:translateY(-1px)}
+.home-cta-cal:active{transform:scale(.92)}
+/* 桌面端：grid 双列，两按钮严格等宽（移动端 flex 自适应已等宽） */
+@media (min-width: 481px){
+  .home-hero-actions{display:grid !important;grid-template-columns:1fr 1fr !important;gap:14px !important;width:min(300px,calc(100% - 48px)) !important}
+  .home-hero-actions .home-cta{width:100% !important;flex:none !important;min-width:0 !important}
+}
+
+/* —— 移动端：首页两按钮固定等宽（对齐输入信息自然宽度），防 flex 压缩导致文字溢出 —— */
+@media (max-width: 480px){
+  .home-hero-actions{display:flex !important;justify-content:center !important;gap:9px !important;padding:0 !important;width:auto !important}
+  .home-hero-actions .home-cta{flex:0 1 auto !important;width:103px !important;min-width:103px !important;max-width:103px !important;padding:14px 12px !important}
+}
+
+/* —— 新手引导（首次访问分步浮层）—— 接入 Claude 主题令牌，明/暗自动适配 —— */
+.onboard-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--c-overlay);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:ob-fade .25s ease both}
+.onboard-hide{animation:ob-fade .25s ease reverse both}
+@keyframes ob-fade{from{opacity:0}to{opacity:1}}
+.onboard-card{position:relative;width:100%;max-width:340px;background:linear-gradient(180deg,var(--c-surface),var(--c-surface-2));border:1px solid var(--c-border-2);border-radius:var(--c-r-xl);padding:30px 24px 22px;text-align:center;box-shadow:var(--c-shadow-3),inset 0 1px 1px rgba(255,255,255,.04);animation:ob-pop .3s cubic-bezier(.2,.8,.3,1.1) both}
+@keyframes ob-pop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+.onboard-x{position:absolute;top:12px;right:14px;border:none;background:none;color:var(--c-text-3);font-size:calc(13px * var(--font-scale, 1));padding:4px 6px;cursor:pointer;font-family:inherit;transition:color .15s ease}
+.onboard-x:hover{color:var(--c-text-hi)}
+.onboard-icon{font-size:calc(46px * var(--font-scale, 1));line-height:1;margin-bottom:14px;color:var(--c-text-hi)!important;text-shadow:0 0 22px color-mix(in srgb,var(--c-accent) 30%,transparent)}
+.onboard-title{font-family:var(--serif);font-size:calc(21px * var(--font-scale, 1));font-weight:700;color:var(--c-text-hi)!important;margin-bottom:10px;letter-spacing:.5px}
+.onboard-desc{font-size:calc(14px * var(--font-scale, 1));line-height:1.7;color:var(--c-text-2);margin-bottom:16px}
+.onboard-try{display:block;width:100%;margin:0 auto 16px;height:42px;border:1px solid var(--c-border-2);border-radius:999px;background:transparent;color:var(--c-text-2);font-size:calc(14px * var(--font-scale, 1));font-weight:600;cursor:pointer;font-family:inherit;transition:background .12s,border-color .12s,color .12s}
+.onboard-try[hidden]{display:none!important}
+.onboard-try:hover{border-color:var(--c-accent);color:var(--c-accent-text);background:var(--c-accent-soft)}
+.onboard-dots{display:flex;gap:7px;justify-content:center;margin-bottom:20px}
+.onboard-dot{width:7px;height:7px;border-radius:50%;background:var(--c-border-3);transition:all .25s}
+.onboard-dot.active{width:20px;border-radius:4px;background:var(--c-accent)}
+.onboard-actions{display:flex;gap:10px;align-items:center}
+.onboard-skip{flex:0 0 auto;background:none;border:none;color:var(--c-text-3);font-size:calc(13px * var(--font-scale, 1));padding:10px 4px;cursor:pointer;font-family:inherit;transition:color .15s ease}
+.onboard-skip:hover{color:var(--c-text-hi)}
+.onboard-next{flex:1;height:46px;border:none;border-radius:999px;background:var(--c-accent);color:var(--c-on-accent);font-size:calc(15px * var(--font-scale, 1));font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 6px 18px color-mix(in srgb,var(--c-accent) 30%,transparent);transition:transform .12s,box-shadow .12s,background .12s}
+.onboard-next:hover{background:var(--c-accent-hover);transform:translateY(-1px);box-shadow:0 8px 22px color-mix(in srgb,var(--c-accent) 40%,transparent)}
+.onboard-next:active{transform:scale(.97)}
+.onboard-next.onboard-final{background:var(--c-accent-hover)}
+
+
+/* ---------- 文字大小调节（仅聊天界面：入口按钮在聊天工具栏，面板为底部弹层） ---------- */
+/* 入口按钮：与聊天工具栏（＋ / 设置 / ×）同款的 40px 圆形按钮 */
+.fs-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  cursor: pointer;
+  padding: 0;
+  transition: background .15s ease, color .15s ease;
+}
+.fs-toggle:hover { background: var(--c-surface-3); color: var(--c-text-hi); }
+.fs-toggle svg { width: 18px; height: 18px; }
+
+/* 底部弹出面板（z-index 须高于聊天遮罩 300） */
+.fs-panel {
+  position: fixed; left: 50%; bottom: calc(72px + env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(12px);
+  z-index: 900;
+  width: min(340px, calc(100vw - 32px));
+  padding: 14px 16px 12px;
+  font-size: 14px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--c-r-lg);
+  box-shadow: var(--c-shadow-3);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease, visibility .18s;
+}
+.fs-panel.open { opacity: 1; visibility: visible; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.fs-panel-tt { font-family: var(--display); font-weight: 600; font-size: .92em; color: var(--c-text-hi); margin-bottom: 10px; }
+.fs-opts { display: flex; gap: 8px; }
+.fs-opt {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 4px; border: 1px solid var(--c-border-2); border-radius: 10px;
+  background: transparent; color: var(--c-text-2); cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.fs-opt:hover { background: var(--c-surface-3); color: var(--c-text); }
+.fs-opt.active {
+  background: var(--c-accent-soft);
+  border-color: color-mix(in srgb, var(--c-accent) 45%, transparent);
+  color: var(--c-accent-text);
+}
+.fs-opt-a { font-family: var(--display); font-weight: 700; line-height: 1; color: inherit; }
+.fs-opt[data-key="small"]    .fs-opt-a { font-size: 14px; }
+.fs-opt[data-key="standard"] .fs-opt-a { font-size: 18px; }
+.fs-opt[data-key="large"]    .fs-opt-a { font-size: 22px; }
+.fs-opt[data-key="xlarge"]   .fs-opt-a { font-size: 26px; }
+.fs-opt-l { font-size: .7em; }
+.fs-panel-hint { margin-top: 10px; font-size: .66em; color: var(--c-text-4); text-align: center; }

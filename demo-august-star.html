@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>问问大师 · 八月星轨 Demo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0f;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+canvas{display:block;position:fixed;top:0;left:0;width:100%;height:100%}
+.label{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:10;text-align:center;pointer-events:none}
+.label h1{font-size:1.4em;font-weight:800;color:rgba(255,220,180,.95);letter-spacing:3px;text-shadow:0 0 20px rgba(217,119,87,.4)}
+.label p{font-size:.72em;color:rgba(255,200,160,.5);letter-spacing:6px;margin-top:6px}
+.badge{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:10;pointer-events:none}
+.badge span{display:inline-block;padding:6px 18px;border-radius:999px;border:1px solid rgba(255,200,120,.2);background:rgba(255,200,120,.06);color:rgba(255,210,160,.6);font-size:.68em;letter-spacing:2px;backdrop-filter:blur(8px)}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="label">
+  <h1>问问大师</h1>
+  <p>八月星轨 · 申月流金</p>
+</div>
+<div class="badge"><span>Perseid Meteor Shower · August Exclusive</span></div>
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+let W, H, CX, CY, R;
+
+function resize() {
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  CX = W / 2; CY = H * 0.44;
+  R = Math.min(W, H) * 0.42;
+}
+resize();
+window.addEventListener('resize', resize);
+
+/* 3D 投影 */
+const F = 900;
+function rotX(p,a){const c=Math.cos(a),s=Math.sin(a);return[p[0],p[1]*c-p[2]*s,p[1]*s+p[2]*c]}
+function rotY(p,a){const c=Math.cos(a),s=Math.sin(a);return[p[0]*c+p[2]*s,p[1],-p[0]*s+p[2]*c]}
+function rotZ(p,a){const c=Math.cos(a),s=Math.sin(a);return[p[0]*c-p[1]*s,p[0]*s+p[1]*c,p[2]]}
+function project(p){const z=p[2]+F+R*2;const k=F/z;return[CX+p[0]*k,CY+p[1]*k,p[2],k]}
+
+/* 八月金秋配色 */
+const PAL = {
+  far:  'rgba(180,150,100,',
+  near: 'rgba(255,210,140,',
+  accent: '#ffc878',
+  glow:  'rgba(255,180,80,',
+  meteor: 'rgba(255,240,200,',
+  mote:  'rgba(255,200,120,'
+};
+
+/* 三重星环 — 八月版：更密、更亮 */
+const rings = [
+  { ax: 0.32, az: 0.16, spin: 0.10, r: 1.00, dots: 32, w: 1.4 },
+  { ax: 1.25, az: -0.30, spin: -0.16, r: 0.80, dots: 24, w: 1.2 },
+  { ax: -0.85, az: 0.62, spin: 0.22, r: 0.62, dots: 18, w: 1.0 },
+];
+
+/* 鼠标视差 */
+let mx=0,my=0,tx=0,ty=0;
+window.addEventListener('pointermove',e=>{
+  tx=(e.clientX/W-0.5)*2;
+  ty=(e.clientY/H-0.5)*2;
+},{passive:true});
+
+/* 流星系统 — 八月英仙座流星雨 */
+const meteors = [];
+function spawnMeteor() {
+  const angle = Math.PI * 0.15 + Math.random() * Math.PI * 0.2; // 斜向下
+  const speed = 8 + Math.random() * 6;
+  const startX = Math.random() * W * 1.3 - W * 0.15;
+  const startY = -50 - Math.random() * 100;
+  meteors.push({
+    x: startX, y: startY,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    life: 1.0,
+    decay: 0.006 + Math.random() * 0.004,
+    len: 80 + Math.random() * 120,
+    width: 1.5 + Math.random() * 1.5
+  });
+}
+let meteorTimer = 0;
+
+/* 漂浮光尘 — 八月萤火 */
+const motes = [];
+for (let i = 0; i < 40; i++) {
+  motes.push({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: -0.2 - Math.random() * 0.4,
+    r: 0.5 + Math.random() * 1.5,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.5 + Math.random() * 1.5
+  });
+}
+
+/* 星空背景 */
+const bgStars = [];
+for (let i = 0; i < 150; i++) {
+  bgStars.push({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: 0.3 + Math.random() * 0.8,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.3 + Math.random() * 0.8
+  });
+}
+
+const t0 = performance.now() / 1000;
+const tBase = () => performance.now() / 1000 - t0;
+let gAngle = 0, lastT = null;
+
+function draw(t) {
+  const dt = lastT === null ? 0.016 : Math.min(0.05, t - lastT);
+  lastT = t;
+  mx += (tx - mx) * 0.04;
+  my += (ty - my) * 0.04;
+  gAngle += dt * 0.12;
+
+  ctx.clearRect(0, 0, W, H);
+
+  /* 1. 深空背景渐变 */
+  const bg = ctx.createRadialGradient(CX, CY, 0, CX, CY, Math.max(W, H) * 0.7);
+  bg.addColorStop(0, 'rgba(20,15,25,1)');
+  bg.addColorStop(0.5, 'rgba(12,8,18,1)');
+  bg.addColorStop(1, 'rgba(6,4,12,1)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  /* 2. 闪烁星空背景 */
+  for (const s of bgStars) {
+    const tw = 0.4 + 0.6 * Math.abs(Math.sin(t * s.speed + s.phase));
+    ctx.fillStyle = `rgba(255,230,200,${tw * 0.5})`;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /* 3. 漂浮光尘 */
+  for (const m of motes) {
+    m.x += m.vx;
+    m.y += m.vy;
+    m.phase += dt * m.speed;
+    if (m.y < -10) { m.y = H + 10; m.x = Math.random() * W; }
+    if (m.x < -10) m.x = W + 10;
+    if (m.x > W + 10) m.x = -10;
+    const alpha = 0.15 + 0.25 * Math.abs(Math.sin(m.phase));
+    ctx.fillStyle = PAL.mote + alpha.toFixed(3) + ')';
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+    ctx.fill();
+    /* 光尘光晕 */
+    ctx.fillStyle = PAL.mote + (alpha * 0.2).toFixed(3) + ')';
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, m.r * 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /* 4. 三重星环 */
+  const gY = gAngle + mx * 0.35;
+  const gX = -0.18 + my * 0.28;
+  const segs = [], dots = [];
+  for (const ring of rings) {
+    const n = 72;
+    const spin = gAngle * (ring.spin / 0.12);
+    for (let i = 0; i < n; i++) {
+      const a1 = i / n * Math.PI * 2, a2 = (i + 1) / n * Math.PI * 2;
+      let p1 = [Math.cos(a1) * R * ring.r, 0, Math.sin(a1) * R * ring.r];
+      let p2 = [Math.cos(a2) * R * ring.r, 0, Math.sin(a2) * R * ring.r];
+      p1 = rotY(rotX(rotZ(p1, ring.az), ring.ax), gY + spin); p1 = rotX(p1, gX);
+      p2 = rotY(rotX(rotZ(p2, ring.az), ring.ax), gY + spin); p2 = rotX(p2, gX);
+      const q1 = project(p1), q2 = project(p2);
+      segs.push({ q1, q2, z: (p1[2] + p2[2]) / 2, w: ring.w * ((q1[3] + q2[3]) / 2) });
+    }
+    for (let i = 0; i < ring.dots; i++) {
+      const a = i / ring.dots * Math.PI * 2 + spin * 1.4;
+      let p = [Math.cos(a) * R * ring.r, 0, Math.sin(a) * R * ring.r];
+      p = rotY(rotX(rotZ(p, ring.az), ring.ax), gY + spin); p = rotX(p, gX);
+      const q = project(p);
+      dots.push({ x: q[0], y: q[1], z: p[2], k: q[3] });
+    }
+  }
+  segs.sort((a, b) => a.z - b.z);
+  for (const s of segs) {
+    const depth = (s.z + R) / (2 * R);
+    const alpha = 0.18 + depth * 0.65;
+    ctx.strokeStyle = (depth > 0.5 ? PAL.near : PAL.far) + alpha.toFixed(3) + ')';
+    ctx.lineWidth = Math.max(0.5, s.w * (0.6 + depth * 0.9));
+    ctx.beginPath(); ctx.moveTo(s.q1[0], s.q1[1]); ctx.lineTo(s.q2[0], s.q2[1]); ctx.stroke();
+  }
+  dots.sort((a, b) => a.z - b.z);
+  for (const d of dots) {
+    const depth = (d.z + R) / (2 * R);
+    const r = 1.0 + depth * 3.0;
+    /* 星点光晕 */
+    ctx.fillStyle = PAL.near + (0.08 + depth * 0.12).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(d.x, d.y, r * 2.5, 0, Math.PI * 2); ctx.fill();
+    /* 星点核心 */
+    ctx.fillStyle = PAL.near + (0.35 + depth * 0.55).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(d.x, d.y, r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /* 5. 中心品牌星 — 八月金芒 */
+  const pulse = 0.85 + 0.15 * Math.sin(t * 1.6);
+  const gs = R * 0.62 * pulse;
+  const g = ctx.createRadialGradient(CX, CY, 0, CX, CY, gs);
+  g.addColorStop(0, PAL.glow + '0.45)');
+  g.addColorStop(0.4, PAL.glow + '0.15)');
+  g.addColorStop(1, PAL.glow + '0)');
+  ctx.fillStyle = g; ctx.fillRect(CX - gs, CY - gs, gs * 2, gs * 2);
+
+  /* 八月专属：中心额外金色光环 */
+  const ringPulse = 0.5 + 0.5 * Math.sin(t * 0.8);
+  ctx.strokeStyle = PAL.glow + (0.08 + ringPulse * 0.06).toFixed(3) + ')';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(CX, CY, R * 0.3 * (1 + ringPulse * 0.05), 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(CX, CY, R * 0.22 * (1 + ringPulse * 0.08), 0, Math.PI * 2); ctx.stroke();
+
+  /* 四芒星 */
+  const sr = R * (0.16 + 0.012 * Math.sin(t * 1.6));
+  ctx.save();
+  ctx.translate(CX, CY);
+  ctx.rotate(t * 0.25);
+  ctx.fillStyle = PAL.accent;
+  ctx.shadowColor = PAL.glow + '0.9)';
+  ctx.shadowBlur = 22 * pulse;
+  ctx.beginPath();
+  const K = 0.24;
+  for (let i = 0; i < 8; i++) {
+    const ang = i * Math.PI / 4 - Math.PI / 2;
+    const rr = i % 2 === 0 ? sr : sr * K;
+    const x = Math.cos(ang) * rr, y = Math.sin(ang) * rr;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(255,255,240,0.9)';
+  ctx.beginPath(); ctx.arc(0, 0, sr * 0.13, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  /* 6. 流星雨 — 八月英仙座 */
+  meteorTimer += dt;
+  if (meteorTimer > 0.4 + Math.random() * 1.2) {
+    meteorTimer = 0;
+    spawnMeteor();
+    /* 偶尔来一波密集流星 */
+    if (Math.random() < 0.15) {
+      setTimeout(spawnMeteor, 150);
+      setTimeout(spawnMeteor, 350);
+    }
+  }
+  for (let i = meteors.length - 1; i >= 0; i--) {
+    const m = meteors[i];
+    m.x += m.vx;
+    m.y += m.vy;
+    m.life -= m.decay;
+    if (m.life <= 0 || m.x > W + 200 || m.y > H + 200) {
+      meteors.splice(i, 1);
+      continue;
+    }
+    /* 流星拖尾 */
+    const tailX = m.x - m.vx * m.len / 10;
+    const tailY = m.y - m.vy * m.len / 10;
+    const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+    grad.addColorStop(0, PAL.meteor + m.life.toFixed(3) + ')');
+    grad.addColorStop(0.3, PAL.meteor + (m.life * 0.5).toFixed(3) + ')');
+    grad.addColorStop(1, PAL.meteor + '0)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = m.width;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(m.x, m.y);
+    ctx.lineTo(tailX, tailY);
+    ctx.stroke();
+    /* 流星头部光点 */
+    ctx.fillStyle = PAL.meteor + m.life.toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(m.x, m.y, m.width * 1.2, 0, Math.PI * 2); ctx.fill();
+    /* 头部光晕 */
+    ctx.fillStyle = PAL.meteor + (m.life * 0.2).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(m.x, m.y, m.width * 4, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function frame() {
+  draw(tBase());
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>

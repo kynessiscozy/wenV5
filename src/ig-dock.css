@@ -1,0 +1,260 @@
+/* Refined iOS glass dock — keeps the existing destinations while improving hierarchy and touch feedback. */
+:root{--ig-dock-height:66px;--ig-dock-ease:cubic-bezier(.22,.78,.25,1)}
+body .ig-dock.tab-bar{
+  position:fixed!important;z-index:90!important;display:none;left:50%!important;right:auto!important;
+  bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;width:min(430px,calc(100vw - 24px))!important;
+  height:var(--ig-dock-height)!important;margin:0!important;padding:6px!important;box-sizing:border-box!important;
+  transform:translateX(-50%)!important;overflow:visible!important;isolation:isolate;border-radius:999px!important;
+  border:1px solid var(--c-border-2)!important;
+  background:linear-gradient(135deg,var(--c-surface),var(--c-surface) 58%,var(--c-surface))!important;
+  box-shadow:none!important;
+  backdrop-filter:blur(30px) saturate(155%)!important;-webkit-backdrop-filter:blur(30px) saturate(155%)!important;
+  animation:igDockEnter .42s var(--ig-dock-ease) both!important;
+}
+body .ig-dock.tab-bar.show{display:block!important}
+body .ig-dock.tab-bar::before{content:''!important;position:absolute!important;inset:1px!important;z-index:-1!important;display:block!important;border-radius:inherit!important;pointer-events:none!important;background:radial-gradient(ellipse 55% 90% at 18% 0%,var(--c-surface-4),transparent 65%),linear-gradient(180deg,var(--c-surface-3),transparent 45%)!important}
+body .ig-dock.tab-bar::after{content:''!important;position:absolute!important;display:block!important;pointer-events:none!important;left:18%!important;right:18%!important;top:0!important;height:1px!important;background:linear-gradient(90deg,transparent,var(--c-surface),transparent)!important;opacity:.8!important}
+body.ig-keyboard .ig-dock.tab-bar{transform:translateX(-50%) translateY(125%)!important;opacity:0!important}
+
+body .ig-dock .tab-bar-inner{position:relative!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:center!important;width:100%!important;height:52px!important;min-height:52px!important;margin:0!important;padding:0!important;gap:0!important}
+body .ig-dock .tab-indicator{display:none!important}
+body .ig-dock .tab-item{position:relative!important;z-index:1!important;display:grid!important;place-items:center!important;width:100%!important;height:52px!important;min-height:52px!important;margin:0!important;padding:0!important;border:0!important;border-radius:999px!important;background:transparent!important;color:var(--c-text)!important;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:color .18s ease,transform .2s var(--ig-dock-ease),background .2s ease!important}
+body .ig-dock .tab-item:hover{color:var(--c-text-hi)!important;background:var(--c-surface-3)!important}
+body .ig-dock .tab-item.active{color:var(--c-text-hi)!important;background:linear-gradient(145deg,var(--c-surface-4),var(--c-surface-3))!important;box-shadow:inset 0 1px rgba(255,255,255,.18),inset 0 -1px rgba(0,0,0,.10),0 3px 9px rgba(0,0,0,.12)!important}
+body .ig-dock .tab-item:active{transform:scale(.88)!important;opacity:.72!important}
+body .ig-dock .ig-nav-icon{display:block!important;width:24px!important;height:24px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.75!important;stroke-linecap:round!important;stroke-linejoin:round!important;transition:transform .2s var(--ig-dock-ease),stroke-width .18s ease,fill .18s ease!important}
+body .ig-dock .tab-item.active .ig-nav-icon{stroke-width:2.35!important;transform:scale(1.05)!important;filter:drop-shadow(0 1px 5px rgba(255,255,255,.15))}
+body .ig-dock .tab-item.active .ig-heart{fill:currentColor!important}
+body .ig-dock .ig-nav-label{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+
+/* Center action is visually distinct without overpowering the report navigation. */
+body .ig-dock .ai-fab{grid-column:3!important;grid-row:1!important;position:relative!important;z-index:3!important;justify-self:center!important;display:grid!important;place-items:center!important;width:46px!important;min-width:46px!important;height:46px!important;min-height:46px!important;margin:0!important;padding:0!important;border:1px solid var(--c-border-3)!important;border-radius:50%!important;color:var(--c-text-hi)!important;background:linear-gradient(145deg,hsla(var(--accent-h),var(--accent-s),67%,.82),hsla(var(--accent-h),var(--accent-s),42%,.72))!important;box-shadow:0 7px 15px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.28)!important;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .22s var(--ig-dock-ease),filter .18s ease!important}
+body .ig-dock .ai-fab:hover{filter:brightness(1.12)!important;transform:translateY(-1px) scale(1.04)!important}
+body .ig-dock .ai-fab:active{transform:scale(.87)!important;filter:brightness(.9)!important}
+body .ig-dock .ai-fab-icon{display:grid!important;place-items:center!important;width:26px!important;height:26px!important;color:var(--c-text-hi)!important}.ig-dock .ig-ai-icon{display:block!important;width:27px!important;height:27px!important;fill:currentColor!important;stroke:none!important;filter:drop-shadow(0 1px 3px rgba(0,0,0,.23))}.ig-dock .ai-fab-text,.ig-dock .ai-badge,.ig-dock .ai-orbits{display:none!important}
+
+#page2 .p2-scroll{padding-bottom:calc(var(--ig-dock-height) + env(safe-area-inset-bottom,0px) + 36px)!important}
+@keyframes igDockEnter{from{opacity:0;transform:translateX(-50%) translateY(16px) scale(.98)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+@media(max-width:600px){body .ig-dock.tab-bar{width:calc(100vw - 16px)!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;border-radius:999px!important;padding:6px 4px!important}}
+@media(max-width:350px){body .ig-dock.tab-bar{width:calc(100vw - 12px)!important}.ig-dock .ig-nav-icon{width:22px!important;height:22px!important}.ig-dock .ai-fab{width:43px!important;min-width:43px!important;height:43px!important;min-height:43px!important}}
+@media(prefers-reduced-motion:reduce){body .ig-dock.tab-bar{animation:none!important}body .ig-dock .tab-item,body .ig-dock .ig-nav-icon,body .ig-dock .ai-fab{transition:none!important}}
+
+/* Dock 内的问问大师入口与导航保持一致，使用紧凑胶囊形态。 */
+body .ig-dock .ai-fab{
+  width:52px!important;
+  min-width:52px!important;
+  height:42px!important;
+  min-height:42px!important;
+  border-radius:999px!important;
+}
+body .ig-dock .ai-fab-icon,body .ig-dock .ig-ai-icon{width:26px!important;height:26px!important}
+@media(max-width:350px){body .ig-dock .ai-fab{width:47px!important;min-width:47px!important;height:40px!important;min-height:40px!important}}
+
+/* 问问大师仅保留图标：去除入口自身的胶囊、描边、渐变和投影。 */
+body .ig-dock .ai-fab{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  filter:none!important;
+}
+body .ig-dock .ai-fab:hover{background:transparent!important;filter:none!important;transform:scale(1.05)!important}
+body .ig-dock .ai-fab:active{transform:scale(.88)!important}
+body .ig-dock .ai-fab-icon{color:var(--c-text-hi)!important;text-shadow:none!important}
+body .ig-dock .ig-ai-icon{filter:none!important}
+
+/* 问问大师改为与玻璃设置一致的锚定式浮层：从 Dock 上方展开，而非全屏模态。 */
+.ai-overlay.open{
+  background:transparent!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  animation:none!important;
+}
+.ai-sheet{
+  left:50%!important;
+  top:auto!important;
+  bottom:calc(var(--ig-dock-height) + env(safe-area-inset-bottom,0px) + 26px)!important;
+  width:min(430px,calc(100vw - 24px))!important;
+  max-height:min(590px,calc(100dvh - var(--ig-dock-height) - env(safe-area-inset-bottom,0px) - 54px))!important;
+  padding:16px!important;
+  border:1px solid var(--c-border-2)!important;
+  border-radius:20px!important;
+  background:var(--c-surface)!important;
+  box-shadow:none!important;
+  backdrop-filter:blur(30px) saturate(155%)!important;
+  -webkit-backdrop-filter:blur(30px) saturate(155%)!important;
+  transform:translate(-50%,10px) scale(.98)!important;
+  transform-origin:center bottom!important;
+}
+.ai-sheet.open{
+  transform:translate(-50%,0) scale(1)!important;
+  animation:none!important;
+}
+.ai-sheet::after{
+  content:'';
+  position:absolute;
+  left:50%; bottom:-7px;
+  width:13px; height:13px;
+  transform:translateX(-50%) rotate(45deg);
+  background:var(--c-surface);
+  border-right:1px solid var(--c-border-2);
+  border-bottom:1px solid var(--c-border-2);
+}
+.ai-sheet>*{position:relative;z-index:1}
+@media(max-width:560px){
+  .ai-sheet{
+    bottom:calc(var(--ig-dock-height) + env(safe-area-inset-bottom,0px) + 21px)!important;
+    width:calc(100vw - 16px)!important;
+    max-height:min(560px,calc(100dvh - var(--ig-dock-height) - env(safe-area-inset-bottom,0px) - 44px))!important;
+    border-radius:18px!important;
+    padding:14px!important;
+  }
+  .ai-sheet .ai-body{min-height:150px!important;max-height:38dvh!important}
+}
+@media(prefers-reduced-motion:reduce){.ai-sheet,.ai-sheet.open{transition:none!important}}
+
+/* 打开锚定式问答面板时，Dock 与问问图标仍保持可见、可点击。 */
+.ai-overlay.open{z-index:89!important}
+
+/* 锚定面板的标题栏操作区：避免新建、设置、关闭与标题/上下文相互挤压。 */
+.ai-sheet .ai-actions{
+  top:12px!important;
+  right:12px!important;
+  gap:5px!important;
+  padding:3px!important;
+  border:1px solid var(--c-border-2)!important;
+  border-radius:999px!important;
+  background:var(--c-surface-3)!important;
+}
+.ai-sheet .ai-new,
+.ai-sheet .ai-settings,
+.ai-sheet .ai-close{
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  min-height:30px!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  font-size:calc(14px * var(--font-scale, 1))!important;
+}
+.ai-sheet .ai-new:hover,
+.ai-sheet .ai-settings:hover,
+.ai-sheet .ai-close:hover{background:var(--c-surface-4)!important;transform:none!important}
+.ai-sheet .ai-title{margin-right:118px!important;min-height:30px!important;display:flex!important;align-items:center!important}
+.ai-sheet .ai-settings-panel{top:52px!important;right:12px!important}
+@media(max-width:560px){
+  .ai-sheet .ai-actions{top:10px!important;right:10px!important}
+  .ai-sheet .ai-new,.ai-sheet .ai-settings,.ai-sheet .ai-close{width:29px!important;height:29px!important;min-width:29px!important;min-height:29px!important}
+  .ai-sheet .ai-title{margin-right:112px!important}
+}
+
+/* 操作组移至面板外侧右上方，标题与内容区域保持完整宽度。 */
+.ai-sheet .ai-actions{
+  top:-45px!important;
+  right:0!important;
+  z-index:12!important;
+  background:var(--c-surface)!important;
+  box-shadow:none!important;
+}
+.ai-sheet .ai-title{margin-right:0!important}
+@media(max-width:560px){
+  .ai-sheet .ai-actions{top:-43px!important;right:0!important}
+  .ai-sheet .ai-title{margin-right:0!important}
+}
+
+/* 问问大师打开后，内容区退后并作高斯模糊；Dock 保持在遮罩之上。 */
+.ai-overlay.open{
+  background:var(--c-surface-3)!important;
+  backdrop-filter:blur(12px)!important;
+  -webkit-backdrop-filter:blur(12px)!important;
+}
+@media(prefers-reduced-transparency:reduce){.ai-overlay.open{background:var(--c-surface-4)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
+
+/* 问问大师面板布局修正：统一标题、操作组与设置浮层的定位。 */
+.ai-sheet .ai-head{
+  position:relative!important;
+  margin:0 0 8px!important;
+  padding:0 0 12px!important;
+}
+.ai-sheet .ai-actions{
+  position:absolute!important;
+  top:10px!important;
+  right:10px!important;
+  z-index:20!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:4px!important;
+  padding:3px!important;
+  border:1px solid var(--c-border-2)!important;
+  border-radius:999px!important;
+  background:var(--c-surface-3)!important;
+  box-shadow:none!important;
+}
+.ai-sheet .ai-new,
+.ai-sheet .ai-settings,
+.ai-sheet .ai-close{
+  width:29px!important;
+  height:29px!important;
+  min-width:29px!important;
+  min-height:29px!important;
+  padding:0!important;
+  margin:0!important;
+  display:grid!important;
+  place-items:center!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  color:var(--c-text)!important;
+  font-size:calc(14px * var(--font-scale, 1))!important;
+  line-height:1!important;
+}
+.ai-sheet .ai-new:hover,
+.ai-sheet .ai-settings:hover,
+.ai-sheet .ai-close:hover{background:var(--c-surface-4)!important;color:var(--c-text-hi)!important;transform:none!important}
+.ai-sheet .ai-title{
+  min-height:35px!important;
+  margin:0 0 8px!important;
+  padding:0 108px 0 0!important;
+  display:flex!important;
+  align-items:center!important;
+  font-size:1.03em!important;
+  line-height:1.25!important;
+}
+.ai-sheet .ai-context{margin:0 0 8px!important}
+.ai-sheet .ai-settings-panel{
+  position:absolute!important;
+  top:51px!important;
+  right:10px!important;
+  z-index:30!important;
+  width:min(280px,calc(100% - 20px))!important;
+  max-height:min(420px,calc(100dvh - 130px))!important;
+  overflow-y:auto!important;
+  border-radius:16px!important;
+  background:var(--c-surface)!important;
+}
+@media(max-width:560px){
+  .ai-sheet .ai-actions{top:9px!important;right:9px!important}
+  .ai-sheet .ai-title{min-height:34px!important;padding-right:104px!important}
+  .ai-sheet .ai-settings-panel{top:50px!important;right:9px!important;width:min(280px,calc(100% - 18px))!important}
+}
+
+/* 问问大师不单独显示关闭键：Dock 图标本身即为开关，背景空白点击仍可关闭。 */
+.ai-sheet .ai-close{display:none!important}
+.ai-sheet .ai-title{padding-right:72px!important}
+@media(max-width:560px){.ai-sheet .ai-title{padding-right:70px!important}}
+
+/* 新对话与 AI 设置使用完全一致的触控尺寸，覆盖旧样式的独立宽高。 */
+#aiSheet .ai-new,
+#aiSheet .ai-settings{
+  width:29px!important;
+  height:29px!important;
+  min-width:29px!important;
+  min-height:29px!important;
+  max-width:29px!important;
+  max-height:29px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  box-sizing:border-box!important;
+}
+@media(max-width:560px){#aiSheet .ai-new,#aiSheet .ai-settings{width:29px!important;height:29px!important;min-width:29px!important;min-height:29px!important}}

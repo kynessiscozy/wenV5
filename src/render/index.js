@@ -1,0 +1,2 @@
+export { formatAIText, renderSmartAnswer, renderRouteButtons, buildRelatedRoutes, compactAIText, formatStandardAnswer } from './ai.js';
+export { getPersona, getTimeline, getMonthlyAlert, getRiskWarning, calcLayoffRisk, getRelationMode, getSuitableType, getRelationRisks, renderAll, renderZiWeiCard, renderQiMenCard, renderMeiHuaCard, renderBeginnerBrief, organizeMasterReportLayout, switchStructureTab, toggleFullGods, renderQuickRead, _qrCard, buildAISummary, calcRelation, drawCurve, copyReport } from './report.js';

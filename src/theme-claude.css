@@ -1,0 +1,148 @@
+/* ============================================================
+   Claude 风格设计令牌 (Design Tokens)
+   ------------------------------------------------------------
+   两套配色：
+     :root / [data-theme="light"]  → Claude 浅色（米白 + 赭橙）
+     [data-theme="dark"]           → Claude 深色（暖炭灰 + 赭橙）
+   其余样式文件只使用这里的语义变量，不再写死颜色。
+   ============================================================ */
+
+/* 文字大小调节：--font-scale 仅作用于聊天界面 #aiSheet（见 styles.css），
+   故此处不再缩放 html，避免影响全站；:root 仅保留默认值 1 作为兜底。 */
+
+:root,
+[data-theme="light"] {
+  --font-scale: 1;            /* 文字大小调节：缩放因子（0.88~1.40），仅聊天界面生效 */
+  /* 底色 / 表面 */
+  --c-bg:            #faf9f5;   /* 页面底 */
+  --c-bg-2:          #f0eee6;   /* 次级底（侧栏、页脚） */
+  --c-surface:       #ffffff;   /* 卡片 */
+  --c-surface-2:     #f7f6f1;   /* 卡片内嵌块 */
+  --c-surface-3:     #efeee7;   /* hover / 选中 */
+  --c-surface-4:     #e8e6dd;   /* pressed */
+  --c-overlay:       rgba(38, 38, 36, .38);  /* 遮罩 */
+
+  /* 描边 */
+  --c-border:        rgba(20, 20, 19, .10);
+  --c-border-2:      rgba(20, 20, 19, .16);
+  --c-border-3:      rgba(20, 20, 19, .24);
+
+  /* 文字 */
+  --c-text:          #141413;
+  --c-text-2:        #4a4945;   /* AA on --c-bg / --c-surface */
+  --c-text-3:        #6b6a64;
+  --c-text-4:        #86857e;
+  --c-text-hi:       #0f0f0e;   /* 原 #fff 的对位色 */
+  --c-on-accent:     #ffffff;   /* 实心强调色上的文字 */
+
+  /* 强调色 —— Claude 赭橙 */
+  --accent-h: 15;
+  --accent-s: 63%;
+  --accent-l: 59%;
+  --c-accent:        #d97757;
+  --c-accent-hover:  #c2603f;
+  --c-accent-soft:   #f6e9e3;
+  --c-accent-text:   #8f3517;
+
+  /* 语义色 */
+  --c-green:  #4f9d69;
+  --c-red:    #c8503c;
+  --c-orange: #cc7a2f;
+  --c-yellow: #b58a2b;
+  --c-teal:   #3f8a9b;
+  --c-purple: #7d5fa8;
+
+  /* 阴影：Claude 几乎不用重投影 */
+  /* 五行色（浅色底：压低明度保证对比度） */
+  --wx-mu:    #427c30;
+  --wx-huo:   #c25538;
+  --wx-tu:    #a8762a;
+  --wx-jin:   #8a7638;
+  --wx-shui:  #266d92;
+
+  --c-shadow-0:  none;
+  --c-shadow-1:  0 1px 2px rgba(20, 20, 19, .05);
+  --c-shadow-2:  0 2px 8px rgba(20, 20, 19, .07);
+  --c-shadow-3:  0 8px 28px rgba(20, 20, 19, .12);
+
+  /* 圆角 */
+  --c-r-sm: 8px;
+  --c-r:    12px;
+  --c-r-lg: 16px;
+  --c-r-xl: 20px;
+
+  --c-scheme: light;
+}
+
+[data-theme="dark"] {
+  --c-bg:            #262624;
+  --c-bg-2:          #1f1e1d;
+  --c-surface:       #30302e;
+  --c-surface-2:     #35343250;
+  --c-surface-3:     #3a3a37;
+  --c-surface-4:     #43423f;
+  --c-overlay:       rgba(10, 10, 9, .62);
+
+  --c-border:        rgba(245, 244, 238, .11);
+  --c-border-2:      rgba(245, 244, 238, .18);
+  --c-border-3:      rgba(245, 244, 238, .26);
+
+  --c-text:          #f5f4ee;
+  --c-text-2:        rgba(245, 244, 238, .78);
+  --c-text-3:        rgba(245, 244, 238, .60);
+  --c-text-4:        rgba(245, 244, 238, .44);
+  --c-text-hi:       #ffffff;
+  --c-on-accent:     #ffffff;
+
+  --accent-h: 15;
+  --accent-s: 55%;
+  --accent-l: 56%;
+  --c-accent:        #d97757;
+  --c-accent-hover:  #e08a6d;
+  --c-accent-soft:   rgba(217, 119, 87, .16);
+  --c-accent-text:   #f2ab90;
+
+  --c-green:  #6cbf85;
+  --c-red:    #e0705a;
+  --c-orange: #e0964a;
+  --c-yellow: #d8b45c;
+  --c-teal:   #6fb3c4;
+  --c-purple: #a78bd0;
+
+  /* 五行色（深色底：提高明度） */
+  --wx-mu:    #7fc45f;
+  --wx-huo:   #e87a5f;
+  --wx-tu:    #d9a34e;
+  --wx-jin:   #cfc08a;
+  --wx-shui:  #63b6dc;
+
+  --c-shadow-0:  none;
+  --c-shadow-1:  0 1px 2px rgba(0, 0, 0, .22);
+  --c-shadow-2:  0 2px 10px rgba(0, 0, 0, .28);
+  --c-shadow-3:  0 10px 34px rgba(0, 0, 0, .42);
+
+  --c-scheme: dark;
+}
+
+/* 跟随系统（用户未手动选择时由 JS 写入 data-theme，此处兜底） */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --c-bg: #262624; --c-bg-2: #1f1e1d;
+    --c-surface: #30302e; --c-surface-2: rgba(53,52,50,.6);
+    --c-surface-3: #3a3a37; --c-surface-4: #43423f;
+    --c-overlay: rgba(10,10,9,.62);
+    --c-border: rgba(245,244,238,.11);
+    --c-border-2: rgba(245,244,238,.18);
+    --c-border-3: rgba(245,244,238,.26);
+    --c-text: #f5f4ee;
+    --c-text-2: rgba(245,244,238,.78);
+    --c-text-3: rgba(245,244,238,.60);
+    --c-text-4: rgba(245,244,238,.44);
+    --c-text-hi: #ffffff;
+    --c-accent-soft: rgba(217,119,87,.16);
+    --c-accent-text: #f2ab90;
+    --wx-mu: #7fc45f; --wx-huo: #e87a5f; --wx-tu: #d9a34e;
+    --wx-jin: #cfc08a; --wx-shui: #63b6dc;
+    --c-scheme: dark;
+  }
+}
