@@ -3,10 +3,34 @@ import { getTodayGZ } from '../engines/bazi.js';
 import { toolPageShell, setToolOutput } from './shared.js';
 
 function closeToolPage(){document.getElementById('toolModal').classList.remove('open');if(window._returnToAI){window._returnToAI=false;setTimeout(()=>openAsk(),120);}}
+
+/* tools2 专属工具：旧版 center.js 无法渲染，需委托给 tools2。
+   这些工具（answerbook / export / calendar）在 tools2 加载完成前
+   被点击时，显示加载提示并轮询等待 tools2 就绪后自动打开。
+   避免落入下方 else 分支误导向「八字合盘」页面。 */
+const TOOLS2_ONLY=['answerbook','export','calendar'];
+function delegateToTools2(type){
+  const modal=document.getElementById('toolModal'),out=document.getElementById('toolModalContent');
+  if(!modal||!out)return;
+  if(window._tools2Ready){window.openToolPage(type);return;}
+  out.innerHTML='<div class="tool-page-shell"><div style="text-align:center;padding:48px 20px;color:var(--c-text-3);font-size:.9em">工具加载中…</div></div>';
+  modal.classList.add('open');
+  let tries=0;
+  const t=setInterval(()=>{
+    tries++;
+    if(window._tools2Ready){clearInterval(t);window.openToolPage(type);}
+    else if(tries>40){clearInterval(t);out.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--c-text-3);font-size:.9em">工具加载失败，请刷新页面重试。</div>';}
+  },50);
+}
+
 function openToolPage(type){
   window._activeTool=type;
-  const d=getCtx(),modal=document.getElementById('toolModal'),out=document.getElementById('toolModalContent');
-  if(!d||!modal||!out)return;
+  const modal=document.getElementById('toolModal'),out=document.getElementById('toolModalContent');
+  if(!modal||!out)return;
+  /* tools2 专属工具委托（不需要命盘上下文） */
+  if(TOOLS2_ONLY.includes(type)){delegateToTools2(type);return;}
+  const d=getCtx();
+  if(!d)return;
   const av={color:d.wx.ys==='木'?'青绿':d.wx.ys==='火'?'红紫':d.wx.ys==='土'?'黄棕':d.wx.ys==='金'?'白银':'黑蓝',dir:d.wx.ys==='木'?'东方':d.wx.ys==='火'?'南方':d.wx.ys==='土'?'中央':d.wx.ys==='金'?'西方':'北方'};
   const data=(items,note='')=>'<div class="tool-page-data">'+items.map(x=>'<div><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('')+'</div>'+(note?'<div class="tool-page-note">'+note+'</div>':'');
   if(type==='wealth')out.innerHTML=toolPageShell('财运与理财罗盘','命盘趋势 + 你的现金流输入，生成可执行的理财优先级。',data([['当前财运',d.ws+' / 100'],['财富节奏',d.ws>=70?'可争取增收与谈价':'以稳健积累为主'],['命盘取向',d.wx.st?'分散配置，避免追高':'先建立储蓄与安全垫'],['数据边界','不构成投资建议']])+'<div class="tool-form-row"><input id="wealthIncome" type="number" placeholder="月到手收入"><input id="wealthCost" type="number" placeholder="月固定支出"><input id="wealthCash" type="number" placeholder="现有储蓄"></div><div class="tool-form-row"><button class="tool-primary" onclick="runWealthTool()">生成现金流方案</button></div><div class="tool-output" id="toolOutput"></div>');
