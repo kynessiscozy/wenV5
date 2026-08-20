@@ -5,12 +5,13 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    minify: 'esbuild',
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         /* 按目录分包：主包只保留启动路径，
            引擎 / AI / 渲染 / 工具各自成 chunk，便于并行加载与缓存复用。
-           tools2 经 main.js 的动态 import() 自动独立成异步 chunk。 */
+           tools2 经 main.js 的动态 import() 自动独立成异步 chunk。
+           Vite 8 用 Rolldown 替代 Rollup，manualChunks 函数形式已废弃，
+           改用 codeSplitting 分组规则。 */
         manualChunks(id) {
           if (id.includes('/src/engines/')) return 'engines';
           if (id.includes('/src/ai/')) return 'ai';
