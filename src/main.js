@@ -89,6 +89,118 @@ initNavigationUI();
 initAISettings();
 initFontSize();
 
+/* ============================================================
+   全局函数暴露：index.html 和动态生成的 onclick 需要全局访问
+   ES module 内的函数默认不挂载到 window，
+   但 inline onclick="fn()" 只能调用 window.fn。
+   ============================================================ */
+(function(){
+  // 1. 已存在但未暴露的函数（来自 import 或本模块定义）
+  window.setGlassMode=setGlassMode;
+  window.jumpTo=jumpTo;
+  window.newAskChat=newAskChat;
+  window.doAskCustom=doAskCustom;
+  window.closeRq=closeRq;
+  window.showRiQian=showRiQian;
+  window.focusSwitchTab=focusSwitchTab;
+  window.calcLayoffRisk=calcLayoffRisk;
+  window.calcRelation=calcRelation;
+  window.switchStructureTab=switchStructureTab;
+  window.toggleFullGods=toggleFullGods;
+  window.setUserMode=setUserMode;
+  window.toggleUserMode=toggleUserMode;
+
+  // 2. 旧版工具函数（tools/ 模块，已被 tools2 接管但仍可能被 onclick 引用）
+  window.openDecisionTool=openDecisionTool;
+  window.runDecisionTool=runDecisionTool;
+  window.startBreathTool=startBreathTool;
+  window.runWealthTool=runWealthTool;
+  window.runCareerTool=runCareerTool;
+  window.runDateTool=runDateTool;
+  window.runStyleTool=runStyleTool;
+  window.runLayoffTool=runLayoffTool;
+  window.runDailyTool=runDailyTool;
+  window.runNameTool=runNameTool;
+  window.runOracleTool=runOracleTool;
+  window.runLotteryTool=runLotteryTool;
+  window.runZodiacTool=runZodiacTool;
+  window.runRelationTool=runRelationTool;
+
+  // 3. 之前已暴露的函数（保持不变）
+  window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.confirmSaveProfile=confirmSaveProfile;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){document.getElementById('aboutModal').classList.add('open');};window.closeAboutModal=function(){document.getElementById('aboutModal').classList.remove('open');};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};
+
+  // 4. 缺失函数：分享卡片（报告卡片右上角分享按钮）
+  window.TJShareReport=function(){
+    const d=window._ctx||window._baziData||{};if(!d.Y)return showToast('请先完成推演');
+    const b=d.Y.g+d.Y.z;
+    const cv=renderShareCard({
+      title:b+' · '+d.b.sx+'年',
+      sub:d.b?'日主 '+d.D.g+d.D.z:'',
+      rows:[
+        {k:'命盘',v:b+' '+d.M.g+d.M.z+' '+d.D.g+d.D.z+' '+d.H.g+d.H.z},
+        {k:'五行',v:d.wx?.c?Object.entries(d.wx.c).map(([k,v])=>k+Math.round(v)).join(' '):''},
+        {k:'用神',v:d.wx?.ys||''},
+      ],
+      foot:'问问大师 · '+new Date().toLocaleDateString('zh-CN')
+    });
+    if(cv)exportShareCard(cv,'问问大师_命盘摘要');
+  };
+  window.TJShareRiQian=function(){
+    const d=window._ctx||window._baziData||{};if(!d.D)return showToast('请先完成推演');
+    const cv=renderShareCard({
+      title:'今日建议',
+      sub:d.D.g+d.D.z+'日 · '+(d.lnSS||''),
+      rows:[
+        {k:'宜',v:d._advYiJi?.yi?.join(' ')||''},
+        {k:'忌',v:d._advYiJi?.ji?.join(' ')||''},
+      ],
+      foot:'问问大师 · '+new Date().toLocaleDateString('zh-CN')
+    });
+    if(cv)exportShareCard(cv,'问问大师_今日建议');
+  };
+  window.TJShareWeek=function(){
+    const d=window._ctx||window._baziData||{};if(!d.D)return showToast('请先完成推演');
+    const cv=renderShareCard({
+      title:'本周运势',
+      sub:d.week?d.week.start+' – '+d.week.end:'',
+      rows:[
+        {k:'顺利',v:d.week?.best?.label||''},
+        {k:'多留余量',v:d.week?.worst?.label||''},
+      ],
+      foot:'问问大师 · '+new Date().toLocaleDateString('zh-CN')
+    });
+    if(cv)exportShareCard(cv,'问问大师_本周运势');
+  };
+
+  // 5. 缺失函数：速读卡折叠/展开
+  window.TJToggleQuickRead=function(btn){
+    const card=btn.closest('.qr-card');if(!card)return;
+    const body=card.querySelector('.qr-body');if(!body)return;
+    const expanded=btn.getAttribute('aria-expanded')==='true';
+    btn.setAttribute('aria-expanded',!expanded);
+    card.classList.toggle('collapsed',expanded);
+    body.style.maxHeight=expanded?'0':body.scrollHeight+'px';
+  };
+
+  // 6. 缺失函数：档案菜单切换
+  window.TJToggleProfileMenu=function(){
+    const menu=document.getElementById('p2ProfileMenu');
+    const btn=document.getElementById('p2ProfileBtn');
+    if(!menu)return;
+    const isOpen=menu.classList.toggle('open');
+    if(btn)btn.setAttribute('aria-expanded',isOpen?'true':'false');
+    // 如果菜单打开且内容为空，填充档案列表
+    if(isOpen&&!menu.innerHTML.trim()){
+      const profiles=[];try{const raw=localStorage.getItem('tj_profiles');if(raw)profiles.push(...JSON.parse(raw))}catch(e){}
+      if(profiles.length===0){
+        menu.innerHTML='<div class="profile-empty">还没有保存的档案</div>';
+      }else{
+        menu.innerHTML=profiles.map((p,i)=>`<button class="profile-item" onclick="loadProfile(${i})">${p.name||'未命名'}</button>`).join('');
+      }
+    }
+  };
+})();
+
 async function calc(isDemoPreview=false){
   const bd=document.getElementById('bDate').value;if(!bd)return showToast('请选择出生日期');
   const timeStr=document.getElementById('bTime').value||'09:00';const[hh,mm]=timeStr.split(':').map(Number);
@@ -406,7 +518,6 @@ async function handleImport(input){const file=input.files[0];if(!file)return;try
   });
   window.rdd=rdd;window.sel=sel;
 })();;
-(function(){window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.confirmSaveProfile=confirmSaveProfile;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.setUserMode=setUserMode;window.toggleUserMode=toggleUserMode;window.openAboutModal=function(){document.getElementById('aboutModal').classList.add('open');};window.closeAboutModal=function(){document.getElementById('aboutModal').classList.remove('open');};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};})();
 
 /* 首页汉堡菜单 */
 function toggleHomeMenu(force){
