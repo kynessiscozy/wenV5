@@ -79,7 +79,8 @@ import {
 import { initFontSize } from './font-size.js';
 import { initWeather, getWxGeo } from './ui/weather.js';
 import { initOnboarding } from './onboarding.js';
-import { bootstrap as bootstrapTools2 } from './tools2/index.js';
+/* tools2 改为动态 import（见文件末尾 bootstrap 处）：
+   工具系统体积大且非首屏必需，独立成异步 chunk，缩小主包。 */
 
 initTheme();
 initWeather();
@@ -104,7 +105,7 @@ async function calc(isDemoPreview=false){
   function doCompute(){
     const resolved=resolveBirthDateTime(y,m,d,hh,mm,useTrueSolar,city.o,city.tz);
     const b=mkBazi(resolved.year,resolved.month,resolved.day,resolved.hourZhi,resolved.hour,resolved.minute,resolved.instant);
-    const wx=mkWx(b),ss=mkSs(b),dy=mkDy(b,gen,y),ln=mkLn(CURR_YEAR),zw=mkZw(b),qm=mkQm(b),mh=mkMh(b),si=mkSi(b);
+    const wx=mkWx(b),ss=mkSs(b),dy=mkDy(b,gen,y,m,d),ln=mkLn(CURR_YEAR),zw=mkZw(b),qm=mkQm(b),mh=mkMh(b),si=mkSi(b);
     const shensha=mkShenSha(b);const liuyue=getLiuYue(CURR_YEAR);
     b._meta={hourZhi:resolved.hourZhi,useTrueSolar:resolved.note?true:false,by:y,bm:m,bd:d};
     const _input={by:y,bm:m,bd:d,bd_raw:bd,timeStr,bp,gen,q,useTrueSolar,resultStyle:resultStyleId,resultStyleLabel:resultStyle.label};
@@ -342,7 +343,7 @@ function saveCurrentProfile(name){
 async function renderProfiles(){try{const list=await dbGetAll();const zone=document.getElementById('profileZone');const grid=document.getElementById('profileGrid');const empty=document.getElementById('profileEmpty');const recentZone=document.getElementById('recentZone');const recentGrid=document.getElementById('recentGrid');const recentEmpty=document.getElementById('recentEmpty');const profileZoneEmpty=document.getElementById('profileZoneEmpty');
   if(!list.length){if(grid)grid.innerHTML='';if(empty)empty.style.display='none';if(zone)zone.style.display='none';if(recentZone)recentZone.style.display='none';if(recentEmpty)recentEmpty.style.display='block';if(profileZoneEmpty)profileZoneEmpty.style.display='block';return;}
   if(empty)empty.style.display='none';if(zone)zone.style.display='block';if(recentEmpty)recentEmpty.style.display='none';if(profileZoneEmpty)profileZoneEmpty.style.display='none';
-  if(recentZone){recentZone.style.display='block';recentGrid.innerHTML=list.slice(0,3).map(p=>{const city=CD[p.bp]||{n:'未知'};const _bd=(p.bd||'1990-1-1').split('-').map(Number);const _b=mkBazi(_bd[0],_bd[1],_bd[2],0);const dg=_b.D.g;const dy=mkDy(_b,p.gen||'male',_bd[0]);const age=TJ.calcAge(_bd[0],_bd[1]||1,_bd[2]||1);const cDy=TJ.findDaYun(dy,age)||dy.ds[0];const cLn=mkLn(CURR_YEAR);let stars='★★★☆☆';try{const wx=mkWx(_b),ss=mkSs(_b);const sc=calcYearScores(_b,wx,ss,SS[dg][cDy.g],SS[dg][cLn.g],null,cDy,cLn);const avgv=(sc.career+sc.wealth+sc.love+sc.health)/4;const n=Math.max(1,Math.min(5,Math.round(avgv/20)));stars='★'.repeat(n)+'☆'.repeat(5-n);}catch(e){}return`<div class="r-card" onclick="loadProfile(${p.id})"><div class="r-ava">${(p.name||'未').charAt(0)}</div><div class="r-info"><div class="r-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div><div class="r-meta">当前大运：${cDy.g}${cDy.z} · ${CURR_YEAR}运势：${stars}<br>最近关注：${p.q||'综合'}</div></div><div class="r-arrow">›</div></div>`;}).join('');}
+  if(recentZone){recentZone.style.display='block';recentGrid.innerHTML=list.slice(0,3).map(p=>{const city=CD[p.bp]||{n:'未知'};const _bd=(p.bd||'1990-1-1').split('-').map(Number);const _b=mkBazi(_bd[0],_bd[1],_bd[2],0);const dg=_b.D.g;const dy=mkDy(_b,p.gen||'male',_bd[0],_bd[1]||1,_bd[2]||1);const age=TJ.calcAge(_bd[0],_bd[1]||1,_bd[2]||1);const cDy=TJ.findDaYun(dy,age)||dy.ds[0];const cLn=mkLn(CURR_YEAR);let stars='★★★☆☆';try{const wx=mkWx(_b),ss=mkSs(_b);const sc=calcYearScores(_b,wx,ss,SS[dg][cDy.g],SS[dg][cLn.g],null,cDy,cLn);const avgv=(sc.career+sc.wealth+sc.love+sc.health)/4;const n=Math.max(1,Math.min(5,Math.round(avgv/20)));stars='★'.repeat(n)+'☆'.repeat(5-n);}catch(e){}return`<div class="r-card" onclick="loadProfile(${p.id})"><div class="r-ava">${(p.name||'未').charAt(0)}</div><div class="r-info"><div class="r-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div><div class="r-meta">当前大运：${cDy.g}${cDy.z} · ${CURR_YEAR}运势：${stars}<br>最近关注：${p.q||'综合'}</div></div><div class="r-arrow">›</div></div>`;}).join('');}
   if(grid)grid.innerHTML=list.slice(0,8).map(p=>{const city=CD[p.bp]||{n:'未知'};const d=new Date(p.updatedAt);return`<div class="r-card" onclick="loadProfile(${p.id})"><div class="r-ava">${(p.name||'未').charAt(0)}</div><div class="r-info"><div class="r-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div><div class="r-meta">${p.bd||''} · ${city.n} · ${p.gen==='male'?'男':'女'}${p.useTrueSolar?'·真':''}</div></div><div style="position:absolute;top:6px;right:8px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9em;color:var(--c-text-4);cursor:pointer;transition:all .15s;z-index:2" onclick="event.stopPropagation();deleteProfile(${p.id})">×</div></div>`;}).join('');
 }catch(e){console.log('renderProfiles',e);}}
 async function loadProfile(id){try{const list=await dbGetAll();const p=list.find(x=>x.id===id);if(!p)return;document.getElementById('bDate').value=p.bd||'';document.getElementById('bTime').value=p.timeStr||'09:00';document.getElementById('bPlace').value=p.bp||'';document.getElementById('cInp').value=(CD[p.bp]||{n:''}).n;document.getElementById('bGen').value=p.gen||'male';const styleEl=document.getElementById('bResultStyle');if(styleEl){styleEl.value=p.resultStyle||'companion';document.querySelectorAll('.result-style-option').forEach(btn=>{const on=btn.dataset.style===styleEl.value;btn.classList.toggle('active',on);btn.setAttribute('aria-checked',on?'true':'false');});const loadedStyle=getResultStyle(styleEl.value);const loadedHint=document.getElementById('resultStyleHint');if(loadedHint)loadedHint.textContent=loadedStyle.intro;}document.getElementById('bQ').value=p.q||'';const sw=document.getElementById('swTrueSolar');if(sw){if(p.useTrueSolar)sw.classList.add('on');else sw.classList.remove('on');document.getElementById('swText').textContent=(sw.classList.contains('on')?'开启':'关闭')+'真太阳时（按出生地经度精确换算时辰）';}const chips=document.getElementById('qChips');if(chips){chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.q===p.q));}calc();}catch(e){console.log('loadProfile',e);}}
@@ -2912,9 +2913,12 @@ if('serviceWorker' in navigator && /^https:/.test(location.protocol)){
 
 /* ============================================================
    tools2 · 工具系统 v2 接管（必须位于所有旧 IIFE 之后）
-   注册已在模块加载时完成，这里显式接管全局入口。
+   动态 import：注册在模块加载时完成，加载后立即接管全局入口。
+   加载完成前若用户点击工具，仍由上方旧版 openToolPage 兜底。
    ============================================================ */
-bootstrapTools2();
+import('./tools2/index.js')
+  .then(m=>m.bootstrap())
+  .catch(e=>console.error('[tools2] 加载失败，继续使用旧版工具页',e));
 
 /* 术语解释：选中文字 → 右键/长按菜单（取消自动下划线标注） */
 installSelectionGloss();
