@@ -30,7 +30,31 @@ function jqDate(y,n){
   // For years beyond the table, use formula
   return solarTermDate(y,n);
 }
-function getMonthPillar(year,month,day){let yp=year;const lc=jqDate(year,0);if(!lc)return{mi:2,yp:year};if(month<lc[0]||(month===lc[0]&&day<lc[1]))yp=year-1;let mi=10;for(let i=11;i>=0;i--){const j=jqDate(year,i);if(!j)continue;if(month>j[0]||(month===j[0]&&day>=j[1])){mi=i;break;}}return{mi,yp};}
+function getMonthPillar(year,month,day){
+  // 月令按节气顺序判断：立春至大雪对应 0..10，
+  // 大雪至次年小寒为子月（10），小寒至立春为丑月（11）。
+  // 不能从 11 倒序比较，因为小寒落在下一年的 1 月，会发生跨年误判。
+  let yp=year;
+  const lichun=jqDate(year,0);
+  if(!lichun)return{mi:2,yp:year};
+  const beforeLichun=month<lichun[0]||(month===lichun[0]&&day<lichun[1]);
+  if(beforeLichun){
+    yp=year-1;
+    const prevXiaohan=jqDate(year-1,11);
+    const afterPrevXiaohan=prevXiaohan&&(
+      month>prevXiaohan[0]||(month===prevXiaohan[0]&&day>=prevXiaohan[1])
+    );
+    return{mi:afterPrevXiaohan?11:10,yp};
+  }
+  let mi=10;
+  for(let i=0;i<=10;i++){
+    const j=jqDate(year,i);
+    if(!j)continue;
+    if(month>j[0]||(month===j[0]&&day>=j[1]))mi=i;
+    else break;
+  }
+  return{mi,yp};
+}
 function trueSolarTime(date,lon,useDST){let d=new Date(date);if(useDST&&d.getFullYear()>=1986&&d.getFullYear()<=1991){const m=d.getMonth()+1;if(m>=4&&m<=9)d=new Date(d.getTime()-3600000);}const offsetMin=(lon-120)*4;const doy=Math.floor((d-new Date(d.getFullYear(),0,0))/86400000);const B=2*Math.PI*(doy-1)/365;const eot=229.18*(0.000075+0.001868*Math.cos(B)-0.032077*Math.sin(B)-0.014615*Math.cos(2*B)-0.040849*Math.sin(2*B));const totalOffset=offsetMin+eot;return new Date(d.getTime()+totalOffset*60000);}
 function resolveBirthDateTime(y,m,d,hh,mm,useTrueSolar,lon){let dt=new Date(y,m-1,d,hh,mm,0);let note='';if(useTrueSolar&&lon){dt=trueSolarTime(dt.getTime(),lon,true);note='已启用真太阳时换算（经度'+lon+'°）';}let by=dt.getFullYear(),bm=dt.getMonth()+1,bd=dt.getDate();let ch=dt.getHours(),cmin=dt.getMinutes();let totalMin=ch*60+cmin;let hourZhi;if(totalMin>=23*60){hourZhi=0;const next=new Date(Date.UTC(by,bm-1,bd+1));by=next.getUTCFullYear();bm=next.getUTCMonth()+1;bd=next.getUTCDate();}else if(totalMin<60){hourZhi=0;}else{hourZhi=Math.floor((totalMin-60)/120)+1;}return{year:by,month:bm,day:bd,hourZhi,note};}
 function getDayPillarIndex(y,m,d){const anchor=new Date(Date.UTC(2000,0,1));const target=new Date(Date.UTC(y,m-1,d));const diff=Math.round((target-anchor)/86400000);return((54+diff)%60+60)%60;}

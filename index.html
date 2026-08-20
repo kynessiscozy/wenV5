@@ -30,6 +30,16 @@
 <link rel="stylesheet" href="/src/claude-ui.css">
 <link rel="stylesheet" href="/src/claude-refine.css">
 <link rel="stylesheet" href="/src/enhance.css">
+<style>
+.result-style-heading{display:flex;align-items:baseline;gap:8px;margin-bottom:7px;min-width:0}
+.result-style-label{font-size:.72em;font-weight:500;color:var(--c-text-2);white-space:nowrap}
+.result-style-heading .result-style-hint{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result-style-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
+.result-style-option{display:flex;align-items:center;justify-content:center;min-height:38px;width:100%;padding:10px 4px;border:1px solid var(--c-border-2);border-radius:12px;background:var(--c-surface-3);color:var(--c-text-hi);font:600 .82em var(--sf);cursor:pointer;appearance:none;-webkit-appearance:none}
+.result-style-option.active{border-color:var(--ac);background:var(--ac1);box-shadow:0 0 0 2px var(--ac2)}
+@media(max-width:520px){.result-style-options{gap:5px}.result-style-option{font-size:.72em;letter-spacing:0;white-space:nowrap}}
+@media(max-width:360px){.result-style-options{gap:3px}.result-style-option{font-size:.66em}}
+</style>
 </head>
 <body>
 
@@ -125,7 +135,7 @@
       <div class="home-hero anim-in d1">
         <div class="home-hero-copy">
           <h1 class="home-hero-title" style="font-weight:800">问问大师</h1>
-          <p class="home-hero-sub">八字推演，辅助决策</p>
+          <p class="home-hero-sub">从命盘看倾向，把选择落到行动</p>
         </div>
         <div class="home-hero-actions">
           <button class="home-cta" id="homeCtaMain" type="button" onclick="TJOpenForm()">输入信息</button>
@@ -148,6 +158,7 @@
         <div class="fd"><label>出生时间</label><input type="time" id="bTime" value="09:00" style="font-family:var(--sf)"></div>
         <div class="fd"><label>出生地点</label><div class="cw"><input type="text" id="cInp" placeholder="搜索城市…" autocomplete="off" value="上海"><input type="hidden" id="bPlace" value="shanghai"><div class="cdd" id="cDD"></div></div></div>
         <div class="fd"><label>性别</label><select id="bGen"><option value="male">男（乾造）</option><option value="female">女（坤造）</option></select></div>
+        <div class="fd full result-style-field"><div class="result-style-heading"><div class="result-style-label">选择你希望的风格</div><small class="result-style-hint" id="resultStyleHint">先接住当下感受，再一起把问题拆小。</small></div><input type="hidden" id="bResultStyle" value="companion"><div class="result-style-options" id="resultStyleOptions" role="radiogroup" aria-label="结果风格"><button type="button" class="result-style-option active" data-style="companion" role="radio" aria-checked="true" onclick="selectResultStyle('companion')">陪伴型</button><button type="button" class="result-style-option" data-style="rigorous" role="radio" aria-checked="false" onclick="selectResultStyle('rigorous')">严谨型</button><button type="button" class="result-style-option" data-style="traditional" role="radio" aria-checked="false" onclick="selectResultStyle('traditional')">传统型</button><button type="button" class="result-style-option" data-style="advisory" role="radio" aria-checked="false" onclick="selectResultStyle('advisory')">建议型</button></div></div>
       </div>
       <input type="hidden" id="bQ" value="">
       <div class="switch-row" style="margin-top:6px"><div class="switch" id="swTrueSolar" onclick="this.classList.toggle('on');document.getElementById('swText').textContent=(this.classList.contains('on')?'开启':'关闭')+'真太阳时（按出生地经度精确换算时辰）'"></div><span id="swText">关闭真太阳时（按出生地经度精确换算时辰）</span></div>
@@ -383,5 +394,8 @@
 </script>
 
 <script type="module" src="/src/main.js"></script>
+</body>
+</html>
+>
 </body>
 </html>

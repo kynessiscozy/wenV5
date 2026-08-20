@@ -35,6 +35,25 @@ import { initArmillary } from './fx/armillary.js';
 import { initArmillaryAugust } from './fx/armillary-august.js';
 import { burstToArmillary } from './fx/burst.js';
 import { TJX } from './state/tjx.js';
+import { getResultStyle } from './state/result-style.js';
+
+window.selectResultStyle=function(value){
+  const hidden=document.getElementById('bResultStyle');
+  const hint=document.getElementById('resultStyleHint');
+  if(hidden)hidden.value=value;
+  document.querySelectorAll('.result-style-option').forEach(btn=>{
+    const active=btn.dataset.style===value;
+    btn.classList.toggle('active',active);
+    btn.setAttribute('aria-checked',active?'true':'false');
+  });
+  if(hint)hint.textContent=getResultStyle(value).intro;
+  window._formDirty=true;
+};
+// 捕获阶段兜底：即使局部表单监听未初始化，按钮仍能切换风格。
+document.addEventListener('click',e=>{
+  const btn=e.target.closest?.('.result-style-option');
+  if(btn)window.selectResultStyle(btn.dataset.style);
+},true);
 import { calcYearScores, calcPattern } from './state/scoring.js';
 import { buildContext } from './state/context.js';
 import {
@@ -74,6 +93,8 @@ async function calc(isDemoPreview=false){
   const timeStr=document.getElementById('bTime').value||'09:00';const[hh,mm]=timeStr.split(':').map(Number);
   const bp=document.getElementById('bPlace').value||'beijing';const gen=document.getElementById('bGen').value;
   const q=document.getElementById('bQ').value;
+  const resultStyleId=document.getElementById('bResultStyle')?.value||'companion';
+  const resultStyle=getResultStyle(resultStyleId);
   const useTrueSolar=document.getElementById('swTrueSolar').classList.contains('on');
   const[y,m,d]=bd.split('-').map(Number);const city=CD[bp]||{n:'未知',o:116.4,a:39.9};
   const formModal=document.getElementById('formModal');
@@ -86,7 +107,7 @@ async function calc(isDemoPreview=false){
     const wx=mkWx(b),ss=mkSs(b),dy=mkDy(b,gen,y),ln=mkLn(CURR_YEAR),zw=mkZw(b),qm=mkQm(b),mh=mkMh(b),si=mkSi(b);
     const shensha=mkShenSha(b);const liuyue=getLiuYue(CURR_YEAR);
     b._meta={hourZhi:resolved.hourZhi,useTrueSolar:resolved.note?true:false,by:y,bm:m,bd:d};
-    const _input={by:y,bm:m,bd:d,bd_raw:bd,timeStr,bp,gen,q,useTrueSolar};
+    const _input={by:y,bm:m,bd:d,bd_raw:bd,timeStr,bp,gen,q,useTrueSolar,resultStyle:resultStyleId,resultStyleLabel:resultStyle.label};
     const _preCtx=buildContext({b,wx,ss,dy,ln,zw,qm,mh,si,shensha,liuyue,P:null,gen,q,city,input:_input});
     window._ctx=_preCtx;window._baziData=_preCtx;window._reportData=_preCtx;
     window._formDirty=false; // 已推演应用，表单修改视为已保存
@@ -315,7 +336,7 @@ function saveCurrentProfile(name){
   const input=d&&(d._input||d.input);
   if(!d||!input)return Promise.reject('无当前命盘数据');
   // 仅持久化"原始输入"，避免存入巨大对象
-  const rec={bd:input.bd_raw||input.bd,timeStr:input.timeStr,bp:input.bp,gen:input.gen,q:input.q,useTrueSolar:!!input.useTrueSolar,name,createdAt:Date.now(),updatedAt:Date.now()};
+  const rec={bd:input.bd_raw||input.bd,timeStr:input.timeStr,bp:input.bp,gen:input.gen,q:input.q,useTrueSolar:!!input.useTrueSolar,resultStyle:input.resultStyle||'companion',name,createdAt:Date.now(),updatedAt:Date.now()};
   return dbPut(rec);
 }
 async function renderProfiles(){try{const list=await dbGetAll();const zone=document.getElementById('profileZone');const grid=document.getElementById('profileGrid');const empty=document.getElementById('profileEmpty');const recentZone=document.getElementById('recentZone');const recentGrid=document.getElementById('recentGrid');const recentEmpty=document.getElementById('recentEmpty');const profileZoneEmpty=document.getElementById('profileZoneEmpty');
@@ -324,7 +345,7 @@ async function renderProfiles(){try{const list=await dbGetAll();const zone=docum
   if(recentZone){recentZone.style.display='block';recentGrid.innerHTML=list.slice(0,3).map(p=>{const city=CD[p.bp]||{n:'未知'};const _bd=(p.bd||'1990-1-1').split('-').map(Number);const _b=mkBazi(_bd[0],_bd[1],_bd[2],0);const dg=_b.D.g;const dy=mkDy(_b,p.gen||'male',_bd[0]);const age=TJ.calcAge(_bd[0],_bd[1]||1,_bd[2]||1);const cDy=TJ.findDaYun(dy,age)||dy.ds[0];const cLn=mkLn(CURR_YEAR);let stars='★★★☆☆';try{const wx=mkWx(_b),ss=mkSs(_b);const sc=calcYearScores(_b,wx,ss,SS[dg][cDy.g],SS[dg][cLn.g],null,cDy,cLn);const avgv=(sc.career+sc.wealth+sc.love+sc.health)/4;const n=Math.max(1,Math.min(5,Math.round(avgv/20)));stars='★'.repeat(n)+'☆'.repeat(5-n);}catch(e){}return`<div class="r-card" onclick="loadProfile(${p.id})"><div class="r-ava">${(p.name||'未').charAt(0)}</div><div class="r-info"><div class="r-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div><div class="r-meta">当前大运：${cDy.g}${cDy.z} · ${CURR_YEAR}运势：${stars}<br>最近关注：${p.q||'综合'}</div></div><div class="r-arrow">›</div></div>`;}).join('');}
   if(grid)grid.innerHTML=list.slice(0,8).map(p=>{const city=CD[p.bp]||{n:'未知'};const d=new Date(p.updatedAt);return`<div class="r-card" onclick="loadProfile(${p.id})"><div class="r-ava">${(p.name||'未').charAt(0)}</div><div class="r-info"><div class="r-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div><div class="r-meta">${p.bd||''} · ${city.n} · ${p.gen==='male'?'男':'女'}${p.useTrueSolar?'·真':''}</div></div><div style="position:absolute;top:6px;right:8px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9em;color:var(--c-text-4);cursor:pointer;transition:all .15s;z-index:2" onclick="event.stopPropagation();deleteProfile(${p.id})">×</div></div>`;}).join('');
 }catch(e){console.log('renderProfiles',e);}}
-async function loadProfile(id){try{const list=await dbGetAll();const p=list.find(x=>x.id===id);if(!p)return;document.getElementById('bDate').value=p.bd||'';document.getElementById('bTime').value=p.timeStr||'09:00';document.getElementById('bPlace').value=p.bp||'';document.getElementById('cInp').value=(CD[p.bp]||{n:''}).n;document.getElementById('bGen').value=p.gen||'male';document.getElementById('bQ').value=p.q||'';const sw=document.getElementById('swTrueSolar');if(sw){if(p.useTrueSolar)sw.classList.add('on');else sw.classList.remove('on');document.getElementById('swText').textContent=(sw.classList.contains('on')?'开启':'关闭')+'真太阳时（按出生地经度精确换算时辰）';}const chips=document.getElementById('qChips');if(chips){chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.q===p.q));}calc();}catch(e){console.log('loadProfile',e);}}
+async function loadProfile(id){try{const list=await dbGetAll();const p=list.find(x=>x.id===id);if(!p)return;document.getElementById('bDate').value=p.bd||'';document.getElementById('bTime').value=p.timeStr||'09:00';document.getElementById('bPlace').value=p.bp||'';document.getElementById('cInp').value=(CD[p.bp]||{n:''}).n;document.getElementById('bGen').value=p.gen||'male';const styleEl=document.getElementById('bResultStyle');if(styleEl){styleEl.value=p.resultStyle||'companion';document.querySelectorAll('.result-style-option').forEach(btn=>{const on=btn.dataset.style===styleEl.value;btn.classList.toggle('active',on);btn.setAttribute('aria-checked',on?'true':'false');});const loadedStyle=getResultStyle(styleEl.value);const loadedHint=document.getElementById('resultStyleHint');if(loadedHint)loadedHint.textContent=loadedStyle.intro;}document.getElementById('bQ').value=p.q||'';const sw=document.getElementById('swTrueSolar');if(sw){if(p.useTrueSolar)sw.classList.add('on');else sw.classList.remove('on');document.getElementById('swText').textContent=(sw.classList.contains('on')?'开启':'关闭')+'真太阳时（按出生地经度精确换算时辰）';}const chips=document.getElementById('qChips');if(chips){chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.q===p.q));}calc();}catch(e){console.log('loadProfile',e);}}
 async function deleteProfile(id){try{await dbDel(id);renderProfiles();}catch(e){console.log('deleteProfile',e);}}
 function openSaveModal(){document.getElementById('saveModal').classList.add('open');const n=document.getElementById('saveName');n.value='';n.focus();}
 function closeSaveModal(){document.getElementById('saveModal').classList.remove('open');}
@@ -332,13 +353,58 @@ function confirmSaveProfile(){const name=document.getElementById('saveName').val
 async function exportProfiles(){try{const list=await dbGetAll();const blob=new Blob([JSON.stringify(list,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='问问大师档案_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}catch(e){showToast('导出失败');}}
 async function handleImport(input){const file=input.files[0];if(!file)return;try{const text=await file.text();const arr=JSON.parse(text);if(!Array.isArray(arr))throw new Error('格式错误');let count=0;for(const p of arr){if(p.bd&&p.bp&&p.gen){delete p.id;p.updatedAt=Date.now();await dbPut(p);count++;}}renderProfiles();showToast(`成功导入 ${count} 条档案`);}catch(e){showToast('导入失败：'+e.message);}input.value='';}
 
-(function(){const inp=document.getElementById('cInp'),hid=document.getElementById('bPlace'),dd=document.getElementById('cDD');let ai=-1;
-function rdd(f){let h='',n=0;const q=(f||'').toLowerCase();CG.forEach(g=>{const m=g.c.filter(c=>!q||c.n.includes(q)||c.i.includes(q)||g.g.includes(q)||(c.p&&c.p.toLowerCase().includes(q)));if(!m.length)return;h+=`<div class="cg">${g.g}</div>`;m.forEach(c=>{h+=`<div class="co" data-i="${c.i}" data-n="${c.n}"><span>${c.n}</span><span class="cp">${g.g}</span></div>`;n++})});if(!n)h='<div style="padding:18px;text-align:center;color:var(--c-text-3);font-size:.82em">未找到</div>';dd.innerHTML=h;ai=-1;dd.querySelectorAll('.co').forEach(el=>{el.addEventListener('mousedown',e=>{e.preventDefault();sel(el.dataset.i,el.dataset.n)})});}
-function sel(i,n){hid.value=i;inp.value=n;dd.classList.remove('show')}
-inp.addEventListener('focus',()=>{rdd(inp.value===(CD[hid.value]||{}).n?'':inp.value);dd.classList.add('show')});
-inp.addEventListener('input',()=>{rdd(inp.value);dd.classList.add('show')});
-inp.addEventListener('blur',()=>setTimeout(()=>dd.classList.remove('show'),150));
-inp.addEventListener('keydown',e=>{const opts=dd.querySelectorAll('.co');if(e.key==='ArrowDown'){e.preventDefault();ai=Math.min(ai+1,opts.length-1);opts.forEach((o,i)=>o.classList.toggle('act',i===ai));if(opts[ai])opts[ai].scrollIntoView({block:'nearest'})}else if(e.key==='ArrowUp'){e.preventDefault();ai=Math.max(ai-1,0);opts.forEach((o,i)=>o.classList.toggle('act',i===ai))}else if(e.key==='Enter'){e.preventDefault();if(ai>=0&&opts[ai])sel(opts[ai].dataset.i,opts[ai].dataset.n)}else if(e.key==='Escape')dd.classList.remove('show')});window.rdd=rdd;window.sel=sel;})();
+(function(){
+  const inp=document.getElementById('cInp'),hid=document.getElementById('bPlace'),dd=document.getElementById('cDD');
+  let ai=-1;
+  // 将候选层提升到 body，避免被表单、卡片或滚动容器裁剪。
+  if(dd){document.body.appendChild(dd);dd.classList.add('cdd-floating');}
+  function placeDropdown(){
+    if(!dd||!inp)return;
+    const r=inp.getBoundingClientRect();
+    dd.style.left=Math.round(r.left)+'px';
+    dd.style.width=Math.round(r.width)+'px';
+    const spaceBelow=window.innerHeight-r.bottom-8;
+    const spaceAbove=r.top-8;
+    const h=Math.min(260,Math.max(120,spaceBelow));
+    if(spaceBelow>=150||spaceBelow>=spaceAbove){
+      dd.style.top=Math.round(r.bottom+4)+'px';
+      dd.style.maxHeight=Math.round(Math.max(120,spaceBelow))+'px';
+    }else{
+      dd.style.top='auto';
+      dd.style.bottom=Math.round(window.innerHeight-r.top+4)+'px';
+      dd.style.maxHeight=Math.round(Math.max(120,spaceAbove))+'px';
+    }
+  }
+  function rdd(f){
+    let h='',n=0;const q=(f||'').toLowerCase();
+    CG.forEach(g=>{
+      const m=g.c.filter(c=>!q||c.n.includes(q)||c.i.includes(q)||g.g.includes(q)||(c.p&&c.p.toLowerCase().includes(q)));
+      if(!m.length)return;
+      h+=`<div class="cg">${g.g}</div>`;
+      m.forEach(c=>{h+=`<div class="co" data-i="${c.i}" data-n="${c.n}"><span>${c.n}</span><span class="cp">${g.g}</span></div>`;n++;});
+    });
+    if(!n)h='<div style="padding:18px;text-align:center;color:var(--c-text-3);font-size:.82em">未找到</div>';
+    dd.innerHTML=h;ai=-1;
+    dd.querySelectorAll('.co').forEach(el=>el.addEventListener('mousedown',e=>{e.preventDefault();sel(el.dataset.i,el.dataset.n);}));
+  }
+  function openDD(){
+    placeDropdown();dd.classList.add('show');
+  }
+  function sel(i,n){hid.value=i;inp.value=n;dd.classList.remove('show');dd.style.bottom='';}
+  inp.addEventListener('focus',()=>{rdd(inp.value===(CD[hid.value]||{}).n?'':inp.value);openDD();});
+  inp.addEventListener('input',()=>{rdd(inp.value);hid.value='';openDD();});
+  inp.addEventListener('blur',()=>setTimeout(()=>dd.classList.remove('show'),150));
+  window.addEventListener('resize',()=>{if(dd.classList.contains('show'))placeDropdown();});
+  window.addEventListener('scroll',()=>{if(dd.classList.contains('show'))placeDropdown();},true);
+  inp.addEventListener('keydown',e=>{
+    const opts=dd.querySelectorAll('.co');
+    if(e.key==='ArrowDown'){e.preventDefault();ai=Math.min(ai+1,opts.length-1);opts.forEach((o,i)=>o.classList.toggle('act',i===ai));if(opts[ai])opts[ai].scrollIntoView({block:'nearest'});}
+    else if(e.key==='ArrowUp'){e.preventDefault();ai=Math.max(ai-1,0);opts.forEach((o,i)=>o.classList.toggle('act',i===ai));}
+    else if(e.key==='Enter'){e.preventDefault();if(ai>=0&&opts[ai])sel(opts[ai].dataset.i,opts[ai].dataset.n);}
+    else if(e.key==='Escape')dd.classList.remove('show');
+  });
+  window.rdd=rdd;window.sel=sel;
+})();;
 (function(){window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.confirmSaveProfile=confirmSaveProfile;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){document.getElementById('aboutModal').classList.add('open');};window.closeAboutModal=function(){document.getElementById('aboutModal').classList.remove('open');};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};})();
 
 /* 首页汉堡菜单 */
@@ -2882,12 +2948,21 @@ installSelectionGloss();
 
   /* 表单字段变化 → 标记「已修改未推演」 */
   window._formDirty=false;
-  ['bDate','bTime','cInp','bGen'].forEach(id=>{
+  ['bDate','bTime','cInp','bGen','bResultStyle'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
     el.addEventListener('input',()=>{window._formDirty=true;});
     el.addEventListener('change',()=>{window._formDirty=true;});
   });
+  const styleSelect=document.getElementById('bResultStyle'),styleHint=document.getElementById('resultStyleHint');
+  const styleButtons=document.querySelectorAll('.result-style-option');
+  styleButtons.forEach(btn=>btn.addEventListener('click',()=>{
+    const value=btn.dataset.style;
+    if(styleSelect)styleSelect.value=value;
+    styleButtons.forEach(x=>{const on=x===btn;x.classList.toggle('active',on);x.setAttribute('aria-checked',on?'true':'false');});
+    if(styleHint)styleHint.textContent=getResultStyle(value).intro;
+    window._formDirty=true;
+  }));
   const sw=document.getElementById('swTrueSolar');
   if(sw)sw.addEventListener('click',()=>{window._formDirty=true;});
 

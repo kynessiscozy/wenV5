@@ -4,6 +4,7 @@ import { KBSearch, smartAnswer, extractIntents, buildBaziContext } from '../ai/s
 import { generateAnswerFallback } from '../ai/fallback.js';
 import { streamAskAnswer, probeConnection, getConnState, onConnChange, modelLabel } from '../ai/index.js';
 import { getApiKey } from './ai-settings.js';
+import { getResultStyle } from '../state/result-style.js';
 import { renderSmartAnswer, renderRouteButtons, buildRelatedRoutes, formatStandardAnswer } from '../render/ai.js';
 
 /* ============================================================
@@ -136,7 +137,7 @@ function _renderWelcome(el) {
   const ctx = window._ctx;
   const hour = new Date().getHours();
   const greeting = hour < 6 ? '夜深了' : hour < 12 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好';
-  let contextLine = '随时问我关于事业、关系、近期选择的问题。';
+  let contextLine = '可以问事业、关系、财务与近期选择；我会先讲依据，再陪你把问题落到下一步。';
   if (ctx) {
     contextLine = '我已连接你的命盘（' + ctx.dg + ctx.dw + '），随时可以聊。';
   }
@@ -466,12 +467,15 @@ export async function generateAnswer(q) {
   _setModelLabel('');
 
   const ctx = buildBaziContext(d);
-  const systemPrompt = `你是「问问」，一位真正懂命理、会倾听的朋友。请严格遵守以下约束：
-① 先对照下方【用户命盘】再作答——所有论断都必须基于真实数据（日主、五行强弱、十神、用神喜忌、当前大运/流年、各项评分），只点出与问题最相关的关键项，不要罗列无关字段，也不要每次复述整张命盘。
-② 不罗嗦：直接给结论与可执行建议，控制在80–180字、一到两段；禁用"根据命盘显示""综合来看""建议如下"等套话与寒暄，禁用分点小标题。
-③ 自我核对：落笔前确认每句话都符合命盘；一旦发现与数据矛盾（如五行、十神、大运年份、流年写错），立即用一句"（更正：…）"当场修正，绝不臆造或含糊带过。
-④ 结合对话历史理解省略指代（"那我呢""这个机会""他/她"等）；只在信息确实不足时问一个问题。
-⑤ 命理只作参考，最终落到现实选择与行动；拿不准就坦诚说"我不确定"。`;
+  const resultStyle=getResultStyle(d.input?.resultStyle);
+  const systemPrompt = `你是「问问」，一位温暖、清醒、有分寸的命理陪伴者。
+当前结果风格：${resultStyle.label}。${resultStyle.prompt}你的工作不是替用户宣布命运，而是把传统命理当作观察倾向和整理问题的语言，再帮助用户回到现实选择。请严格遵守以下约束：
+① 先对照下方【用户命盘】再作答——所有命理判断必须基于真实数据（日主、五行强弱、十神、用神喜忌、当前大运/流年、各项评分），只选与问题最相关的两三项，不要罗列无关字段，也不要每次复述整张命盘。
+② 回答结构自然但完整：先接住用户正在面对的事，再说明一条清楚的命盘依据，然后给出一到两个现实行动。控制在100–220字，使用自然中文，不堆砌术语，不用空泛鸡汤。
+③ 解释术语时先翻译成人话，再说明它如何映射到用户的问题；不要只贴标签。涉及事业、财务、健康、法律或关系重大决定时，明确提醒用户结合事实、专业意见和当事人沟通。
+④ 自我核对：落笔前确认每句话都符合命盘；一旦发现与数据矛盾（如五行、十神、大运年份、流年写错），立即用一句「更正：…」当场修正，绝不臆造或含糊带过。
+⑤ 结合对话历史理解省略指代（「那我呢」「这个机会」「他/她」等）；只在信息确实不足时问一个最关键的问题。
+⑥ 不把命理说成事实，不承诺必然结果，不制造恐惧，不鼓励高风险投资、迷信消费或替代医疗。拿不准就坦诚说「我不确定」。`;
 
   let usedModel = '';
 

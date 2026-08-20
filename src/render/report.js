@@ -3,6 +3,7 @@ import { resolveBirthDateTime } from '../engines/calendar.js';
 import { mkBazi, mkWx, mkSs, getShenShaLabels, getTodayGZ } from '../engines/bazi.js';
 import { TJ } from '../state/tj.js';
 import { getCtx } from '../state/context.js';
+import { getResultStyle } from '../state/result-style.js';
 import { buildContext } from '../state/context.js';
 import { getLayoffAstroRisk } from '../ai/risk.js';
 import { showToast } from '../ui/toast.js';
@@ -563,7 +564,19 @@ export function renderBeginnerBrief(sec,d){
     _cell(`对我有利的方向 ${_term('用神')}`,_ys?_ys+'元素':'—',YS_MEANING[_ys]||'')+
     _cell(`当前人生阶段 ${_term('大运')}`,_dyLabel||'—',_dy?_dyNote:'')+
   `</div>`:'';
-  return `<div class="beginner-brief"><div class="bb-eyebrow">新手解读报告</div>${basicHtml}<div class="bb-title">${title}</div>${scoreHtml}<div class="bb-row"><div class="bb-label">你现在的状态</div><div class="bb-text">${portrait}</div></div><div class="bb-row"><div class="bb-label">对你有利的方向</div><div class="bb-text">${opportunity}</div></div><div class="bb-row"><div class="bb-label">接下来怎么做</div><div class="bb-text bb-action">${action}</div></div><div class="bb-note">${tip}</div><button class="bb-master" type="button" onclick="setUserMode('master')">查看完整专业依据　→</button></div>`;
+  const _style=getResultStyle(d.input?.resultStyle);
+  if(_style.label==='严谨型'){
+    tip='判读边界：以上是规则模型下的倾向，不等于事件概率；请用事实、数据和时间验证。';
+    action='先写下依据、未知项和可验证信号；等收集到新信息后，再做一次小范围调整。';
+  }else if(_style.label==='传统型'){
+    tip='传统口径：以下以日主、月令、十神与用神为主线，流派不同可能有不同取法。';
+    action='回看本节提到的日主、月令和用神，把术语各写成一句自己的白话，再决定如何应用。';
+  }else if(_style.label==='建议型'){
+    tip='行动提醒：不要一次处理太多事，先完成最影响结果的那一步。';
+    action='只选一个优先事项：明确目标、设定截止时间，并在今天完成一个可交付的小动作。';
+  }
+  const _styleBanner=`<div class="result-style-banner"><b>${_style.label}</b><span>${_style.intro}</span></div>`;
+  return `<div class="beginner-brief"><div class="bb-eyebrow">新手解读报告</div>${_styleBanner}${basicHtml}<div class="bb-title">${title}</div>${scoreHtml}<div class="bb-row"><div class="bb-label">你现在的状态</div><div class="bb-text">${portrait}</div></div><div class="bb-row"><div class="bb-label">对你有利的方向</div><div class="bb-text">${opportunity}</div></div><div class="bb-row"><div class="bb-label">接下来怎么做</div><div class="bb-text bb-action">${action}</div></div><div class="bb-note">${tip}</div><button class="bb-master" type="button" onclick="setUserMode('master')">查看完整专业依据　→</button></div>`;
 }
 export function organizeMasterReportLayout(ctx){
   const ming=document.getElementById('s-ming'),yun=document.getElementById('s-yun');

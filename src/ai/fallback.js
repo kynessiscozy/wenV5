@@ -35,7 +35,7 @@ export function generateAnswerFallback(q,d,el){
     action='1. 保持现有作息\n2. 每月复盘一次目标进度';
   }
   const continuation=contextualFollowUp?`你是在接着问刚才的「${priorUser.slice(0,28)}」。`:'';
-  const text=`${continuation}我先说重点：${conclusion}。${reason} 这不代表事情已经被定死，现实里的选择更重要。你可以先从这一步开始：${action.replace(/\n/g,'；')}`;
+  const text=`${continuation}先把重点说清楚：${conclusion}。从${reason}来看，这更像一个值得观察的倾向，不是已经写死的结论；你的信息、节奏和选择仍然更重要。今天可以先做一件小事：${action.replace(/\n/g,'；')}`;
   let html='<div class="ai-dialogue"><div class="ai-dialogue-line"><div class="ai-dialogue-avatar">✦</div><div class="ai-dialogue-text"><div class="ai-dialogue-label">问问大师</div>'+compactAIText(text,180)+'</div></div></div>';
   // —— 兜底回答末尾也附跳转按钮 ——
   const links=buildRelatedRoutes(intents);
