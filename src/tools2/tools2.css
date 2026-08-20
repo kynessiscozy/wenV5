@@ -1166,3 +1166,104 @@
   border-radius: 0 !important; padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
 }
 .tool-modal.cal-fullscreen .tw-content { padding-top: 10px; }
+
+/* ============================================================
+   导出 PDF 工具样式
+   ============================================================ */
+.tw-tool-export {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 16px 0;
+}
+.tw-export-status { margin-bottom: 20px; }
+.tw-ok {
+  background: var(--c-surface-2, #f3f1ec);
+  color: #2d7a3f;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.tw-warn {
+  background: var(--c-surface-2, #f3f1ec);
+  color: #c44;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.tw-export-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.tw-export-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+}
+.tw-export-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.tw-export-btn small {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: .7;
+}
+.tw-export-note {
+  font-size: 13px;
+  color: var(--c-text-3, #999);
+  line-height: 1.8;
+  padding-top: 16px;
+  border-top: 1px solid var(--c-border, #e0ddd6);
+}
+.tw-export-note p { margin: 0 0 4px; }
+
+/* 打印样式（由 export.js 动态注入 @media print） */
+.tw-print-header, .tw-print-footer { display: none; }
+
+/* ============================================================
+   档案菜单样式
+   ============================================================ */
+.p2-profile-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 180px;
+  background: var(--c-surface, #fff);
+  border: 1px solid var(--c-border, #e0ddd6);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  padding: 6px;
+  z-index: 100;
+}
+.p2-profile-menu.open { display: block; }
+.profile-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  color: var(--c-text, #333);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.profile-item:hover { background: var(--c-surface-2, #f3f1ec); }
+.profile-empty {
+  padding: 12px;
+  font-size: 13px;
+  color: var(--c-text-3, #999);
+  text-align: center;
+}

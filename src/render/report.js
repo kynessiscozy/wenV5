@@ -673,7 +673,7 @@ export function organizeMasterReportLayout(ctx){
   // 只保留标题改写与"当前时段"注入；兜底：若有卡片跑出档位面再收回。
   const trend=yun.querySelector('[data-card="trend"]'),timeline=yun.querySelector('[data-card="timeline"]'),focus=yun.querySelector('[data-card="todayAdv"]'),months=yun.querySelector('[data-card="liuyue"]');
   if(trend){const title=trend.querySelector('.card-tt');if(title)title.textContent='当年运势';}
-  if(timeline){timeline.querySelector('.card-tt').textContent='人生时间线';}
+  if(timeline){const tt=timeline.querySelector('.card-tt');if(tt)tt.textContent='人生时间线';}
   if(focus){
     const title=focus.querySelector('.card-tt');if(title)title.textContent='今日建议 · 当下关注';
     const st=focus.querySelector('.card-st');if(st)st.textContent='宜忌 · 近期提醒 · 健康关注';

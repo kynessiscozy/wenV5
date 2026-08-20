@@ -109,8 +109,12 @@ initFontSize();
   window.toggleFullGods=toggleFullGods;
   window.setUserMode=setUserMode;
   window.toggleUserMode=toggleUserMode;
+  window.doAsk=doAsk;
+  window.toggleAISettings=toggleAISettings;
 
   // 2. 旧版工具函数（tools/ 模块，已被 tools2 接管但仍可能被 onclick 引用）
+  window.openToolPage=openToolPage;
+  window.closeToolPage=closeToolPage;
   window.openDecisionTool=openDecisionTool;
   window.runDecisionTool=runDecisionTool;
   window.startBreathTool=startBreathTool;
