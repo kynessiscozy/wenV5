@@ -127,8 +127,8 @@ export const zodiac = {
           ringSvg(a, b) + nodes +
         '</div>' +
         resultHtml +
-        (other ? '<div class="tw-actions" id="twZAI"></div>' : '') +
-        notice('<b>提示：</b>生肖合冲仅为传统文化参考，不构成对任何关系的判断或决定依据。真正决定关系的是沟通、边界和共同目标。');
+        notice('<b>提示：</b>生肖合冲仅为传统文化参考，不构成对任何关系的判断或决定依据。真正决定关系的是沟通、边界和共同目标。') +
+        (other ? '<div class="tw-actions tw-ai-mount" id="twZAI"></div>' : '');
 
       // 事件
       container.querySelectorAll('.tw-z-sx').forEach(el => {

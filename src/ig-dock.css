@@ -28,39 +28,48 @@ body .ig-dock .tab-item.active .ig-heart{fill:currentColor!important}
 body .ig-dock .ig-nav-label{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 
 /* Center action is visually distinct without overpowering the report navigation. */
-body .ig-dock .ai-fab{grid-column:3!important;grid-row:1!important;position:relative!important;z-index:3!important;justify-self:center!important;display:grid!important;place-items:center!important;width:46px!important;min-width:46px!important;height:46px!important;min-height:46px!important;margin:0!important;padding:0!important;border:1px solid var(--c-border-3)!important;border-radius:50%!important;color:var(--c-text-hi)!important;background:linear-gradient(145deg,hsla(var(--accent-h),var(--accent-s),67%,.82),hsla(var(--accent-h),var(--accent-s),42%,.72))!important;box-shadow:0 7px 15px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.28)!important;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .22s var(--ig-dock-ease),filter .18s ease!important}
+body .ig-dock .ai-fab{grid-column:3!important;grid-row:1!important;position:relative!important;z-index:3!important;justify-self:center!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:0!important;width:46px!important;min-width:46px!important;height:46px!important;min-height:46px!important;margin:0!important;padding:0!important;border:1px solid var(--c-border-3)!important;border-radius:50%!important;color:#fff!important;background:linear-gradient(145deg,hsla(var(--accent-h),var(--accent-s),67%,.9),hsla(var(--accent-h),var(--accent-s),42%,.82))!important;box-shadow:0 7px 15px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.28)!important;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .22s var(--ig-dock-ease),filter .18s ease!important}
 body .ig-dock .ai-fab:hover{filter:brightness(1.12)!important;transform:translateY(-1px) scale(1.04)!important}
 body .ig-dock .ai-fab:active{transform:scale(.87)!important;filter:brightness(.9)!important}
-body .ig-dock .ai-fab-icon{display:grid!important;place-items:center!important;width:26px!important;height:26px!important;color:var(--c-text-hi)!important}.ig-dock .ig-ai-icon{display:block!important;width:27px!important;height:27px!important;fill:currentColor!important;stroke:none!important;filter:drop-shadow(0 1px 3px rgba(0,0,0,.23))}.ig-dock .ai-fab-text,.ig-dock .ai-badge,.ig-dock .ai-orbits{display:none!important}
+body .ig-dock .ai-fab-icon{display:grid!important;place-items:center!important;width:24px!important;height:24px!important}.ig-dock .ig-ai-icon{display:block!important;width:24px!important;height:24px!important;fill:#fff!important;stroke:none!important;filter:drop-shadow(0 1px 3px rgba(0,0,0,.23))}.ig-dock .ai-fab-text{display:none!important}.ig-dock .ai-badge,.ig-dock .ai-orbits{display:none!important}
 
 #page2 .p2-scroll{padding-bottom:calc(var(--ig-dock-height) + env(safe-area-inset-bottom,0px) + 36px)!important}
 @keyframes igDockEnter{from{opacity:0;transform:translateX(-50%) translateY(16px) scale(.98)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 @media(max-width:600px){body .ig-dock.tab-bar{width:calc(100vw - 16px)!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;border-radius:999px!important;padding:6px 4px!important}}
-@media(max-width:350px){body .ig-dock.tab-bar{width:calc(100vw - 12px)!important}.ig-dock .ig-nav-icon{width:22px!important;height:22px!important}.ig-dock .ai-fab{width:43px!important;min-width:43px!important;height:43px!important;min-height:43px!important}}
+@media(max-width:350px){body .ig-dock.tab-bar{width:calc(100vw - 12px)!important}.ig-dock .ig-nav-icon{width:22px!important;height:22px!important}.ig-dock .ai-fab{width:42px!important;min-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;font-size:11px!important}}
 @media(prefers-reduced-motion:reduce){body .ig-dock.tab-bar{animation:none!important}body .ig-dock .tab-item,body .ig-dock .ig-nav-icon,body .ig-dock .ai-fab{transition:none!important}}
 
-/* Dock 内的问问大师入口与导航保持一致，使用紧凑胶囊形态。 */
+/* Dock 内的问问大师入口：纯图标圆形按钮。 */
 body .ig-dock .ai-fab{
-  width:52px!important;
-  min-width:52px!important;
-  height:42px!important;
-  min-height:42px!important;
-  border-radius:999px!important;
+  width:46px!important;
+  min-width:46px!important;
+  height:46px!important;
+  min-height:46px!important;
+  border-radius:50%!important;
 }
-body .ig-dock .ai-fab-icon,body .ig-dock .ig-ai-icon{width:26px!important;height:26px!important}
-@media(max-width:350px){body .ig-dock .ai-fab{width:47px!important;min-width:47px!important;height:40px!important;min-height:40px!important}}
+body .ig-dock .ai-fab-icon,body .ig-dock .ig-ai-icon{width:24px!important;height:24px!important}
+@media(max-width:350px){body .ig-dock .ai-fab{width:42px!important;min-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important}}
 
-/* 问问大师仅保留图标：去除入口自身的胶囊、描边、渐变和投影。 */
+/* 问问大师：保留强调底色与图标 + 文字标签，作为 Dock 中央突出入口。 */
 body .ig-dock .ai-fab{
-  background:transparent!important;
-  border:0!important;
-  box-shadow:none!important;
-  filter:none!important;
+  background:linear-gradient(145deg,hsla(var(--accent-h),var(--accent-s),67%,.9),hsla(var(--accent-h),var(--accent-s),42%,.82))!important;
+  border:1px solid var(--c-border-3)!important;
+  box-shadow:0 7px 15px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.28)!important;
 }
-body .ig-dock .ai-fab:hover{background:transparent!important;filter:none!important;transform:scale(1.05)!important}
-body .ig-dock .ai-fab:active{transform:scale(.88)!important}
-body .ig-dock .ai-fab-icon{color:var(--c-text-hi)!important;text-shadow:none!important}
-body .ig-dock .ig-ai-icon{filter:none!important}
+body .ig-dock .ai-fab:hover{filter:brightness(1.08)!important;transform:translateY(-1px) scale(1.03)!important}
+body .ig-dock .ai-fab:active{transform:scale(.95)!important}
+body .ig-dock .ai-fab-icon{color:#fff!important;text-shadow:none!important}
+body .ig-dock .ig-ai-icon{filter:drop-shadow(0 1px 3px rgba(0,0,0,.23))!important}
+
+/* 浅色模式：AI 按钮改用浅色软底 + 强调文字色图标，融入浅色 Dock（与全站浅色规范一致）。 */
+[data-theme="light"] body .ig-dock .ai-fab{
+  background:var(--c-accent-soft)!important;
+  border:1px solid color-mix(in srgb,var(--c-accent) 38%,transparent)!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.10),inset 0 1px rgba(255,255,255,.55)!important;
+}
+[data-theme="light"] body .ig-dock .ai-fab:hover{filter:none!important;background:color-mix(in srgb,var(--c-accent) 14%,var(--c-accent-soft))!important;transform:translateY(-1px) scale(1.03)!important}
+[data-theme="light"] body .ig-dock .ai-fab-icon{color:var(--c-accent-text)!important}
+[data-theme="light"] body .ig-dock .ig-ai-icon{fill:var(--c-accent-text)!important;filter:drop-shadow(0 1px 2px rgba(0,0,0,.12))!important}
 
 /* 问问大师改为与玻璃设置一致的锚定式浮层：从 Dock 上方展开，而非全屏模态。 */
 .ai-overlay.open{

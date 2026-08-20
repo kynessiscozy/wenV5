@@ -254,7 +254,7 @@ export const calendar = {
             (hit ? '<div class="it"><b>' + hit.k + '</b><span>' + hit.v + '</span></div>' : '') +
             '<div class="it"><b>能量</b><span>' + wxText + '</span></div>' +
           '</div>' +
-          '<div class="tw-actions" id="twCalAI"></div>';
+          '<div class="tw-actions tw-ai-mount" id="twCalAI"></div>';
       } else {
         // 未排盘：不显示「今日适合 / 节奏 / 提示」等命理信息，保持纯日历（节假日/心情/待办）
         body = '';

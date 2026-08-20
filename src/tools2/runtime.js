@@ -162,7 +162,7 @@ export function goResult(container, toolName, innerHtml) {
           '<span class="tw-result-bar-title">' + esc(toolName || '结果') + '</span>' +
         '</div>' +
       '</header>' +
-      '<div class="tw-result-page-body">' + innerHtml + '</div>' +
+      '<div class="tw-result-page-body">' + innerHtml + '<div class="tw-ai-mount"></div></div>' +
       '<footer class="tw-result-ops">' +
         '<button type="button" class="tw-btn tw-btn-ghost" data-gofrom>重新填写</button>' +
         '<button type="button" class="tw-btn tw-btn-primary" data-close>完成</button>' +
@@ -177,14 +177,14 @@ export function goResult(container, toolName, innerHtml) {
   result.querySelectorAll('[data-gofrom]').forEach(b => b.addEventListener('click', () => goForm(container)));
   result.querySelector('[data-close]')?.addEventListener('click', () => closeTool());
 
-  /* —— 全面接入 AI：每个结果页底部统一挂「AI 解读」 —— */
-  const footer = result.querySelector('.tw-result-ops');
-  if (footer) {
+  /* —— 全面接入 AI：统一放在结果正文底部，不混进吸底操作栏 —— */
+  const aiMount = result.querySelector('.tw-ai-mount');
+  if (aiMount) {
     attachToolAI({
       root: result,
       typeLabel: toolName,
       getSource: () => (result.querySelector('.tw-result-page-body')?.innerText || '').slice(0, 1800),
-      slot: footer,
+      slot: aiMount,
     });
   }
 

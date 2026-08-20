@@ -1,3 +1,5 @@
+import { SOLAR_TERM_TIMES } from './solar-terms.js';
+
 const JQ_STR="AQMCBQMEBAQFBQYGBwcIBwkHCgYLBgAEAQMCBQMEBAUFBQYGBwcIBwkHCgcLBgAEAQMCBQMEBAUFBQYHBwcIBwkICgcLBwAFAQMCBQMEBAUFBQYGBwcIBwkICgcLBwAFAQQCBAMEBAQFBQYGBwYIBwkHCgYLBgAFAQMCBQMEBAUFBQYGBwcIBwkHCgcLBgAEAQMCBQMEBAUFBQYHBwcIBwkICgcLBgAFAQMCBQMEBAUFBQYHBwcIBwkICgcLBwAFAQQCBAMEBAQFBQYGBwYIBwkHCgYLBgAFAQMCBQMEBAUFBQYGBwcIBwkHCgcLBgAEAQMCBQMEBAUFBQYHBwcIBwkICgcLBgAFAQMCBQMEBAUFBQYHBwcIBwkICgcLBwAFAQQCBAMEBAQFBQYGBwYIBwkHCgYLBgAFAQMCBQMEBAUFBQYGBwcIBwkHCgcLBgAEAQMCBQMEBAUFBQYHBwcIBwkICgcLBgAFAQMCBQMEBAUFBQYHBwcIBwkICgcLBwAFAQQCBAMEBAQFBQYGBwYIBwkHCgYLBgAFAQMCBQMEBAUFBQYGBwcIBwkHCgcLBgAEAQMCBQMEBAUFBQYGBwcIBwkICgcLBgAFAQMCBQMEBAUFBQYHBwcIBwkICgcLBwAFAQQCBAMEBAQFBQYGBwYIBwkHCgYLBgAFAQMCBQMEBAUFBQYGBwcIBwkHCgYLBgAEAQMCBQMEBAUFBQYGBwcIBwkICgcLBgAFAQMCBQMEBAUFBQYHBwcIBwkICgcLBwAFAQQCBAMEBAQFBQYGBwYIBgkHCgYLBgAFAQMCBQMEBAUFBQYGBwcIBwkHCgYLBgAEAQMCBQMEBAUFBQYGBwcIBwkICgcLBgAFAQMCBQMEBAUFBQYHBwcIBwkICgcLBwAFAQQCBAMEBAQFBAYGBwYIBgkHCgYLBgAFAQMCBQMEBAUFBQYGBwcIBwkHCgYLBgAEAQMCBQMEBAUFBQYGBwcIBwkICgcLBgAFAQMCBQMEBAUFBQYHBwcIBwkICgcLBwAFAQQCBAMEBAQFBAYGBwYIBgkHCgYLBgAFAQMCBQMEBAUFBQYGBwcIBwkHCgYLBgAEAQMCBQMEBAUFBQYGBwcIBwkICgcLBgAFAQMCBQMEBAUFBQYHBwcIBwkICgcLBwAFAQQCBAMDBAQFBAYGBwYIBgkHCgYLBgAFAQMCBQMEBAQFBQYGBwYIBwkHCgYLBgAEAQMCBQMEBAUFBQYGBwcIBwkHCgcLBgAFAQMCBQMEBAUFBQYHBwcIBwkICgcLBwAFAQQCBAMEBAQFBAYGBwYIBgkHCgYLBgAFAQMCBAMEBAQFBQYGBwYIBwkHCgYLBgAEAQMCBQMEBAUFBQYGBwcIBwkHCgcLBgAEAQMCBQMEBAUFBQYHBwcIBwkICgcLBgAFAQMCBAMDBAQFBAYGBwYIBgkHCgYLBgAFAQICBAMDBAQFBAYGBwYIBgkHCgYLBgAEAQMCBAMEBAQFBQYGBwYIBwkHCgYLBgAEAQMCBQMEBAUFBQYGBwcIBwkHCgcLBgAEAQMCBAMDBAQFBAYFBwYIBgkHCgYLBQAFAQICBAMDBAQFBAYGBwYIBgkHCgYLBgAEAQMCBAMEBAQFBQYGBwYIBgkHCgYLBgAEAQMCBQMEBAUFBQYGBwcIBwkHCgYLBgAEAQMCBAMDBAQFBAYFBwYIBgkHCgYLBQAFAQICBAMDBAQFBAYGBwYIBgkHCgYLBgAEAQMCBAMEBAQFBQYGBwYIBgkHCgYLBgAEAQMCBQMEBAUFBQYGBwcIBwkHCgYLBgAEAQMCBAMDBAQFBAYFBwYIBgkHCgYLBQAFAQICBAMDBAQFBAYGBwYIBgkHCgYLBgAEAQMCBAMEBAQFBQYGBwYIBgkHCgYLBgAEAQMCBQMEBAUFBQYGBwcIBwkHCgYLBgAEAQMCBAMDBAQFBAYFBwYIBgkHCgYLBQAFAQICBAMDBAQFBAYGBwYIBgkHCgYLBgAEAQMCBAMEBAQFBAYGBwYIBgkHCgYLBgAEAQMCBQMEBAUFBQYGBwcIBwkHCgYLBgAEAQMCBAMDBAQFBAYFBwYIBgkGCgYLBQAEAQICBAMDBAQFBAYGBwYIBgkHCgYLBgAEAQMCAwMDBAMFBAYFBwUIBgkGCgULBQAEAQICBAMDBAQFBAYFBwYIBgkHCgYLBQAEAQICBAMDBAQFBAYGBwYIBgkHCgYLBgAEAQMCBAMEBAQFBQYGBwYIBwkHCgYLBgAEAQMCAwMDBAMFBAYFBwUIBQkGCgULBQAEAQICBAMDBAQFBAYFBwYIBgkGCgYLBQAEAQICBAMDBAQFBAYGBwYIBgkHCgYLBgAEAQMCBAMEBAQFBQYGBwYIBwkHCgYLBgAEAQMCAwMDBAMFAwYFBwUIBQkGCgULBQAEAQICBAMDBAQFBAYFBwYIBgkGCgYLBQADAQICBAMDBAQFBAYFBwYIBgkHCgYLBQAEAQICBAMDBAQFBAYGBwYIBgkHCgYLBgAEAQMCAwMDBAMFAwYFBwUIBQkGCgULBQAEAQICBAMDBAQFBAYFBwYIBgkGCgYLBQADAQICBAMDBAQFBAYFBwYIBgkHCgYLBQAEAQICAwMCBAMFAwYFBwUIBQkGCgULBQAEAQICAwMDBAMFAwYFBwUIBQkGCgULBQADAQICBAMDBAQFBAYFBwYIBgkGCgYLBQADAQICBAMDBAQFBAYFBwYIBgkHCgYLBQAEAQICAwMCBAMFAwYFBwUIBQkGCgULBQAEAQICAwMDBAMFAwYFBwUIBQkGCgULBQADAQICBAMDBAMFBAYFBwUIBgkGCgULBQADAQICBAMDBAQFBAYFBwYIBgkHCgYLBQAEAQICAwMCBAMFAwYFBwUIBQkGCgULBQAEAQICAwMDBAMFAwYFBwUIBQkGCgULBQADAQICBAMDBAMFBAYFBwUIBgkGCgULBQADAQICBAMDBAQFBAYFBwYIBgkGCgYLBQAEAQICAwMCBAMFAwYFBwUIBQkGCgULBQAEAQICAwMCBAMFAwYFBwUIBQkGCgULBQADAQICBAMDBAMFBAYFBwUIBgkGCgULBQADAQICBAMDBAQFBAYFBwYIBgkGCgYLBQAEAQICAwMCBAMFAwYEBwUIBQkGCgULBQAEAQICAwMCBAMFAwYFBwUIBQkGCgULBQADAQICBAMDBAMFBAYFBwUIBgkGCgULBQADAQICBAMDBAQFBAYFBwYIBgkGCgYLBQAEAQICBAMDBAQFBAYFBwYIBgkHCgYLBgAE";
 
 function _initJq(){const bin=atob(JQ_STR);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);window._jqArr=arr;window._jqMaxYear=1900+Math.floor(arr.length/24)-1;}
@@ -30,33 +32,87 @@ function jqDate(y,n){
   // For years beyond the table, use formula
   return solarTermDate(y,n);
 }
-function getMonthPillar(year,month,day){
-  // 月令按节气顺序判断：立春至大雪对应 0..10，
-  // 大雪至次年小寒为子月（10），小寒至立春为丑月（11）。
-  // 不能从 11 倒序比较，因为小寒落在下一年的 1 月，会发生跨年误判。
-  let yp=year;
-  const lichun=jqDate(year,0);
+function jqInstant(year,index){
+  const row=SOLAR_TERM_TIMES[year];
+  if(row&&row[index]){
+    // 节气表以中国标准时间（UTC+8）保存，转为统一 UTC 时间比较。
+    return new Date(row[index].replace(' ','T')+'+08:00');
+  }
+  const d=jqDate(year,index);
+  if(!d)return null;
+  const termYear=index===11?year+1:year;
+  return new Date(Date.UTC(termYear,d[0]-1,d[1],0,0,0)-8*3600000);
+}
+function birthAsChinaStandardInstant(year,month,day,hour=12,minute=0,second=0){
+  return new Date(Date.UTC(year,month-1,day,hour,minute,second)-8*3600000);
+}
+function getMonthPillar(year,month,day,hour=12,minute=0,second=0,birthInstant=null){
+  // 按节气“具体时刻”判断，不再按公历日期零点切换。
+  const birth=birthInstant?new Date(birthInstant):birthAsChinaStandardInstant(year,month,day,hour,minute,second);
+  const lichun=jqInstant(year,0);
   if(!lichun)return{mi:2,yp:year};
-  const beforeLichun=month<lichun[0]||(month===lichun[0]&&day<lichun[1]);
+  const beforeLichun=birth<lichun;
+  const yp=beforeLichun?year-1:year;
   if(beforeLichun){
-    yp=year-1;
-    const prevXiaohan=jqDate(year-1,11);
-    const afterPrevXiaohan=prevXiaohan&&(
-      month>prevXiaohan[0]||(month===prevXiaohan[0]&&day>=prevXiaohan[1])
-    );
-    return{mi:afterPrevXiaohan?11:10,yp};
+    const prevXiaohan=jqInstant(year-1,11);
+    return{mi:prevXiaohan&&birth>=prevXiaohan?11:10,yp};
   }
   let mi=10;
   for(let i=0;i<=10;i++){
-    const j=jqDate(year,i);
-    if(!j)continue;
-    if(month>j[0]||(month===j[0]&&day>=j[1]))mi=i;
-    else break;
+    const term=jqInstant(year,i);
+    if(term&&birth>=term)mi=i;
+    else if(term)break;
   }
   return{mi,yp};
 }
-function trueSolarTime(date,lon,useDST){let d=new Date(date);if(useDST&&d.getFullYear()>=1986&&d.getFullYear()<=1991){const m=d.getMonth()+1;if(m>=4&&m<=9)d=new Date(d.getTime()-3600000);}const offsetMin=(lon-120)*4;const doy=Math.floor((d-new Date(d.getFullYear(),0,0))/86400000);const B=2*Math.PI*(doy-1)/365;const eot=229.18*(0.000075+0.001868*Math.cos(B)-0.032077*Math.sin(B)-0.014615*Math.cos(2*B)-0.040849*Math.sin(2*B));const totalOffset=offsetMin+eot;return new Date(d.getTime()+totalOffset*60000);}
-function resolveBirthDateTime(y,m,d,hh,mm,useTrueSolar,lon){let dt=new Date(y,m-1,d,hh,mm,0);let note='';if(useTrueSolar&&lon){dt=trueSolarTime(dt.getTime(),lon,true);note='已启用真太阳时换算（经度'+lon+'°）';}let by=dt.getFullYear(),bm=dt.getMonth()+1,bd=dt.getDate();let ch=dt.getHours(),cmin=dt.getMinutes();let totalMin=ch*60+cmin;let hourZhi;if(totalMin>=23*60){hourZhi=0;const next=new Date(Date.UTC(by,bm-1,bd+1));by=next.getUTCFullYear();bm=next.getUTCMonth()+1;bd=next.getUTCDate();}else if(totalMin<60){hourZhi=0;}else{hourZhi=Math.floor((totalMin-60)/120)+1;}return{year:by,month:bm,day:bd,hourZhi,note};}
+function zoneParts(date,tz){
+  const f=new Intl.DateTimeFormat('en-CA',{timeZone:tz,hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const p=Object.fromEntries(f.formatToParts(date).filter(x=>x.type!=='literal').map(x=>[x.type,Number(x.value)]));
+  // 某些引擎会把午夜格式化为 24:00，统一成次日 00:00 之前的可比较形式。
+  if(p.hour===24)p.hour=0;
+  return p;
+}
+function zoneOffsetMinutes(date,tz){
+  const p=zoneParts(date,tz);
+  const asUtc=Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute,p.second);
+  return Math.round((asUtc-date.getTime())/60000);
+}
+function zonedTimeToUtc(y,m,d,hour,minute,second,tz){
+  const wall=Date.UTC(y,m-1,d,hour,minute,second);
+  let utc=wall;
+  // 两次迭代即可处理 IANA 时区的标准时与夏令时偏移。
+  for(let i=0;i<3;i++)utc=wall-zoneOffsetMinutes(new Date(utc),tz)*60000;
+  return new Date(utc);
+}
+function equationOfTimeMinutes(y,m,d){
+  const start=Date.UTC(y,0,0), cur=Date.UTC(y,m-1,d);
+  const doy=Math.floor((cur-start)/86400000);
+  const B=2*Math.PI*(doy-1)/365;
+  return 229.18*(0.000075+0.001868*Math.cos(B)-0.032077*Math.sin(B)-0.014615*Math.cos(2*B)-0.040849*Math.sin(2*B));
+}
+function trueSolarTime(date,lon,tz='Asia/Shanghai'){
+  const d=new Date(date),p=zoneParts(d,tz);
+  // 真太阳时 = UTC + 经度时间 + 均时差；IANA 实际偏移已在 UTC 中处理，
+  // 因而不再对 1986—1991 年按月份硬减一小时。
+  const correction=(lon*4)+equationOfTimeMinutes(p.year,p.month,p.day);
+  return new Date(d.getTime()+correction*60000);
+}
+function resolveBirthDateTime(y,m,d,hh,mm,useTrueSolar,lon,tz='Asia/Shanghai'){
+  const civil=zonedTimeToUtc(y,m,d,hh,mm,0,tz);
+  const solar=useTrueSolar&&Number.isFinite(lon)?trueSolarTime(civil,lon,tz):civil;
+  const p=useTrueSolar&&Number.isFinite(lon)?{
+    year:solar.getUTCFullYear(),month:solar.getUTCMonth()+1,day:solar.getUTCDate(),hour:solar.getUTCHours(),minute:solar.getUTCMinutes()
+  }:zoneParts(civil,tz);
+  let by=p.year,bm=p.month,bd=p.day,ch=p.hour,cmin=p.minute;
+  const totalMin=ch*60+cmin;
+  let hourZhi;
+  if(totalMin>=23*60){
+    hourZhi=0;
+    const next=new Date(Date.UTC(by,bm-1,bd+1));by=next.getUTCFullYear();bm=next.getUTCMonth()+1;bd=next.getUTCDate();
+  }else if(totalMin<60)hourZhi=0;
+  else hourZhi=Math.floor((totalMin-60)/120)+1;
+  return{year:by,month:bm,day:bd,hour:ch,minute:cmin,hourZhi,note:useTrueSolar?'已启用真太阳时换算（经度'+lon+'°）':'',instant:civil.getTime(),tz};
+}
 function getDayPillarIndex(y,m,d){const anchor=new Date(Date.UTC(2000,0,1));const target=new Date(Date.UTC(y,m-1,d));const diff=Math.round((target-anchor)/86400000);return((54+diff)%60+60)%60;}
 
 export { _initJq, solarTermDate, jqDate, getMonthPillar, trueSolarTime, resolveBirthDateTime, getDayPillarIndex };

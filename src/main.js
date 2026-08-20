@@ -102,8 +102,8 @@ async function calc(isDemoPreview=false){
 
   // 纯计算与渲染。失败抛错，由两条过渡路径各自处理界面。
   function doCompute(){
-    const resolved=resolveBirthDateTime(y,m,d,hh,mm,useTrueSolar,city.o);
-    const b=mkBazi(resolved.year,resolved.month,resolved.day,resolved.hourZhi);
+    const resolved=resolveBirthDateTime(y,m,d,hh,mm,useTrueSolar,city.o,city.tz);
+    const b=mkBazi(resolved.year,resolved.month,resolved.day,resolved.hourZhi,resolved.hour,resolved.minute,resolved.instant);
     const wx=mkWx(b),ss=mkSs(b),dy=mkDy(b,gen,y),ln=mkLn(CURR_YEAR),zw=mkZw(b),qm=mkQm(b),mh=mkMh(b),si=mkSi(b);
     const shensha=mkShenSha(b);const liuyue=getLiuYue(CURR_YEAR);
     b._meta={hourZhi:resolved.hourZhi,useTrueSolar:resolved.note?true:false,by:y,bm:m,bd:d};

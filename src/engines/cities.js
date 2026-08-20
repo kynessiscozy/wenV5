@@ -31,4 +31,24 @@ const CD={},CG=[
 ];
 CG.forEach(g=>g.c.forEach(c=>{CD[c.i]={n:c.n,p:c.p,o:c.o,a:c.a,g:g.g}}));
 
+// IANA 时区：出生时间先按当地民用时间还原为 UTC，再做真太阳时计算。
+const CITY_TZ={
+  beijing:'Asia/Shanghai',shanghai:'Asia/Shanghai',tianjin:'Asia/Shanghai',chongqing:'Asia/Shanghai',
+  shijiazhuang:'Asia/Shanghai',tangshan:'Asia/Shanghai',baoding:'Asia/Shanghai',qinhuangdao:'Asia/Shanghai',
+  shenyang:'Asia/Shanghai',dalian:'Asia/Shanghai',changchun:'Asia/Shanghai',haerbin:'Asia/Shanghai',taiyuan:'Asia/Shanghai',huhehaote:'Asia/Shanghai',
+  nanjing:'Asia/Shanghai',suzhou:'Asia/Shanghai',wuxi:'Asia/Shanghai',changzhou:'Asia/Shanghai',nantong:'Asia/Shanghai',xuzhou:'Asia/Shanghai',yangzhou:'Asia/Shanghai',
+  hangzhou:'Asia/Shanghai',ningbo:'Asia/Shanghai',wenzhou:'Asia/Shanghai',jiaxing:'Asia/Shanghai',shaoxing:'Asia/Shanghai',jinhua:'Asia/Shanghai',
+  hefei:'Asia/Shanghai',wuhu:'Asia/Shanghai',fuzhou:'Asia/Shanghai',xiamen:'Asia/Shanghai',quanzhou:'Asia/Shanghai',nanchang:'Asia/Shanghai',
+  jinan:'Asia/Shanghai',qingdao:'Asia/Shanghai',yantai:'Asia/Shanghai',weihai:'Asia/Shanghai',zhengzhou:'Asia/Shanghai',luoyang:'Asia/Shanghai',kaifeng:'Asia/Shanghai',
+  wuhan:'Asia/Shanghai',yichang:'Asia/Shanghai',changsha:'Asia/Shanghai',hengyang:'Asia/Shanghai',guangzhou:'Asia/Shanghai',shenzhen:'Asia/Shanghai',dongguan:'Asia/Shanghai',foshan:'Asia/Shanghai',zhuhai:'Asia/Shanghai',huizhou:'Asia/Shanghai',shantou:'Asia/Shanghai',
+  nanning:'Asia/Shanghai',guilin:'Asia/Shanghai',haikou:'Asia/Shanghai',sanya:'Asia/Shanghai',chengdu:'Asia/Shanghai',mianyang:'Asia/Shanghai',guiyang:'Asia/Shanghai',kunming:'Asia/Shanghai',dali:'Asia/Shanghai',lijiang:'Asia/Shanghai',xian:'Asia/Shanghai',lanzhou:'Asia/Shanghai',wulumuqi:'Asia/Shanghai',
+  hongkong:'Asia/Hong_Kong',macau:'Asia/Macau',taipei:'Asia/Taipei',kaohsiung:'Asia/Taipei',
+  tokyo:'Asia/Tokyo',osaka:'Asia/Tokyo',kyoto:'Asia/Tokyo',seoul:'Asia/Seoul',busan:'Asia/Seoul',fukuoka:'Asia/Tokyo',
+  singapore:'Asia/Singapore',bangkok:'Asia/Bangkok',kualalumpur:'Asia/Kuala_Lumpur',jakarta:'Asia/Jakarta',hanoi:'Asia/Bangkok',hochiminh:'Asia/Ho_Chi_Minh',manila:'Asia/Manila',
+  london:'Europe/London',paris:'Europe/Paris',berlin:'Europe/Berlin',rome:'Europe/Rome',madrid:'Europe/Madrid',
+  newyork:'America/New_York',losangeles:'America/Los_Angeles',sanfrancisco:'America/Los_Angeles',chicago:'America/Chicago',toronto:'America/Toronto',vancouver:'America/Vancouver',
+  sydney:'Australia/Sydney',melbourne:'Australia/Melbourne',dubai:'Asia/Dubai',auckland:'Pacific/Auckland',moscow:'Europe/Moscow',istanbul:'Europe/Istanbul'
+};
+Object.keys(CD).forEach(id=>{CD[id].tz=CITY_TZ[id]||'Asia/Shanghai';});
+
 export { CD, CG };

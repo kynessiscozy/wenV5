@@ -2,16 +2,17 @@
    问问大师 · DeepSeek 提供方（OpenAI 兼容 / SSE 流式）
    ------------------------------------------------------------
    端点：https://api.deepseek.com/chat/completions
-   模型：deepseek-chat (V3) / deepseek-reasoner (R1)
+   模型：deepseek-v4-flash（主）/ deepseek-chat (V3) / deepseek-reasoner (R1)
    说明：浏览器直连，密钥仅存本地；CORS 已确认支持跨域。
    接口签名与 openrouter.js 保持一致，便于门面层无缝切换。
    ============================================================ */
 
 export const DEEPSEEK_BASE = 'https://api.deepseek.com';
-export const ASK_MODELS = ['deepseek-chat', 'deepseek-reasoner'];
-export const TOOL_MODELS = ['deepseek-chat'];
+export const ASK_MODELS = ['deepseek-v4-flash', 'deepseek-chat', 'deepseek-reasoner'];
+export const TOOL_MODELS = ['deepseek-v4-flash', 'deepseek-chat'];
 
 export const MODEL_LABELS = {
+  'deepseek-v4-flash': 'DeepSeek V4 Flash',
   'deepseek-chat': 'DeepSeek V3',
   'deepseek-reasoner': 'DeepSeek R1'
 };
