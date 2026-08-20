@@ -1455,19 +1455,21 @@ function setUserMode(mode){
 function openCalendarMode(){
   const fab=document.getElementById('calFab');
   if(fab)fab.classList.add('active');
-  /* 日历模式：复用 tools2 的 calendar 工具。tools2 加载前会降级到旧版逻辑 */
+  /* 日历模式：必须由 tools2 的 calendar 工具接管。
+     注意：旧版 openToolPage（center.js）在页面加载时已同步挂载到 window，
+     但它没有 calendar 分支，最后的 else 会误导向「八字合盘」页面。
+     因此不能用 typeof window.openToolPage==='function' 判断 tools2 是否就绪，
+     必须用 window._tools2Ready 标记（由 runtime.js installGlobal 设置）。 */
   try{
-    if(typeof window.openToolPage==='function'){
+    if(window._tools2Ready){
       window.openToolPage('calendar');
-    }else if(typeof window._ensureTools2==='function'){
-      window._ensureTools2().then(()=>window.openToolPage('calendar'));
     }else{
-      // 兜底：等一下 tools2 加载完再打开
+      // tools2 尚未加载完（动态 import 异步），轮询等待就绪后打开
       let tries=0;
       const t=setInterval(()=>{
         tries++;
-        if(typeof window.openToolPage==='function'){clearInterval(t);window.openToolPage('calendar');}
-        else if(tries>40){clearInterval(t);console.warn('[openCalendarMode] tools2 未就绪');}
+        if(window._tools2Ready){clearInterval(t);window.openToolPage('calendar');}
+        else if(tries>40){clearInterval(t);console.warn('[openCalendarMode] tools2 未就绪，日历不可用');}
       },50);
     }
   }catch(e){console.error('[openCalendarMode]',e);}

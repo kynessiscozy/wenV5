@@ -237,4 +237,5 @@ export function esc(s) {
 export function installGlobal() {
   window.openToolPage = function (type) { openTool(type); };
   window.closeToolPage = function () { closeTool(); };
+  window._tools2Ready = true;
 }
