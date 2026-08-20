@@ -4,9 +4,6 @@
   <path d="M32 8 C46 8 48 18 48 26 C48 34 40 42 32 42 C24 42 16 40 16 48" fill="none" stroke="#c75a2a" stroke-width="2.5" stroke-linecap="round"/>
   <circle cx="32" cy="32" r="4.5" fill="none" stroke="rgba(140,100,50,.5)" stroke-width="1.2"/>
   <circle cx="32" cy="32" r="1.8" fill="#c49b3c"/>
-  <!-- V5 角标 -->
-  <g>
-    <rect x="38" y="38" width="22" height="22" rx="6" fill="#d97757" stroke="#f5efe0" stroke-width="1.5"/>
-    <text x="49" y="54" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="11" font-weight="800" letter-spacing="0.5">V5</text>
-  </g>
+  <!-- V5 角标：纯文字 -->
+  <text x="48" y="57" text-anchor="middle" fill="#c75a2a" font-family="system-ui,sans-serif" font-size="14" font-weight="900" letter-spacing="0.5">V5</text>
 </svg>
