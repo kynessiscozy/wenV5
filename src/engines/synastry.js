@@ -47,7 +47,7 @@ const PILLAR_WEIGHT = { D: 3.0, M: 1.6, Y: 1.0, H: 1.0 };
 
 /* ------------------------------------------------------------
    为「对方」排盘
-   注意：不能调用 mkDy()，它内部直接读取页面上本人的 bDate 输入框。
+   合盘只比对四柱本身，不涉及大运，故无需调用 mkDy()。
 ------------------------------------------------------------ */
 export function buildPartnerChart({ y, m, d, hourZhi }) {
   const known = Number.isInteger(hourZhi) && hourZhi >= 0 && hourZhi <= 11;

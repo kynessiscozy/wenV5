@@ -47,10 +47,10 @@ theme-claude.css  →  styles.css  →  ig-dock.css  →  claude-ui.css
 
 | 脚本 | 作用 |
 |---|---|
-| `tools/claudeify.py` | 第一轮：白系颜色 → `--c-text*` / `--c-surface*` / `--c-border*` |
-| `tools/claudeify2.py` | 第二轮：暗色底（低明度 rgba/hex/hsla）→ 同上 |
-| `tools/strip-glass.py` | 删除 15 条 `[data-glass]`「玻璃质感强度」规则 |
-| `tools/strip-shadows.py` | 中和 48 条深黑投影（在浅底上会变成脏灰光晕） |
+| `tools/archive/claudeify.py` | 第一轮：白系颜色 → `--c-text*` / `--c-surface*` / `--c-border*` |
+| `tools/archive/claudeify2.py` | 第二轮：暗色底（低明度 rgba/hex/hsla）→ 同上 |
+| `tools/archive/strip-glass.py` | 删除 15 条 `[data-glass]`「玻璃质感强度」规则 |
+| `tools/archive/strip-shadows.py` | 中和 48 条深黑投影（在浅底上会变成脏灰光晕） |
 
 ### 手工改动
 - `src/engines/shared.js` — 五行色 `WC` 改为 `var(--wx-*)`，随主题切换明度
@@ -77,8 +77,8 @@ theme-claude.css  →  styles.css  →  ig-dock.css  →  claude-ui.css
 npm run build
 npx vite preview --port 4173 &
 
-node tools/shot.mjs      # 首页/报告/运势/工具/AI 面板 × 明暗 → /tmp/shots
-node tools/shot2.mjs     # 大师模式/工具弹层/保存弹窗 × 明暗 → /tmp/shots2
+node tools/archive/shot.mjs      # 首页/报告/运势/工具/AI 面板 × 明暗 → /tmp/shots
+node tools/archive/shot2.mjs     # 大师模式/工具弹层/保存弹窗 × 明暗 → /tmp/shots2
 node tools/contrast.mjs  # WCAG AA 对比度审计
 ```
 
@@ -410,7 +410,7 @@ node tools/test-explain.mjs   # 入口注入 / 自动提问 / 术语不再答非
 
 ### 方法
 
-新增 `tools/audit-layout2.mjs`，在三种视口 × 七个界面下自动检测：
+新增 `tools/archive/audit-layout2.mjs`，在三种视口 × 七个界面下自动检测：
 横向溢出、文字裁切、触控目标过小、卡片重叠。
 排除了两类误报：滑出视口的 `.page`（页面切换动画所需）与 sr-only 元素。
 
@@ -488,8 +488,8 @@ node tools/test-explain.mjs   # 入口注入 / 自动提问 / 术语不再答非
 ### 测试
 
 ```
-node tools/test-explain-ctx.mjs   # 7 张卡片的提问是否都带命盘数据、且不返回词典
-node tools/test-syn-fold.mjs      # 折叠结构 / 展开收起 / 高度收敛 / 触控 ≥44px
+node tools/archive/test-explain-ctx.mjs   # 7 张卡片的提问是否都带命盘数据、且不返回词典
+node tools/archive/test-syn-fold.mjs      # 折叠结构 / 展开收起 / 高度收敛 / 触控 ≥44px
 ```
 
 ---
