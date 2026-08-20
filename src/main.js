@@ -184,6 +184,31 @@ initFontSize();
     card.classList.toggle('qr-collapsed',expanded);
   };
 
+  // 5.5 运势页：年/月/周/日 档位切换
+  window.TJActivateYunTab=function(key){
+    const yunSec=document.getElementById('s-yun');if(!yunSec)return;
+    const tabs=yunSec.querySelectorAll('.yun-tab');
+    const panes=yunSec.querySelectorAll('.yun-pane');
+    let found=false;
+    tabs.forEach(t=>{
+      const on=t.dataset.yun===key;
+      t.classList.toggle('active',on);
+      t.setAttribute('aria-selected',on?'true':'false');
+      if(on)found=true;
+    });
+    panes.forEach(p=>{
+      p.classList.toggle('active',p.dataset.yun===key);
+    });
+    if(!found)return;
+    // 切换后滚动回标签栏顶部
+    const sc=document.getElementById('p2Scroll');
+    const tabsEl=yunSec.querySelector('.yun-tabs');
+    if(sc&&tabsEl){
+      const top=tabsEl.getBoundingClientRect().top-(sc.getBoundingClientRect()?.top||0);
+      if(top<0)sc.scrollBy({top,behavior:'smooth'});
+    }
+  };
+
   // 6. 档案菜单切换（使用 IndexedDB）
   window.TJToggleProfileMenu=async function(){
     const menu=document.getElementById('p2ProfileMenu');

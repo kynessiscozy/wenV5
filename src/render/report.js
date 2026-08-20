@@ -367,7 +367,7 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   H+=`<div class="sec" id="s-yun">`;
   H+=renderQuickRead('yun',ctx);
   H+=renderBeginnerBrief('yun',ctx);
-  H+=`<div class="yun-tabs" role="tablist" aria-label="运势时间粒度"><button class="yun-tab active" type="button" data-yun="year" role="tab" aria-selected="true">当年</button><button class="yun-tab" type="button" data-yun="month" role="tab" aria-selected="false">流月</button><button class="yun-tab" type="button" data-yun="week" role="tab" aria-selected="false">本周</button><button class="yun-tab" type="button" data-yun="day" role="tab" aria-selected="false">当下关注</button></div>`;
+  H+=`<div class="yun-tabs" role="tablist" aria-label="运势时间粒度"><button class="yun-tab active" type="button" data-yun="year" role="tab" aria-selected="true" onclick="TJActivateYunTab('year')">当年</button><button class="yun-tab" type="button" data-yun="month" role="tab" aria-selected="false" onclick="TJActivateYunTab('month')">流月</button><button class="yun-tab" type="button" data-yun="week" role="tab" aria-selected="false" onclick="TJActivateYunTab('week')">本周</button><button class="yun-tab" type="button" data-yun="day" role="tab" aria-selected="false" onclick="TJActivateYunTab('day')">当下关注</button></div>`;
   H+=`<div class="yun-panes">`;
 
   // ===== 年档：当年核心趋势 + 人生时间线（合并掉原"大运时间轴"，十年只呈现一次）=====
