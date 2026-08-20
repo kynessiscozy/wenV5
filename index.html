@@ -230,33 +230,70 @@
   <div class="modal-bg" onclick="closeSaveModal()"></div>
   <div class="modal-sheet glass save-sheet">
     <div class="modal-close" onclick="closeSaveModal()">×</div>
-    <div class="save-icon">
-      <svg viewBox="0 0 64 64" width="56" height="56">
-        <circle cx="32" cy="32" r="30" fill="var(--c-accent-soft, rgba(217,119,87,.12))"/>
-        <path d="M22 18 h20 a4 4 0 0 1 4 4 v20 a4 4 0 0 1 -4 4 h-20 a4 4 0 0 1 -4 -4 v-20 a4 4 0 0 1 4 -4 z" fill="none" stroke="var(--c-accent-text, #c75a2a)" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M26 18 v8 h12 v-8" fill="none" stroke="var(--c-accent-text, #c75a2a)" stroke-width="2" stroke-linejoin="round"/>
-        <rect x="24" y="34" width="16" height="12" rx="2" fill="none" stroke="var(--c-accent-text, #c75a2a)" stroke-width="2"/>
-        <path d="M32 28 v14 M27 33 l5 5 l5 -5" fill="none" stroke="var(--c-accent-text, #c75a2a)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+    <div class="save-hero">
+      <div class="save-icon-ring">
+        <div class="save-icon-glow"></div>
+        <div class="save-icon">
+          <svg viewBox="0 0 64 64" width="56" height="56">
+            <defs>
+              <linearGradient id="saveIconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#e89670"/>
+                <stop offset="100%" stop-color="#c75a2a"/>
+              </linearGradient>
+            </defs>
+            <path d="M32 10c-12.15 0-22 9.85-22 22s9.85 22 22 22 22-9.85 22-22-9.85-22-22-22zm0 40c-9.94 0-18-8.06-18-18s8.06-18 18-18 18 8.06 18 18-8.06 18-18 18z" fill="url(#saveIconGrad)" opacity="0.15"/>
+            <path d="M24 20 h16 a4 4 0 0 1 4 4 v16 a4 4 0 0 1 -4 4 h-16 a4 4 0 0 1 -4 -4 v-16 a4 4 0 0 1 4 -4 z" fill="none" stroke="url(#saveIconGrad)" stroke-width="2.2" stroke-linejoin="round"/>
+            <path d="M28 20 v6 h8 v-6" fill="none" stroke="url(#saveIconGrad)" stroke-width="2.2" stroke-linejoin="round"/>
+            <rect x="26" y="34" width="12" height="10" rx="2" fill="none" stroke="url(#saveIconGrad)" stroke-width="2.2"/>
+            <path d="M32 30 v12 M28 35 l4 4 l4 -4" fill="none" stroke="url(#saveIconGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+      <div class="save-title">保存命盘档案</div>
+      <div class="save-subtitle">给这份命盘取个名字，随时回来查看</div>
     </div>
-    <div class="save-title">保存命盘档案</div>
-    <div class="save-subtitle">给这份命盘取个名字，随时回来查看</div>
-    <div class="save-preview">
-      <div class="save-preview-row">
-        <span class="save-preview-label">出生</span>
-        <span class="save-preview-value" id="spBd">—</span>
+    <div class="save-preview-card">
+      <div class="save-preview-badge">命盘预览</div>
+      <div class="save-preview-grid">
+        <div class="save-preview-item">
+          <span class="sp-icon">📅</span>
+          <div class="sp-info">
+            <span class="sp-label">出生日期</span>
+            <span class="sp-value" id="spBd">—</span>
+          </div>
+        </div>
+        <div class="save-preview-item">
+          <span class="sp-icon">📍</span>
+          <div class="sp-info">
+            <span class="sp-label">出生地点</span>
+            <span class="sp-value" id="spBp">—</span>
+          </div>
+        </div>
+        <div class="save-preview-item">
+          <span class="sp-icon" id="spGenIcon">♂</span>
+          <div class="sp-info">
+            <span class="sp-label">性别</span>
+            <span class="sp-value" id="spGen">—</span>
+          </div>
+        </div>
       </div>
-      <div class="save-preview-row">
-        <span class="save-preview-label">出生地</span>
-        <span class="save-preview-value" id="spBp">—</span>
-      </div>
-      <div class="save-preview-row">
-        <span class="save-preview-label">性别</span>
-        <span class="save-preview-value" id="spGen">—</span>
+      <div class="save-bazi-preview" id="spBazi">
+        <span class="bz-pillar"><small>年</small><b>—</b></span>
+        <span class="bz-pillar"><small>月</small><b>—</b></span>
+        <span class="bz-pillar"><small>日</small><b>—</b></span>
+        <span class="bz-pillar"><small>时</small><b>—</b></span>
       </div>
     </div>
     <div class="save-input-wrap">
-      <input type="text" id="saveName" placeholder="输入档案名称…" maxlength="20" autocomplete="off" onkeydown="if(event.key==='Enter')confirmSaveProfile()">
+      <div class="save-input-label">档案名称</div>
+      <input type="text" id="saveName" placeholder="例如：我的命盘、妈妈的命盘…" maxlength="20" autocomplete="off" oninput="updateSaveNameCount()" onkeydown="if(event.key==='Enter')confirmSaveProfile()">
+      <div class="save-input-count"><span id="saveNameCount">0</span>/20</div>
+    </div>
+    <div class="save-quick-names">
+      <span class="sqn-tag" onclick="quickSaveName('我的命盘')">我的命盘</span>
+      <span class="sqn-tag" onclick="quickSaveName('妈妈')">妈妈</span>
+      <span class="sqn-tag" onclick="quickSaveName('爸爸')">爸爸</span>
+      <span class="sqn-tag" onclick="quickSaveName('伴侣')">伴侣</span>
     </div>
     <button class="save-btn" onclick="confirmSaveProfile()">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>

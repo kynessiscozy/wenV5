@@ -82,6 +82,65 @@ body .card-share:active{transform:scale(.92)}
 .p2-profile-sep{height:1px;background:var(--c-border);margin:6px 8px}
 .p2-profile-empty{padding:14px 12px;font-size:.8em;color:var(--c-text-3);text-align:center}
 
+/* ---- 档案菜单：保存当前命盘按钮 ---- */
+.p2-profile-save-btn{
+  display:flex;align-items:center;gap:10px;
+  width:100%;
+  padding:12px 14px;
+  border:0;
+  border-radius:12px;
+  background:linear-gradient(135deg, #e89670 0%, #d97757 50%, #c75a2a 100%);
+  color:#fff;
+  font-family:inherit;
+  font-size:.85em;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .2s ease;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 4px 12px color-mix(in srgb, var(--c-accent, #d97757) 30%, transparent);
+}
+.p2-profile-save-btn::before{
+  content:'';
+  position:absolute;
+  top:0;left:-100%;
+  width:100%;height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+  transition:left .5s ease;
+}
+.p2-profile-save-btn:hover::before{
+  left:100%;
+}
+.p2-profile-save-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 16px color-mix(in srgb, var(--c-accent, #d97757) 38%, transparent);
+}
+.p2-profile-save-btn:active{
+  transform:translateY(0);
+}
+.p2ps-icon{
+  width:24px;height:24px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  background:rgba(255,255,255,.2);
+  font-size:1em;
+  font-weight:700;
+  flex-shrink:0;
+}
+.p2ps-text{
+  flex:1;
+  text-align:left;
+  letter-spacing:.5px;
+}
+.p2ps-arrow{
+  font-size:.9em;
+  opacity:.8;
+  transition:transform .2s ease;
+}
+.p2-profile-save-btn:hover .p2ps-arrow{
+  transform:translateX(3px);
+}
+
 /* ---- 答案之书：收藏入口与收藏列表 ---- */
 .answerbook-saved-entry{
   margin-top:10px;padding:9px 18px;border-radius:999px;
@@ -570,112 +629,297 @@ body.report-active .home-menu-drawer{display:none}
 @keyframes wxPulse{0%,100%{opacity:.4}50%{opacity:.9}}
 
 /* ============================================================
-   保存档案弹窗
+   保存档案弹窗 — 精美版
    ============================================================ */
 .save-sheet{
   text-align:center;
-  width:min(420px,92vw);
-  padding:32px 28px 28px!important;
-  border-radius:24px!important;
+  width:min(440px,92vw);
+  padding:0 0 24px!important;
+  border-radius:28px!important;
+  overflow:hidden!important;
 }
-.save-icon{
-  width:72px;height:72px;
-  margin:0 auto 16px;
+.save-sheet .modal-close{
+  position:absolute;top:14px;right:14px;z-index:10;
+  width:32px;height:32px;
   display:flex;align-items:center;justify-content:center;
   border-radius:50%;
-  background:var(--c-accent-soft, rgba(217,119,87,.12));
-  animation:saveIconIn .5s cubic-bezier(.2,.8,.3,1.2) both;
+  background:var(--c-surface-2, rgba(255,255,255,.6));
+  backdrop-filter:blur(10px);
+  color:var(--c-text-3, #999);
+  font-size:calc(18px * var(--font-scale, 1));
+  line-height:1;
+  cursor:pointer;
+  transition:all .2s ease;
+  border:1px solid var(--c-border, #eee);
+}
+.save-sheet .modal-close:hover{
+  color:var(--c-text-hi, #333);
+  background:var(--c-surface-3, #fff);
+  transform:rotate(90deg);
+}
+
+/* ---- 顶部英雄区 ---- */
+.save-hero{
+  position:relative;
+  padding:36px 28px 20px;
+  background:linear-gradient(180deg, 
+    color-mix(in srgb, var(--c-accent, #d97757) 8%, transparent) 0%, 
+    transparent 100%);
+}
+.save-icon-ring{
+  position:relative;
+  width:84px;height:84px;
+  margin:0 auto 16px;
+  animation:saveIconFloat 3s ease-in-out infinite;
+}
+.save-icon-glow{
+  position:absolute;inset:-8px;
+  border-radius:50%;
+  background:radial-gradient(circle, 
+    color-mix(in srgb, var(--c-accent, #d97757) 25%, transparent) 0%, 
+    transparent 70%);
+  filter:blur(8px);
+  animation:saveGlowPulse 2.4s ease-in-out infinite;
+}
+.save-icon{
+  position:relative;
+  width:84px;height:84px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
+  background:var(--c-surface, #fff);
+  box-shadow:0 8px 24px color-mix(in srgb, var(--c-accent, #d97757) 20%, transparent),
+             0 2px 8px rgba(0,0,0,.06);
+  animation:saveIconIn .6s cubic-bezier(.2,.8,.3,1.3) both;
 }
 @keyframes saveIconIn{
-  from{transform:scale(0);opacity:0}
-  to{transform:scale(1);opacity:1}
+  0%{transform:scale(0) rotate(-20deg);opacity:0}
+  60%{transform:scale(1.1) rotate(5deg)}
+  100%{transform:scale(1) rotate(0);opacity:1}
+}
+@keyframes saveIconFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-4px)}
+}
+@keyframes saveGlowPulse{
+  0%,100%{opacity:.6;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.1)}
 }
 .save-title{
-  font-size:1.2em;
-  font-weight:800;
+  font-family:var(--serif);
+  font-size:1.28em;
+  font-weight:700;
   color:var(--c-text-hi, #1a1915);
   margin-bottom:6px;
+  letter-spacing:1px;
 }
 .save-subtitle{
   font-size:.82em;
   color:var(--c-text-3, #888);
-  margin-bottom:18px;
+  line-height:1.6;
 }
-.save-preview{
+
+/* ---- 命盘预览卡 ---- */
+.save-preview-card{
+  margin:4px 20px 18px;
+  padding:16px;
+  border-radius:18px;
   background:var(--c-surface-2, #f8f6f0);
-  border-radius:14px;
-  padding:12px 16px;
-  margin-bottom:18px;
+  border:1px solid var(--c-border, #eee);
+  text-align:left;
+  position:relative;
+}
+.save-preview-badge{
+  position:absolute;top:-10px;left:16px;
+  padding:3px 10px;
+  border-radius:999px;
+  background:linear-gradient(135deg, #d97757, #c75a2a);
+  color:#fff;
+  font-size:.65em;
+  font-weight:600;
+  letter-spacing:1px;
+}
+.save-preview-grid{
+  display:flex;flex-direction:column;gap:10px;
+  margin-top:4px;
+}
+.save-preview-item{
+  display:flex;align-items:center;gap:10px;
+}
+.sp-icon{
+  width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:10px;
+  background:var(--c-surface-3, #fff);
+  font-size:1em;
+  flex-shrink:0;
+}
+.sp-info{
+  display:flex;flex-direction:column;gap:2px;
+  min-width:0;flex:1;
+}
+.sp-label{
+  font-size:.68em;
+  color:var(--c-text-4, #aaa);
+  letter-spacing:.5px;
+}
+.sp-value{
+  font-size:.85em;
+  font-weight:600;
+  color:var(--c-text-hi, #1a1915);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* ---- 四柱预览 ---- */
+.save-bazi-preview{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px dashed var(--c-border, #e5e0d5);
+}
+.bz-pillar{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 4px;
+  border-radius:10px;
+  background:var(--c-surface-3, #fff);
+  font-family:var(--serif);
+}
+.bz-pillar small{
+  font-size:.6em;
+  color:var(--c-text-4, #bbb);
+  font-family:var(--sf);
+  letter-spacing:1px;
+}
+.bz-pillar b{
+  font-size:.95em;
+  font-weight:700;
+  color:var(--c-text-hi, #1a1915);
+}
+
+/* ---- 输入区域 ---- */
+.save-input-wrap{
+  margin:0 20px 12px;
+  position:relative;
   text-align:left;
 }
-.save-preview-row{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:6px 0;
-  font-size:.82em;
-}
-.save-preview-row + .save-preview-row{
-  border-top:1px dashed var(--c-border, #eee);
-}
-.save-preview-label{
-  color:var(--c-text-3, #888);
-}
-.save-preview-value{
-  color:var(--c-text-hi, #1a1915);
+.save-input-label{
+  font-size:.72em;
   font-weight:600;
-}
-.save-input-wrap{
-  margin-bottom:18px;
+  color:var(--c-text-2, #666);
+  margin-bottom:6px;
+  letter-spacing:.5px;
 }
 .save-input-wrap input{
   width:100%;
-  padding:14px 18px;
-  border-radius:16px;
+  padding:14px 48px 14px 16px;
+  border-radius:14px;
   border:1.5px solid var(--c-border-2, #e8e4da);
   background:var(--c-surface-3, #fff);
   color:var(--c-text-hi, #1a1915);
   font-family:var(--sf, system-ui, sans-serif);
-  font-size:.95em;
-  text-align:center;
+  font-size:.9em;
   transition:all .2s;
   outline:none;
   box-sizing:border-box;
 }
 .save-input-wrap input:focus{
-  border-color:var(--c-accent-text, #c75a2a);
-  box-shadow:0 0 0 4px rgba(217,119,87,.15);
+  border-color:var(--c-accent, #d97757);
+  box-shadow:0 0 0 4px color-mix(in srgb, var(--c-accent, #d97757) 12%, transparent);
+  background:var(--c-surface, #fff);
 }
 .save-input-wrap input::placeholder{
-  color:var(--c-text-4, #bbb);
+  color:var(--c-text-4, #ccc);
 }
+.save-input-count{
+  position:absolute;
+  right:14px;bottom:12px;
+  font-size:.68em;
+  color:var(--c-text-4, #ccc);
+  font-variant-numeric:tabular-nums;
+}
+.save-input-wrap input:focus + .save-input-count,
+.save-input-count.has-text{
+  color:var(--c-accent-text, #c75a2a);
+}
+
+/* ---- 快捷名称标签 ---- */
+.save-quick-names{
+  display:flex;flex-wrap:wrap;gap:6px;
+  margin:0 20px 18px;
+}
+.sqn-tag{
+  padding:5px 12px;
+  border-radius:999px;
+  background:var(--c-surface-2, #f8f6f0);
+  border:1px solid var(--c-border, #eee);
+  color:var(--c-text-2, #666);
+  font-size:.74em;
+  cursor:pointer;
+  transition:all .18s ease;
+  user-select:none;
+}
+.sqn-tag:hover{
+  background:var(--c-accent-soft, rgba(217,119,87,.1));
+  border-color:var(--c-accent, #d97757);
+  color:var(--c-accent-text, #c75a2a);
+}
+.sqn-tag:active{
+  transform:scale(.96);
+}
+
+/* ---- 保存按钮 ---- */
 .save-btn{
   display:inline-flex;
   align-items:center;
   justify-content:center;
   gap:8px;
-  width:100%;
-  padding:14px 24px;
+  width:calc(100% - 40px);
+  margin:0 20px;
+  padding:15px 24px;
   border-radius:16px;
   border:0;
-  background:linear-gradient(135deg, #d97757, #c75a2a);
+  background:linear-gradient(135deg, #e89670 0%, #d97757 50%, #c75a2a 100%);
   color:#fff;
   font-family:var(--sf, system-ui, sans-serif);
   font-size:.95em;
   font-weight:700;
   cursor:pointer;
-  transition:all .2s;
-  box-shadow:0 4px 16px rgba(217,119,87,.3);
+  transition:all .2s ease;
+  box-shadow:0 6px 20px color-mix(in srgb, var(--c-accent, #d97757) 35%, transparent),
+             0 2px 6px color-mix(in srgb, var(--c-accent, #d97757) 20%, transparent);
+  position:relative;
+  overflow:hidden;
+}
+.save-btn::before{
+  content:'';
+  position:absolute;
+  top:0;left:-100%;
+  width:100%;height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+  transition:left .6s ease;
+}
+.save-btn:hover::before{
+  left:100%;
 }
 .save-btn:hover{
-  transform:translateY(-1px);
-  box-shadow:0 6px 20px rgba(217,119,87,.4);
+  transform:translateY(-2px);
+  box-shadow:0 10px 28px color-mix(in srgb, var(--c-accent, #d97757) 40%, transparent),
+             0 4px 10px color-mix(in srgb, var(--c-accent, #d97757) 25%, transparent);
 }
 .save-btn:active{
   transform:translateY(0);
 }
+
 @media(max-width:560px){
   #saveModal .modal-sheet{
-    padding-bottom:calc(80px + env(safe-area-inset-bottom, 34px));
+    padding-bottom:calc(24px + env(safe-area-inset-bottom, 34px))!important;
   }
+  .save-hero{padding:30px 24px 16px}
+  .save-preview-card{margin:4px 16px 16px}
+  .save-input-wrap{margin:0 16px 12px}
+  .save-quick-names{margin:0 16px 16px}
+  .save-btn{width:calc(100% - 32px);margin:0 16px}
 }
 
 

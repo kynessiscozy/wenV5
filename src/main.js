@@ -131,7 +131,7 @@ initFontSize();
   window.runRelationTool=runRelationTool;
 
   // 3. 之前已暴露的函数（保持不变）
-  window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.confirmSaveProfile=confirmSaveProfile;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){document.getElementById('aboutModal').classList.add('open');};window.closeAboutModal=function(){document.getElementById('aboutModal').classList.remove('open');};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};
+  window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.confirmSaveProfile=confirmSaveProfile;window.quickSaveName=quickSaveName;window.updateSaveNameCount=updateSaveNameCount;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){document.getElementById('aboutModal').classList.add('open');};window.closeAboutModal=function(){document.getElementById('aboutModal').classList.remove('open');};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};
 
   // 4. 缺失函数：分享卡片（报告卡片右上角分享按钮）
   window.TJShareReport=function(){
@@ -179,11 +179,9 @@ initFontSize();
   // 5. 缺失函数：速读卡折叠/展开
   window.TJToggleQuickRead=function(btn){
     const card=btn.closest('.qr-card');if(!card)return;
-    const body=card.querySelector('.qr-body');if(!body)return;
     const expanded=btn.getAttribute('aria-expanded')==='true';
     btn.setAttribute('aria-expanded',!expanded);
-    card.classList.toggle('collapsed',expanded);
-    body.style.maxHeight=expanded?'0':body.scrollHeight+'px';
+    card.classList.toggle('qr-collapsed',expanded);
   };
 
   // 6. 档案菜单切换（使用 IndexedDB）
@@ -197,7 +195,7 @@ initFontSize();
     try{
       const list=await dbGetAll();
       let html='';
-      html+='<button class="profile-item" style="color:var(--c-accent-text,#c75a2a);font-weight:600" onclick="openSaveModal();document.getElementById(\'p2ProfileMenu\').classList.remove(\'open\')">＋ 保存当前命盘</button>';
+      html+='<button class="p2-profile-save-btn" onclick="openSaveModal();document.getElementById(\'p2ProfileMenu\').classList.remove(\'open\')"><span class="p2ps-icon">＋</span><span class="p2ps-text">保存当前命盘</span><span class="p2ps-arrow">→</span></button>';
       html+='<div class="p2-profile-sep" style="height:1px;background:var(--c-border,#eee);margin:6px 0"></div>';
       if(list.length===0){
         html+='<div class="profile-empty">还没有保存的档案</div>';
@@ -491,6 +489,7 @@ function openSaveModal(){
   m.classList.add('open');
   const n=document.getElementById('saveName');
   n.value='';
+  updateSaveNameCount();
   setTimeout(()=>n.focus(),100);
   // 填充命盘预览
   const d=getCtx();
@@ -498,13 +497,44 @@ function openSaveModal(){
   const bdEl=document.getElementById('spBd');
   const bpEl=document.getElementById('spBp');
   const genEl=document.getElementById('spGen');
+  const genIconEl=document.getElementById('spGenIcon');
+  const baziEl=document.getElementById('spBazi');
   if(input){
     if(bdEl)bdEl.textContent=input.bd||'—';
     if(bpEl)bpEl.textContent=(CD[input.bp]||{n:'未知'}).n;
-    if(genEl)genEl.textContent=input.gen==='male'?'男':'女';
+    if(genEl)genEl.textContent=input.gen==='male'?'男（乾造）':'女（坤造）';
+    if(genIconEl)genIconEl.textContent=input.gen==='male'?'♂':'♀';
+    // 填充四柱
+    if(baziEl&&d&&d.b){
+      const b=d.b;
+      const pillars=[
+        {label:'年',gz:b.Y.g+b.Y.z},
+        {label:'月',gz:b.M.g+b.M.z},
+        {label:'日',gz:b.D.g+b.D.z},
+        {label:'时',gz:b.H.g+b.H.z}
+      ];
+      baziEl.innerHTML=pillars.map(p=>
+        `<span class="bz-pillar"><small>${p.label}</small><b>${p.gz}</b></span>`
+      ).join('');
+    }
   }
 }
 function closeSaveModal(){document.getElementById('saveModal').classList.remove('open');}
+function updateSaveNameCount(){
+  const n=document.getElementById('saveName');
+  const c=document.getElementById('saveNameCount');
+  if(!n||!c)return;
+  c.textContent=n.value.length;
+  c.parentElement?.classList.toggle('has-text',n.value.length>0);
+}
+function quickSaveName(name){
+  const n=document.getElementById('saveName');
+  if(!n)return;
+  n.value=name;
+  updateSaveNameCount();
+  n.focus();
+  n.setSelectionRange(name.length,name.length);
+}
 function confirmSaveProfile(){const name=document.getElementById('saveName').value.trim();if(!name){showToast('请输入档案名称');return;}saveCurrentProfile(name).then(()=>{closeSaveModal();renderProfiles();showToast('已保存到档案库');}).catch(e=>showToast('保存失败：'+e));}
 async function exportProfiles(){try{const list=await dbGetAll();const blob=new Blob([JSON.stringify(list,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='问问大师档案_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}catch(e){showToast('导出失败');}}
 async function handleImport(input){const file=input.files[0];if(!file)return;try{const text=await file.text();const arr=JSON.parse(text);if(!Array.isArray(arr))throw new Error('格式错误');let count=0;for(const p of arr){if(p.bd&&p.bp&&p.gen){delete p.id;p.updatedAt=Date.now();await dbPut(p);count++;}}renderProfiles();showToast(`成功导入 ${count} 条档案`);}catch(e){showToast('导入失败：'+e.message);}input.value='';}
