@@ -1393,69 +1393,6 @@ function toggleUserMode(){setUserMode(document.body.classList.contains('beginner
   new MutationObserver(mount).observe(document.body,{childList:true,subtree:true});
 })();
 
-})();
-
-/* ============================================================================
-   摇签问卜 · 专业签诗库（ORACLE_SIGNS）
-   结构：每种签为一个数组，每首含
-     n    签号
-     grade 等级（上上签 / 上签 / 中签 / 下签）
-     name 签名（典故出处）
-     poem 签诗（七言四句）
-     yi   圣意 / 签语
-     jie  解曰（解读）
-     dian 典故（出处故事）
-   内容以传统签式写成，用于自我反思与行动参考，不作定论。
-   ============================================================================ */
-
-
-(function(){
- const oldRun=window.TJToolRun;
- return;}
-  const out=document.getElementById('v3_result');if(!out)return;
-  const q=(document.getElementById('v3_question')?.value||'').trim()||'你心中的问题';
-  const area=document.getElementById('v3_area')?.value||'观音签';
-  
-  const lib = SIGN_LIB[area] || SIGN_LIB['观音签'] || [];
-  const lot = lib.length ? lib[Math.floor(Math.random()*lib.length)] : null;
-  const n = lot ? lot.n : (Math.floor(Math.random()*48)+1);
-  const title = lot ? lot.name : '无名签';
-  const grade = lot ? lot.grade : '中签';
-  const poem = lot ? lot.poem : '';
-  const yi = lot ? lot.yi : '';
-  const jie = lot ? lot.jie : '';
-  const dian = lot ? lot.dian : '';
-  const qEsc = String(q).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
-  const gradeClass = grade.indexOf('上')>-1 ? 'sg-up' : (grade.indexOf('下')>-1 ? 'sg-down' : 'sg-mid');
-  const act = grade.indexOf('上')>-1
-    ? '此签利进取，宜把握当下机缘、顺势而为，不必过疑。'
-    : grade.indexOf('下')>-1
-    ? '此签多阻滞，宜退守谨慎、先稳根基，待时运转圜再图。'
-    : '此签宜守常渐进，按部就班、稳中求进，莫急莫怠。';
-  out.innerHTML='<div class="tj-oracle-stage shake"><div class="tj-oracle-scene"><div class="tj-oracle-glow"></div><div class="tj-oracle-cup"></div><div class="tj-oracle-stick"></div><div class="tj-oracle-status">正在摇签 · 请专注你的问题</div></div></div><div class="tj-oracle-hint">'+area+' · 摇签中</div>';
-  out.classList.add('show');out.scrollIntoView({behavior:'smooth',block:'nearest'});
-  setTimeout(()=>{const stage=out.querySelector('.tj-oracle-stage');if(!stage)return;stage.classList.remove('shake');stage.classList.add('draw');stage.querySelector('.tj-oracle-status').textContent='签筒停下 · 正在抽取';},1450);
-  setTimeout(()=>{const stage=out.querySelector('.tj-oracle-stage');if(!stage)return;stage.classList.remove('draw');stage.classList.add('reveal');stage.querySelector('.tj-oracle-status').textContent='签已出筒 · 第 '+n+' 签';},2700);
-  setTimeout(()=>{
-    out.innerHTML=''
-      +'<div class="tj-result-head"><div class="tj-result-title">'+area+' · 第 '+n+' 签</div><div class="tj-score '+gradeClass+'">'+grade+'</div></div>'
-      +'<div class="tj-result-body">'
-      +'<div class="tj-oracle-name">『'+title+'』</div>'
-      +'<div class="tj-oracle-poem">'+poem.replace(/\n/g,'<br>')+'</div>'
-      +'<div class="tj-result-list">'
-      +'<div><b>圣意</b><span>'+yi+'</span></div>'
-      +'<div><b>解曰</b><span>'+jie+'</span></div>'
-      +'<div><b>典故</b><span>'+dian+'</span></div>'
-      +'<div><b>结合所问</b><span>你问：「'+qEsc+'」。以此签观之，'+act+'</span></div>'
-      +'</div></div>'
-      +'<div class="tj-sign-actions"><button type="button" class="tj-sign-share" onclick="TJShareOracle()">生成签文卡</button><button type="button" class="tj-sign-refresh" onclick="TJToolRun(\'oracle\')">↻ 再摇一签</button></div>'
-      +'<div class="tj-disclaimer">签文为传统问卜之参详，用于自我反思与理顺思路；健康、法律、财务及关系等重大决定，请结合现实条件与专业意见，不以签文为定论。</div>';
-    window._lastOracle={area,n,title,grade,poem,yi,jie,dian,q};
-    out.classList.add('show');
-  },3550);
- };
-})();
-
 /* ============================================================
    tools2 · 工具系统 v2 接管（必须位于所有旧 IIFE 之后）
    动态 import：注册在模块加载时完成，加载后立即接管全局入口。
