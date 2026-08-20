@@ -34,7 +34,6 @@ import { renderShareCard, exportShareCard } from './share/card.js';
 import { initArmillary } from './fx/armillary.js';
 import { initArmillaryAugust } from './fx/armillary-august.js';
 import { burstToArmillary } from './fx/burst.js';
-import { playIconDrawAnimation } from './fx/icon-draw.js';
 import { TJX } from './state/tjx.js';
 import { getResultStyle } from './state/result-style.js';
 
@@ -554,8 +553,6 @@ window.toggleHomeMenu=toggleHomeMenu;
 })();
 
 document.addEventListener('DOMContentLoaded',()=>{
-  /* 开屏动画：逐笔绘制 V5 图标，停留 2 秒后淡出 */
-  playIconDrawAnimation();
   initOnboarding();
   initDB().then(()=>renderProfiles()).catch(e=>console.log('DB init',e));
   const ai=document.getElementById('askInput');
