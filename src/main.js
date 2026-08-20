@@ -79,6 +79,15 @@ import {
 import { initFontSize } from './font-size.js';
 import { initWeather, getWxGeo } from './ui/weather.js';
 import { initOnboarding } from './onboarding.js';
+// 第 1 批拆分模块（零耦合 IIFE 外提至 src/legacy/）
+import { initHomeFx } from './legacy/home.js';
+import { initCityAutocomplete, initFormDirtyGuard } from './legacy/forms.js';
+import { initCardCollapse, initDensityToggle, initExplainInject, initQuickReadCollapse, initTodayCard, initYunTab } from './legacy/report.js';
+import { initDailyRun, initDailySignRevamp, initDailySignShare, initDateToolRevamp, initStyleToolV2, initToolCenterFinal, initToolCenterSearch, initToolEngineV3, initToolRefineLayer, initToolRunWrap, initWealthToolRevamp } from './legacy/tools.js';
+import { initAnswerBookV2, initCustomToolFallback, initToolCardArt } from './legacy/tool-extras.js';
+import { initSecondaryPage, initSecondaryResultFallback, initTertiaryBackFix } from './legacy/tool-pages.js';
+import { initDockIndicator, initDockKeyboard, initDockLighting } from './legacy/dock.js';
+import { initCloudflareCleanup, initExperienceLayer, initKBExpansion, initSynastryShare, initToolAI } from './legacy/interactions.js';
 /* tools2 改为动态 import（见文件末尾 bootstrap 处）：
    工具系统体积大且非首屏必需，独立成异步 chunk，缩小主包。 */
 
@@ -354,58 +363,7 @@ function confirmSaveProfile(){const name=document.getElementById('saveName').val
 async function exportProfiles(){try{const list=await dbGetAll();const blob=new Blob([JSON.stringify(list,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='问问大师档案_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}catch(e){showToast('导出失败');}}
 async function handleImport(input){const file=input.files[0];if(!file)return;try{const text=await file.text();const arr=JSON.parse(text);if(!Array.isArray(arr))throw new Error('格式错误');let count=0;for(const p of arr){if(p.bd&&p.bp&&p.gen){delete p.id;p.updatedAt=Date.now();await dbPut(p);count++;}}renderProfiles();showToast(`成功导入 ${count} 条档案`);}catch(e){showToast('导入失败：'+e.message);}input.value='';}
 
-(function(){
-  const inp=document.getElementById('cInp'),hid=document.getElementById('bPlace'),dd=document.getElementById('cDD');
-  let ai=-1;
-  // 将候选层提升到 body，避免被表单、卡片或滚动容器裁剪。
-  if(dd){document.body.appendChild(dd);dd.classList.add('cdd-floating');}
-  function placeDropdown(){
-    if(!dd||!inp)return;
-    const r=inp.getBoundingClientRect();
-    dd.style.left=Math.round(r.left)+'px';
-    dd.style.width=Math.round(r.width)+'px';
-    const spaceBelow=window.innerHeight-r.bottom-8;
-    const spaceAbove=r.top-8;
-    const h=Math.min(260,Math.max(120,spaceBelow));
-    if(spaceBelow>=150||spaceBelow>=spaceAbove){
-      dd.style.top=Math.round(r.bottom+4)+'px';
-      dd.style.maxHeight=Math.round(Math.max(120,spaceBelow))+'px';
-    }else{
-      dd.style.top='auto';
-      dd.style.bottom=Math.round(window.innerHeight-r.top+4)+'px';
-      dd.style.maxHeight=Math.round(Math.max(120,spaceAbove))+'px';
-    }
-  }
-  function rdd(f){
-    let h='',n=0;const q=(f||'').toLowerCase();
-    CG.forEach(g=>{
-      const m=g.c.filter(c=>!q||c.n.includes(q)||c.i.includes(q)||g.g.includes(q)||(c.p&&c.p.toLowerCase().includes(q)));
-      if(!m.length)return;
-      h+=`<div class="cg">${g.g}</div>`;
-      m.forEach(c=>{h+=`<div class="co" data-i="${c.i}" data-n="${c.n}"><span>${c.n}</span><span class="cp">${g.g}</span></div>`;n++;});
-    });
-    if(!n)h='<div style="padding:18px;text-align:center;color:var(--c-text-3);font-size:.82em">未找到</div>';
-    dd.innerHTML=h;ai=-1;
-    dd.querySelectorAll('.co').forEach(el=>el.addEventListener('mousedown',e=>{e.preventDefault();sel(el.dataset.i,el.dataset.n);}));
-  }
-  function openDD(){
-    placeDropdown();dd.classList.add('show');
-  }
-  function sel(i,n){hid.value=i;inp.value=n;dd.classList.remove('show');dd.style.bottom='';}
-  inp.addEventListener('focus',()=>{rdd(inp.value===(CD[hid.value]||{}).n?'':inp.value);openDD();});
-  inp.addEventListener('input',()=>{rdd(inp.value);hid.value='';openDD();});
-  inp.addEventListener('blur',()=>setTimeout(()=>dd.classList.remove('show'),150));
-  window.addEventListener('resize',()=>{if(dd.classList.contains('show'))placeDropdown();});
-  window.addEventListener('scroll',()=>{if(dd.classList.contains('show'))placeDropdown();},true);
-  inp.addEventListener('keydown',e=>{
-    const opts=dd.querySelectorAll('.co');
-    if(e.key==='ArrowDown'){e.preventDefault();ai=Math.min(ai+1,opts.length-1);opts.forEach((o,i)=>o.classList.toggle('act',i===ai));if(opts[ai])opts[ai].scrollIntoView({block:'nearest'});}
-    else if(e.key==='ArrowUp'){e.preventDefault();ai=Math.max(ai-1,0);opts.forEach((o,i)=>o.classList.toggle('act',i===ai));}
-    else if(e.key==='Enter'){e.preventDefault();if(ai>=0&&opts[ai])sel(opts[ai].dataset.i,opts[ai].dataset.n);}
-    else if(e.key==='Escape')dd.classList.remove('show');
-  });
-  window.rdd=rdd;window.sel=sel;
-})();;
+initCityAutocomplete();
 (function(){window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.confirmSaveProfile=confirmSaveProfile;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){document.getElementById('aboutModal').classList.add('open');};window.closeAboutModal=function(){document.getElementById('aboutModal').classList.remove('open');};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};})();
 
 /* 首页汉堡菜单 */
@@ -469,59 +427,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 /* ====== 卡片折叠功能 ====== */
-(function(){
-  // —— 默认折叠：本地存储记录"用户已展开的卡片" ——
-  const LS_KEY='tj_expanded_cards';
-  function loadExpanded(){
-    try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]');}catch(e){return [];}
-  }
-  function saveExpanded(arr){
-    try{localStorage.setItem(LS_KEY,JSON.stringify(arr));}catch(e){}
-  }
-  // 给所有 .glass.card-2 自动注入折叠按钮（card-1 默认不折叠 = 主信息）
-  function injectToggles(){
-    const expanded=loadExpanded();
-    document.querySelectorAll('#page2 .glass.card-2[data-card]:not([data-collapsible]):not([data-no-collapse])').forEach(el=>{
-      const hd=el.querySelector('.card-hd');
-      if(!hd)return;
-      const btn=document.createElement('button');
-      btn.className='card-toggle';
-      btn.type='button';
-      btn.title='折叠/展开';
-      btn.setAttribute('aria-label','折叠或展开这张卡片');
-      btn.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>';
-      hd.appendChild(btn);
-      el.setAttribute('data-collapsible','1');
-      const onToggle=function(e){
-        if(e.target.closest('button:not(.card-toggle),a,input,select,svg.no-toggle'))return;
-        toggleCard(el);
-      };
-      btn.addEventListener('click',e=>{e.stopPropagation();toggleCard(el);});
-      hd.style.cursor='pointer';
-      hd.addEventListener('click',onToggle);
-      // —— 默认折叠：只有用户曾展开过的卡片才保持展开 ——
-      const key=el.getAttribute('data-card');
-      if(!expanded.includes(key))el.classList.add('collapsed');
-      // 折叠状态需要暴露给辅助技术，否则读屏用户不知道内容是收起的
-      btn.setAttribute('aria-expanded', el.classList.contains('collapsed')?'false':'true');
-    });
-  }
-  function toggleCard(el){
-    const key=el.getAttribute('data-card');
-    el.classList.toggle('collapsed');
-    const tg=el.querySelector('.card-toggle');
-    if(tg)tg.setAttribute('aria-expanded', el.classList.contains('collapsed')?'false':'true');
-    if(!key)return;
-    let list=loadExpanded();
-    if(el.classList.contains('collapsed')){
-      list=list.filter(k=>k!==key);
-    }else{
-      if(!list.includes(key))list.push(key);
-    }
-    saveExpanded(list);
-  }
-  window._injectCardToggles=injectToggles;
-})();
+initCardCollapse();
 
 /* ====== 合并卡：当下关注 子 tab 切换 ====== */
 function focusSwitchTab(btn){
@@ -539,274 +445,12 @@ function toggleDensity(){
   if(btn)btn.classList.toggle('on',document.body.classList.contains('density-compact'));
   try{localStorage.setItem('tj_density',document.body.classList.contains('density-compact')?'1':'0');}catch(e){}
 }
-(function(){
-  // 还原上次设置
-  try{if(localStorage.getItem('tj_density')==='1')document.body.classList.add('density-compact');}catch(e){}
-  // 滚动监听显示返回顶部
-  window.addEventListener('load',()=>{
-    const sc=document.getElementById('p2Scroll');
-    const btn=document.getElementById('backToTop');
-    if(!sc||!btn)return;
-    let ticking=false;
-    sc.addEventListener('scroll',()=>{
-      if(ticking)return;
-      ticking=true;
-      requestAnimationFrame(()=>{
-        btn.classList.toggle('show',sc.scrollTop>200);
-        ticking=false;
-      });
-    },{passive:true});
-    if(document.getElementById('densityToggle')&&document.body.classList.contains('density-compact')){
-      document.getElementById('densityToggle').classList.add('on');
-    }
-  });
-})();
+initDensityToggle();
 
 /* =========================================================
    首页：粒子 + 鼠标跟随 + 卡片视差 + body.home 自动切换
    ========================================================= */
-(function(){
-  const ROOT=document.documentElement;
-  const isMobile=window.matchMedia('(hover:none)').matches;
-
-  // ---- body.home 状态管理（page1 显示时启用首页特效）----
-  function applyHomeState(){
-    const p1=document.getElementById('page1');
-    const p2=document.getElementById('page2');
-    const onHome=p1&&!p1.classList.contains('hidden')&&(!p2||p2.classList.contains('hidden')||!p2.classList.contains('active'));
-    document.body.classList.toggle('home',onHome);
-  }
-  // 初始
-  document.addEventListener('DOMContentLoaded',applyHomeState);
-  // 监听 page1/page2 class 改动
-  const obs=new MutationObserver(()=>applyHomeState());
-  window.addEventListener('load',()=>{
-    const p1=document.getElementById('page1'),p2=document.getElementById('page2');
-    if(p1)obs.observe(p1,{attributes:true,attributeFilter:['class']});
-    if(p2)obs.observe(p2,{attributes:true,attributeFilter:['class']});
-    applyHomeState();
-  });
-
-  // ---- 鼠标跟随光球（含 lerp 拖尾）----
-  if(!isMobile){
-    const dot=document.getElementById('tjCursorDot');
-    const ring=document.getElementById('tjCursorRing');
-    if(dot&&ring){
-      let mx=window.innerWidth/2,my=window.innerHeight/2;
-      let dx=mx,dy=my,rx=mx,ry=my;
-      let pressed=false;
-      window.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.classList.remove('hide');ring.classList.remove('hide');},{passive:true});
-      window.addEventListener('mouseleave',()=>{dot.classList.add('hide');ring.classList.add('hide');});
-      window.addEventListener('mousedown',()=>{pressed=true;ring.classList.add('active');});
-      window.addEventListener('mouseup',()=>{pressed=false;ring.classList.remove('active');});
-      // hover 检测：交互元素
-      document.addEventListener('mouseover',e=>{
-        const t=e.target;
-        if(t&&t.closest&&t.closest('button,a,input,select,textarea,.chip,.cta,.tab-item,.r-card,.pf-card,.ai-chip,.ai-cat,.ai-route-btn,.tl-card,.lym-item,[onclick],[data-q]')){
-          dot.classList.add('hover');ring.classList.add('hover');
-        }
-      });
-      document.addEventListener('mouseout',e=>{
-        const t=e.target;
-        if(t&&t.closest&&t.closest('button,a,input,select,textarea,.chip,.cta,.tab-item,.r-card,.pf-card,.ai-chip,.ai-cat,.ai-route-btn,.tl-card,.lym-item,[onclick],[data-q]')){
-          dot.classList.remove('hover');ring.classList.remove('hover');
-        }
-      });
-      function tick(){
-        dx+=(mx-dx)*0.4;dy+=(my-dy)*0.4;
-        rx+=(mx-rx)*0.18;ry+=(my-ry)*0.18;
-        dot.style.transform='translate3d('+dx+'px,'+dy+'px,0) translate(-50%,-50%)';
-        ring.style.transform='translate3d('+rx+'px,'+ry+'px,0) translate(-50%,-50%)';
-        requestAnimationFrame(tick);
-      }
-      tick();
-    }
-  }
-
-  // ---- 粒子系统 ----
-  const cv=document.getElementById('tjParticles');
-  if(cv){
-    const ctx=cv.getContext('2d');
-    let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
-    let parts=[];
-    let mouseX=-9999,mouseY=-9999;
-    function resize(){
-      W=window.innerWidth;H=window.innerHeight;
-      cv.width=W*DPR;cv.height=H*DPR;
-      cv.style.width=W+'px';cv.style.height=H+'px';
-      ctx.setTransform(DPR,0,0,DPR,0,0);
-      const target=Math.min(130,Math.max(55,Math.floor(W*H/13000)));
-      parts=[];
-      for(let i=0;i<target;i++){
-        const br=Math.random()<0.12;
-        parts.push({
-          x:Math.random()*W,
-          y:Math.random()*H,
-          vx:(Math.random()-0.5)*0.18,
-          vy:(Math.random()-0.5)*0.18,
-          r:br?(Math.random()*1.4+1.0):(Math.random()*1.0+0.3),
-          a:br?(Math.random()*0.3+0.55):(Math.random()*0.5+0.2),
-          twinkle:Math.random()*Math.PI*2,
-          bright:br,
-          spike:br?(Math.random()*3.5+2.5):0,
-          tspd:0.02+Math.random()*0.05
-        });
-      }
-    }
-    window.addEventListener('mousemove',e=>{mouseX=e.clientX;mouseY=e.clientY;},{passive:true});
-    window.addEventListener('mouseleave',()=>{mouseX=-9999;mouseY=-9999;});
-
-    let running=true;
-    document.addEventListener('visibilitychange',()=>{running=!document.hidden;if(running)tick();});
-
-    let shoots=[];
-    function spawnShoot(){
-      if(shoots.length>=2)return;
-      shoots.push({
-        x:Math.random()*W*0.6,
-        y:Math.random()*H*0.4,
-        vx:3+Math.random()*4,
-        vy:1+Math.random()*2,
-        life:1,
-        tail:70+Math.random()*50
-      });
-    }
-
-    function tick(){
-      if(!running)return;
-      // 首页与测试结果页均绘制；报告页以纯星点呈现，减少连线干扰阅读。
-      const isHome=document.body.classList.contains('home');
-      const isReport=document.body.classList.contains('report-active');
-      if(!isHome&&!isReport){
-        ctx.clearRect(0,0,W,H);
-        requestAnimationFrame(tick);return;
-      }
-      ctx.clearRect(0,0,W,H);
-      // 取当前主题色
-      const styles=getComputedStyle(document.documentElement);
-      const h=styles.getPropertyValue('--accent-h').trim()||'38';
-      const sat=styles.getPropertyValue('--accent-s').trim()||'55%';
-
-      // 首页保留星点连线；测试结果页仅保留星点，视觉更像安静的星空。
-      if(isHome)for(let i=0;i<parts.length;i++){
-        const p=parts[i];
-        for(let j=i+1;j<parts.length;j++){
-          const q=parts[j];
-          const dx=p.x-q.x,dy=p.y-q.y;
-          const d2=dx*dx+dy*dy;
-          if(d2<11000){
-            const alpha=(1-d2/11000)*0.18;
-            ctx.strokeStyle='hsla('+h+','+sat+',65%,'+alpha+')';
-            ctx.lineWidth=0.5;
-            ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
-          }
-        }
-      }
-      // 画粒子 + 鼠标交互
-      for(const p of parts){
-        p.x+=p.vx;p.y+=p.vy;
-        p.twinkle+=p.tspd||0.04;
-        if(p.x<0)p.x=W;else if(p.x>W)p.x=0;
-        if(p.y<0)p.y=H;else if(p.y>H)p.y=0;
-        // 鼠标排斥（轻微）
-        const dx=p.x-mouseX,dy=p.y-mouseY;
-        const d2=dx*dx+dy*dy;
-        if(d2<14400){
-          const f=(1-d2/14400)*0.6;
-          p.x+=dx*f*0.04;p.y+=dy*f*0.04;
-        }
-        const tw=0.7+Math.sin(p.twinkle)*0.3;
-        // 亮星光晕 + 十字芒
-        if(isHome&&p.bright){
-          const glowR=p.r*5*tw;
-          const g2=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,glowR);
-          g2.addColorStop(0,'hsla('+h+','+sat+',85%,'+(0.22*tw)+')');
-          g2.addColorStop(0.5,'hsla('+h+','+sat+',80%,'+(0.06*tw)+')');
-          g2.addColorStop(1,'hsla('+h+','+sat+',80%,0)');
-          ctx.fillStyle=g2;
-          ctx.beginPath();ctx.arc(p.x,p.y,glowR,0,Math.PI*2);ctx.fill();
-          var sl=p.spike*tw;
-          ctx.strokeStyle='hsla('+h+','+sat+',90%,'+(0.32*tw)+')';
-          ctx.lineWidth=0.6;
-          ctx.beginPath();
-          ctx.moveTo(p.x-sl,p.y);ctx.lineTo(p.x+sl,p.y);
-          ctx.moveTo(p.x,p.y-sl);ctx.lineTo(p.x,p.y+sl);
-          ctx.stroke();
-        }
-        ctx.fillStyle='hsla('+h+','+sat+',75%,'+(p.a*tw)+')';
-        ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
-      }
-      // 流星
-      if(isHome){
-        if(Math.random()<0.004)spawnShoot();
-        for(let i=shoots.length-1;i>=0;i--){
-          const s=shoots[i];
-          s.x+=s.vx;s.y+=s.vy;s.life-=0.012;
-          if(s.life<=0||s.x>W+50||s.y>H+50){shoots.splice(i,1);continue;}
-          const tx=s.x-s.vx*s.tail/8, ty=s.y-s.vy*s.tail/8;
-          const g3=ctx.createLinearGradient(s.x,s.y,tx,ty);
-          g3.addColorStop(0,'hsla('+h+','+sat+',90%,'+(s.life*0.9)+')');
-          g3.addColorStop(1,'hsla('+h+','+sat+',90%,0)');
-          ctx.strokeStyle=g3;
-          ctx.lineWidth=1.5;
-          ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(tx,ty);ctx.stroke();
-          ctx.fillStyle='hsla('+h+','+sat+',95%,'+s.life+')';
-          ctx.beginPath();ctx.arc(s.x,s.y,1.5,0,Math.PI*2);ctx.fill();
-        }
-      }
-      requestAnimationFrame(tick);
-    }
-    resize();
-    window.addEventListener('resize',resize);
-    tick();
-  }
-
-  // ---- 表单卡片视差倾斜 ----
-  function bindTilt(el){
-    if(!el||isMobile)return;
-    let raf=null;
-    el.addEventListener('mousemove',e=>{
-      const r=el.getBoundingClientRect();
-      const x=e.clientX-r.left,y=e.clientY-r.top;
-      const px=x/r.width,py=y/r.height;
-      // 光点位置（CSS 变量驱动 ::before 径向光）
-      el.style.setProperty('--mx',(px*100).toFixed(1)+'%');
-      el.style.setProperty('--my',(py*100).toFixed(1)+'%');
-      if(raf)cancelAnimationFrame(raf);
-      raf=requestAnimationFrame(()=>{
-        const rx=(0.5-py)*4,ry=(px-0.5)*4;
-        el.style.transform='perspective(900px) rotateX('+rx.toFixed(2)+'deg) rotateY('+ry.toFixed(2)+'deg)';
-      });
-    });
-    el.addEventListener('mouseleave',()=>{
-      el.style.transform='perspective(900px) rotateX(0) rotateY(0)';
-      el.style.setProperty('--mx','50%');el.style.setProperty('--my','50%');
-    });
-  }
-  // —— 全局：绑定到 .home-card 与所有 page2 内的 .glass 卡片 ——
-  function bindAllTilt(){
-    document.querySelectorAll('.home-card:not([data-tilted])').forEach(el=>{bindTilt(el);el.setAttribute('data-tilted','1');});
-    document.querySelectorAll('#page2 .glass:not([data-tilted])').forEach(el=>{bindTilt(el);el.setAttribute('data-tilted','1');});
-  }
-  window.addEventListener('load',bindAllTilt);
-  // 推算完成后 page2 内容会被重渲染，提供一个全局钩子
-  window._rebindTilt=bindAllTilt;
-
-  // ---- CTA 按钮涟漪 ----
-  document.addEventListener('click',e=>{
-    const btn=e.target&&e.target.closest&&e.target.closest('.cta');
-    if(!btn||btn.disabled)return;
-    const r=btn.getBoundingClientRect();
-    const x=e.clientX-r.left,y=e.clientY-r.top;
-    const size=Math.max(r.width,r.height);
-    const rip=document.createElement('span');
-    rip.className='cta-ripple';
-    rip.style.width=rip.style.height=size+'px';
-    rip.style.left=(x-size/2)+'px';rip.style.top=(y-size/2)+'px';
-    btn.appendChild(rip);
-    setTimeout(()=>rip.remove(),700);
-  });
-})();
+initHomeFx();
 
 /* ============================================================
    首页 3D 品牌特效（浑天仪星环）：
@@ -1361,218 +1005,10 @@ function toggleUserMode(){setUserMode(document.body.classList.contains('beginner
 })();
 
 /* 工具中心增强：搜索、分类、键盘可用性与更清晰的工具入口 */
-(function(){
-  const groups={
-    all:'全部',money:'财富与事业',life:'日常决策',relation:'关系与沟通',play:'灵感与娱乐'
-  };
-  const map={wealth:'money',career:'money',layoff:'money',date:'life',style:'life',daily:'life',relation:'relation',zodiac:'relation',name:'play',oracle:'play',answerbook:'play',lottery:'play'};
-  const labels={wealth:'收入与理财',career:'职业选择',date:'重要事项',style:'环境与状态',layoff:'职场预案',daily:'今日节奏',name:'名称灵感',oracle:'自我反思',answerbook:'快速答案',lottery:'娱乐选号',zodiac:'生肖关系',relation:'关系分析'};
-  function mount(){
-    const hub=document.querySelector('#s-adv .tool-hub'),grid=hub&&hub.querySelector('.tool-grid');
-    if(!hub||!grid||document.getElementById('toolsToolbar'))return;
-    grid.id='toolGrid';
-    const toolIds=['wealth','career','date','style','layoff','daily','name','oracle','answerbook','lottery','zodiac','relation'];
-    grid.querySelectorAll('.tool-tile').forEach((tile,index)=>{
-      const m=(tile.getAttribute('onclick')||'').match(/openToolPage\(\s*['\"]([^'\"]+)['\"]\s*\)/);
-      const id=(m&&m[1])||toolIds[index];
-      if(!id)return;
-      tile.dataset.tool=id;
-      tile.dataset.group=map[id]||'life';
-      tile.setAttribute('aria-label',labels[id]||'决策工具');
-    });
-    const bar=document.createElement('div');bar.className='tools-toolbar';bar.id='toolsToolbar';
-    bar.innerHTML='<input class="tools-search" id="toolsSearch" type="search" placeholder="输入工具名称或关键词" aria-label="搜索工具"><div class="tools-filter" role="tablist">'+Object.entries(groups).map(([k,v])=>'<button type="button" data-group="'+k+'" class="'+(k==='all'?'active':'')+'">'+v+'</button>').join('')+'</div>';
-    hub.insertBefore(bar,grid);
-    let active='all';
-    function render(){const q=(document.getElementById('toolsSearch').value||'').trim().toLowerCase();let count=0;grid.querySelectorAll('.tool-tile').forEach(t=>{const ok=(active==='all'||t.dataset.group===active)&&(!q||(t.textContent+' '+(labels[t.dataset.tool]||'')).toLowerCase().includes(q));t.classList.toggle('is-filter-hidden',!ok);if(ok)count++;});let empty=grid.querySelector('.tool-empty');if(!count){if(!empty){empty=document.createElement('div');empty.className='tool-empty';grid.appendChild(empty)}empty.textContent='没有找到匹配的工具，换个关键词试试。'}else if(empty)empty.remove();}
-    bar.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.group;bar.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));render();}));
-    bar.querySelector('input').addEventListener('input',render);render();
-  }
-  const oldSwitch=window.switchTab;window.switchTab=function(el){if(oldSwitch)oldSwitch(el);if(el&&el.dataset.sec==='s-adv')setTimeout(mount,0)};
-  document.addEventListener('DOMContentLoaded',mount);
-  new MutationObserver(mount).observe(document.body,{childList:true,subtree:true});
-})();
+initToolCenterSearch();
 
 /* v3：统一工具引擎。每个工具只有“输入—判断—行动”三步，避免各自为政。 */
-(function(){
- const T={
-  wealth:{k:'财富与事业',icon:'财',title:'财运与理财罗盘',desc:'把命盘节奏和真实现金流放在一起看，先建立安全垫，再安排增长。',fields:[['income','月到手收入','number','例如 15000'],['cost','月固定支出','number','例如 8000'],['cash','现有储蓄','number','例如 60000']]},
-  career:{k:'财富与事业',icon:'业',title:'转行与副业测评',desc:'不替你冲动跳船，而是判断准备度、现金流和验证路径。',fields:[['goal','目标','select',['转行','副业','创业']],['ready','准备程度','select',['已有技能和作品','已有方向但未验证','还没有明确方向']],['runway','可承受准备期','select',['1个月以内','1—3个月','3个月以上']]]},
-  date:{k:'日常决策',icon:'择',title:'重要事项择日助手',desc:'择日不替代现实条件，重点帮你补齐风险检查和行动准备。',fields:[['event','事项','select',['签约合作','面试入职','搬家出行','关系沟通']],['date','目标日期','date',''],['constraint','现实限制','textarea','例如：必须周五完成、对方只能晚上沟通']]},
-  style:{k:'日常决策',icon:'装',title:'能量穿搭与工位风水',desc:'将抽象的五行提示转成颜色、环境和专注习惯，避免复杂摆件依赖。',fields:[['scene','场景','select',['重要沟通','面试汇报','专注工作','休息恢复']],['space','当前环境问题','select',['杂乱、注意力分散','光线不足','久坐疲劳','没有明显问题']]]},
-  layoff:{k:'财富与事业',icon:'险',title:'裁员风险预案',desc:'不做“会不会被裁”的确定性预测，综合公司信号、现金流缓冲与求职准备度，帮你判断应观察、准备还是立即行动。',fields:[['signal','公司信号（最重要）','select',['稳定增长','业务调整','部门收缩或冻结','已出现明确裁撤信号']],['buffer','现金流缓冲（月数）','select',['不足3个月','3—6个月','6个月以上']],['ready','求职准备度','select',['未准备','部分准备','随时可投递']]]},
-  daily:{k:'日常决策',icon:'签',title:'今日日签',desc:'每天只选一个重点，避免把建议变成新的压力。',fields:[['focus','今日重点','select',['推进工作','关系沟通','学习积累','休息恢复']],['energy','当前状态','select',['精力充足','普通','疲惫或焦虑']]]},
-  name:{k:'灵感与娱乐',icon:'名',title:'智能起名工具',desc:'生成的是灵感方向，不替代读音、字义、重名和家族规范核验。',fields:[['surname','姓氏','text','请输入姓氏'],['style','风格','select',['简洁现代','温润典雅','大气坚定']],['wish','希望传达','text','例如：安定、聪慧、开阔']]},
-  oracle:{k:'灵感与娱乐',icon:'卜',title:'摇签问卜',desc:'传统寺庙问卜：先按问题选择适合的签种，再抽取签诗。观音签适合综合求问；文王签适合事业、学业与方向；关帝签适合事业、承诺与行动；城隍签适合是非、契约与公道；土地公签适合家宅、搬迁与生活根基；财神签适合财务、经营与收入；爱情签适合感情关系；健康签适合作息与身心提醒。结果仅作自我反思参考。',fields:[['area','签种','select',['观音签','文王签','关帝签','城隍签','土地公签','财神签','爱情签','健康签']],['question','你的问题','textarea','只写一件具体的事']]},
-  answerbook:{k:'灵感与娱乐',icon:'答',title:'答案之书',desc:'把一个问题写下来，翻开一句简短答案，作为整理思路的提示。它不是预测，也不能替代你的判断。',fields:[['question','你的问题','textarea','例如：我现在适合开始这件事吗？'],['mode','回答方式','select',['直接回答','行动提醒','自我探索']]]},
-  lottery:{k:'灵感与娱乐',icon:'号',title:'娱乐选号',desc:'纯随机生成，不预测中奖，不使用命盘制造确定性。',fields:[['type','玩法','select',['双色球','超级大乐透']],['count','注数','select',['1','3','5']]]},
-  zodiac:{k:'关系与沟通',icon:'肖',title:'生肖合冲分析',desc:'只作为传统文化参考，真正决定关系质量的是边界、沟通和共同目标。',fields:[['other','对方生肖','select','鼠牛虎兔龙蛇马羊猴鸡狗猪'.split('')],['scene','关系场景','select',['亲密关系','朋友合作','家人沟通']]]},
-  relation:{k:'关系与沟通',icon:'合',title:'八字合盘 · 关系分析',desc:'为对方真实排盘，比对日主、五行与干支关系，并给出可直接使用的沟通方案。',fields:[['focus','关系类型','select',['亲密关系','朋友合作','家人沟通']],['pname','对方称呼（可不填）','text','例如：阿雯'],['bdate','对方出生日期（可不填）','date',''],['bhour','对方出生时辰','select',['时辰不详 · 用三柱比对','子 23:00–00:59','丑 01:00–02:59','寅 03:00–04:59','卯 05:00–06:59','辰 07:00–08:59','巳 09:00–10:59','午 11:00–12:59','未 13:00–14:59','申 15:00–16:59','酉 17:00–18:59','戌 19:00–20:59','亥 21:00–22:59']],['issue','当前卡点','textarea','例如：对方不回复、分工不清、总是争吵'],['goal','希望改善','text','例如：把需求说清楚']]}
- };
- const val=id=>{const e=document.getElementById('v3_'+id);return e?e.value.trim():''};
- function esc(x){return String(x||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
- function field(f){let [id,label,type,extra]=f;const optAttr=(id==='bdate')?' data-optional="1"':'';let body=type==='select'?'<select id="v3_'+id+'">'+extra.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select>':type==='textarea'?'<textarea id="v3_'+id+'" placeholder="'+esc(extra)+'"></textarea>':'<input id="v3_'+id+'" type="'+type+'" placeholder="'+esc(extra)+'"'+optAttr+'>';return '<div class="tj-field"><label for="v3_'+id+'">'+label+'</label>'+body+'</div>';}
- function base(type){const t=T[type];return '<div class="tj-tool-v3"><div class="tj-tool-intro"><div class="tj-tool-kicker">'+t.k+' · 问问大师工具</div><div class="tj-tool-title">'+t.icon+' '+t.title+'</div><div class="tj-tool-desc">'+t.desc+'</div></div><div class="tj-fields">'+t.fields.map(field).join('')+'</div><button class="tj-submit" onclick="TJToolRun(\''+type+'\')">生成我的方案</button><div class="tj-result" id="v3_result"></div><div class="tj-disclaimer">结果用于整理思路与行动规划，不构成投资、医疗、法律或职业确定性判断。</div></div>';}
- const chartTools=new Set(['wealth','career','date','style','layoff','name','zodiac','relation']);
- function result(title,body,score){const e=document.getElementById('v3_result'),d=window._ctx||window._baziData||{},wx=d.wx||{},chart=chartTools.has(window._activeTool)?'<div class="tj-chart-basis"><b>✦ 命盘依据</b><div><span>日主</span><strong>'+(d.dg||'—')+'</strong><span>有利方向</span><strong>'+(wx.ys||'—')+'</strong><span>事业评分</span><strong>'+(d.cs||'—')+'/100</strong><span>财富评分</span><strong>'+(d.ws||'—')+'/100</strong></div><p>以上信息用于校正工具建议的节奏与侧重点；现实信号、个人选择和专业意见优先。</p></div>':' ';e.innerHTML='<div class="tj-result-head"><div class="tj-result-title">'+title+'</div>'+(score?'<div class="tj-score">'+score+'</div>':'')+'</div><div class="tj-result-body">'+body+'</div>'+chart;e.classList.add('show');e.scrollIntoView({behavior:'smooth',block:'nearest'});}
- function run(type){const d=window._ctx||window._baziData||{},wx=d.wx||{},scoreBase=d.cs||60;
-  if(type==='wealth'){let income=+val('income'),cost=+val('cost'),cash=+val('cash');if(!income||cost<0){showToast('请填写收入和支出');return}let surplus=Math.max(0,income-cost),months=cost?Math.floor(cash/cost):0;result('现金流优先级','每月结余约 <strong>'+surplus+'</strong>，结余率约 <strong>'+Math.round(surplus/income*100)+'%</strong>。储蓄可覆盖约 <strong>'+months+'个月</strong>固定支出。<div class="tj-result-list"><div><b>第一步</b><span>'+(months<3?'先补足3—6个月应急金，暂缓高波动投入。':'把应急金与长期资金分开管理。')+'</span></div><div><b>第二步</b><span>'+(surplus/income<.2?'优先优化固定支出或增加稳定收入。':'为长期目标设定自动化储蓄比例。')+'</span></div></div>');return}
-  if(type==='career'){let ready=val('ready'),goal=val('goal'),runway=val('runway');const cs=Math.round(scoreBase||60);
-    let s=40+(ready==='已有技能和作品'?26:ready.includes('方向')?12:0)+(runway==='3个月以上'?10:runway.includes('1—3')?4:-4)+Math.round((cs-50)*0.3);
-    s=Math.max(28,Math.min(94,s));
-    const verdict=s>=75?'准备较充分，可以推进验证':s>=55?'方向可行，条件还要补一补':'先做低成本验证，别急着下注';
-    const paths={'转行':['约3位目标行业的从业者深聊，核实你对这行的想象和现实的差距','用兼职、试单或作品集投递做一次真实验证','确认起步期的收入落差，在现金流承受范围内'],'副业':['先做一个最小可交付版本：一件样品、一次试服务或一页介绍','把第一单完整跑通，再考虑扩大投入','固定每周的副业时段，不让它侵蚀主业和休息'],'创业':['先验证需求：找到3个愿意付费或预定意向的真实客户','把启动成本压到最坏情况也能承受的水平','写下明确的止损线：亏到多少、拖到多久就停']};
-    const steps=paths[goal]||paths['转行'];
-    result('准备度评估 · '+goal,'<div class="tj-result-list"><div><b>判断</b><span>目标「'+goal+'」，准备程度「'+ready+'」，可承受准备期「'+runway+'」。'+verdict+'。</span></div><div><b>验证三步</b><span>'+steps.join('；')+'。</span></div><div><b>底线</b><span>'+(runway==='1个月以内'?'你的缓冲期很短，任何变动都先确保下月现金流有着落。':'保留现金流缓冲，不建议在没有退出方案时裸辞或重投入。')+'</span></div><div><b>命盘节奏参考</b><span>当前事业节奏评分 '+cs+'/100，'+(cs>=70?'节奏支持主动争取，但仍以验证为先。':'节奏偏蓄力，更适合小步试错而非大动作。')+'仅供节奏参考，现实条件优先。</span></div></div>',s+'<small>准备度</small>');return}
-  if(type==='date'){result('事项准备方案','事项：<strong>'+val('event')+'</strong>，日期：<strong>'+val('date')+'</strong>。<div class="tj-result-list"><div><b>必须确认</b><span>时间、对象、金额或交付边界，以及不可逆后果。</span></div><div><b>行动建议</b><span>提前准备备选方案；若现实条件不成熟，先准备而不是强行执行。</span></div></div>');return}
-  if(type==='style'){let scene=val('scene'),space=val('space');result('环境行动方案','场景：<strong>'+scene+'</strong>。优先使用 '+(wx.ys||'当前有利元素')+' 的小面积颜色提示。<div class="tj-result-list"><div><b>马上调整</b><span>'+(space==='杂乱、注意力分散'?'清空桌面，只保留当前任务相关物品。':space==='光线不足'?'先改善光线和屏幕高度，再谈摆件。':space==='久坐疲劳'?'设置每50分钟起身的提醒。':'保持现有环境，减少额外布置。')+'</span></div><div><b>原则</b><span>舒适、整洁、可持续，比复杂风水布置更重要。</span></div></div>');return}
-  if(type==='layoff'){let signal=val('signal'),buffer=val('buffer'),ready=val('ready'),d=window._ctx||window._baziData||{},chartScore=Math.round(((+d.cs||60)+(+d.ws||60))/2);let urgent=signal.includes('明确')||signal.includes('收缩');let risk=(signal.includes('明确')?62:signal.includes('收缩')?48:signal.includes('调整')?28:12)+(buffer.includes('不足')?16:buffer.includes('3—6')?8:0)+(ready==='未准备'?12:ready==='部分准备'?6:0)+Math.round((70-chartScore)*.18);risk=Math.max(8,Math.min(92,risk));let level=risk>=65?'高风险':risk>=40?'需提前准备':'目前可观察';result(level,'公司信号：<strong>'+signal+'</strong>。现金流：<strong>'+buffer+'</strong>。<div class="tj-result-list"><div><b>命盘节奏参考</b><span>结合当前命盘的事业与财富节奏评分（'+chartScore+'分）校正风险提示；命盘只用于节奏参考，不替代现实证据。</span></div><div><b>48小时内</b><span>'+ (urgent?'更新简历、作品集，整理合同、绩效和项目成果。':'记录最近成果，保持简历随时可更新。')+'</span></div><div><b>本周行动</b><span>'+ (ready==='未准备'?'联系2位行业联系人，建立外部机会。':'投递或验证1个真实机会，不把准备停留在收藏岗位。')+'</span></div></div>',risk+'%');return}
-  if(type==='daily'){let focus=val('focus'),energy=val('energy');result('今日只做一件事','今日重点：<strong>'+focus+'</strong>。当前状态：<strong>'+energy+'</strong>。<div class="tj-result-list"><div><b>最小行动</b><span>'+(energy==='疲惫或焦虑'?'先做20分钟低阻力版本，不追求完成全部。':'安排一段不被打断的25分钟时间。')+'</span></div><div><b>结束标准</b><span>完成一个可见的小结果，晚上用3分钟复盘。</span></div></div>');return}
-  if(type==='name'){let s=val('surname')||'你的姓氏';
-    // 用神字根（扩充），并按"用神 + 生用神"两层取字
-    const ROOTS={木:['栩','棠','桐','蔚','桓','槿','柏','榆'],火:['昭','昕','晗','昱','暄','晔','焕','炜'],土:['安','屹','予','坤','岚','岳','培','均'],金:['知','钰','书','钦','铮','铭','鉴','铎'],水:['澄','泓','沅','涵','澈','汐','湛','洵']};
-    const GEN={木:'水',火:'木',土:'火',金:'土',水:'金'}; // 生我者为辅助
-    const primary=ROOTS[wx.ys]||['安','宁','知'];
-    const aux=ROOTS[GEN[wx.ys]]||primary;
-    const styleWish=(val('style')||'简洁现代')+(val('wish')?' · 希望传达"'+esc(val('wish'))+'"':'');
-    // 组合：单字 / 双字（用神+辅助）交替，避免重复字
-    const combos=[];
-    for(let i=0;i<6&&combos.length<6;i++){
-      if(i%2===0){const c=primary[i%primary.length];if(!combos.includes(esc(s+c)))combos.push(esc(s+c));}
-      else{const c1=primary[(i+1)%primary.length],c2=aux[(i+3)%aux.length];if(c1!==c2)combos.push(esc(s+c1+c2));}
-    }
-    result('名称灵感','为「<strong>'+esc(s)+'</strong>」提供方向：<strong>'+styleWish+'</strong>。用神『'+esc(wx.ys||'土')+'』。'+
-      '<div class="tj-result-list"><div><b>候选名字</b><span>'+combos.join('、')+'</span></div>'+
-      '<div><b>取字逻辑</b><span>以用神『'+esc(wx.ys||'土')+'』属性字为主，辅以生助用神的『'+esc(GEN[wx.ys]||'')+'』属性字，双字名取两者搭配。</span></div>'+
-      '<div><b>核验清单</b><span>读音顺口、字义稳妥、重名查询、方言谐音、家族避讳与正式登记规范，请逐项核对后再定。</span></div></div>'+
-      '<div class="tj-disclaimer">起名灵感仅供方向参考，最终请以读音、字义和正式登记要求为准。</div>');return}
-  if(type==='answerbook'){const q=val('question')||'我现在应该怎么做？',mode=val('mode')||'直接回答';const pools={
-   '直接回答':['可以。先从最小、可逆的一步开始。','再等等，先把关键信息补齐。','答案不在猜测里，去问清楚、看事实。','暂时不要，保留选择比仓促承诺更重要。','可以尝试，但请先设好边界和截止时间。'],
-   '行动提醒':['今天只做一个 20 分钟版本，不要求一次完成。','把问题拆成三步，先完成最容易验证的第一步。','去找一个真实的人或数据，给你的想法一次验证。','写下最坏情况和退出条件，再决定是否继续。','为这件事设一个具体截止时间，避免无限犹豫。'],
-   '自我探索':['你真正担心的，是失败，还是别人如何评价？','如果不需要证明给任何人看，你还会选择它吗？','你已经知道答案的一部分，只是还没有允许自己承认。','这件事让你更接近想成为的人，还是更远？','先区分“我想要什么”和“我害怕失去什么”。']};const list=pools[mode]||pools['直接回答'];const answer=list[Math.floor(Math.random()*list.length)];const now=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});result('答案之书','问题：<strong>'+esc(q)+'</strong>。<div class="answer-book-card book-opening"><div class="answer-book-status">正在翻开答案之书 · 请专注你的问题</div><div class="answer-book-cover"><span>答案之书</span><small>THE BOOK OF ANSWERS</small></div><div class="answer-book-page"><div class="answer-book-mark">✦</div><div class="answer-book-mode">'+esc(mode)+' · '+now+'</div><div class="answer-book-answer">'+answer+'</div><div class="answer-book-note">把这句话当作一个新的视角，再结合事实、感受和实际条件做决定。重大决定仍请核对现实信息与专业意见。</div></div><div class="answer-book-actions"><button type="button" onclick="TJAnswerBookAgain()">↻ 再翻一页</button><button type="button" onclick="TJAnswerBookSave()">♡ 收藏这句</button></div></div>');const book=document.querySelector('.answer-book-card.book-opening');setTimeout(()=>book?.classList.add('book-opening-open'),520);setTimeout(()=>book?.classList.add('book-opening-reveal'),1250);return}
-  if(type==='oracle'){let p=['先做最小的一步，再观察反馈。','信息未齐时，暂缓承诺更稳妥。','把期待说清楚，避免用猜测代替沟通。','保持节奏，答案会在行动中出现。'];result('三段式启示','问题：<strong>'+esc(val('question')||'你的问题')+'</strong>。<div class="tj-result-list"><div><b>当下</b><span>'+p[Math.floor(Math.random()*p.length)]+'</span></div><div><b>行动</b><span>'+p[Math.floor(Math.random()*p.length)]+'</span></div><div><b>提醒</b><span>'+p[Math.floor(Math.random()*p.length)]+'</span></div></div>');return}
-  if(type==='lottery'){let playType=val('type'),n=+val('count')||1;
-    const uniq=(count,max)=>{const a=[];while(a.length<count){const x=Math.floor(Math.random()*max)+1;if(!a.includes(x))a.push(x);}return a.sort((p,q)=>p-q);};
-    const pad=x=>String(x).padStart(2,'0');
-    const draws=[];
-    for(let i=0;i<n;i++){
-      if(playType.includes('大乐透')){draws.push('第'+(i+1)+'注　前区 '+uniq(5,35).map(pad).join(' ')+'　后区 '+uniq(2,12).map(pad).join(' '));}
-      else{draws.push('第'+(i+1)+'注　红球 '+uniq(6,33).map(pad).join(' ')+'　蓝球 '+pad(Math.floor(Math.random()*16)+1));}
-    }
-    window._lastLottery={type:playType,text:draws.join('\n')};
-    result('随机组合','玩法：<strong>'+playType+'</strong>（'+n+' 注）。<div class="tj-result-list">'+draws.map(t=>{const m=t.match(/^第(\d+)注\s*(.*)$/);return '<div><b>第 '+(m?m[1]:'—')+' 注</b><span>'+(m?m[2]:'')+'</span></div>';}).join('')+'</div><div class="tj-sign-actions"><button type="button" class="tj-sign-share" onclick="TJCopyLottery()">复制号码</button><button type="button" class="tj-sign-refresh" onclick="TJToolRun(\'lottery\')">↻ 换一组</button></div><div class="tj-disclaimer">号码为纯随机生成，不使用命盘，也不提高任何中奖概率。购彩请量力而行。</div>');return}
-  if(type==='zodiac'){const self=d.b&&d.b.sx||'',other=val('other'),scene=val('scene');
-    const SX=['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
-    const HE=[['鼠','牛'],['虎','猪'],['兔','狗'],['龙','鸡'],['蛇','猴'],['马','羊']];
-    const CHONG=[['鼠','马'],['牛','羊'],['虎','猴'],['兔','鸡'],['龙','狗'],['蛇','猪']];
-    const HAI=[['鼠','羊'],['牛','马'],['虎','蛇'],['兔','龙'],['猴','猪'],['鸡','狗']];
-    const SAN=[['猴','鼠','龙'],['虎','马','狗'],['蛇','鸡','牛'],['猪','兔','羊']];
-    const pair=(t,a,b)=>t.some(p=>(p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a));
-    const tri=t=>t.some(g=>g.includes(a)&&g.includes(b));
-    const a=self,b=other;
-    let rel='平和',tone='',tag='',detail='',advice='';
-    if(!self){rel='';detail='未检测到你本人的生肖（需要先完成推演）。先按通用相处原则给出建议。';advice='把分工、时间和期待说清楚，减少"你应该懂"的猜测。';}
-    else if(a===b){rel='同属相';tone='var(--c-teal)';tag='同频双刃';detail='你们节奏和自我要求的来源相似，容易互相理解，也可能在同一个固执点上较劲。';advice='共鸣多，但别让"谁也不肯先让步"变成僵局；分歧时先定规则再谈对错。';}
-    else if(pair(HE,a,b)){rel='六合';tone='var(--c-green)';tag='天然合拍';detail='在生肖关系中属于最合的一对，沟通成本低，容易快速建立信任与默契。';advice='适合尽快推进实质性合作或沟通；但别因为太顺就跳过边界和分工的确认。';}
-    else if(pair(CHONG,a,b)){rel='六冲';tone='var(--c-red)';tag='节奏对冲';detail='处事节奏和方式差异明显，容易在小事上起摩擦，属于需要明确规则的配对。';advice='靠默契容易翻车，重要事项落到文字：分工、时间、验收标准；情绪上头时先搁置，别当场拍板。';}
-    else if(pair(HAI,a,b)){rel='相害';tone='var(--c-orange)';tag='暗处损耗';detail='不易爆发大冲突，但容易在细节和期待上互相消耗，误解说不清。';advice='多确认、少猜测，把"我以为你懂了"换成复述核对；定期对齐期待。';}
-    else if(tri(SAN)){rel='三合';tone='var(--c-green)';tag='同向协作';detail='属于同一五行局，目标和方向上容易站到一起，适合为共同目标分工。';advice='适合组队做项目；提前说好利益与责任分配，能走得更远。';}
-    else{rel='平和';tone='var(--c-text-3)';tag='中性配对';detail='没有明显的合冲关系，属于中性配对，关系质量主要由现实相处决定。';advice='按正常节奏相处，观察对方的边界与沟通习惯即可，不必预设好坏。';}
-    const sceneAdvice=scene==='亲密关系'?'把需求直接说出来，别用生肖给对方的反应下结论。':scene==='朋友合作'?'先小范围协作一次再谈深度绑定，观察可靠性。':'保持尊重和边界，生肖只是参考，不是定论。';
-    result('相处提醒 · '+(rel||'通用'),'你：<strong>'+esc(self||'未排盘')+'</strong>，对方：<strong>'+esc(other)+'</strong>'+(rel?' · <span style="color:'+(tone||'')+'">'+rel+'</span>':'')+'。<div class="tj-result-list">'+(detail?'<div><b>关系判读</b><span>'+detail+'</span></div>':'')+'<div><b>沟通建议</b><span>'+advice+'</span></div><div><b>'+esc(scene)+'</b><span>'+sceneAdvice+'</span></div></div><div class="tj-disclaimer">生肖合冲仅为传统文化参考，不构成对任何关系的判断或决定依据。真正决定关系的是沟通、边界和共同目标。</div>',rel?tag:'');return}
-  if(type==='relation'){
-   const focus=val('focus'),bdate=val('bdate'),bhour=val('bhour');
-   const scriptHtml='<div class="tj-result-list"><div><b>开场</b><span>“我想把这件事说清楚，不是为了争输赢，而是希望我们更好配合。”</span></div><div><b>表达</b><span>描述事实 → 说出感受 → 提出一个具体请求：'+esc(val('goal'))+'</span></div><div><b>边界</b><span>如果现在不适合沟通，约定一个明确的回看时间，而不是无限等待。</span></div></div>';
-   if(!bdate){result('下一次沟通脚本','关系类型：<strong>'+esc(focus)+'</strong>。填写对方出生日期后，可在此基础上加入真实合盘比对。'+scriptHtml);return}
-   const me=window._ctx||window._baziData;
-   if(!me||!me.b){showToast('请先完成个人推演');return}
-   const [py,pm,pd]=bdate.split('-').map(Number);
-   if(!py||!pm||!pd){showToast('出生日期格式有误');return}
-   const hourIdx=(!bhour||bhour.indexOf('不详')>=0)?null:'子丑寅卯辰巳午未申酉戌亥'.indexOf(bhour.charAt(0));
-   let r;
-   try{r=calcSynastry({myChart:me.b,myPillars:['Y','M','D','H'],myYongShen:me.wx.ys,partner:{y:py,m:pm,d:pd,hourZhi:(hourIdx===null||hourIdx<0)?null:hourIdx}});}
-   catch(e){console.error('synastry failed',e);showToast('合盘计算失败，请检查输入');return}
-   const pbc=r.partnerChart;
-   const partnerGZ=r.partnerPillars.map(k=>pbc[k].g+pbc[k].z).join(' ');
-   const myGZ=[me.b.Y,me.b.M,me.b.D,me.b.H].map(x=>x.g+x.z).join(' ');
-   const lab=r.score>=80?'契合度高':r.score>=65?'整体顺畅':r.score>=50?'有合有冲':r.score>=35?'需要磨合':'差异明显';
-   const dp=r.dayPair,dn=[];
-   if(dp.same)dn.push('双方<strong>日柱相同</strong>，价值观与节奏高度接近，容易一拍即合，也容易同时陷入同一个盲区。');
-   if(dp.heZhi)dn.push('<strong>日支六合</strong>——合婚中最被看重的一项，日常相处自然合拍。');
-   if(dp.heGan)dn.push('<strong>日干相合</strong>，表达与决策方式容易同步。');
-   if(dp.chongZhi)dn.push('<strong>日支相冲</strong>，夫妻宫直接对冲：不代表不合适，但生活习惯差别大，需要明确规则而非靠默契。');
-   if(dp.chongGan)dn.push('<strong>日干相冲</strong>，容易在观点上针锋相对。');
-   if(dp.haiZhi)dn.push('<strong>日支相害</strong>，易因小事累积不满，要有及时说开的习惯。');
-   // 折叠分组：结论常驻，细节按需展开。
-   // 原本 9 个小节平铺 1170px（约 1.4 屏），用户要一路滚才能看完。
-   const grp=(id,title,sub,body,open)=>
-     '<section class="syn-group'+(open?' open':'')+'" data-syn="'+id+'">'+
-       '<button type="button" class="syn-group-hd" onclick="TJSynToggle(this)" aria-expanded="'+(open?'true':'false')+'">'+
-         '<span class="syn-group-tt">'+title+'</span>'+
-         (sub?'<span class="syn-group-sub">'+sub+'</span>':'')+
-         '<span class="syn-group-arrow" aria-hidden="true"></span>'+
-       '</button>'+
-       // 必须包一层：grid-template-rows:0fr 只压第一行，
-       // 多个直接子元素时会自动创建第二行，导致收不起来
-       '<div class="syn-group-bd"><div class="syn-group-inner">'+body+'</div></div>'+
-     '</section>';
-   const rows=arr=>'<div class="tj-result-list">'+arr.map(x=>'<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join('')+'</div>';
-
-   // —— 顶部结论：始终可见 ——
-   // 外层 result() 已渲染「合盘结果 · 亲密关系 + 分数」标题条，
-   // 这里不再重复分数，只给判语与统计，避免三层标题叠在一起。
-   let H='<div class="syn-verdict">'+
-     '<span class="syn-verdict-label" style="color:'+
-       (r.score>=80?'var(--c-green)':r.score>=65?'var(--c-teal)':r.score>=50?'var(--c-yellow)':r.score>=35?'var(--c-orange)':'var(--c-red)')+
-       '">'+lab+'</span>'+
-     '<span class="syn-verdict-meta">'+r.counts.he+' 合 / '+r.counts.chong+' 冲'+
-       (r.counts.other?' / '+r.counts.other+' 刑害':'')+' · '+(r.precision==='full'?'四柱':'三柱')+'</span>'+
-   '</div>';
-
-   // 一句话总述，让用户不展开也知道结论
-   H+='<div class="syn-summary">'+r.dm.title+'　'+r.dm.desc+'</div>';
-
-   // —— 分组 1：双方命盘（默认展开，是理解后续的基础）——
-   H+=grp('chart','双方命盘',(r.precision==='day'?'对方时辰不详':''),
-     '<div class="syn-charts"><div><span>你</span><b>'+myGZ+'</b></div>'+
-     '<div><span>对方</span><b>'+partnerGZ+'</b></div></div>',true);
-
-   // —— 分组 2：关键结论（默认展开）——
-   const dn2=[];
-   if(dp.same)dn2.push('双方<strong>日柱相同</strong>，价值观与节奏高度接近，容易一拍即合，也容易同时陷入同一个盲区。');
-   if(dp.heZhi)dn2.push('<strong>日支六合</strong>——合婚中最被看重的一项，日常相处自然合拍。');
-   if(dp.heGan)dn2.push('<strong>日干相合</strong>，表达与决策方式容易同步。');
-   if(dp.chongZhi)dn2.push('<strong>日支相冲</strong>，夫妻宫直接对冲：不代表不合适，但生活习惯差别大，需要明确规则而非靠默契。');
-   if(dp.chongGan)dn2.push('<strong>日干相冲</strong>，容易在观点上针锋相对。');
-   if(dp.haiZhi)dn2.push('<strong>日支相害</strong>，易因小事累积不满，要有及时说开的习惯。');
-   // 日主关系已在上方 syn-summary 呈现，组内不再重复
-   let coreBody='';
-   if(dn2.length)coreBody+=rows([['夫妻宫（日柱）',dn2.join('<br>')]]);
-   coreBody+=rows([['五行互补 · 用神「'+r.comp.yongShen+'」',r.comp.text]]);
-   coreBody+=rows([['日主关系',r.dm.myDayGan+' 见 '+r.dm.theirDayGan+'（'+r.dm.ss+'）']]);
-   H+=grp('core','关键结论',(dn2.length?dn2.length+' 项':''),coreBody,true);
-
-   // —— 分组 3：逐项依据（默认折叠，这是最长的一块）——
-   let detail='';
-   if(r.positives.length)detail+=rows([['相合之处',r.positives.slice(0,4).map(h=>'· '+h.text+'（'+h.where+'）').join('<br>')]]);
-   if(r.frictions.length)detail+=rows([['需要留意',r.frictions.slice(0,4).map(h=>'· '+h.text+'（'+h.where+'）').join('<br>')]]);
-   if(detail)H+=grp('detail','逐项依据',(r.positives.length+r.frictions.length)+' 条',detail,false);
-
-   // —— 分组 4：沟通脚本（默认折叠）——
-   H+=grp('script','下一次沟通怎么开口','3 步',scriptHtml,false);
-
-   if(r.precision==='day')H+='<div class="tj-disclaimer">未填对方时辰，本次用年月日三柱比对。日柱（夫妻宫）不依赖时辰，仍为精确计算，核心结论成立；缺少的时柱主要影响子女宫与晚年节奏的判断。</div>';
-   H+='<div class="tj-disclaimer">合盘用于理解彼此差异、找到沟通方式，不预测关系结局，也不构成是否开始或结束一段关系的建议。</div>';
-    H+='<div class="tj-sign-actions"><button type="button" class="tj-sign-share" onclick="TJShareSyn()">生成合盘卡</button><button type="button" class="tj-sign-refresh" onclick="TJSynShare()">文字分享</button><button type="button" class="tj-sign-refresh" onclick="TJSynSave()">保存这个人</button></div>';
-   window._lastSynastry={name:val('pname'),relation:focus,result:r,y:py,m:pm,d:pd,
-     hourZhi:(hourIdx===null||hourIdx<0)?null:hourIdx,score:r.score};
-   result('合盘结果 · '+esc(focus),H,r.score);return}
- }
- window.TJAnswerBookAgain=function(){run('answerbook')};
- window.TJAnswerBookSave=function(){const card=document.querySelector('.answer-book-card');if(!card)return;const text=card.querySelector('.answer-book-answer')?.textContent||'';try{const old=JSON.parse(localStorage.getItem('tj_answerbook_saved')||'[]');old.unshift({text,at:Date.now()});localStorage.setItem('tj_answerbook_saved',JSON.stringify(old.slice(0,20)));const b=card.querySelector('.answer-book-actions button:last-child');if(b){b.textContent='♥ 已收藏';b.disabled=true}}catch(e){showToast('暂时无法保存，请稍后再试')}};
- window.TJToolRun=run;
- window.openToolPage=function(type){const d=document.getElementById('toolModal'),out=document.getElementById('toolModalContent');if(!d||!out||!T[type])return;window._activeTool=type;out.innerHTML=base(type);d.classList.add('open');setTimeout(()=>out.querySelector('input,select,textarea')?.focus(),120)};
-})();
+initToolEngineV3();
 
 /* ============================================================================
    摇签问卜 · 专业签诗库（ORACLE_SIGNS）
@@ -1699,351 +1135,54 @@ window.ORACLE_SIGNS = {
   ]
 };
 
-(function(){
- const oldRun=window.TJToolRun;
- window.TJToolRun=function(type){
-  if(type!=='oracle'){oldRun(type);return;}
-  const out=document.getElementById('v3_result');if(!out)return;
-  const q=(document.getElementById('v3_question')?.value||'').trim()||'你心中的问题';
-  const area=document.getElementById('v3_area')?.value||'观音签';
-  const SIGN_LIB = window.ORACLE_SIGNS || {};
-  const lib = SIGN_LIB[area] || SIGN_LIB['观音签'] || [];
-  const lot = lib.length ? lib[Math.floor(Math.random()*lib.length)] : null;
-  const n = lot ? lot.n : (Math.floor(Math.random()*48)+1);
-  const title = lot ? lot.name : '无名签';
-  const grade = lot ? lot.grade : '中签';
-  const poem = lot ? lot.poem : '';
-  const yi = lot ? lot.yi : '';
-  const jie = lot ? lot.jie : '';
-  const dian = lot ? lot.dian : '';
-  const qEsc = String(q).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
-  const gradeClass = grade.indexOf('上')>-1 ? 'sg-up' : (grade.indexOf('下')>-1 ? 'sg-down' : 'sg-mid');
-  const act = grade.indexOf('上')>-1
-    ? '此签利进取，宜把握当下机缘、顺势而为，不必过疑。'
-    : grade.indexOf('下')>-1
-    ? '此签多阻滞，宜退守谨慎、先稳根基，待时运转圜再图。'
-    : '此签宜守常渐进，按部就班、稳中求进，莫急莫怠。';
-  out.innerHTML='<div class="tj-oracle-stage shake"><div class="tj-oracle-scene"><div class="tj-oracle-glow"></div><div class="tj-oracle-cup"></div><div class="tj-oracle-stick"></div><div class="tj-oracle-status">正在摇签 · 请专注你的问题</div></div></div><div class="tj-oracle-hint">'+area+' · 摇签中</div>';
-  out.classList.add('show');out.scrollIntoView({behavior:'smooth',block:'nearest'});
-  setTimeout(()=>{const stage=out.querySelector('.tj-oracle-stage');if(!stage)return;stage.classList.remove('shake');stage.classList.add('draw');stage.querySelector('.tj-oracle-status').textContent='签筒停下 · 正在抽取';},1450);
-  setTimeout(()=>{const stage=out.querySelector('.tj-oracle-stage');if(!stage)return;stage.classList.remove('draw');stage.classList.add('reveal');stage.querySelector('.tj-oracle-status').textContent='签已出筒 · 第 '+n+' 签';},2700);
-  setTimeout(()=>{
-    out.innerHTML=''
-      +'<div class="tj-result-head"><div class="tj-result-title">'+area+' · 第 '+n+' 签</div><div class="tj-score '+gradeClass+'">'+grade+'</div></div>'
-      +'<div class="tj-result-body">'
-      +'<div class="tj-oracle-name">『'+title+'』</div>'
-      +'<div class="tj-oracle-poem">'+poem.replace(/\n/g,'<br>')+'</div>'
-      +'<div class="tj-result-list">'
-      +'<div><b>圣意</b><span>'+yi+'</span></div>'
-      +'<div><b>解曰</b><span>'+jie+'</span></div>'
-      +'<div><b>典故</b><span>'+dian+'</span></div>'
-      +'<div><b>结合所问</b><span>你问：「'+qEsc+'」。以此签观之，'+act+'</span></div>'
-      +'</div></div>'
-      +'<div class="tj-sign-actions"><button type="button" class="tj-sign-share" onclick="TJShareOracle()">生成签文卡</button><button type="button" class="tj-sign-refresh" onclick="TJToolRun(\'oracle\')">↻ 再摇一签</button></div>'
-      +'<div class="tj-disclaimer">签文为传统问卜之参详，用于自我反思与理顺思路；健康、法律、财务及关系等重大决定，请结合现实条件与专业意见，不以签文为定论。</div>';
-    window._lastOracle={area,n,title,grade,poem,yi,jie,dian,q};
-    out.classList.add('show');
-  },3550);
- };
-})();
+initToolRunWrap();
 
 /* 二级页面控制：结果页与输入页分离，返回时保留用户输入 */
-(function(){
- let observer=null;
- function install(){
-  const root=document.getElementById('toolModalContent');if(!root||observer)return;
-  observer=new MutationObserver(()=>{
-   const tool=root.querySelector('.tj-tool-v3'),result=root.querySelector('.tj-result');
-   if(!tool||!result||!result.classList.contains('show')||tool.classList.contains('result-mode'))return;
-   tool.classList.add('result-mode');
-   const type=window._activeTool||'';
-   const title=(root.querySelector('.tj-tool-title')?.textContent||'工具结果').replace(/^[^\s]+\s/,'');
-    const head=document.createElement('div');head.className='tj-result-page-head';head.innerHTML='<button class="tj-result-back" type="button" aria-label="返回输入页">‹</button><div><div class="tj-result-page-kicker">RESULT · 结果页</div><div class="tj-result-page-title">'+title+'</div></div>';
-    result.prepend(head);
-    const actions=document.createElement('div');actions.className='tj-result-actions';actions.innerHTML='<button class="secondary" type="button">重新填写</button><button class="secondary" type="button" data-share="1">分享卡片</button><button class="primary" type="button">完成</button>';
-    result.appendChild(actions);
-    const back=()=>{tool.classList.remove('result-mode');result.classList.remove('show');head.remove();actions.remove();root.querySelector('input,select,textarea')?.focus();};
-    head.querySelector('button').onclick=back;actions.querySelector('.secondary:not([data-share])').onclick=back;actions.querySelector('[data-share]').onclick=()=>{if(window.TJShareToolResult)window.TJShareToolResult();};actions.querySelector('.primary').onclick=()=>closeToolPage();
-  });
-  observer.observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
- }
- const oldOpen=window.openToolPage;
- window.openToolPage=function(type){if(oldOpen)oldOpen(type);setTimeout(()=>{observer=null;install()},30)};
- document.addEventListener('DOMContentLoaded',install);
-})();
+initSecondaryPage();
 
 /* 二级结果页兜底修复：不依赖 MutationObserver，确保返回按钮始终生成 */
-(function(){
- function promote(){
-  const root=document.getElementById('toolModalContent'),tool=root&&root.querySelector('.tj-tool-v3'),result=root&&root.querySelector('.tj-result');
-  if(!tool||!result||!result.classList.contains('show')||tool.classList.contains('result-mode'))return;
-  tool.classList.add('result-mode');
-  const old=result.querySelector('.tj-result-page-head');if(old)old.remove();
-  const oldActs=result.querySelector('.tj-result-actions');if(oldActs)oldActs.remove();
-  const title=(root.querySelector('.tj-tool-title')?.textContent||'工具结果').replace(/^[^\s]+\s/,'');
-  const head=document.createElement('div');head.className='tj-result-page-head';head.innerHTML='<button class="tj-result-back" type="button" aria-label="返回输入页">‹</button><div><div class="tj-result-page-kicker">RESULT · 结果页</div><div class="tj-result-page-title">'+title+'</div></div>';
-  const actions=document.createElement('div');actions.className='tj-result-actions';actions.innerHTML='<button class="secondary" type="button">重新填写</button><button class="secondary" type="button" data-share="1">分享卡片</button><button class="primary" type="button">完成</button>';
-  result.prepend(head);result.appendChild(actions);
-  const back=()=>{tool.classList.remove('result-mode');result.classList.remove('show');head.remove();actions.remove();root.querySelector('input,select,textarea')?.focus();};
-  head.querySelector('.tj-result-back').onclick=back;actions.querySelector('.secondary:not([data-share])').onclick=back;actions.querySelector('[data-share]').onclick=()=>{if(window.TJShareToolResult)window.TJShareToolResult();};actions.querySelector('.primary').onclick=()=>closeToolPage();
- }
- setInterval(promote,120);
- const oldRun=window.TJToolRun;
- window.TJToolRun=function(type){if(oldRun)oldRun(type);setTimeout(promote,80);setTimeout(promote,500);setTimeout(promote,1200);};
-})();
+initSecondaryResultFallback();
 
 /* 工具精进层：统一校验、历史记录、结果复制与风险提示 */
-(function(){
- const KEY='tj_tool_history_v2';
- const esc=x=>String(x||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
- function read(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}}
- function save(type){const root=document.getElementById('toolModalContent');const title=root?.querySelector('.tj-tool-title')?.textContent||type;let a=read().filter(x=>x.type!==type);a.unshift({type,title:title.replace(/^\S+\s/,''),at:Date.now()});try{localStorage.setItem(KEY,JSON.stringify(a.slice(0,8)))}catch(e){}}
- function validate(type){const root=document.getElementById('toolModalContent');if(!root)return false;const fields=[...root.querySelectorAll('.tj-field input,.tj-field textarea')];for(const el of fields){if(el.type==='date'&&!el.value){if(el.dataset.optional==='1')continue;showToast('请先选择目标日期');el.focus();return false}if(el.tagName==='TEXTAREA'&&type!=='oracle'&&type!=='relation'&&type!=='answerbook'&&!el.value.trim()){showToast('请补充具体问题或限制条件');el.focus();return false}}if(type==='wealth'){const income=+document.getElementById('v3_income')?.value,cost=+document.getElementById('v3_cost')?.value;if(!income||cost<0||cost>income*10){showToast('请检查收入与支出数据');return false}}return true}
- function historyHtml(){const a=read();if(!a.length)return '';return '<div class="tj-history"><div class="tj-history-title">最近使用</div>'+a.slice(0,4).map(x=>'<div class="tj-history-item"><span>'+esc(x.title)+'</span><time>'+new Date(x.at).toLocaleDateString('zh-CN')+'</time></div>').join('')+'</div>'}
- function addMeta(type){const result=document.querySelector('#toolModalContent .tj-result');if(!result||result.querySelector('.tj-result-meta'))return;const meta=document.createElement('div');meta.className='tj-result-meta';meta.innerHTML='<span>已完成分析</span><span>结果仅供决策参考</span>';result.insertBefore(meta,result.firstChild);const hist=document.createElement('div');hist.innerHTML=historyHtml();result.appendChild(hist.firstElementChild||hist)}
- const oldRun=window.TJToolRun;
- window.TJToolRun=function(type){if(!validate(type))return;save(type);if(oldRun)oldRun(type);[120,500,1200,3800].forEach(ms=>setTimeout(()=>addMeta(type),ms));};
- const oldOpen=window.openToolPage;
- window.openToolPage=function(type){if(oldOpen)oldOpen(type);setTimeout(()=>{const root=document.getElementById('toolModalContent');if(root&&!root.querySelector('.tj-history')){const h=document.createElement('div');h.className='tj-history';h.innerHTML=historyHtml();root.querySelector('.tj-tool-v3')?.appendChild(h)}} ,100)};
- document.addEventListener('click',e=>{const b=e.target.closest('.tj-result-actions .primary');if(!b)return;const r=document.querySelector('#toolModalContent .tj-result');if(!r)return;const text=r.innerText||'';navigator.clipboard?.writeText(text).then(()=>{const old=b.textContent;b.textContent='已复制结果';setTimeout(()=>b.textContent=old,1400)}).catch(()=>showToast('复制失败，请手动选择结果文本'))});
-})();
+initToolRefineLayer();
 
 /* 修复三级页面返回：把返回按钮放到工具弹窗外部（.tool-modal），而非 .tool-sheet 内部 */
-(function(){
- function sync(){
-  const modal=document.getElementById('toolModal'),tool=document.querySelector('#toolModalContent .tj-tool-v3');if(!modal)return;
-  let b=modal.querySelector('.tj-level-back');
-  if(!b){b=document.createElement('button');b.className='tj-level-back';b.type='button';b.textContent='‹';b.setAttribute('aria-label','返回工具输入页');modal.appendChild(b);}
-  const open=!!(tool&&tool.classList.contains('result-mode'));modal.classList.toggle('result-open',open);
-  b.onclick=()=>{if(!tool)return;const result=tool.querySelector('.tj-result');tool.classList.remove('result-mode');modal.classList.remove('result-open');if(result){result.classList.remove('show');result.querySelector('.tj-result-page-head')?.remove();result.querySelector('.tj-result-actions')?.remove();}tool.querySelector('input,select,textarea')?.focus()};
- }
- setInterval(sync,100);document.addEventListener('DOMContentLoaded',sync);
-})();
+initTertiaryBackFix();
 
 /* 财运工具改版：移除金额输入，改用节奏、目标与风险偏好进行判断 */
-(function(){
- const oldOpen=window.openToolPage;
- window.TJWealthNoAmount=function(){
-  const out=document.getElementById('toolModalContent');if(!out)return;
-  out.innerHTML='<div class="tj-tool-v3"><div class="tj-tool-intro"><div class="tj-tool-kicker">财富与事业 · 问问大师工具</div><div class="tj-tool-title">◉ 财运与理财罗盘</div><div class="tj-tool-desc">不要求填写收入金额，改从现金流节奏、财富目标和风险承受度，生成更容易执行的理财方向。</div></div><div class="tj-fields"><div class="tj-field"><label>目前现金流状态</label><select id="v3_w_cash"><option>稳定，有固定结余</option><option>基本稳定，但结余不多</option><option>收入波动较大</option><option>支出压力较大</option></select></div><div class="tj-field"><label>当前财富目标</label><select id="v3_w_goal"><option>建立安全垫</option><option>稳定增收</option><option>长期积累</option><option>准备重大支出</option></select></div><div class="tj-field"><label>风险承受度</label><select id="v3_w_risk"><option>偏稳健，不希望明显波动</option><option>可以接受适度波动</option><option>愿意承担较高波动</option></select></div><div class="tj-field"><label>近期最困扰的事</label><select id="v3_w_issue"><option>容易冲动消费</option><option>不知道如何分配结余</option><option>想增加收入来源</option><option>担心未来不确定性</option></select></div></div><button class="tj-submit" type="button" onclick="TJWealthRunNoAmount()">生成财富方案</button><div class="tj-result" id="v3_result"></div><div class="tj-disclaimer">本工具不提供投资金额、收益率或具体产品推荐，仅帮助整理财富节奏。</div></div>';
-  const sheet=document.querySelector('#toolModal .tool-sheet');if(sheet)sheet.classList.remove('result-open');
-  document.getElementById('toolModal').classList.add('open');
- }
- window.TJWealthRunNoAmount=function(){
-  const d=window._ctx||window._baziData||{},wx=d.wx||{};const cash=document.getElementById('v3_w_cash').value,goal=document.getElementById('v3_w_goal').value,risk=document.getElementById('v3_w_risk').value,issue=document.getElementById('v3_w_issue').value;
-  // 现金流分层判断：这是方案的第一依据，命盘只作节奏参考
-  const tier=cash.includes('压力')?'tight':cash.includes('波动')?'unstable':'steady';
-  const tierVerdict={tight:'当前现金流偏紧，任何安排都以"先稳住"为前提，不建议新增投入。',unstable:'收入有波动时，先把不稳定部分当作浮动收入，不当作固定预算。',steady:'现金流有结余，可以把一部分转为定期动作，而不是留在活期里被消耗。'}[tier];
-  const first=tier==='tight'?'先减压：暂停非必要大额支出，列出固定支出清单，找出前三项可延后的。':tier==='unstable'?'先稳流：为波动收入单独建缓冲，至少覆盖一个月固定支出，再谈分配。':'先分层：把结余分成日常、应急、长期三笔，分别放在不同位置。';
-  const second=goal==='建立安全垫'?'在应急金补足前（3—6个月固定支出），其他目标全部往后排。':goal==='稳定增收'?'优先提升可重复的收入来源（技能、客户、产品线），不追逐一次性机会。':goal==='准备重大支出'?'先定时间表和金额上限，配一个可退出的备用方案，再安排支出节奏。':'用长期、分散、可持续的方式积累，设定固定扣款，减少频繁决策。';
-  const third=risk.includes('较高')?'先写下自己能承受的最大回撤和等待时长，超出这个范围的一律不碰。':risk.includes('适度')?'分层执行：大头稳健保值，小头用于学习和试错，比例固定不临时加码。':'以流动性和本金安全为先；任何承诺"确定高收益"的，直接排除。';
-  const issueFix={'容易冲动消费':'设一个48小时冷静期：想买的先放进清单，两天后再看还想要几样。','不知道如何分配结余':'先按固定比例分账（如应急/长期/机动），比例定好后每月重复即可。','想增加收入来源':'从现有技能出发列出3个可验证的增收方向，本月只验证其中一个。','担心未来不确定性':'把担心写成具体清单，逐项标注"可控/不可控"，只对可控项安排动作。'}[issue]||'完成一次支出分类，找到最大的优化点。';
-  // 本周节奏：用流日引擎的当日基调给节奏提示（不预测财运）
-  let weekAct='按固定节奏推进财务动作，不因单日情绪改变计划。';
-  try{
-    if(d.b&&wx.ys){const lr=calcLiuRi(d.b,wx.ys);
-      weekAct=lr.tone==='flow'?'本周推进阻力小，适合把账目整理、转存这类事项一次办完。':lr.tone==='steady'?'本周按计划处理财务事项即可，不必临时加码。':lr.tone==='friction'?'本周容易有临时变动，大额操作缓一缓，先核对信息。':'本周宜收不宜动，财务决定往后放几天更稳。';}
-  }catch(e){}
-  const scoreTip=typeof d.ws==='number'?(d.ws>=70?'当前命盘节奏对积累相对有利，但仍以现实现金流为准。':d.ws>=50?'当前命盘节奏中性，重点在执行纪律而非择时。':'当前命盘节奏偏守，减少动作、守住本金优先。'):'';
-  const result=document.getElementById('v3_result');result.innerHTML='<div class="tj-result-head"><div class="tj-result-title">财富节奏方案</div><div class="tj-score">'+(d.ws||'—')+'</div></div><div class="tj-result-body"><div class="tj-result-list"><div><b>现状判断</b><span>'+tierVerdict+'</span></div><div><b>第一优先级</b><span>'+first+'</span></div><div><b>目标路径 · '+goal+'</b><span>'+second+'</span></div><div><b>风险边界</b><span>'+third+'</span></div><div><b>应对困扰 · '+issue+'</b><span>'+issueFix+'</span></div><div><b>本周节奏</b><span>'+weekAct+'</span></div>'+(scoreTip?'<div><b>命盘节奏参考</b><span>财富节奏评分 '+(d.ws||'—')+'/100。'+scoreTip+'命理仅作节奏参考，不构成投资建议。</span></div>':'')+'</div></div><div class="tj-disclaimer">本工具用于整理财务节奏与行动优先级，不提供投资金额、收益率或产品推荐。</div>';result.classList.add('show');
- }
- window.openToolPage=function(type){if(oldOpen)oldOpen(type);if(type==='wealth')setTimeout(TJWealthNoAmount,40)};
-})();
+initWealthToolRevamp();
 
 /* 今日日签改版：取消选项，打开即生成当日综合日签 */
-(function(){
- const oldOpen=window.openToolPage;
- window.TJDailyRun=function(){
-  const d=window._ctx||window._baziData||{},wx=d.wx||{},out=document.getElementById('v3_result');if(!out)return;
-  const focus=wx.ys==='木'?'启动与拓展':wx.ys==='火'?'表达与推进':wx.ys==='土'?'整理与稳固':wx.ys==='金'?'取舍与执行':'流动与复盘';
-  const text=wx.ys==='木'?'适合开始一件新事，先行动再优化。':wx.ys==='火'?'适合表达观点、推进沟通，但避免情绪化决定。':wx.ys==='土'?'适合整理计划、收纳环境，把基础打稳。':wx.ys==='金'?'适合处理重点任务、明确边界和做减法。':'适合复盘、调整节奏，让事情保持流动。';
-  out.innerHTML='<div class="tj-result-head"><div class="tj-result-title">今日日签</div><div class="tj-score">'+(d.wx?.ys||'—')+'</div></div><div class="tj-result-body"><div class="tj-result-list"><div><b>今日主线</b><span>'+focus+'</span></div><div><b>宜</b><span>'+text+'</span></div><div><b>忌</b><span>避免同时处理太多目标，不在疲惫或焦虑时做重大决定。</span></div><div><b>今日行动</b><span>选一件最重要的小事，安排一段不被打断的时间完成它。</span></div></div></div><div class="tj-disclaimer">日签用于整理当日节奏，不替代现实判断。</div>';out.classList.add('show');out.closest('.tj-tool-v3').classList.add('result-mode');document.querySelector('#toolModal .tool-sheet')?.classList.add('result-open');
- };
- window.openToolPage=function(type){if(oldOpen)oldOpen(type);if(type==='daily')setTimeout(()=>{const root=document.getElementById('toolModalContent');if(!root)return;root.innerHTML='<div class="tj-tool-v3"><div class="tj-tool-intro"><div class="tj-tool-kicker">日常决策 · 问问大师工具</div><div class="tj-tool-title">☼ 今日日签</div><div class="tj-tool-desc">打开即可生成今日综合日签，不需要选择任何选项。</div></div><button class="tj-submit" type="button" onclick="TJDailyRun()">生成今日日签</button><div class="tj-result" id="v3_result"></div><div class="tj-disclaimer">日签仅用于自我提醒与节奏整理。</div></div>';},40)};
-})();
+initDailySignRevamp();
 
 /* 今日日签增强：更完整内容 + 原生分享 / 复制兜底 */
-(function(){
- function share(){const r=document.getElementById('v3_result');const text='问问大师今日日签\n'+(r?.innerText||'');if(navigator.share){navigator.share({title:'问问大师今日日签',text}).catch(()=>{})}else if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>showToast('今日日签已复制，可分享给朋友'))}else showToast(text)}
- window.shareDailySign=share;
- const old=window.TJDailyRun;
- window.TJDailyRun=function(){
-  if(old)old();
-  setTimeout(()=>{const out=document.getElementById('v3_result');if(!out)return;out.classList.add('daily-sign-result');const d=window._ctx||window._baziData||{},wx=d.wx||{};const fav=wx.ys||'土';const title=fav==='木'?'今天适合打开局面':fav==='火'?'今天适合主动表达':fav==='金'?'今天适合做减法':fav==='水'?'今天适合调整节奏':'今天适合稳住基本盘';const extra='<div class="tj-result-list"><div><b>行动与协作</b><span>'+ (fav==='木'?'适合启动新项目、提出方案，先做出第一版。':fav==='火'?'适合汇报、谈判和推进卡住的事项，表达要直接但留余地。':fav==='金'?'适合清理待办、明确边界和结束低效沟通。':fav==='水'?'适合复盘信息、补足准备，不宜被外界节奏牵着走。':'适合整理流程、稳步交付，把基础工作做扎实。')+'</span></div><div><b>行动与协作</b><span>优先推进一件重要工作；沟通时先说事实，再说感受与请求，把分工和期待讲清楚。</span></div><div><b>状态与提醒</b><span>安排一次走动和补水，晚上减少屏幕；重要决定先复核，避免在疲惫或情绪高点拍板。</span></div></div><div class="tj-sign-actions"><button class="tj-sign-share" type="button" onclick="shareDailySign()">↗ 分享日签</button><button class="tj-sign-refresh" type="button" onclick="TJDailyRun()">↻ 重新生成</button></div>';if(!out.innerHTML.includes('工作与事业'))out.querySelector('.tj-result-body')?.insertAdjacentHTML('beforeend',extra)},80)
- };
-})();
+initDailySignShare();
 
 /* 流日驱动日签：真实计算「当日干支 × 本人命盘」的互动
    （旧版此处的地支比对是死代码：dayZhi===((typeof __TJX_V5!=='undefined'&&'')||'')
      恒为 false，导致永远输出同一句通用提示） */
-(function(){
- window.TJDailyRun=function(){
-  const d=window._ctx||window._baziData;
-  const out=document.getElementById('v3_result');
-  if(!out)return;
-  if(!d||!d.b){showToast('请先完成个人推演');return}
-
-  const r=calcLiuRi(d.b,(d.wx&&d.wx.ys)||'土');
-  const c=buildDailyCopy(r);
-  const focusEl=document.getElementById('v3_focus');
-  const focus=focusEl?focusEl.value:'';
-
-  const toneColor=r.tone==='flow'?'var(--c-green)':r.tone==='steady'?'var(--c-teal)'
-                 :r.tone==='friction'?'var(--c-orange)':'var(--c-text-3)';
-
-  let H='<div class="tj-result-head"><div><div class="tj-result-title">'+c.headline+'</div>'+
-        '<div class="tj-daily-meta">'+r.day.gz+'日 · '+c.role+' · '+c.domain+'</div></div>'+
-        '<div class="tj-score" style="color:'+toneColor+'">'+c.label+'</div></div>';
-
-  H+='<div class="tj-result-body"><div class="tj-result-list">';
-  c.sections.forEach(x=>{H+='<div><b>'+x.k+'</b><span>'+x.v+'</span></div>'});
-  if(focus)H+='<div><b>你选的重点：'+focus+'</b><span>'+
-    (r.tone==='rest'||r.tone==='friction'
-      ? '今天阻力偏大，把它拆成一个 20 分钟就能完成的版本，先动起来即可。'
-      : '今天状态支持这件事，安排一段不被打断的时间集中处理。')+'</span></div>';
-  H+='</div></div>';
-
-  H+='<div class="tj-sign-actions"><button class="tj-sign-share" type="button" onclick="TJShareRiQian()">生成日签卡</button>'+
-     '<button class="tj-sign-refresh" type="button" onclick="shareDailySign()">文字分享</button>'+
-     '<button class="tj-sign-refresh" type="button" onclick="closeToolPage()">完成</button></div>';
-  H+='<div class="tj-disclaimer">依据当日干支与你的命盘关系生成，同一天内容固定，用于整理节奏，不预测吉凶，也不替代现实判断。</div>';
-
-  out.innerHTML=H;
-  out.classList.add('daily-sign-result','show');
-  out.closest('.tj-tool-v3')?.classList.add('result-mode');
-  document.querySelector('#toolModal .tool-sheet')?.classList.add('result-open');
- };
-})();
+initDailyRun();
 
  /* 能量穿搭与工位风水 v2：按用神给完整配色，按场景给具体穿法 */
-(function(){
-  const old=window.TJToolRun;
-  const PALETTE={木:{主:'青绿、墨绿',辅:'米白、原木色',点缀:'少量湖蓝',饰:'木质或布艺小物'},火:{主:'朱红、珊瑚',辅:'暖米、杏色',点缀:'金色配件',饰:'红绳、暖光小物'},土:{主:'米色、暖黄、咖色',辅:'乳白',点缀:'陶土色',饰:'陶瓷、编织材质'},金:{主:'白色、银灰、香槟',辅:'浅灰',点缀:'金属线条',饰:'金属腕表、钢笔'},水:{主:'深蓝、雾蓝、墨黑',辅:'浅灰蓝',点缀:'透明材质',饰:'玻璃、水晶小物'}};
-  const ADVICE={'重要沟通':'整体柔和、低攻击性：用主色大面积，点缀色只出现在一个细节（领带、胸针、丝巾），让对方注意力在内容不在衣服上。','面试汇报':'正式感优先：辅助色打底，主色作一件单品，显得稳重又有记忆点；避免全身高饱和。','专注工作':'颜色越少越好：中性色为主，主色只在视线边缘出现（杯子、桌垫），减少注意力拉扯。','休息恢复':'暖调低照度：辅助色+点缀色，避开正红正黑这类强刺激，材质以柔软为主。'};
-  window.TJToolRun=function(type){if(type!=='style'){if(old)old(type);return}const d=window._ctx||window._baziData||{},wx=d.wx||{};const p=PALETTE[wx.ys]||PALETTE['土'];const scene=document.getElementById('v3_scene')?.value||'当前场景',space=document.getElementById('v3_space')?.value||'当前环境',out=document.getElementById('v3_result');if(!out)return;
-    const spaceFix=space.includes('杂乱')?'清空桌面，只留当前任务相关物品；给每样东西定一个固定位置，用完归位。':space.includes('光线')?'优先改善光线和屏幕高度：屏幕顶与视线平齐，补一盏暖光台灯，再谈摆件。':space.includes('久坐')?'每50分钟起身两分钟，把水杯放远一点强制走动；调整座椅支撑腰部。':'现有环境保持简洁即可，减少新增物品，避免变成新的干扰源。';
-    out.innerHTML='<div class="tj-result-head"><div class="tj-result-title">能量穿搭与工位方案</div><div class="tj-score">'+(wx.ys||'土')+'</div></div><div class="tj-result-body"><div class="tj-result-list"><div><b>配色方案</b><span>主：'+p.主+' · 辅：'+p.辅+' · 点缀：'+p.点缀+'</span></div><div><b>'+scene+'怎么穿</b><span>'+(ADVICE[scene]||'选择低饱和、舒适且容易长期使用的颜色，不必大面积铺陈。')+'</span></div><div><b>工位第一步</b><span>'+spaceFix+'</span></div><div><b>随身小物</b><span>'+p.饰+'——小面积出现即可，作用在心理暗示，不在堆砌。</span></div></div></div><div class="tj-disclaimer">颜色与环境建议用于状态提醒，舒适、整洁和可持续使用优先，不需要购买任何"风水摆件"。</div>';out.classList.add('show')};
-})();
+initStyleToolV2();
 
 
 /* 工具中心最终版：问题入口与快捷筛选 */
-(function(){
- function enhance(){
-  const hub=document.querySelector('#s-adv .tool-hub'),bar=document.getElementById('toolsToolbar');
-  if(!hub||!bar)return;
- }
- const obs=new MutationObserver(enhance);obs.observe(document.body,{childList:true,subtree:true});
- enhance();
-})();
+initToolCenterFinal();
 
 /* 择日助手改版：不再让用户手动挑日期，直接根据推演结果给出候选日期 */
-(function(){
-  const oldOpen=window.openToolPage;
-  function fmt(d){return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日'}
-  function renderDateTool(){
-    const modal=document.getElementById('toolModal'),root=document.getElementById('toolModalContent');if(!root||!modal)return;
-    modal.classList.add('open');
-    root.innerHTML='<div class="tj-tool-v3 tj-date-auto"><div class="tj-tool-intro"><div class="tj-tool-kicker">日常决策 · 问问大师工具</div><div class="tj-tool-title">◇ 重要事项择日助手</div><div class="tj-tool-desc">结合你的命盘节奏与近期日期，筛选更适合推进重要事项的时间。你只需要告诉我事项类型。</div></div><div class="tj-fields"><div class="tj-field"><label>准备安排什么事项</label><select id="v3_event"><option>签约合作</option><option>面试入职</option><option>发布项目</option><option>搬家出行</option><option>关系沟通</option><option>启动新计划</option></select></div><div class="tj-field"><label>希望安排在</label><select id="v3_range"><option>未来7天</option><option>未来14天</option><option>未来30天</option></select></div></div><button class="tj-submit" type="button" onclick="TJDateRunAuto()">开始推算合适日期</button><div class="tj-result" id="v3_result"></div><div class="tj-disclaimer">结果用于安排节奏与准备重点，不替代天气、交通、合同及其他现实条件判断。</div></div>';
-  }
-  window.TJDateRunAuto=function(){
-    const event=document.getElementById('v3_event')?.value||'重要事项';
-    const days=+(document.getElementById('v3_range')?.value.match(/\d+/)?.[0]||7);
-    const ctx=window._ctx||window._baziData||{},wx=ctx.wx||{};
-    if(!ctx||!ctx.b){showToast('请先完成个人推演，再为你本人挑选日期');return;}
-    const ys=wx.ys||'土';
-    // 事项类型 → 更适合的当日十神领域（由流日引擎逐日计算，无随机数）
-    const EVENT_ROLE={'签约合作':['正官','正财','偏财'],'面试入职':['正官','正印'],'发布项目':['食神','伤官','偏财'],'搬家出行':['偏财','比肩'],'关系沟通':['正印','食神'],'启动新计划':['比肩','偏财','正财']};
-    const want=EVENT_ROLE[event]||[];
-    const TONE_LABEL={flow:'顺势',steady:'平稳',friction:'有阻力',rest:'宜收'};
-    const WD=['日','一','二','三','四','五','六'];
-    const candidates=[];
-    for(let i=1;i<=days;i++){
-      const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+i);
-      const r=calcLiuRi(ctx.b,ys,d);
-      let score=r.energy+(want.includes(r.role)?8:0);
-      if(r.chong.length)score-=6;            // 当日冲命盘某柱，扣减
-      if(r.tone==='rest')score-=4;           // 宜收的日子不适合推大事
-      candidates.push({d,r,score:Math.max(5,Math.min(98,Math.round(score)))});
-    }
-    candidates.sort((a,b)=>b.score-a.score);
-    const top=candidates.slice(0,3);
-    const notes={'签约合作':'适合确认边界、责任与交付节点','面试入职':'适合展示准备成果并主动沟通','发布项目':'适合公开推进，让成果获得反馈','搬家出行':'优先核对交通、天气和物品清单','关系沟通':'适合在情绪稳定时把需求说清楚','启动新计划':'适合先完成一个可见的第一步'};
-    const rows=top.map((x,i)=>'<div class="tj-date-choice'+(i===0?' best':'')+'"><div><b>'+fmt(x.d)+'</b><span>星期'+WD[x.d.getDay()]+' · '+x.r.day.gz+'日 · '+TONE_LABEL[x.r.tone]+'</span></div><strong>'+x.score+'<small>适配度</small></strong><p>'+(i===0?'首选：':'备选：')+notes[event]+'。当天'+x.r.roleInfo.domain+'</p></div>').join('');
-    const out=document.getElementById('v3_result');out.innerHTML='<div class="tj-result-head"><div class="tj-result-title">为「'+event+'」推荐的日期</div><div class="tj-score">'+(wx.ys||'—')+'</div></div><div class="tj-result-body"><div class="tj-date-list">'+rows+'</div><div class="tj-date-note">推算依据：逐日计算当日干支与你命盘的契合度（能量分、十神领域与冲合），无随机数。最终请再核对对方时间、天气、交通和实际截止日期。</div></div>';out.classList.add('show');
-  };
-  window.openToolPage=function(type){if(type==='date'){setTimeout(renderDateTool,40);return}if(oldOpen)oldOpen(type)};
-})();
+initDateToolRevamp();
 
 /* 自定义工具结果兜底：所有工具页面都显示命盘结合提示 */
-(function(){
- function sync(){if(!['wealth','career','date','style','layoff','name','zodiac','relation'].includes(window._activeTool))return;const d=window._ctx||window._baziData||{},wx=d.wx||{};document.querySelectorAll('#toolModalContent .tj-result.show').forEach(e=>{if(e.querySelector('.tj-chart-basis'))return;const n=document.createElement('div');n.className='tj-chart-basis';n.innerHTML='<b>✦ 命盘依据</b><div><span>日主</span><strong>'+(d.dg||'—')+'</strong><span>有利方向</span><strong>'+(wx.ys||'—')+'</strong><span>事业评分</span><strong>'+(d.cs||'—')+'/100</strong><span>财富评分</span><strong>'+(d.ws||'—')+'/100</strong></div><p>用于校正建议节奏；现实信息优先。</p>';e.appendChild(n)});}
- setInterval(sync,250);
-})();
+initCustomToolFallback();
 
 /* 问问大师应答数据库扩展：补充高频、可执行问题 */
-(function(){
- if(typeof KB==='undefined'||!KB.faqs)return;
- KB.faqs.push(
-  {id:'ux1',q:'最近为什么总是焦虑？',kw:['焦虑','压力','内耗','烦躁','睡不着'],intent:'综合',anchor:'health',answer:d=>[
-   `先把它理解为节奏过载，而不是简单的“运气不好”。当前事业评分${d.cs||'—'}、财富评分${d.ws||'—'}提示你更需要恢复可控感。`,
-   `命盘中的${d.dg||'日主'}与有利方向${d.wx?.ys||'—'}，适合用明确边界、规律作息和小步行动来稳定状态。`,
-   `${d.cDy?.g||''}${d.cDy?.z||''}阶段不宜同时承担太多目标，先处理最影响睡眠和现金流的那一件。`,
-   '今天写下3件事：必须做、可以等、暂时不做；只完成“必须做”中的最小一步。若持续影响睡眠或生活，请寻求专业帮助。'
-  ],related:['c3']},
-  {id:'ux2',q:'我该不该答应这个机会？',kw:['机会','答应','要不要','选择','决定','纠结'],intent:'选择',anchor:'focus',answer:d=>[
-   '先不要只问“吉不吉”，而要看这件事是否同时满足收益、风险和退出条件。',
-   `结合${d.dg||'日主'}的当前节奏与有利方向${d.wx?.ys||'—'}，建议优先选择能积累能力、资源或稳定现金流的机会。`,
-   `当前大运${d.cDy?.g||''}${d.cDy?.z||''}更适合${d.cs>70?'主动验证、争取反馈':'小范围试错、保留退路'}。`,
-   '给自己24小时：写下最坏结果、可承受损失和退出时间；三项都说得清，再答应。'
-  ],related:['c2','c3']},
-  {id:'ux3',q:'我的财运什么时候会好？',kw:['财运','赚钱','收入','发财','财富'],intent:'财运',anchor:'trend',answer:d=>[
-   `财运不只看某一天，而看收入能力、现金流和机会能否形成闭环。当前财富评分为${d.ws||'—'}/100。`,
-   `命盘有利方向为${d.wx?.ys||'—'}，更适合把资源投入到可重复的技能、客户或产品，而不是追逐一次性暴利。`,
-   `在${d.cDy?.g||''}${d.cDy?.z||''}阶段，先建立安全垫再扩大投入，现金流稳定比短期高回报更重要。`,
-   '本周完成一次支出分类，并选一个能在30天内验证的增收动作；不使用杠杆，不把签文或命理当收益承诺。'
-  ],related:['c2']},
-  {id:'ux4',q:'感情里总是沟通不好怎么办？',kw:['沟通','吵架','冷战','感情','伴侣','关系'],intent:'感情',anchor:'loveMode',answer:d=>[
-   '先停止猜测对方真正想法，把一次沟通缩小到一个具体事件和一个具体请求。',
-   `你的命盘日主${d.dg||'—'}与当前关系节奏提示，表达需求比证明谁对谁错更重要。`,
-   `在当前大运${d.cDy?.g||''}${d.cDy?.z||''}下，稳定、重复的沟通比一次性摊牌更容易建立信任。`,
-   '用“事实—感受—请求”说三句话；如果情绪超过7分，先约定第二天再谈。涉及安全或伤害时优先保护自己并寻求专业支持。'
-  ],related:['c3']}
- );
-})();
+initKBExpansion();
 
 /* 部分工具接入 AI：只在用户主动点击时调用，避免自动消耗额度。 */
-(function(){
-  const enabled={wealth:'财富与现金流',career:'职业选择',layoff:'职场风险',relation:'关系沟通',style:'环境与状态'};
-  function install(type){
-    if(!enabled[type])return;
-    const out=document.getElementById('v3_result');if(!out||!out.classList.contains('show')||out.querySelector('.tj-ai-btn'))return;
-    const btn=document.createElement('button');btn.type='button';btn.className='tj-ai-btn';btn.textContent='让 AI 帮我换个角度看看';btn.onclick=()=>window.TJAskToolAI(type,btn);out.appendChild(btn);
-  }
-  window.TJAskToolAI=async function(type,btn){
-    const out=document.getElementById('v3_result');if(!out||!enabled[type])return;
-    const source=(out.querySelector('.tj-result-body')||out).innerText.slice(0,1800),ctx=window._ctx||window._baziData||{};
-    btn.disabled=true;btn.textContent='AI 正在整理…';
-    let answer='';
-    try{
-      answer=await askToolInsight({
-        apiKey:getApiKey(),
-        typeLabel:enabled[type],
-        source,
-        chartSummary:`日主${ctx.dg||'—'}，有利方向${ctx.wx?.ys||'—'}`
-      });
-    }catch(e){}
-    if(answer){let box=out.querySelector('.tj-ai-box');if(!box){box=document.createElement('div');box.className='tj-ai-box';out.appendChild(box)}box.innerHTML='<b>AI 换个角度</b>'+answer.replace(/[<>]/g,'');btn.remove()}
-    else{btn.disabled=false;btn.textContent='暂时无法连接 AI，重试一次'}
-  };
-  const old=window.TJToolRun;
-  window.TJToolRun=function(type){const r=old?old(type):undefined;if(enabled[type])setTimeout(()=>install(type),90);return r};
-  new MutationObserver(()=>{const type=window._activeTool;if(enabled[type])install(type)}).observe(document.body,{childList:true,subtree:true});
-})();
+initToolAI();
 
-(function(){
-// 部署环境曾把 Cloudflare challenge-platform 的隐藏 iframe 注入脚本复制回源码，
-// 那是打包残留、对功能没有任何作用，还会拖慢首屏，这里整体移除。
-})();
+initCloudflareCleanup();
 
 // Expose legacy inline event handlers after moving scripts into a Vite module.
 Object.assign(window, {
@@ -2172,214 +1311,28 @@ Object.assign(window, {
 });
 
 /* iOS Instagram-style dock: tab indicator alignment follows scroll & layout. */
-(function(){
-  const scroll=document.getElementById('p2Scroll'),dock=document.getElementById('tabBar');
-  if(!scroll||!dock)return;
-  const realign=()=>{const active=dock.querySelector('.tab-item.active'),ind=dock.querySelector('.tab-indicator'),inner=dock.querySelector('.tab-bar-inner');if(!active||!ind||!inner)return;const x=active.offsetLeft,w=active.offsetWidth;ind.style.width=w+'px';ind.style.transform='translateX('+x+'px)';ind.classList.add('ready')};
-  scroll.addEventListener('scroll',()=>{
-    requestAnimationFrame(realign);
-  },{passive:true});
-  if(typeof ResizeObserver!=='undefined')new ResizeObserver(realign).observe(dock);
-  dock.addEventListener('click',()=>requestAnimationFrame(realign),{passive:true});
-  [0,120,300,520].forEach(ms=>setTimeout(realign,ms));
-})();
+initDockIndicator();
 
 /* Liquid Glass dock lighting follows the pointer/finger position. */
-(function(){
-  const dock=document.getElementById('tabBar');
-  if(!dock)return;
-  const light=(x,y)=>{const r=dock.getBoundingClientRect();dock.style.setProperty('--ig-light-x',((x-r.left)/Math.max(1,r.width)*100).toFixed(1)+'%');dock.style.setProperty('--ig-light-y',((y-r.top)/Math.max(1,r.height)*100).toFixed(1)+'%')};
-  dock.addEventListener('pointermove',e=>light(e.clientX,e.clientY),{passive:true});
-  dock.addEventListener('pointerleave',()=>{dock.style.setProperty('--ig-light-x','50%');dock.style.setProperty('--ig-light-y','0%')},{passive:true});
-})();
+initDockLighting();
 
 /* Keep the floating dock out of the way when iOS opens the keyboard. */
-(function(){
-  const vv=window.visualViewport;
-  if(!vv)return;
-  const sync=()=>{const keyboard=window.innerHeight-vv.height>160;document.body.classList.toggle('ig-keyboard',keyboard)};
-  vv.addEventListener('resize',sync,{passive:true});
-  vv.addEventListener('scroll',sync,{passive:true});
-  sync();
-})();
+initDockKeyboard();
 
 /* 问问大师体验层：自适应输入框、气泡操作、键盘发送与无障碍。 */
-(function(){
-  const mount=()=>{
-    const sheet=document.getElementById('aiSheet'),input=document.getElementById('askInput'),send=document.querySelector('#aiSheet .ai-send'),result=document.getElementById('askResult');
-    if(!sheet||!input||!result||sheet.dataset.uxMounted)return;
-    sheet.dataset.uxMounted='1';
-    result.setAttribute('aria-live','polite');
-    result.setAttribute('aria-label','问问大师对话内容');
-    input.setAttribute('enterkeyhint','send');
-    input.setAttribute('maxlength','500');
-    input.setAttribute('aria-label','输入你想咨询的问题');
-
-    // 自适应输入框高度
-    const resize=()=>{
-      input.style.height='auto';
-      input.style.height=Math.min(input.scrollHeight,120)+'px';
-      if(send)send.disabled=!input.value.trim();
-    };
-    input.addEventListener('input',()=>{
-      resize();
-      const countEl=document.getElementById('aiCount');
-      if(countEl)countEl.textContent=input.value.length+' / 500';
-    });
-    resize();
-
-    // 输入提示
-    const row=input.closest('.ai-input-row');
-    if(row&&!document.getElementById('aiCount')){
-      const hint=document.createElement('div');
-      hint.className='ai-compose-hint';
-      hint.innerHTML='<span>Enter 发送 · Shift + Enter 换行</span><b id="aiCount">0 / 500</b>';
-      row.insertAdjacentElement('afterend',hint);
-    }
-
-    // Enter 发送，Shift+Enter 换行
-    input.addEventListener('keydown',e=>{
-      if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){
-        e.preventDefault();
-        doAskCustom();
-      }
-    });
-
-    // 恢复草稿
-    try{
-      const draft=sessionStorage.getItem('tj_ai_draft')||'';
-      if(draft){input.value=draft;resize();}
-    }catch(e){}
-    input.addEventListener('input',()=>{try{sessionStorage.setItem('tj_ai_draft',input.value)}catch(e){}});
-
-    // 委托气泡操作（复制/重试）
-    result.addEventListener('click',e=>{
-      const btn=e.target.closest('.chat-actions button');
-      if(!btn)return;
-      const msg=btn.closest('.chat-msg');
-      if(btn.dataset.act==='copy'){
-        const text=msg?.querySelector('.chat-ai-text,.chat-bubble-kb,.chat-bubble-ai')?.innerText||'';
-        navigator.clipboard?.writeText(text).then(()=>{
-          btn.textContent='已复制';
-          setTimeout(()=>btn.textContent='复制',1200);
-        }).catch(()=>{});
-      }else if(btn.dataset.act==='retry'){
-        const bubbles=[...result.querySelectorAll('.chat-bubble-user')];
-        const q=bubbles.at(-1)?.textContent?.trim();
-        if(q)doAsk(q);
-      }
-    });
-
-    // 自动滚动到底部
-    new MutationObserver(()=>{
-      result.scrollTo({top:result.scrollHeight,behavior:'smooth'});
-    }).observe(result,{childList:true,subtree:true});
-
-    // 更新命盘上下文显示（含示例模式）
-    const d=window._ctx||window._baziData;
-    const c=document.getElementById('aiContext');
-    if(c&&d){
-      c.innerHTML=d.isDemoPreview
-        ?'<span class="ai-demo-context">✦ 示例报告</span><b>'+d.dg+d.dw+' · 体验用示例命盘</b>'
-        :'<span>✦ 已结合命盘</span><b>'+d.dg+d.dw+' · '+(d.wx?.st?'行动型节奏':'蓄力型节奏')+'</b>';
-    }
-  };
-  document.addEventListener('DOMContentLoaded',mount);
-  const old=window.openAsk;
-  window.openAsk=function(){if(old)old();setTimeout(mount,80)};
-})();
+initExperienceLayer();
 
 /* Reuse each tool card's artwork in its detail-page introduction. */
-(function(){
-  const root=document.getElementById('toolModalContent');
-  if(!root)return;
-  const decorate=()=>{
-    const tool=root.querySelector('.tj-tool-v3');
-    const type=window._activeTool;
-    if(tool&&type)tool.dataset.toolArt=type;
-  };
-  new MutationObserver(decorate).observe(root,{childList:true,subtree:true});
-  const previousOpen=window.openToolPage;
-  window.openToolPage=function(type){
-    if(previousOpen)previousOpen(type);
-    [0,50,140].forEach(delay=>setTimeout(decorate,delay));
-  };
-  document.addEventListener('DOMContentLoaded',decorate);
-})();
+initToolCardArt();
 
 
 /* Answer Book v2: a self-contained reflective reading flow. */
-(function(){
-  const priorOpenTool=window.openToolPage;
-  window.openToolPage=function(type){
-    if(type==='answerbook'){openAnswerBook();return;}
-    if(priorOpenTool)priorOpenTool(type);
-  };
-})();
+initAnswerBookV2();
 
 /* ============================================================
    合盘：分享 / 保存对象 / 最近对象快捷选择
    ============================================================ */
-(function(){
-  const HOUR_LABELS=['子 23:00–00:59','丑 01:00–02:59','寅 03:00–04:59','卯 05:00–06:59',
-    '辰 07:00–08:59','巳 09:00–10:59','午 11:00–12:59','未 13:00–14:59',
-    '申 15:00–16:59','酉 17:00–18:59','戌 19:00–20:59','亥 21:00–22:59'];
-
-  // 合盘结果分组展开/收起
-  window.TJSynToggle=function(btn){
-    const sec=btn.closest('.syn-group');
-    if(!sec)return;
-    const open=sec.classList.toggle('open');
-    btn.setAttribute('aria-expanded',open?'true':'false');
-  };
-
-  window.TJSynShare=function(){
-    const s=window._lastSynastry;
-    if(!s){showToast('暂无可分享的合盘结果');return}
-    shareSynastry({name:s.name,relation:s.relation,result:s.result});
-  };
-
-  window.TJSynSave=function(){
-    const s=window._lastSynastry;
-    if(!s){showToast('暂无可保存的合盘对象');return}
-    const rec=saveSynastryPartner({name:s.name,y:s.y,m:s.m,d:s.d,hourZhi:s.hourZhi,
-                                   relation:s.relation,score:s.score});
-    if(rec)mountPicker();
-  };
-
-  // —— 在合盘表单顶部挂「最近对象」快捷选择 ——
-  function mountPicker(){
-    const root=document.getElementById('toolModalContent');
-    if(!root||window._activeTool!=='relation')return;
-    const fields=root.querySelector('.tj-fields');
-    if(!fields)return;
-    let box=root.querySelector('.tj-partner-picker-wrap');
-    const html=partnerPickerHtml();
-    if(!html){if(box)box.remove();return}
-    if(!box){
-      box=document.createElement('div');
-      box.className='tj-partner-picker-wrap';
-      fields.parentNode.insertBefore(box,fields);
-      bindPartnerPicker(box,p=>{
-        const set=(id,v)=>{const e=document.getElementById('v3_'+id);if(e)e.value=v;};
-        set('pname',p.name);
-        set('bdate',`${p.y}-${String(p.m).padStart(2,'0')}-${String(p.d).padStart(2,'0')}`);
-        const hs=document.getElementById('v3_bhour');
-        if(hs)hs.value=(p.hourZhi==null)?'时辰不详 · 用三柱比对':HOUR_LABELS[p.hourZhi];
-        if(p.relation){const f=document.getElementById('v3_focus');if(f)f.value=p.relation;}
-        showToast(`已填入「${p.name}」`);
-      },mountPicker);
-    }
-    box.innerHTML=html;
-  }
-
-  const oldOpen=window.openToolPage;
-  window.openToolPage=function(type){
-    if(oldOpen)oldOpen(type);
-    if(type==='relation')[80,260,600].forEach(ms=>setTimeout(mountPicker,ms));
-  };
-  window.TJSynMountPicker=mountPicker;
-})();
+initSynastryShare();
 
 /* ============================================================
    首页「今日一句」：回访用户无需重新推演即可看到当天内容
@@ -2523,73 +1476,7 @@ Object.assign(window, {
    竞品调研：新手最大的障碍是「看不懂，又不知道怎么问」。
    这里让用户不必自己组织问题，点一下即可带着上下文提问。
    ============================================================ */
-(function(){
-  const SEL='#page2 [data-card], #page2 .beginner-brief, #page2 .qr-card';
-
-  function makeBtn(){
-    const b=document.createElement('button');
-    b.type='button';
-    b.className='explain-btn';
-    b.setAttribute('aria-label','这段是什么意思');
-    b.title='这段是什么意思';
-    b.innerHTML='<span>这段是什么意思</span>';
-    return b;
-  }
-
-  // 每张卡片只给第一个「可见」术语加问号，避免满屏问号。
-  // 必须判断可见性：新手/大师模式会隐藏大量卡片，
-  // 若标到隐藏元素上，用户实际看到的那个就没有提示了。
-  function markFirstTerms(){
-    document.querySelectorAll('#page2 .glass, #page2 .beginner-brief, #page2 .qr-card').forEach(card=>{
-      if(card.offsetParent===null)return;
-      const terms=[...card.querySelectorAll('.glossary-term')].filter(t=>t.offsetParent!==null);
-      card.querySelectorAll('.glossary-term.has-hint').forEach(e=>e.classList.remove('has-hint'));
-      if(terms.length)terms[0].classList.add('has-hint');
-    });
-  }
-
-  function inject(){
-    if(!document.body.classList.contains('report-active'))return;
-    markFirstTerms();
-    document.querySelectorAll(SEL).forEach(card=>{
-      if(card.querySelector(':scope > .explain-btn'))return;
-      // 标签页里的卡片已去外壳；若内部子卡已有解释入口，外层再加一个
-      // 就会出现两个连着的「这段是什么意思」（实测命盘页）
-      // 工具中心与合盘表单不需要解释入口
-      const k=card.dataset?.card||'';
-      if(k==='toolHub')return;
-      if(card.offsetParent===null)return;
-      const btn=makeBtn();
-      btn.addEventListener('click',e=>{
-        e.stopPropagation();
-        try{
-          const {cardKey,heading,excerpt}=extractSection(card);
-          const q=buildExplainQuestion({cardKey,heading,excerpt});
-          if(typeof window.openAsk==='function')window.openAsk();
-          setTimeout(()=>{ if(typeof window.doAsk==='function')window.doAsk(q); },260);
-        }catch(err){ console.warn('explain',err); }
-      });
-      card.appendChild(btn);
-    });
-    // 去壳后的标签页卡片：外层与内部子卡会各挂一个按钮，
-    // 视觉上是两个紧挨着的「这段是什么意思」。外层那个所指不明，去掉。
-    // 注意必须放在注入之后 —— inject 按文档顺序先给外层加，
-    // 在 section-tabs 建标签时清理会被之后的注入重新加回来。
-    document.querySelectorAll('#page2 .sec-plain').forEach(card=>{
-      const all=[...card.querySelectorAll('.explain-btn')];
-      if(all.length<2)return;
-      const own=all.find(b=>b.parentElement===card);
-      if(own)own.remove();
-    });
-  }
-
-  const obs=new MutationObserver(()=>{
-    clearTimeout(window._explainT);
-    window._explainT=setTimeout(inject,300);
-  });
-  obs.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
-  window.TJInjectExplain=inject;
-})();
+initExplainInject();
 
 /* ============================================================
    报告页档案快切：此前给亲友看报告必须回首页重新选档案
@@ -2681,235 +1568,19 @@ if('serviceWorker' in navigator && /^https:/.test(location.protocol)){
    运势页档位：年 / 月 / 周 / 日 子标签
    选择记入 sessionStorage，重进报告时恢复上次的档位。
    ============================================================ */
-(function(){
-  const KEY='tj_yun_tab_v1';
-  function activate(yt){
-    const tabs=document.querySelectorAll('#s-yun .yun-tab');
-    if(!tabs.length)return;
-    tabs.forEach(b=>{const a=b.dataset.yun===yt;b.classList.toggle('active',a);b.setAttribute('aria-selected',String(a));});
-    document.querySelectorAll('#s-yun .yun-pane').forEach(p=>p.classList.toggle('active',p.dataset.yun===yt));
-    try{sessionStorage.setItem(KEY,yt);}catch(e){}
-  }
-  window.TJActivateYunTab=activate;
-  document.addEventListener('click',e=>{
-    const b=e.target.closest&&e.target.closest('.yun-tab');
-    if(b)activate(b.dataset.yun);
-  });
-  const oldShow=window.showPage2;
-  window.showPage2=function(){
-    const r=oldShow?oldShow.apply(this,arguments):undefined;
-    let yt='year';try{yt=sessionStorage.getItem(KEY)||'year';}catch(e){}
-    setTimeout(()=>activate(yt),120);
-    return r;
-  };
-})();
+initYunTab();
 
 /* ============================================================
    分享卡片：把真实推演结果渲染成图片
    竞品差距补齐：此前只有文字复制，分享链是断的。
    数据全部来自实时推演，不掺写死的吉祥话。
    ============================================================ */
-(function(){
-  const TONE_LABEL={flow:'顺势',steady:'平稳',friction:'有阻力',rest:'宜收'};
-  const TONE_BADGE={flow:'状态在线',steady:'稳步推进',friction:'留有余量',rest:'宜收尾恢复'};
-  const dateTag=d=>`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
-  const todayStr=()=>dateTag(new Date());
-  const DISC='仅供自我整理与行动参考，不构成投资、医疗、法律或职业决策依据';
-
-  // —— 周运势卡 ——
-  window.TJShareWeek=function(){
-    const w=window._weekData;
-    if(!w){showToast('请先完成推演，生成报告后即可分享');return;}
-    const fmt=d=>`${d.getMonth()+1}月${d.getDate()}日`;
-    const cv=renderShareCard({
-      kicker:'周运势 · WEEKLY RHYTHM',
-      title:`${fmt(w.start)} – ${fmt(w.end)}`,
-      sub:'逐日干支 × 你的命盘 · 与每日日签同源推演',
-      badge:(TONE_LABEL[w.dominant]||'平稳')+' · '+w.avg+'分',
-      rows:[
-        {k:'本周基调',v:w.summary},
-        {k:'相对顺利',v:`${w.best.label}（${w.best.short} · ${w.best.day.gz}日）——把重要的事尽量放在这天`},
-        {k:'多留余量',v:`${w.worst.label}（${w.worst.short} · ${w.worst.day.gz}日）——行程别排满，重大决定往后放`},
-      ],
-      foot:DISC,
-    });
-    exportShareCard(cv,'问问大师_周运势_'+w.start.getMonth()+1+w.start.getDate());
-  };
-
-  // —— 今日卡（日签口径：当日干支 × 命盘）——
-  window.TJShareRiQian=function(){
-    const d=window._ctx||window._baziData;
-    const r=(d&&d.b)?calcLiuRi(d.b,(d.wx&&d.wx.ys)||'土'):(window._todayLiuRi||null);
-    if(!r){showToast('请先完成推演，即可生成今日卡片');return;}
-    const c=buildDailyCopy(r);
-    const cv=renderShareCard({
-      kicker:'今日日签 · DAILY',
-      title:c.headline,
-      sub:`${todayStr()} · ${r.day.gz}日 · ${c.label}`,
-      badge:(TONE_BADGE[r.tone]||'平稳')+' · '+r.energy+'分',
-      rows:[
-        {k:'今日基调',v:c.label+' · '+c.role+' · '+c.domain},
-        ...(c.sections.slice(0,3).map(s=>({k:s.k,v:s.v}))),
-      ],
-      foot:DISC,
-    });
-    exportShareCard(cv,'问问大师_今日日签_'+r.day.dateKey);
-  };
-
-  // —— 命盘报告摘要卡 ——
-  window.TJShareReport=function(){
-    const d=window._ctx||window._baziData;
-    if(!d||!d.b){showToast('请先完成推演');return;}
-    const b=d.b,wx=d.wx||{};
-    const four=[b.Y,b.M,b.D,b.H].map(x=>x.g+x.z).join(' · ');
-    const cLn=d.cLn||mkLn(CURR_YEAR);
-    const rawBd=(d.input&&(d.input.bd_raw||d.input.bd))||'';
-    let bdText=todayStr();
-    const _m=rawBd.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-    if(_m)bdText=`${_m[1]}年${+_m[2]}月${+_m[3]}日${d.input.gen==='male'?' · 乾造':' · 坤造'}`;
-    const cv=renderShareCard({
-      kicker:'命盘摘要 · CHART',
-      title:`${d.dg||''}${d.dw||''}命盘`,
-      sub:bdText,
-      badge:(d.wx&&d.wx.st?'行动型节奏':'蓄力型节奏'),
-      rows:[
-        {k:'四柱',v:four},
-        {k:'五行重心',v:`用神「${wx.ys||'—'}」 · 喜神「${wx.xs||'—'}」`},
-        {k:'当前大运',v:(d.cDy?`${d.cDy.g}${d.cDy.z} · `:'')+(d.cs?`事业 ${d.cs} / 财富 ${d.ws} / 感情 ${d.ls} / 健康 ${d.hs}`:'')},
-        {k:`${CURR_YEAR}流年`,v:`${cLn.g}${cLn.z}${cLn.sx?` · ${cLn.sx}年`:''}${d.lnSS?` · ${d.lnSS}`:''}`},
-      ],
-      foot:DISC,
-    });
-    exportShareCard(cv,'问问大师_命盘摘要');
-  };
-
-  // —— 通用工具结果卡：从当前工具结果页提取内容渲染 ——
-  window.TJShareToolResult=function(){
-    const root=document.getElementById('toolModalContent');
-    const out=root&&root.querySelector('.tj-result.show');
-    if(!out){showToast('先生成结果，再分享卡片');return;}
-    const title=(root.querySelector('.tj-tool-title')?.textContent||'工具结果').replace(/^[^\s]+\s/,'').trim();
-    const sub=((root.querySelector('.tj-tool-kicker')?.textContent)||'').trim();
-    const scoreEl=out.querySelector('.tj-score');
-    const rows=[...out.querySelectorAll('.tj-result-list>div')].slice(0,6).map(el=>({
-      k:el.querySelector('b')?.textContent.trim()||'',
-      v:el.querySelector('span')?.innerText.trim().slice(0,90)||''
-    })).filter(r=>r.k&&r.v);
-    if(!rows.length){showToast('该结果暂不支持卡片分享');return;}
-    const cv=renderShareCard({
-      kicker:sub||'问问大师工具',
-      title:title,
-      sub:todayStr(),
-      badge:(scoreEl&&scoreEl.textContent.trim())||null,
-      rows,
-      foot:DISC,
-    });
-    exportShareCard(cv,'问问大师_'+title);
-  };
-
-  // —— 签文卡：签诗适合做成图片 ——
-  window.TJShareOracle=function(){
-    const o=window._lastOracle;
-    if(!o){showToast('先摇一签，再生成签文卡');return;}
-    const cv=renderShareCard({
-      kicker:o.area+' · 第 '+o.n+' 签',
-      title:'『'+o.title+'』',
-      sub:todayStr()+' · '+(o.q?('所问：'+String(o.q).slice(0,40)):'摇签问卜'),
-      badge:o.grade||null,
-      rows:[
-        {k:'签诗',v:o.poem.replace(/\n/g,'，')},
-        {k:'圣意',v:o.yi||'—'},
-        {k:'解曰',v:(o.jie||'—').slice(0,90)},
-      ],
-      foot:DISC,
-    });
-    exportShareCard(cv,'问问大师_签文_'+o.area+o.n);
-  };
-
-  // —— 彩票号码复制 ——
-  window.TJCopyLottery=function(){
-    const l=window._lastLottery;
-    if(!l){showToast('先生成号码');return;}
-    if(navigator.clipboard){navigator.clipboard.writeText(l.type+'\n'+l.text).then(()=>showToast('号码已复制')).catch(()=>showToast(l.text));}
-    else showToast(l.text);
-  };
-
-  // —— 合盘卡 ——
-  window.TJShareSyn=function(){
-    const s=window._lastSynastry;
-    if(!s||!s.result){showToast('先完成一次合盘，再生成卡片');return;}
-    const r=s.result,lab=r.score>=80?'契合度高':r.score>=65?'整体顺畅':r.score>=50?'有合有冲':r.score>=35?'需要磨合':'差异明显';
-    const cv=renderShareCard({
-      kicker:'八字合盘 · SYNASTRY',
-      title:((s.name?s.name+' × ':(s.relation||'关系')+' · ')+lab),
-      sub:(r.precision==='full'?'四柱比对':'三柱比对（对方时辰未提供）')+' · '+todayStr(),
-      badge:r.score+'分',
-      rows:[
-        {k:'总述',v:r.dm.title+' '+r.dm.desc},
-        {k:'合冲统计',v:r.counts.he+' 合 / '+r.counts.chong+' 冲'+(r.counts.other?' / '+r.counts.other+' 刑害':'')},
-        {k:'互补要素',v:r.comp.text},
-      ],
-      foot:'合盘用于理解差异、找到沟通方式，不预测关系结局。'+DISC,
-    });
-    exportShareCard(cv,'问问大师_合盘_'+(s.name||'关系'));
-  };
-})();
+initTodayCard();
 
 /* ============================================================
    速读卡折叠
    ============================================================ */
-(function(){
-  const KEY='tj_qr_collapsed_v1';
-  function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; } }
-  function save(m){ try{ localStorage.setItem(KEY,JSON.stringify(m)); }catch(e){} }
-  // 用所属分区做 key，各分区的速读独立记忆
-  function keyOf(card){ return card.closest('.sec')?.id || 'default'; }
-
-  window.TJToggleQuickRead=function(btn){
-    const card=btn.closest('.qr-card'); if(!card)return;
-    const open=!card.classList.toggle('qr-collapsed');
-    btn.setAttribute('aria-expanded', open?'true':'false');
-    const m=load(); m[keyOf(card)]=!open; save(m);
-  };
-
-  // 恢复上次的折叠状态
-  function restore(){
-    const m=load();
-    document.querySelectorAll('#page2 .qr-card').forEach(card=>{
-      const collapsed=!!m[keyOf(card)];
-      card.classList.toggle('qr-collapsed',collapsed);
-      card.querySelector('.qr-head')?.setAttribute('aria-expanded',collapsed?'false':'true');
-    });
-  }
-  /* 不能用「MutationObserver + 防抖」：restore 自身会改 class，
-     不断重置计时器导致永不执行（section-tabs 已踩过同一个坑）。
-     改为报告激活后轮询几次，状态稳定即停。 */
-  let timer=null,stable=0,last='';
-  const sigOf=()=>[...document.querySelectorAll('#page2 .qr-card')]
-    .map(c=>(c.closest('.sec')?.id||'')+(c.classList.contains('qr-collapsed')?'1':'0')).join(',');
-  function start(){
-    if(timer)return;
-    stable=0;last='';
-    timer=setInterval(()=>{
-      if(!document.body.classList.contains('report-active')){stop();return}
-      restore();
-      const s2=sigOf();
-      stable=(s2===last&&s2!=='')?stable+1:0;
-      last=s2;
-      if(stable>=3)stop();
-    },400);
-    setTimeout(stop,12000);
-  }
-  function stop(){ clearInterval(timer); timer=null; }
-
-  new MutationObserver(()=>{
-    if(document.body.classList.contains('report-active'))start(); else stop();
-  }).observe(document.body,{attributes:true,attributeFilter:['class']});
-  document.addEventListener('click',e=>{
-    if(e.target.closest?.('.tab-item')||e.target.closest?.('.mode-top-switch'))start();
-  },true);
-  if(document.body.classList.contains('report-active'))start();
-})();
+initQuickReadCollapse();
 
 /* ============================================================
    tools2 · 工具系统 v2 接管（必须位于所有旧 IIFE 之后）
@@ -2926,62 +1597,4 @@ installSelectionGloss();
 /* ============================================================
    表单未推演保护：修改输入后未推演，点击「重新推演」弹窗确认
    ============================================================ */
-(function(){
-  /* 轻量确认弹窗（移动端友好，非原生 confirm） */
-  window.showConfirm=function(opts){
-    document.getElementById('tjConfirm')?.remove();
-    const box=document.createElement('div');
-    box.className='tj-confirm';box.id='tjConfirm';
-    box.innerHTML=
-      '<div class="tj-confirm-bg"></div>'+
-      '<div class="tj-confirm-card" role="alertdialog" aria-modal="true" aria-label="'+(opts.title||'提示')+'">'+
-        '<div class="tt">'+(opts.title||'提示')+'</div>'+
-        '<div class="tx">'+(opts.text||'')+'</div>'+
-        '<div class="acts">'+
-          '<button type="button" class="ghost" data-act="cancel">'+(opts.cancelText||'取消')+'</button>'+
-          '<button type="button" class="primary" data-act="ok">'+(opts.okText||'确定')+'</button>'+
-        '</div>'+
-      '</div>';
-    document.body.appendChild(box);
-    const done=(act)=>{box.remove();if(act==='ok'&&opts.onOk)opts.onOk();if(act==='cancel'&&opts.onCancel)opts.onCancel();};
-    box.querySelector('[data-act="ok"]').addEventListener('click',()=>done('ok'));
-    box.querySelector('[data-act="cancel"]').addEventListener('click',()=>done('cancel'));
-    box.querySelector('.tj-confirm-bg').addEventListener('click',()=>done('cancel'));
-    return box;
-  };
-
-  /* 表单字段变化 → 标记「已修改未推演」 */
-  window._formDirty=false;
-  ['bDate','bTime','cInp','bGen','bResultStyle'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el)return;
-    el.addEventListener('input',()=>{window._formDirty=true;});
-    el.addEventListener('change',()=>{window._formDirty=true;});
-  });
-  const styleSelect=document.getElementById('bResultStyle'),styleHint=document.getElementById('resultStyleHint');
-  const styleButtons=document.querySelectorAll('.result-style-option');
-  styleButtons.forEach(btn=>btn.addEventListener('click',()=>{
-    const value=btn.dataset.style;
-    if(styleSelect)styleSelect.value=value;
-    styleButtons.forEach(x=>{const on=x===btn;x.classList.toggle('active',on);x.setAttribute('aria-checked',on?'true':'false');});
-    if(styleHint)styleHint.textContent=getResultStyle(value).intro;
-    window._formDirty=true;
-  }));
-  const sw=document.getElementById('swTrueSolar');
-  if(sw)sw.addEventListener('click',()=>{window._formDirty=true;});
-
-  /* 拦截「重新推演」：有未推演修改时弹窗确认 */
-  const _origGoBack=window.goBack;
-  window.goBack=function(){
-    if(window._formDirty&&window._ctx){
-      window.showConfirm({
-        title:'尚未推演',
-        text:'你修改了出生信息，但还没有重新推演。返回后修改会保留在表单里，下次打开即可继续。',
-        okText:'继续返回',cancelText:'取消',
-        onOk:()=>{window._formDirty=false;_origGoBack();},
-      });
-      return;
-    }
-    _origGoBack();
-  };
-})();
+initFormDirtyGuard();
