@@ -176,10 +176,15 @@ export async function askToolInsight({
   typeLabel,
   source,
   chartSummary,
-  models = TOOL_MODELS
+  models = TOOL_MODELS,
+  extraSystem = '',
+  depth = false
 }) {
   if (!apiKey) throw new Error('missing OpenRouter API key');
-  const prompt = `你是一位温暖、清醒、有分寸的决策助理。用户刚完成「${typeLabel}」工具。请把工具结果翻译成自然中文：先接住用户的处境，再指出一条最重要的现实重点，最后给一个今天就能完成的小动作。只引用与结果直接相关的依据，不要重复整份结果，不把命理说成事实，不制造恐惧或夸张承诺；涉及健康、财务、法律和关系重大决定时，提醒结合现实信息与专业意见。控制在140字以内。工具结果：${source}。用户命盘参考：${chartSummary}。`;
+  const lenRule = depth
+    ? '请展开到200–300字做具体拆解：明确指出用户在哪个方位、放什么物件、为什么，并给出今天就能执行的小动作。'
+    : '控制在140字以内。';
+  const prompt = `你是一位温暖、清醒、有分寸的决策助理。用户刚完成「${typeLabel}」工具。请把工具结果翻译成自然中文：先接住用户的处境，再指出一条最重要的现实重点，最后给一个今天就能完成的小动作。只引用与结果直接相关的依据，不要重复整份结果，不把命理说成事实，不制造恐惧或夸张承诺；涉及健康、财务、法律和关系重大决定时，提醒结合现实信息与专业意见。${lenRule}工具结果：${source}。用户命盘参考：${chartSummary}。${extraSystem}`;
 
   for (const model of models) {
     try {
@@ -189,7 +194,7 @@ export async function askToolInsight({
         body: JSON.stringify({
           model,
           temperature: 0.65,
-          max_tokens: 180,
+          max_tokens: depth ? 360 : 180,
           messages: [{ role: 'user', content: prompt }]
         })
       });

@@ -173,7 +173,7 @@ async function refreshWeather() {
     const temp = Math.round(cur.temperature_2m);
     const hum  = cur.relative_humidity_2m;
     const wind = Math.round(cur.wind_speed_10m);
-    // 缓存最近天气，供工具（如能量穿搭）结合使用
+    // 缓存最近天气，供需要结合环境的工具使用
     _wxNow = { city, temp, hum, wind, label: wx.label, code: cur.weather_code, icon: wx.icon };
 
     WX_PREFIXES.forEach(p => _setWxContent(p, wx.icon, temp, wx.label, city, hum, wind));
@@ -188,6 +188,29 @@ let _wxGeo = null;
 
 export function getWxGeo() {
   return _wxGeo;
+}
+
+/* ---- 主动获取定位（供工具按需调用，如风水大师） ----
+   返回 {city, lat, lon}，并写入 _wxGeo 缓存。
+   失败时抛出错误，由调用方决定是否回退默认值。 */
+export async function requestGeo() {
+  return await new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error('当前浏览器不支持定位'));
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        const lat = parseFloat(pos.coords.latitude.toFixed(4));
+        const lon = parseFloat(pos.coords.longitude.toFixed(4));
+        const city = await reverseCity(lat, lon);
+        _wxGeo = { city: city || '当前位置', lat, lon };
+        resolve(_wxGeo);
+      } catch (e) {
+        _wxGeo = { city: '当前位置', lat: pos.coords.latitude, lon: pos.coords.longitude };
+        resolve(_wxGeo);
+      }
+    }, (err) => {
+      reject(new Error(err && err.code === 1 ? '定位权限被拒绝，请在浏览器设置中允许后重试' : '定位失败'));
+    }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
+  });
 }
 
 /* ---- 导出最近一次天气（供工具结合使用） ---- */

@@ -10,7 +10,6 @@ import { register, installGlobal } from './runtime.js';
 import { wealth } from './wealth.js';
 import { career } from './career.js';
 import { date } from './date.js';
-import { style } from './style.js';
 import { layoff } from './layoff.js';
 import { daily } from './daily.js';
 import { name } from './name.js';
@@ -21,11 +20,13 @@ import { relation } from './relation.js';
 import { answerbook } from './answerbook.js';
 import { calendar } from './calendar.js';
 import { exportPdfTool } from './export.js';
+import { fengshui } from './fengshui.js';
+import { style } from './style.js';
 
 [
   wealth, career, date, style, layoff, daily,
   name, oracle, lottery, zodiac, relation, answerbook, calendar,
-  exportPdfTool,
+  exportPdfTool, fengshui,
 ].forEach(register);
 
 export function bootstrap() {

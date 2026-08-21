@@ -147,7 +147,7 @@ export function viewShell(formHtml) {
 
 let _barScrollCleanup = null;
 
-export function goResult(container, toolName, innerHtml) {
+export function goResult(container, toolName, innerHtml, opts = {}) {
   const view = container.querySelector('.tw-view');
   if (!view) return;
   const form = view.querySelector('.tw-view-form');
@@ -183,8 +183,10 @@ export function goResult(container, toolName, innerHtml) {
     attachToolAI({
       root: result,
       typeLabel: toolName,
-      getSource: () => (result.querySelector('.tw-result-page-body')?.innerText || '').slice(0, 1800),
+      getSource: opts.getSource || (() => (result.querySelector('.tw-result-page-body')?.innerText || '').slice(0, 1800)),
       slot: aiMount,
+      extraSystem: opts.aiExtraSystem || '',
+      depth: !!opts.aiDepth,
     });
   }
 

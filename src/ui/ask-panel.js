@@ -370,7 +370,7 @@ export function aiToolRequest(q) {
     [/转行|副业|职业选择|换工作/, 'career', '转行与副业测评'],
     [/裁员|失业|职场风险/, 'layoff', '裁员风险检测'],
     [/关系沟通|伴侣沟通|感情沟通/, 'relation', '关系沟通分析'],
-    [/穿搭|工位|环境|颜色|风水/, 'style', '能量穿搭与工位风水'],
+    [/风水|环境/, 'fengshui', '风水大师'],
     [/择日|重要事项|安排日期/, 'date', '重要事项择日助手'],
     [/今日日签|今日提醒|日签/, 'daily', '今日日签'],
     [/起名|取名|名字/, 'name', '智能起名工具'],
@@ -382,7 +382,7 @@ export function aiToolRequest(q) {
   if (!hit) return false;
   const el = document.getElementById('askResult');
   if (!el) return false;
-  const short = { wealth: '财运', career: '转行', layoff: '职场风险', relation: '关系沟通', style: '环境', date: '择日', daily: '日签', name: '起名', oracle: '摇签', lottery: '选号', zodiac: '生肖' }[hit[1]] || '工具';
+  const short = { wealth: '财运', career: '转行', layoff: '职场风险', relation: '关系沟通', date: '择日', daily: '日签', name: '起名', oracle: '摇签', lottery: '选号', zodiac: '生肖' }[hit[1]] || '工具';
   _renderToolCallBubble(el, short, hit[1]);
   return true;
 }

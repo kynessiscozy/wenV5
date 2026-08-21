@@ -21,7 +21,6 @@ import { openFocusTool, openBreathTool, startBreathTool } from './tools/wellness
 import { runWealthTool } from './tools/wealth.js';
 import { runCareerTool } from './tools/career.js';
 import { runDateTool } from './tools/dating.js';
-import { runStyleTool } from './tools/style.js';
 import { runLayoffTool } from './tools/layoff-tool.js';
 import { runDailyTool } from './tools/daily.js';
 import { runNameTool } from './tools/naming.js';
@@ -123,7 +122,6 @@ initEvolveUI();
   window.runWealthTool=runWealthTool;
   window.runCareerTool=runCareerTool;
   window.runDateTool=runDateTool;
-  window.runStyleTool=runStyleTool;
   window.runLayoffTool=runLayoffTool;
   window.runDailyTool=runDailyTool;
   window.runNameTool=runNameTool;
@@ -1757,13 +1755,13 @@ function toggleUserMode(){setUserMode(document.body.classList.contains('beginner
   const groups={
     all:'全部',money:'财富与事业',life:'日常决策',relation:'关系与沟通',play:'灵感与娱乐'
   };
-  const map={wealth:'money',career:'money',layoff:'money',date:'life',style:'life',daily:'life',relation:'relation',zodiac:'relation',name:'play',oracle:'play',answerbook:'play',lottery:'play',export:'life'};
-  const labels={wealth:'收入与理财',career:'职业选择',date:'重要事项',style:'环境与状态',layoff:'职场预案',daily:'今日节奏',name:'名称灵感',oracle:'自我反思',answerbook:'快速答案',lottery:'娱乐选号',zodiac:'生肖关系',relation:'关系分析',export:'报告导出'};
+  const map={wealth:'money',career:'money',layoff:'money',date:'life',daily:'life',fengshui:'life',relation:'relation',zodiac:'relation',name:'play',oracle:'play',answerbook:'play',lottery:'play',export:'life'};
+  const labels={wealth:'收入与理财',career:'职业选择',date:'重要事项',fengshui:'风水方位',layoff:'职场预案',daily:'今日节奏',name:'名称灵感',oracle:'自我反思',answerbook:'快速答案',lottery:'娱乐选号',zodiac:'生肖关系',relation:'关系分析',export:'报告导出'};
   function mount(){
     const hub=document.querySelector('#s-adv .tool-hub'),grid=hub&&hub.querySelector('.tool-grid');
     if(!hub||!grid||document.getElementById('toolsToolbar'))return;
     grid.id='toolGrid';
-    const toolIds=['wealth','career','date','style','layoff','daily','name','oracle','answerbook','lottery','zodiac','relation','export'];
+    const toolIds=['wealth','career','date','layoff','daily','name','oracle','answerbook','lottery','zodiac','relation','export','fengshui'];
     grid.querySelectorAll('.tool-tile').forEach((tile,index)=>{
       const m=(tile.getAttribute('onclick')||'').match(/openToolPage\(\s*['\"]([^'\"]+)['\"]\s*\)/);
       const id=(m&&m[1])||toolIds[index];

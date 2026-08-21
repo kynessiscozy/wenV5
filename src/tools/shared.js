@@ -8,7 +8,6 @@ const TOOL_IMG = {
   wealth:  B + 'art/wealth.svg',
   career:  B + 'art/career.svg',
   date:    B + 'art/date.svg',
-  style:   B + 'art/style.svg',
   layoff:  B + 'art/layoff.svg',
   daily:   B + 'art/daily.svg',
   name:    B + 'art/name.svg',
@@ -19,7 +18,7 @@ const TOOL_IMG = {
 };
 const TOOL_NAMES = {
   wealth: '财运与理财罗盘', career: '转行与副业测评',
-  date: '重要事项择日助手', style: '能量穿搭与工位风水',
+  date: '重要事项择日助手',
   layoff: '裁员风险检测', daily: '今日日签',
   name: '智能起名工具', oracle: '摇签问卜',
   lottery: '双色球 / 超级大乐透', zodiac: '生肖合冲分析',
