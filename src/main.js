@@ -712,8 +712,28 @@ function toggleP2Menu(force){
   ov.classList.toggle('open',open);
   dw.classList.toggle('open',open);
   document.body.style.overflow=open?'hidden':'';
+  /* 打开时同步主题选择器状态 */
+  if(open)_syncP2ThemeSeg();
 }
 window.toggleP2Menu=toggleP2Menu;
+
+/* P2 菜单内联主题切换 */
+let _p2ThemeBound=false;
+function _syncP2ThemeSeg(){
+  const seg=document.getElementById('p2ThemeSeg');
+  if(!seg)return;
+  const pref=getThemePref();
+  seg.querySelectorAll('.gs-seg-opt').forEach(b=>b.classList.toggle('active',b.dataset.val===pref));
+  if(!_p2ThemeBound){
+    _p2ThemeBound=true;
+    seg.addEventListener('click',e=>{
+      const btn=e.target.closest('.gs-seg-opt');
+      if(!btn)return;
+      applyThemePref(btn.dataset.val);
+      seg.querySelectorAll('.gs-seg-opt').forEach(b=>b.classList.toggle('active',b===btn));
+    });
+  }
+}
 
 /* 离开报告页时自动关闭 p2 菜单 */
 (function(){
@@ -734,18 +754,7 @@ function _buildGlobalSettingsPanel(){
   const panel=document.getElementById('globalSettingsPanel');
   if(!panel||panel.children.length)return panel;
 
-  /* 主题 */
-  const themePref=getThemePref();
   panel.innerHTML=
-    '<div class="gs-section-title">外观</div>'+
-    '<div class="gs-row">'+
-      '<div><div class="gs-row-label">主题</div></div>'+
-      '<div class="gs-seg" id="gsThemeSeg">'+
-        '<button class="gs-seg-opt'+(themePref==='light'?' active':'')+'" data-val="light">浅色</button>'+
-        '<button class="gs-seg-opt'+(themePref==='dark'?' active':'')+'" data-val="dark">深色</button>'+
-        '<button class="gs-seg-opt'+(themePref==='system'?' active':'')+'" data-val="system">跟随</button>'+
-      '</div>'+
-    '</div>'+
     '<div class="gs-section-title">阅读</div>'+
     '<div class="gs-row">'+
       '<div><div class="gs-row-label">信息密度</div><div class="gs-row-hint">紧凑模式可显示更多内容</div></div>'+
@@ -753,14 +762,6 @@ function _buildGlobalSettingsPanel(){
     '</div>'+
     '<div class="gs-section-title">AI 设置</div>'+
     '<div id="gsAIContainer"></div>';
-
-  /* 主题切换 */
-  panel.querySelector('#gsThemeSeg').addEventListener('click',e=>{
-    const btn=e.target.closest('.gs-seg-opt');
-    if(!btn)return;
-    applyThemePref(btn.dataset.val);
-    panel.querySelectorAll('#gsThemeSeg .gs-seg-opt').forEach(b=>b.classList.toggle('active',b===btn));
-  });
 
   /* 信息密度开关 */
   const densitySw=panel.querySelector('#gsDensitySw');
