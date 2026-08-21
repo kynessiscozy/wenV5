@@ -133,7 +133,7 @@ initEvolveUI();
   window.runRelationTool=runRelationTool;
 
   // 3. 之前已暴露的函数（保持不变）
-  window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.confirmSaveProfile=confirmSaveProfile;window.quickSaveName=quickSaveName;window.updateSaveNameCount=updateSaveNameCount;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){document.getElementById('aboutModal').classList.add('open');};window.closeAboutModal=function(){document.getElementById('aboutModal').classList.remove('open');};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};
+  window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.openArchiveModal=openArchiveModal;window.closeArchiveModal=closeArchiveModal;window.loadProfileFromArchive=loadProfileFromArchive;window.deleteProfileFromArchive=deleteProfileFromArchive;window.confirmSaveProfile=confirmSaveProfile;window.quickSaveName=quickSaveName;window.updateSaveNameCount=updateSaveNameCount;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){document.getElementById('aboutModal').classList.add('open');};window.closeAboutModal=function(){document.getElementById('aboutModal').classList.remove('open');};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};
 
   // 4. 缺失函数：分享卡片（报告卡片右上角分享按钮）
   window.TJShareReport=function(){
@@ -548,8 +548,6 @@ function openSaveModal(){
       ).join('');
     }
   }
-  // 渲染已保存命盘列表
-  renderSaveModalList();
 }
 function closeSaveModal(){
   document.getElementById('saveModal').classList.remove('open');
@@ -557,42 +555,59 @@ function closeSaveModal(){
   const dock=document.querySelector('.ig-dock.tab-bar');
   if(dock)dock.style.display='';
 }
-async function renderSaveModalList(){
-  const list=document.getElementById('saveModalList');
+/* ---- 档案库弹窗 ---- */
+function openArchiveModal(){
+  const m=document.getElementById('archiveModal');
+  if(!m)return;
+  m.classList.add('open');
+  const dock=document.querySelector('.ig-dock.tab-bar');
+  if(dock)dock.style.display='none';
+  renderArchiveList();
+}
+function closeArchiveModal(){
+  const m=document.getElementById('archiveModal');
+  if(!m)return;
+  m.classList.remove('open');
+  const dock=document.querySelector('.ig-dock.tab-bar');
+  if(dock)dock.style.display='';
+}
+async function renderArchiveList(){
+  const list=document.getElementById('archiveList');
   if(!list)return;
   try{
     const profiles=await dbGetAll();
     if(!profiles.length){
-      list.innerHTML='<div class="save-archives-empty">还没有保存的命盘<br>填好名称后点击上方保存即可</div>';
+      list.innerHTML='<div class="save-archives-empty">还没有保存的命盘<br>点击「保存命盘」即可添加</div>';
       return;
     }
     list.innerHTML=profiles.map(p=>{
       const city=CD[p.bp]||{n:'未知'};
       const d=new Date(p.updatedAt);
       const dateStr=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-      return `<div class="save-archive-card" onclick="loadProfileFromModal(${p.id})">
+      return `<div class="save-archive-card" onclick="loadProfileFromArchive(${p.id})">
         <div class="sa-ava">${(p.name||'未').charAt(0)}</div>
         <div class="sa-info">
           <div class="sa-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div>
           <div class="sa-meta">${p.bd||''} · ${city.n} · ${p.gen==='male'?'男':'女'} · ${dateStr}</div>
         </div>
         <div class="sa-actions">
-          <button type="button" class="sa-del" onclick="event.stopPropagation();deleteProfileFromModal(${p.id})" title="删除">×</button>
+          <button type="button" class="sa-del" onclick="event.stopPropagation();deleteProfileFromArchive(${p.id})" title="删除">×</button>
         </div>
       </div>`;
     }).join('');
-  }catch(e){console.log('renderSaveModalList',e);}
+  }catch(e){console.log('renderArchiveList',e);}
 }
-function loadProfileFromModal(id){
+function loadProfileFromArchive(id){
   loadProfile(id);
-  closeSaveModal();
+  closeArchiveModal();
 }
-async function deleteProfileFromModal(id){
+async function deleteProfileFromArchive(id){
   try{
     await dbDel(id);
-    renderSaveModalList();
+    renderArchiveList();
+    renderProfiles();
     showToast('已删除');
-  }catch(e){console.log('deleteProfileFromModal',e);}
+  }catch(e){console.log('deleteProfileFromArchive',e);}
 }
 function updateSaveNameCount(){
   const n=document.getElementById('saveName');
@@ -611,7 +626,7 @@ function quickSaveName(name){
 }
 function confirmSaveProfile(){const name=document.getElementById('saveName').value.trim();if(!name){showToast('请输入档案名称');return;}saveCurrentProfile(name).then(()=>{closeSaveModal();renderProfiles();showToast('已保存到档案库');}).catch(e=>showToast('保存失败：'+e));}
 async function exportProfiles(){try{const list=await dbGetAll();const blob=new Blob([JSON.stringify(list,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='问问大师档案_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}catch(e){showToast('导出失败');}}
-async function handleImport(input){const file=input.files[0];if(!file)return;try{const text=await file.text();const arr=JSON.parse(text);if(!Array.isArray(arr))throw new Error('格式错误');let count=0;for(const p of arr){if(p.bd&&p.bp&&p.gen){delete p.id;p.updatedAt=Date.now();await dbPut(p);count++;}}renderProfiles();renderSaveModalList();showToast(`成功导入 ${count} 条档案`);}catch(e){showToast('导入失败：'+e.message);}input.value='';}
+async function handleImport(input){const file=input.files[0];if(!file)return;try{const text=await file.text();const arr=JSON.parse(text);if(!Array.isArray(arr))throw new Error('格式错误');let count=0;for(const p of arr){if(p.bd&&p.bp&&p.gen){delete p.id;p.updatedAt=Date.now();await dbPut(p);count++;}}renderProfiles();renderArchiveList();showToast(`成功导入 ${count} 条档案`);}catch(e){showToast('导入失败：'+e.message);}input.value='';}
 
 (function(){
   const inp=document.getElementById('cInp'),hid=document.getElementById('bPlace'),dd=document.getElementById('cDD');
@@ -809,6 +824,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.key==='Escape'){
       const ask=document.getElementById('aiSheet');if(ask&&ask.classList.contains('open')){closeAsk();return;}
       const save=document.getElementById('saveModal');if(save&&save.classList.contains('open')){closeSaveModal();return;}
+      const arch=document.getElementById('archiveModal');if(arch&&arch.classList.contains('open')){closeArchiveModal();return;}
       const fm=document.getElementById('formModal');if(fm&&fm.classList.contains('open')){window.TJCloseForm&&window.TJCloseForm();return;}
       const rq=document.getElementById('rqModal');if(rq&&rq.classList.contains('open')){closeRq();return;}
       const p2=document.getElementById('page2');if(p2&&(p2.classList.contains('active')||!p2.classList.contains('hidden'))){goBack();return;}

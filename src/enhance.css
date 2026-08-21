@@ -1217,35 +1217,38 @@ body.report-active .home-menu-drawer{display:none}
 /* ---- 顶部英雄区 ---- */
 .save-hero{
   position:relative;
-  padding:36px 28px 20px;
+  padding:20px 24px 14px;
   background:linear-gradient(180deg, 
     color-mix(in srgb, var(--c-accent, #d97757) 8%, transparent) 0%, 
     transparent 100%);
 }
 .save-icon-ring{
   position:relative;
-  width:84px;height:84px;
-  margin:0 auto 16px;
+  width:48px;height:48px;
+  margin:0 auto 8px;
   animation:saveIconFloat 3s ease-in-out infinite;
 }
 .save-icon-glow{
-  position:absolute;inset:-8px;
+  position:absolute;inset:-6px;
   border-radius:50%;
   background:radial-gradient(circle, 
     color-mix(in srgb, var(--c-accent, #d97757) 25%, transparent) 0%, 
     transparent 70%);
-  filter:blur(8px);
+  filter:blur(6px);
   animation:saveGlowPulse 2.4s ease-in-out infinite;
 }
 .save-icon{
   position:relative;
-  width:84px;height:84px;
+  width:48px;height:48px;
   display:flex;align-items:center;justify-content:center;
   border-radius:50%;
   background:var(--c-surface, #fff);
-  box-shadow:0 8px 24px color-mix(in srgb, var(--c-accent, #d97757) 20%, transparent),
-             0 2px 8px rgba(0,0,0,.06);
+  box-shadow:0 4px 12px color-mix(in srgb, var(--c-accent, #d97757) 20%, transparent),
+             0 1px 4px rgba(0,0,0,.06);
   animation:saveIconIn .6s cubic-bezier(.2,.8,.3,1.3) both;
+}
+.save-icon svg{
+  width:30px;height:30px;
 }
 @keyframes saveIconIn{
   0%{transform:scale(0) rotate(-20deg);opacity:0}
@@ -1262,16 +1265,16 @@ body.report-active .home-menu-drawer{display:none}
 }
 .save-title{
   font-family:var(--serif);
-  font-size:1.28em;
+  font-size:1.08em;
   font-weight:700;
   color:var(--c-text-hi, #1a1915);
-  margin-bottom:6px;
+  margin-bottom:3px;
   letter-spacing:1px;
 }
 .save-subtitle{
-  font-size:.82em;
+  font-size:.76em;
   color:var(--c-text-3, #888);
-  line-height:1.6;
+  line-height:1.5;
 }
 
 /* ---- 命盘预览卡 ---- */
@@ -1552,6 +1555,44 @@ body.report-active .home-menu-drawer{display:none}
   .sa-ava{width:40px;height:40px;font-size:1em}
 }
 
+/* ============================================================
+   档案库弹窗
+   ============================================================ */
+.archive-sheet{
+  max-width:480px;
+  padding:0 0 20px;
+}
+.archive-hero{
+  padding:28px 24px 16px;
+  text-align:center;
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--c-accent, #d97757) 6%, transparent) 0%,
+    transparent 100%);
+}
+.archive-title{
+  font-family:var(--serif);
+  font-size:1.2em;
+  font-weight:700;
+  color:var(--c-text-hi, #1a1915);
+  margin-bottom:5px;
+  letter-spacing:1px;
+}
+.archive-subtitle{
+  font-size:.8em;
+  color:var(--c-text-3, #888);
+}
+.archive-actions-row{
+  display:flex;gap:10px;justify-content:center;
+  padding:0 24px 16px;
+}
+.archive-actions-row .save-archives-btn{
+  font-size:.76em;padding:8px 18px;
+}
+#archiveList{
+  padding:0 24px;
+  max-height:60vh;overflow-y:auto;
+}
+
 @media(max-width:560px){
   /* 底部抽屉式 */
   #saveModal{
@@ -1576,29 +1617,29 @@ body.report-active .home-menu-drawer{display:none}
   }
   /* 英雄区精简 */
   .save-hero{
-    padding:20px 20px 14px;
+    padding:16px 20px 10px;
     position:relative;
   }
   .save-hero::before{
-    content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);
+    content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);
     width:36px;height:4px;border-radius:2px;background:var(--c-border-2);
   }
   .save-icon-ring{
-    width:56px;height:56px;
-    margin:0 auto 10px;
+    width:40px;height:40px;
+    margin:0 auto 6px;
   }
   .save-icon{
-    width:56px;height:56px;
+    width:40px;height:40px;
   }
   .save-icon svg{
-    width:38px;height:38px;
+    width:26px;height:26px;
   }
   .save-title{
-    font-size:1.1em;
-    margin-bottom:4px;
+    font-size:.96em;
+    margin-bottom:2px;
   }
   .save-subtitle{
-    font-size:.76em;
+    font-size:.72em;
   }
   /* 预览卡紧凑 */
   .save-preview-card{
@@ -1646,12 +1687,49 @@ body.report-active .home-menu-drawer{display:none}
   }
 }
 @media(max-width:360px){
-  .save-hero{padding:18px 16px 12px}
+  .save-hero{padding:14px 16px 8px}
   .save-preview-card{margin:0 12px 12px;padding:12px}
   .save-input-wrap{margin:0 12px 10px}
   .save-quick-names{margin:0 12px 12px}
   .save-btn{width:calc(100% - 24px);margin:0 12px}
   .sqn-tag{padding:6px 11px;font-size:.7em}
+}
+
+/* 档案库弹窗 — 移动端底部抽屉 */
+@media(max-width:560px){
+  #archiveModal{
+    align-items:flex-end!important;
+    padding:0!important;
+  }
+  #archiveModal.open ~ .ig-dock.tab-bar,
+  body:has(#archiveModal.open) .ig-dock.tab-bar{
+    display:none!important;
+  }
+  #archiveModal .modal-sheet{
+    width:100vw!important;max-width:100vw!important;
+    border-radius:20px 20px 0 0!important;
+    max-height:88vh;
+    padding-bottom:calc(20px + env(safe-area-inset-bottom, 20px))!important;
+    animation:saveSheetUp .32s cubic-bezier(.2,.8,.3,1) both;
+  }
+  .archive-hero{
+    padding:20px 20px 12px;
+    position:relative;
+  }
+  .archive-hero::before{
+    content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);
+    width:36px;height:4px;border-radius:2px;background:var(--c-border-2);
+  }
+  .archive-title{font-size:1.04em;margin-bottom:3px}
+  .archive-subtitle{font-size:.74em}
+  .archive-actions-row{padding:0 16px 12px;gap:8px}
+  .archive-actions-row .save-archives-btn{font-size:.72em;padding:7px 14px}
+  #archiveList{padding:0 16px;max-height:50vh}
+}
+@media(max-width:360px){
+  .archive-hero{padding:16px 14px 10px}
+  .archive-actions-row{padding:0 12px 10px}
+  #archiveList{padding:0 12px}
 }
 
 
