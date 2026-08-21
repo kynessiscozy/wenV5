@@ -169,8 +169,10 @@
 
 <div class="page hidden" id="page2">
   <div class="p2-top">
-    <button class="p2-back" onclick="goBack()">
-      <span>重新推演</span>
+    <button class="p2-menu-btn" id="p2MenuBtn" type="button" onclick="toggleP2Menu()" aria-label="菜单" title="菜单">
+      <span class="p2-menu-bars"></span>
+      <span class="p2-menu-bars"></span>
+      <span class="p2-menu-bars"></span>
     </button>
     <div class="mode-top-group" role="tablist" aria-label="报告阅读模式"><button class="mode-top-switch" id="modeBeginner" type="button" role="tab" aria-selected="true" onclick="setUserMode('beginner')">新手</button><button class="mode-top-switch" id="modeMaster" type="button" role="tab" aria-selected="false" onclick="setUserMode('master')">大师</button></div>
     <div class="p2-actions"><button class="p2-act cal-fab" id="calFab" type="button" onclick="openCalendarMode()" title="日历模式" aria-label="日历模式"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button><div class="p2-profile-wrap"><button class="p2-act p2-profile-btn" type="button" id="p2ProfileBtn" onclick="TJToggleProfileMenu()" title="档案" aria-label="档案"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button><div class="p2-profile-menu" id="p2ProfileMenu" role="menu" aria-label="档案"></div></div>
@@ -200,6 +202,37 @@
     <div class="lg-opt" data-mode="clear" onclick="setGlassMode('clear')">清澈</div>
     <div class="lg-opt active" data-mode="standard" onclick="setGlassMode('standard')">标准</div>
     <div class="lg-opt" data-mode="tinted" onclick="setGlassMode('tinted')">凝重</div>
+  </div>
+</div>
+
+<!-- 推演结果页汉堡菜单 -->
+<div class="p2-menu-overlay" id="p2MenuOverlay" onclick="toggleP2Menu(false)"></div>
+<aside class="p2-menu-drawer" id="p2MenuDrawer" aria-label="菜单面板">
+  <div class="p2-menu-header">
+    <span class="p2-menu-title">菜单</span>
+    <button class="p2-menu-close" type="button" onclick="toggleP2Menu(false)" aria-label="关闭">×</button>
+  </div>
+  <div class="p2-menu-body">
+    <button type="button" class="p2-menu-item" onclick="toggleP2Menu(false);goBack()">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8"/><path d="M3 3v5h5"/></svg>
+      <span>重新推演</span>
+    </button>
+    <button type="button" class="p2-menu-item" onclick="toggleP2Menu(false);openGlobalSettings()">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+      <span>全局设置</span>
+    </button>
+  </div>
+</aside>
+
+<!-- 全局设置弹窗 -->
+<div class="modal" id="globalSettingsModal">
+  <div class="modal-bg" onclick="closeGlobalSettings()"></div>
+  <div class="modal-sheet glass gs-sheet">
+    <div class="modal-close" onclick="closeGlobalSettings()">×</div>
+    <div class="gs-hero">
+      <div class="gs-title">全局设置</div>
+    </div>
+    <div class="gs-panel" id="globalSettingsPanel"></div>
   </div>
 </div>
 

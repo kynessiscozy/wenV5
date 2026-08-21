@@ -918,10 +918,208 @@ body.beginner-mode .beginner-brief {
 }
 .home-menu-drawer .pf-io-btn:hover{background:var(--c-surface-3)}
 
-/* page2 显示时（report-active）汉堡按钮隐藏 */
+/* page2 显示时（report-active）首页汉堡按钮隐藏 */
 body.report-active .home-menu-btn,
 body.report-active .home-menu-overlay,
 body.report-active .home-menu-drawer{display:none}
+
+/* ============================================================
+   推演结果页汉堡菜单（p2-menu）
+   ============================================================ */
+.p2-menu-btn{
+  width:42px;height:42px;border-radius:50%;
+  border:1px solid var(--c-border);
+  background:var(--c-surface-2);
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;
+  cursor:pointer;transition:all .2s ease;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  flex-shrink:0;
+}
+.p2-menu-btn:hover{background:var(--c-surface-3);box-shadow:0 2px 12px rgba(0,0,0,.1)}
+.p2-menu-bars{
+  display:block;width:18px;height:2px;border-radius:1px;
+  background:var(--c-text-hi);transition:all .3s ease;
+}
+.p2-menu-btn.active .p2-menu-bars:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.p2-menu-btn.active .p2-menu-bars:nth-child(2){opacity:0;transform:scaleX(0)}
+.p2-menu-btn.active .p2-menu-bars:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* 遮罩层 */
+.p2-menu-overlay{
+  position:fixed;inset:0;z-index:1090;
+  background:rgba(0,0,0,.35);backdrop-filter:blur(2px);
+  opacity:0;pointer-events:none;transition:opacity .3s ease;
+}
+.p2-menu-overlay.open{opacity:1;pointer-events:auto}
+
+/* 抽屉面板 */
+.p2-menu-drawer{
+  position:fixed;top:0;left:0;bottom:0;z-index:1100;
+  width:min(300px,82vw);
+  background:var(--c-bg);
+  border-right:1px solid var(--c-border);
+  transform:translateX(-100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+  box-shadow:4px 0 24px rgba(0,0,0,.08);
+  overflow:hidden;
+}
+.p2-menu-drawer.open{transform:translateX(0)}
+
+/* 抽屉头部 */
+.p2-menu-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 20px;border-bottom:1px solid var(--c-border);
+  flex-shrink:0;
+}
+.p2-menu-title{
+  font-size:1em;font-weight:600;color:var(--c-text-hi);letter-spacing:2px;
+}
+.p2-menu-close{
+  width:32px;height:32px;border-radius:8px;border:none;
+  background:transparent;font-size:1.4em;color:var(--c-text-3);
+  cursor:pointer;transition:all .15s ease;
+  display:flex;align-items:center;justify-content:center;
+}
+.p2-menu-close:hover{background:var(--c-surface-3);color:var(--c-text-hi)}
+
+/* 抽屉内容 */
+.p2-menu-body{
+  flex:1;overflow-y:auto;padding:12px 16px 24px;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* 菜单项 */
+.p2-menu-item{
+  display:flex;align-items:center;gap:14px;
+  width:100%;padding:14px 16px;
+  border:none;border-radius:12px;
+  background:transparent;
+  font-size:.88em;color:var(--c-text);
+  cursor:pointer;transition:all .15s ease;
+  margin-bottom:4px;
+}
+.p2-menu-item:hover{background:var(--c-surface-3)}
+.p2-menu-item:active{background:var(--c-surface-3);transform:scale(.98)}
+.p2-menu-item svg{color:var(--c-text-3);flex-shrink:0}
+.p2-menu-item:hover svg{color:var(--c-text-hi)}
+
+/* ============================================================
+   全局设置弹窗
+   ============================================================ */
+#globalSettingsModal{
+  z-index:400 !important;
+}
+.gs-sheet{
+  width:min(440px,92vw);
+  padding:0!important;
+  border-radius:22px!important;
+  overflow:hidden;
+}
+.gs-sheet .modal-close{z-index:10}
+.gs-hero{
+  padding:20px 24px 12px;
+  border-bottom:1px solid var(--c-border);
+}
+.gs-title{
+  font-size:1em;font-weight:600;color:var(--c-text-hi);
+}
+.gs-panel{
+  padding:16px 20px 20px;
+  max-height:70vh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* 设置分区标题 */
+.gs-section-title{
+  font-size:.72em;color:var(--c-text-3);
+  letter-spacing:1px;text-transform:uppercase;
+  margin:18px 0 10px;
+}
+.gs-section-title:first-child{margin-top:0}
+
+/* 设置行 */
+.gs-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 0;
+  font-size:.85em;color:var(--c-text);
+  border-bottom:1px solid var(--c-border);
+}
+.gs-row:last-child{border-bottom:none}
+.gs-row-label{font-weight:500}
+.gs-row-hint{font-size:.72em;color:var(--c-text-4);margin-top:2px}
+
+/* 分段选择器 */
+.gs-seg{
+  display:inline-flex;gap:3px;
+  padding:3px;border-radius:999px;
+  background:var(--c-surface-3);
+  border:1px solid var(--c-border-2);
+}
+.gs-seg-opt{
+  padding:7px 14px;border-radius:999px;border:none;
+  background:transparent;font-size:.82em;color:var(--c-text-3);
+  cursor:pointer;transition:all .15s ease;
+}
+.gs-seg-opt:hover{color:var(--c-text)}
+.gs-seg-opt.active{
+  background:var(--c-accent);color:#fff;
+  box-shadow:0 2px 6px color-mix(in srgb,var(--c-accent) 34%,transparent);
+}
+
+/* 开关 */
+.gs-switch{
+  width:44px;height:24px;border-radius:999px;
+  background:var(--c-surface-3);border:1px solid var(--c-border-2);
+  position:relative;cursor:pointer;transition:all .2s ease;
+  flex-shrink:0;
+}
+.gs-switch::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--c-text-4);
+  transition:all .2s ease;
+}
+.gs-switch.on{background:var(--c-accent);border-color:var(--c-accent)}
+.gs-switch.on::after{left:22px;background:#fff}
+
+/* 全局设置弹窗移动端 */
+@media(max-width:560px){
+  #globalSettingsModal{
+    align-items:flex-end!important;
+    padding:0!important;
+  }
+  .gs-sheet{
+    width:100vw!important;max-width:100vw!important;
+    border-radius:20px 20px 0 0!important;
+    max-height:88vh;
+    animation:gsSheetUp .32s cubic-bezier(.2,.8,.3,1) both;
+  }
+  @keyframes gsSheetUp{
+    from{transform:translateY(100%);opacity:.5}
+    to{transform:translateY(0);opacity:1}
+  }
+  .gs-hero{
+    padding:16px 20px 12px;position:relative;
+  }
+  .gs-hero::before{
+    content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);
+    width:36px;height:4px;border-radius:2px;background:var(--c-border-2);
+  }
+  .gs-panel{
+    padding:16px 20px 20px;
+    max-height:calc(88vh - 52px);
+  }
+  .gs-row{padding:13px 0;font-size:.85em}
+  .gs-seg-opt{padding:9px 14px;font-size:.8em}
+  .gs-switch{width:48px;height:26px}
+  .gs-switch::after{width:20px;height:20px}
+  .gs-switch.on::after{left:24px}
+  #globalSettingsModal .modal-close{
+    top:14px;right:16px;width:30px;height:30px;font-size:1em;
+  }
+}
 
 /* ============================================================
    天气模块 — 精致卡片式展示

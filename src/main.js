@@ -74,7 +74,7 @@ import {
   openAsk, closeAsk, newAskChat, aiToolRequest, doAsk, doAskCustom,
   aiSwitchCat, aiRefreshChips, aiOnInputSuggest, generateAnswer,
   getAISettings, getApiKey, toggleAISettings, initAISettings,
-  initTheme, toggleTheme
+  initTheme, toggleTheme, applyThemePref, getThemePref
 } from './ui/index.js';
 import { initFontSize } from './font-size.js';
 import { initWeather, getWxGeo } from './ui/weather.js';
@@ -643,6 +643,134 @@ function toggleHomeMenu(force){
   document.body.style.overflow=open?'hidden':'';
 }
 window.toggleHomeMenu=toggleHomeMenu;
+
+/* 推演结果页汉堡菜单 */
+function toggleP2Menu(force){
+  const btn=document.getElementById('p2MenuBtn');
+  const ov=document.getElementById('p2MenuOverlay');
+  const dw=document.getElementById('p2MenuDrawer');
+  if(!btn||!ov||!dw)return;
+  let open;
+  if(force===false)open=false;
+  else if(force===true)open=true;
+  else open=!btn.classList.contains('active');
+  btn.classList.toggle('active',open);
+  ov.classList.toggle('open',open);
+  dw.classList.toggle('open',open);
+  document.body.style.overflow=open?'hidden':'';
+}
+window.toggleP2Menu=toggleP2Menu;
+
+/* 离开报告页时自动关闭 p2 菜单 */
+(function(){
+  const _goBack=window.goBack;
+  if(typeof _goBack==='function'){
+    window.goBack=function(){toggleP2Menu(false);return _goBack.apply(this,arguments);};
+  }
+})();
+
+/* ============================================================
+   全局设置弹窗
+   ============================================================ */
+const GS_KEY_THEME='tj_theme';
+const GS_KEY_DENSITY='tj_density';
+const GS_KEY_STAR='tj_star_mode';
+
+function _buildGlobalSettingsPanel(){
+  const panel=document.getElementById('globalSettingsPanel');
+  if(!panel||panel.children.length)return panel;
+
+  /* 主题 */
+  const themePref=getThemePref();
+  panel.innerHTML=
+    '<div class="gs-section-title">外观</div>'+
+    '<div class="gs-row">'+
+      '<div><div class="gs-row-label">主题</div></div>'+
+      '<div class="gs-seg" id="gsThemeSeg">'+
+        '<button class="gs-seg-opt'+(themePref==='light'?' active':'')+'" data-val="light">浅色</button>'+
+        '<button class="gs-seg-opt'+(themePref==='dark'?' active':'')+'" data-val="dark">深色</button>'+
+        '<button class="gs-seg-opt'+(themePref==='system'?' active':'')+'" data-val="system">跟随</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="gs-row">'+
+      '<div><div class="gs-row-label">玻璃质感</div><div class="gs-row-hint">调节卡片毛玻璃强度</div></div>'+
+      '<div class="gs-seg" id="gsGlassSeg">'+
+        '<button class="gs-seg-opt" data-val="clear">清澈</button>'+
+        '<button class="gs-seg-opt active" data-val="standard">标准</button>'+
+        '<button class="gs-seg-opt" data-val="tinted">凝重</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="gs-section-title">阅读</div>'+
+    '<div class="gs-row">'+
+      '<div><div class="gs-row-label">信息密度</div><div class="gs-row-hint">紧凑模式可显示更多内容</div></div>'+
+      '<div class="gs-switch'+(document.body.classList.contains('density-compact')?' on':'')+'" id="gsDensitySw"></div>'+
+    '</div>'+
+    '<div class="gs-row">'+
+      '<div><div class="gs-row-label">星轨动画</div><div class="gs-row-hint">首页背景星环效果</div></div>'+
+      '<div class="gs-switch'+((localStorage.getItem(GS_KEY_STAR)||'classic')==='august'?' on':'')+'" id="gsStarSw"></div>'+
+    '</div>';
+
+  /* 主题切换 */
+  panel.querySelector('#gsThemeSeg').addEventListener('click',e=>{
+    const btn=e.target.closest('.gs-seg-opt');
+    if(!btn)return;
+    applyThemePref(btn.dataset.val);
+    panel.querySelectorAll('#gsThemeSeg .gs-seg-opt').forEach(b=>b.classList.toggle('active',b===btn));
+  });
+
+  /* 玻璃质感切换 */
+  const glassSeg=panel.querySelector('#gsGlassSeg');
+  const curGlass=document.body.getAttribute('data-glass')||'standard';
+  glassSeg.querySelectorAll('.gs-seg-opt').forEach(b=>b.classList.toggle('active',b.dataset.val===curGlass));
+  glassSeg.addEventListener('click',e=>{
+    const btn=e.target.closest('.gs-seg-opt');
+    if(!btn)return;
+    if(typeof window.setGlassMode==='function')window.setGlassMode(btn.dataset.val);
+    glassSeg.querySelectorAll('.gs-seg-opt').forEach(b=>b.classList.toggle('active',b===btn));
+  });
+
+  /* 信息密度开关 */
+  const densitySw=panel.querySelector('#gsDensitySw');
+  densitySw.addEventListener('click',()=>{
+    document.body.classList.toggle('density-compact');
+    densitySw.classList.toggle('on',document.body.classList.contains('density-compact'));
+    try{localStorage.setItem(GS_KEY_DENSITY,document.body.classList.contains('density-compact')?'1':'0');}catch(e){}
+  });
+
+  /* 星轨开关 */
+  const starSw=panel.querySelector('#gsStarSw');
+  starSw.addEventListener('click',()=>{
+    const cur=localStorage.getItem(GS_KEY_STAR)||'classic';
+    const next=cur==='august'?'classic':'august';
+    try{localStorage.setItem(GS_KEY_STAR,next);}catch(e){}
+    starSw.classList.toggle('on',next==='august');
+    if(window._tjArm&&typeof window._tjArm.stop==='function')window._tjArm.stop();
+    if(typeof window.createArm==='function'){
+      window._tjArm=window.createArm(next);
+    }
+  });
+
+  return panel;
+}
+
+function openGlobalSettings(){
+  const modal=document.getElementById('globalSettingsModal');
+  if(!modal)return;
+  _buildGlobalSettingsPanel();
+  modal.classList.add('open');
+  const dock=document.querySelector('.ig-dock.tab-bar');
+  if(dock)dock.style.display='none';
+}
+window.openGlobalSettings=openGlobalSettings;
+
+function closeGlobalSettings(){
+  const modal=document.getElementById('globalSettingsModal');
+  if(!modal)return;
+  modal.classList.remove('open');
+  const dock=document.querySelector('.ig-dock.tab-bar');
+  if(dock)dock.style.display='';
+}
+window.closeGlobalSettings=closeGlobalSettings;
 
 /* 离开首页时自动关闭菜单 */
 (function(){
