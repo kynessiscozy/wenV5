@@ -57,11 +57,6 @@ export function initTheme() {
     if (!document.querySelector('.theme-toggle-home')) {
       document.body.appendChild(makeToggle('theme-toggle-home'));
     }
-    // 报告页顶栏按钮（放在操作区首位）
-    const actions = document.querySelector('.p2-actions');
-    if (actions && !actions.querySelector('.theme-toggle')) {
-      actions.insertBefore(makeToggle('theme-toggle-top'), actions.firstChild);
-    }
     applyThemePref(getThemePref());
   };
 
