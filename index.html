@@ -227,17 +227,20 @@
     </button>
     <button type="button" class="p2-menu-item" onclick="toggleP2Menu(false);openGlobalSettings()">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
-      <span>全局设置</span>
+      <span>AI 设置</span>
     </button>
   </div>
-  <!-- 外观主题切换 -->
+  <!-- 主题 + 信息密度 -->
   <div class="p2-appearance">
-    <span class="p2-appearance-label">外观</span>
     <div class="gs-seg" id="p2ThemeSeg">
       <button type="button" class="gs-seg-opt" data-val="light">浅色</button>
       <button type="button" class="gs-seg-opt" data-val="dark">深色</button>
       <button type="button" class="gs-seg-opt" data-val="system">跟随</button>
     </div>
+    <button type="button" class="p2-density-btn" id="p2DensityBtn" onclick="toggleP2Density()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="14" y2="18"/></svg>
+      <span>紧凑</span>
+    </button>
   </div>
   <!-- 天气模块 -->
   <div class="wx-card" id="p2WxLine" style="display:none">
@@ -251,18 +254,18 @@
   </div>
   <!-- 关于 / 免责声明 -->
   <div class="p2-menu-footer" style="padding:12px 16px;border-top:1px solid var(--c-border);display:flex;flex-direction:column;gap:8px">
-    <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleP2Menu(false);openAboutModal()">关于问问大师</button>
+    <button type="button" class="pf-io-btn" id="aboutBtnP2" style="width:100%;padding:10px;font-size:.82em" onclick="toggleP2Menu(false);openAboutModal()">关于问问大师</button>
     <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleP2Menu(false);openDisclaimerModal()">免责声明</button>
   </div>
 </aside>
 
-<!-- 全局设置弹窗 -->
+<!-- AI 设置弹窗 -->
 <div class="modal" id="globalSettingsModal">
   <div class="modal-bg" onclick="closeGlobalSettings()"></div>
   <div class="modal-sheet glass gs-sheet">
     <div class="modal-close" onclick="closeGlobalSettings()">×</div>
     <div class="gs-hero">
-      <div class="gs-title">全局设置</div>
+      <div class="gs-title">AI 设置</div>
     </div>
     <div class="gs-panel" id="globalSettingsPanel"></div>
   </div>
@@ -421,6 +424,17 @@
     <div class="modal-close" onclick="closeMonthModal()">×</div>
     <div id="monthModalContent"></div>
   </div>
+</div>
+
+<!-- 图标绘制动画 overlay -->
+<div class="icon-draw-overlay" id="iconDrawOverlay" aria-hidden="true">
+  <svg class="icon-draw-svg" viewBox="0 0 64 64">
+    <rect class="id-rect" width="64" height="64" rx="12" fill="#f5efe0"/>
+    <path class="id-path id-p1" d="M32 8 C50 8 56 20 56 32 C56 44 50 56 32 56 C14 56 8 44 8 32 C8 24 12 16 16 16 C24 16 28 28 28 32 C28 40 22 48 16 48" fill="none" stroke="rgba(180,135,65,.7)" stroke-width="2.5" stroke-linecap="round"/>
+    <path class="id-path id-p2" d="M32 8 C46 8 48 18 48 26 C48 34 40 42 32 42 C24 42 16 40 16 48" fill="none" stroke="#c75a2a" stroke-width="2.5" stroke-linecap="round"/>
+    <circle class="id-path id-p3" cx="32" cy="32" r="4.5" fill="none" stroke="rgba(140,100,50,.5)" stroke-width="1.2"/>
+    <circle class="id-path id-p4" cx="32" cy="32" r="1.8" fill="#c49b3c"/>
+  </svg>
 </div>
 
 <!-- 关于问问大师 弹窗 -->

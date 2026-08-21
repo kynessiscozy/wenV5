@@ -712,8 +712,8 @@ function toggleP2Menu(force){
   ov.classList.toggle('open',open);
   dw.classList.toggle('open',open);
   document.body.style.overflow=open?'hidden':'';
-  /* 打开时同步主题选择器状态 */
-  if(open)_syncP2ThemeSeg();
+  /* 打开时同步主题选择器和信息密度状态 */
+  if(open){_syncP2ThemeSeg();_syncP2Density();}
 }
 window.toggleP2Menu=toggleP2Menu;
 
@@ -735,6 +735,21 @@ function _syncP2ThemeSeg(){
   }
 }
 
+/* P2 菜单内联信息密度切换 */
+function _syncP2Density(){
+  const btn=document.getElementById('p2DensityBtn');
+  if(!btn)return;
+  btn.classList.toggle('active',document.body.classList.contains('density-compact'));
+}
+function toggleP2Density(){
+  document.body.classList.toggle('density-compact');
+  const on=document.body.classList.contains('density-compact');
+  const btn=document.getElementById('p2DensityBtn');
+  if(btn)btn.classList.toggle('active',on);
+  try{localStorage.setItem('tj_density',on?'1':'0');}catch(e){}
+}
+window.toggleP2Density=toggleP2Density;
+
 /* 离开报告页时自动关闭 p2 菜单 */
 (function(){
   const _goBack=window.goBack;
@@ -754,22 +769,7 @@ function _buildGlobalSettingsPanel(){
   const panel=document.getElementById('globalSettingsPanel');
   if(!panel||panel.children.length)return panel;
 
-  panel.innerHTML=
-    '<div class="gs-section-title">阅读</div>'+
-    '<div class="gs-row">'+
-      '<div><div class="gs-row-label">信息密度</div><div class="gs-row-hint">紧凑模式可显示更多内容</div></div>'+
-      '<div class="gs-switch'+(document.body.classList.contains('density-compact')?' on':'')+'" id="gsDensitySw"></div>'+
-    '</div>'+
-    '<div class="gs-section-title">AI 设置</div>'+
-    '<div id="gsAIContainer"></div>';
-
-  /* 信息密度开关 */
-  const densitySw=panel.querySelector('#gsDensitySw');
-  densitySw.addEventListener('click',()=>{
-    document.body.classList.toggle('density-compact');
-    densitySw.classList.toggle('on',document.body.classList.contains('density-compact'));
-    try{localStorage.setItem(GS_KEY_DENSITY,document.body.classList.contains('density-compact')?'1':'0');}catch(e){}
-  });
+  panel.innerHTML='<div id="gsAIContainer"></div>';
 
   /* AI 设置面板嵌入 */
   const aiContainer=panel.querySelector('#gsAIContainer');
@@ -1858,4 +1858,45 @@ installSelectionGloss();
     }
     _origGoBack();
   };
+})();
+
+/* ============================================================
+   彩蛋：长按「关于问问大师」播放图标绘制动画
+   ============================================================ */
+(function(){
+  const HOLD_MS=600;
+  let timer=null,triggered=false;
+
+  function playIconDraw(){
+    const ov=document.getElementById('iconDrawOverlay');
+    if(!ov)return;
+    ov.classList.remove('show');
+    void ov.offsetWidth;
+    ov.classList.add('show');
+    setTimeout(()=>{ov.classList.remove('show');},3600);
+  }
+
+  function bind(){
+    const btn=document.getElementById('aboutBtnP2');
+    if(!btn)return;
+    btn.addEventListener('pointerdown',function(){
+      triggered=false;
+      timer=setTimeout(function(){
+        triggered=true;timer=null;
+        toggleP2Menu(false);
+        playIconDraw();
+      },HOLD_MS);
+    });
+    function cancel(){if(timer){clearTimeout(timer);timer=null;}}
+    btn.addEventListener('pointerup',cancel);
+    btn.addEventListener('pointerleave',cancel);
+    btn.addEventListener('pointercancel',cancel);
+    btn.addEventListener('click',function(e){
+      if(triggered){e.preventDefault();e.stopImmediatePropagation();triggered=false;}
+    },true);
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',bind);
+  }else{bind();}
 })();

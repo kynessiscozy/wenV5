@@ -1010,18 +1010,26 @@ body.report-active .home-menu-drawer{display:none}
 .p2-menu-item:hover svg{color:var(--c-accent)}
 .p2-menu-item span{line-height:1.3}
 
-/* P2 菜单内联外观选择器 */
+/* P2 菜单内联主题选择器 */
 .p2-appearance{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 16px;margin-top:4px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 16px;margin-top:4px;
   border-top:1px solid var(--c-border);
   flex-shrink:0;
 }
-.p2-appearance-label{
-  font-size:.78em;font-weight:600;color:var(--c-text-2);letter-spacing:1px;
-}
 .p2-appearance .gs-seg-opt{
   padding:6px 12px;font-size:.76em;
+}
+.p2-density-btn{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:999px;
+  border:1px solid var(--c-border-2);background:var(--c-surface-3);
+  font-size:.76em;color:var(--c-text-3);cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.p2-density-btn:hover{color:var(--c-text)}
+.p2-density-btn.active{
+  background:var(--c-accent);color:#fff;border-color:var(--c-accent);
 }
 
 /* ============================================================
@@ -2099,4 +2107,57 @@ button:active{transform:scale(.97)}
   font-size: .7em;
   color: inherit;
   opacity: .8;
+}
+
+/* ============================================================
+   图标绘制动画 overlay
+   ============================================================ */
+.icon-draw-overlay{
+  position:fixed;inset:0;z-index:2000;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.88);
+  opacity:0;pointer-events:none;
+  transition:opacity .3s ease;
+}
+.icon-draw-overlay.show{
+  opacity:1;pointer-events:auto;
+}
+.icon-draw-svg{
+  width:min(200px,60vw);height:min(200px,60vw);
+}
+.icon-draw-svg .id-rect{
+  opacity:0;
+  animation:idRectIn .4s ease-out forwards;
+}
+.icon-draw-svg .id-path{
+  stroke-dasharray:var(--len,300);
+  stroke-dashoffset:var(--len,300);
+  fill-opacity:0;
+}
+.icon-draw-overlay.show .icon-draw-svg .id-p1{
+  --len:200;
+  animation:idDraw 1.2s ease-in-out .3s forwards;
+}
+.icon-draw-overlay.show .icon-draw-svg .id-p2{
+  --len:160;
+  animation:idDraw 1s ease-in-out 1.3s forwards;
+}
+.icon-draw-overlay.show .icon-draw-svg .id-p3{
+  --len:30;
+  animation:idDraw .5s ease-in-out 2.1s forwards;
+}
+.icon-draw-overlay.show .icon-draw-svg .id-p4{
+  --len:12;
+  animation:idDraw .3s ease-in-out 2.4s forwards,
+            idFillIn .3s ease-out 2.7s forwards;
+}
+@keyframes idRectIn{
+  from{opacity:0;transform:scale(.8)}
+  to{opacity:1;transform:scale(1)}
+}
+@keyframes idDraw{
+  to{stroke-dashoffset:0}
+}
+@keyframes idFillIn{
+  to{fill-opacity:1}
 }
