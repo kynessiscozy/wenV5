@@ -548,12 +548,51 @@ function openSaveModal(){
       ).join('');
     }
   }
+  // 渲染已保存命盘列表
+  renderSaveModalList();
 }
 function closeSaveModal(){
   document.getElementById('saveModal').classList.remove('open');
   // 恢复 dock 栏显示
   const dock=document.querySelector('.ig-dock.tab-bar');
   if(dock)dock.style.display='';
+}
+async function renderSaveModalList(){
+  const list=document.getElementById('saveModalList');
+  if(!list)return;
+  try{
+    const profiles=await dbGetAll();
+    if(!profiles.length){
+      list.innerHTML='<div class="save-archives-empty">还没有保存的命盘<br>填好名称后点击上方保存即可</div>';
+      return;
+    }
+    list.innerHTML=profiles.map(p=>{
+      const city=CD[p.bp]||{n:'未知'};
+      const d=new Date(p.updatedAt);
+      const dateStr=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      return `<div class="save-archive-card" onclick="loadProfileFromModal(${p.id})">
+        <div class="sa-ava">${(p.name||'未').charAt(0)}</div>
+        <div class="sa-info">
+          <div class="sa-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div>
+          <div class="sa-meta">${p.bd||''} · ${city.n} · ${p.gen==='male'?'男':'女'} · ${dateStr}</div>
+        </div>
+        <div class="sa-actions">
+          <button type="button" class="sa-del" onclick="event.stopPropagation();deleteProfileFromModal(${p.id})" title="删除">×</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){console.log('renderSaveModalList',e);}
+}
+function loadProfileFromModal(id){
+  loadProfile(id);
+  closeSaveModal();
+}
+async function deleteProfileFromModal(id){
+  try{
+    await dbDel(id);
+    renderSaveModalList();
+    showToast('已删除');
+  }catch(e){console.log('deleteProfileFromModal',e);}
 }
 function updateSaveNameCount(){
   const n=document.getElementById('saveName');
@@ -572,7 +611,7 @@ function quickSaveName(name){
 }
 function confirmSaveProfile(){const name=document.getElementById('saveName').value.trim();if(!name){showToast('请输入档案名称');return;}saveCurrentProfile(name).then(()=>{closeSaveModal();renderProfiles();showToast('已保存到档案库');}).catch(e=>showToast('保存失败：'+e));}
 async function exportProfiles(){try{const list=await dbGetAll();const blob=new Blob([JSON.stringify(list,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='问问大师档案_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}catch(e){showToast('导出失败');}}
-async function handleImport(input){const file=input.files[0];if(!file)return;try{const text=await file.text();const arr=JSON.parse(text);if(!Array.isArray(arr))throw new Error('格式错误');let count=0;for(const p of arr){if(p.bd&&p.bp&&p.gen){delete p.id;p.updatedAt=Date.now();await dbPut(p);count++;}}renderProfiles();showToast(`成功导入 ${count} 条档案`);}catch(e){showToast('导入失败：'+e.message);}input.value='';}
+async function handleImport(input){const file=input.files[0];if(!file)return;try{const text=await file.text();const arr=JSON.parse(text);if(!Array.isArray(arr))throw new Error('格式错误');let count=0;for(const p of arr){if(p.bd&&p.bp&&p.gen){delete p.id;p.updatedAt=Date.now();await dbPut(p);count++;}}renderProfiles();renderSaveModalList();showToast(`成功导入 ${count} 条档案`);}catch(e){showToast('导入失败：'+e.message);}input.value='';}
 
 (function(){
   const inp=document.getElementById('cInp'),hid=document.getElementById('bPlace'),dd=document.getElementById('cDD');

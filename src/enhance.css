@@ -1467,6 +1467,91 @@ body.report-active .home-menu-drawer{display:none}
   transform:translateY(0);
 }
 
+/* ============================================================
+   保存弹窗 — 档案库列表
+   ============================================================ */
+.save-archives{
+  margin-top:20px;
+  padding-top:16px;
+  border-top:1px solid var(--c-border);
+}
+.save-archives-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;
+}
+.save-archives-title{
+  font-size:.92em;font-weight:700;color:var(--c-text);
+}
+.save-archives-actions{
+  display:flex;gap:8px;
+}
+.save-archives-btn{
+  font-size:.72em;padding:5px 12px;
+  border-radius:8px;border:1px solid var(--c-border);
+  background:var(--c-bg-2);color:var(--c-text-2);
+  cursor:pointer;transition:all .15s;
+}
+.save-archives-btn:hover{
+  border-color:var(--c-accent);color:var(--c-accent);
+}
+.save-archives-list{
+  display:flex;flex-direction:column;gap:8px;
+  max-height:280px;overflow-y:auto;
+}
+.save-archive-card{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:12px;
+  background:var(--c-bg-2);border:1px solid var(--c-border);
+  cursor:pointer;transition:all .15s;position:relative;
+}
+.save-archive-card:hover{
+  border-color:var(--c-accent);
+  background:var(--c-bg-3);
+}
+.save-archive-card:active{
+  transform:scale(.98);
+}
+.sa-ava{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.95em;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,var(--c-accent),var(--c-accent-2,#c75a2a));
+  flex-shrink:0;
+}
+.sa-info{
+  flex:1;min-width:0;
+}
+.sa-name{
+  font-size:.85em;font-weight:600;color:var(--c-text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sa-meta{
+  font-size:.68em;color:var(--c-text-3);
+  margin-top:2px;
+}
+.sa-actions{
+  flex-shrink:0;
+}
+.sa-del{
+  width:24px;height:24px;border-radius:50%;
+  border:none;background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1em;color:var(--c-text-4);cursor:pointer;
+  transition:all .15s;
+}
+.sa-del:hover{
+  background:rgba(220,53,69,.12);color:#dc3545;
+}
+.save-archives-empty{
+  text-align:center;padding:24px 12px;
+  font-size:.78em;color:var(--c-text-3);line-height:1.8;
+}
+@media(max-width:560px){
+  .save-archives-list{max-height:220px}
+  .save-archive-card{padding:12px 14px}
+  .sa-ava{width:40px;height:40px;font-size:1em}
+}
+
 @media(max-width:560px){
   /* 底部抽屉式 */
   #saveModal{
