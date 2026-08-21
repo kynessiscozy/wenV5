@@ -3,6 +3,14 @@ import { TJ } from '../state/tj.js';
 import { getCtx } from '../state/context.js';
 import { KB } from './kb.js';
 
+/* 自进化钩子：由 evolve/index.js 在启动时注入，避免循环依赖。 */
+let _matchEvolved = () => null;
+let _faqBoost = () => ({});
+export function installEvolveHooks({ matchEvolved, faqBoost } = {}) {
+  if (typeof matchEvolved === 'function') _matchEvolved = matchEvolved;
+  if (typeof faqBoost === 'function') _faqBoost = faqBoost;
+}
+
 export function extractIntents(q){const ints=[];if(/事业|工作|职业|升职|跳槽|创业|职场|领导|下属|管理|项目|裁员|被裁|优化|失业|岗位取消|裁撤|PIP/i.test(q))ints.push('事业');if(/感情|婚姻|爱情|对象|桃花|另一半|配偶|分手|复合|结婚|离婚|恋爱|异性|缘分|正缘/i.test(q))ints.push('感情');if(/财|钱|投资|收入|赚钱|股|基金|理财|薪水|工资|经济|负债|储蓄|消费|开支/i.test(q))ints.push('财运');if(/健康|身体|病|养生|疾病|医院|手术|失眠|精神|体质|锻炼|调养/i.test(q))ints.push('健康');if(/学业|考试|考研|留学|读书|学校|成绩|论文|面试|升学|考证|进修/i.test(q))ints.push('学业');if(/搬家|买房|装修|住|房产|租房|风水|方位|城市|出国|迁移|出行|旅途/i.test(q))ints.push('居住');if(!ints.length)ints.push('综合');return ints;}
 
 /* ============================================================
@@ -40,6 +48,8 @@ export const KBSearch={
       sc+=this.similar(ql,f.q)*8;
       // 标题包含关键词时再加成
       if(ql.length>=2&&f.q.toLowerCase().includes(ql.slice(0,2)))sc+=2;
+      const boost=_faqBoost()[f.id];
+      if(boost)sc*=boost;
       return{f,sc};
     }).filter(x=>x.sc>2.5).sort((a,b)=>b.sc-a.sc).slice(0,topK);
     return scored;
@@ -111,6 +121,7 @@ export function smartAnswer(q,ctx){
     const route=KB.routes[f.anchor];
     return{
       kind:'faq',
+      faqId:f.id,
       title:f.q,
       sections:[
         {title:'结论',content:lines[0]||'-'},

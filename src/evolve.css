@@ -1,0 +1,85 @@
+/* ============================================================
+   问问大师 · 自进化界面
+   ============================================================ */
+
+.evolve-gen {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--ac4);
+  background: var(--ac1);
+  color: var(--ac-text);
+  font-size: var(--fs-micro, 11px);
+  font-weight: 650;
+  letter-spacing: .04em;
+  vertical-align: 1px;
+}
+
+.evolve-section .evolve-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 8px 0;
+}
+.evolve-stat {
+  text-align: center;
+  padding: 8px 2px;
+  border-radius: 10px;
+  background: var(--c-surface-2);
+}
+.evolve-stat b {
+  display: block;
+  font-size: 1.05em;
+  color: var(--c-text-hi);
+  font-variant-numeric: tabular-nums;
+}
+.evolve-stat span {
+  font-size: .62em;
+  color: var(--c-text-3);
+}
+.evolve-note {
+  font-size: .7em;
+  line-height: 1.65;
+  color: var(--c-text-2);
+  margin-bottom: 8px;
+}
+.evolve-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.chat-actions button[data-act="up"].on,
+.chat-actions button[data-act="up"][aria-pressed="true"] {
+  color: rgba(122, 182, 72, .95);
+  background: rgba(122, 182, 72, .12);
+  border-color: rgba(122, 182, 72, .28);
+}
+.chat-actions button[data-act="down"].on,
+.chat-actions button[data-act="down"][aria-pressed="true"] {
+  color: rgba(212, 101, 74, .95);
+  background: rgba(212, 101, 74, .12);
+  border-color: rgba(212, 101, 74, .28);
+}
+
+/* 触控设备没有 hover，反馈按钮需要常显 */
+@media (hover: none) {
+  .chat-actions {
+    opacity: .78;
+  }
+}
+@media (hover: hover) {
+  .chat-actions {
+    opacity: 0;
+  }
+  .chat-msg:hover .chat-actions,
+  .chat-msg:focus-within .chat-actions {
+    opacity: .75;
+  }
+}
+
+.chat-bubble-kb .ai-kb-badge.personal {
+  background: var(--ac1);
+  color: var(--ac-text);
+}

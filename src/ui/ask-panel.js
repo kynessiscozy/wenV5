@@ -6,6 +6,11 @@ import { streamAskAnswer, probeConnection, getConnState, onConnChange, modelLabe
 import { getApiKey } from './ai-settings.js';
 import { getResultStyle } from '../state/result-style.js';
 import { renderSmartAnswer, renderRouteButtons, buildRelatedRoutes, formatStandardAnswer } from '../render/ai.js';
+import {
+  getEvolvePrompt, recordExperience, rateExperience, flagExperience,
+  lastExperienceId, flagLastFollowUp, chartKeyOf, getGenome
+} from '../evolve/index.js';
+import { showToast } from './toast.js';
 
 /* ============================================================
    问问大师 · 重构版 — ChatGPT 气泡式对话
@@ -141,6 +146,8 @@ function _renderWelcome(el) {
   if (ctx) {
     contextLine = '我已连接你的命盘（' + ctx.dg + ctx.dw + '），随时可以聊。';
   }
+  const gen = (getGenome() && getGenome().generation) || 0;
+  if (gen > 0) contextLine += ' 我已经和你相处到第' + gen + '代，会记得你更在意什么。';
   const msgDiv = document.createElement('div');
   msgDiv.className = 'chat-msg chat-msg-ai chat-welcome';
   msgDiv.innerHTML =
@@ -197,8 +204,26 @@ function _hideTyping(el) {
   if (indicator) indicator.remove();
 }
 
+function _chatActionsHtml(retry) {
+  return '<div class="chat-actions">' +
+    '<button type="button" data-act="up" title="有帮助">有用</button>' +
+    '<button type="button" data-act="down" title="不太对">不准</button>' +
+    '<button type="button" data-act="copy" title="复制回答">复制</button>' +
+    (retry ? '<button type="button" data-act="retry" title="重新回答">重试</button>' : '') +
+  '</div>';
+}
+function _plainFrom(node) {
+  return String(node?.innerText || node?.textContent || '').replace(/\s+/g, ' ').trim();
+}
+async function _remember(msgDiv, payload) {
+  try {
+    const id = await recordExperience(payload);
+    if (msgDiv && id != null) msgDiv.dataset.eid = String(id);
+  } catch (e) {}
+}
+
 // —— AI 回复气泡 ——
-function _createAiBubble(el) {
+function _createAiBubble(el, q) {
   _hideTyping(el);
   const msgDiv = document.createElement('div');
   msgDiv.className = 'chat-msg chat-msg-ai chat-msg-appear';
@@ -206,15 +231,15 @@ function _createAiBubble(el) {
     '<div class="chat-avatar">✦</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai"><div class="chat-ai-text"></div></div>' +
-      '<div class="chat-actions">' +
-        '<button type="button" data-act="copy" title="复制回答">复制</button>' +
-        '<button type="button" data-act="retry" title="重新回答">重试</button>' +
-      '</div>' +
+      _chatActionsHtml(true) +
       '<div class="chat-meta">' + _ts() + '</div>' +
     '</div>';
+  if (q) msgDiv.dataset.q = q;
   el.appendChild(msgDiv);
   _scrollToBottom(el);
-  return msgDiv.querySelector('.chat-ai-text');
+  const textEl = msgDiv.querySelector('.chat-ai-text');
+  textEl._msg = msgDiv;
+  return textEl;
 }
 
 // —— KB 信息库气泡 ——
@@ -227,13 +252,13 @@ function _renderKbBubble(el, kbRes, q) {
     '<div class="chat-avatar">✦</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai chat-bubble-kb">' + kbHtml + '</div>' +
-      '<div class="chat-actions">' +
-        '<button type="button" data-act="copy" title="复制回答">复制</button>' +
-      '</div>' +
+      _chatActionsHtml(false) +
       '<div class="chat-meta">' + _ts() + '</div>' +
     '</div>';
+  if (q) msgDiv.dataset.q = q;
   el.appendChild(msgDiv);
   _scrollToBottom(el);
+  return msgDiv;
 }
 
 // —— 工具调用气泡 ——
@@ -441,6 +466,15 @@ export async function generateAnswer(q) {
   const contextualFollowUp = previousTurns.length > 0 && (
     q.trim().length <= 18 || /^(那|然后|所以|具体|继续|怎么办|怎么做|为什么|他|她|这个|那我|我呢|可以吗|要不要)/.test(q.trim())
   );
+  if (contextualFollowUp) flagLastFollowUp().catch(() => {});
+
+  const expBase = {
+    q,
+    intents: extractIntents(q),
+    style: d && d.input ? d.input.resultStyle : '',
+    chartKey: chartKeyOf(d),
+    ctx: d
+  };
 
   // ———— 无命盘 ————
   if (!d) {
@@ -455,10 +489,18 @@ export async function generateAnswer(q) {
   if (kbRes) {
     _showTyping(el, '信息库匹配中…');
     await _delay(400 + Math.random() * 300);
-    _renderKbBubble(el, kbRes, q);
+    const msgDiv = _renderKbBubble(el, kbRes, q);
+    const answer = (kbRes.sections || []).map(s => s.content || '').join(' ');
+    await _remember(msgDiv, {
+      ...expBase,
+      a: answer,
+      source: kbRes.kind === 'term' ? 'term' : kbRes.kind === 'personal' ? 'personal' : 'kb',
+      faqId: kbRes.faqId || null,
+      answerLen: answer.length
+    });
     _persistLast();
     conversation.push({ role: 'user', content: q });
-    conversation.push({ role: 'assistant', content: (kbRes.sections || []).map(s => s.content || '').join(' ').slice(0, 180) });
+    conversation.push({ role: 'assistant', content: answer.slice(0, 180) });
     return;
   }
 
@@ -468,8 +510,9 @@ export async function generateAnswer(q) {
 
   const ctx = buildBaziContext(d);
   const resultStyle=getResultStyle(d.input?.resultStyle);
+  const evolveBlock = getEvolvePrompt();
   const systemPrompt = `你是「问问」，一位温暖、清醒、有分寸的命理陪伴者。
-当前结果风格：${resultStyle.label}。${resultStyle.prompt}你的工作不是替用户宣布命运，而是把传统命理当作观察倾向和整理问题的语言，再帮助用户回到现实选择。请严格遵守以下约束：
+当前结果风格：${resultStyle.label}。${resultStyle.prompt}${evolveBlock ? '\n' + evolveBlock + '\n' : ''}你的工作不是替用户宣布命运，而是把传统命理当作观察倾向和整理问题的语言，再帮助用户回到现实选择。请严格遵守以下约束：
 ① 先对照下方【用户命盘】再作答——所有命理判断必须基于真实数据（日主、五行强弱、十神、用神喜忌、当前大运/流年、各项评分），只选与问题最相关的两三项，不要罗列无关字段，也不要每次复述整张命盘。
 ② 回答结构自然但完整：先接住用户正在面对的事，再说明一条清楚的命盘依据，然后给出一到两个现实行动。控制在100–220字，使用自然中文，不堆砌术语，不用空泛鸡汤。
 ③ 解释术语时先翻译成人话，再说明它如何映射到用户的问题；不要只贴标签。涉及事业、财务、健康、法律或关系重大决定时，明确提醒用户结合事实、专业意见和当事人沟通。
@@ -488,7 +531,7 @@ export async function generateAnswer(q) {
     let textEl = null;
     const _mkBubble = () => {
       if (textEl) return textEl;
-      textEl = _createAiBubble(el);
+      textEl = _createAiBubble(el, q);
       return textEl;
     };
 
@@ -523,6 +566,12 @@ export async function generateAnswer(q) {
       const routeHtml = renderRouteButtons(links, '前往相关页面查看');
       textEl.closest('.chat-bubble').insertAdjacentHTML('beforeend', routeHtml);
     }
+    await _remember(textEl && textEl._msg, {
+      ...expBase,
+      a: result.text,
+      source: 'ai',
+      answerLen: result.text.length
+    });
     _persistLast();
     _scrollToBottom(el);
 
@@ -532,7 +581,14 @@ export async function generateAnswer(q) {
     // ———— 第 3 层：离线兜底 ————
     _hideTyping(el);
     _setModelLabel('');
-    _generateAnswerFallbackChat(q, d, el);
+    const fbMsg = _generateAnswerFallbackChat(q, d, el);
+    const fbText = _plainFrom(fbMsg && fbMsg.querySelector('.chat-ai-text'));
+    await _remember(fbMsg, {
+      ...expBase,
+      a: fbText,
+      source: 'fallback',
+      answerLen: fbText.length
+    });
     _persistLast();
     conversation.push({ role: 'user', content: q });
     conversation.push({ role: 'assistant', content: '已基于当前话题给出建议。' });
@@ -541,7 +597,7 @@ export async function generateAnswer(q) {
 
 // —— Fallback 气泡渲染 ——
 function _generateAnswerFallbackChat(q, d, el) {
-  const textEl = _createAiBubble(el);
+  const textEl = _createAiBubble(el, q);
   const temp = document.createElement('div');
   generateAnswerFallback(q, d, temp);
   const fallbackText = temp.querySelector('.ai-dialogue-text')?.innerHTML
@@ -549,4 +605,38 @@ function _generateAnswerFallbackChat(q, d, el) {
     || '抱歉，我暂时无法连接到 AI 服务。请稍后再试。';
   textEl.innerHTML = fallbackText;
   _scrollToBottom(el);
+  return textEl._msg;
 }
+
+document.addEventListener('click', async e => {
+  const btn = e.target.closest?.('.chat-actions [data-act]');
+  if (!btn) return;
+  const msg = btn.closest('.chat-msg');
+  if (!msg) return;
+  const act = btn.dataset.act;
+  const eid = msg.dataset.eid ? Number(msg.dataset.eid) : lastExperienceId();
+  const q = msg.dataset.q || '';
+  if (act === 'copy') {
+    const text = _plainFrom(msg.querySelector('.chat-ai-text, .chat-bubble'));
+    try { await navigator.clipboard.writeText(text); showToast('已复制'); }
+    catch (err) { showToast('复制失败'); }
+    if (eid != null) flagExperience(eid, 'copy', true).catch(() => {});
+    return;
+  }
+  if (act === 'retry') {
+    if (eid != null) flagExperience(eid, 'retry', true).catch(() => {});
+    if (q) generateAnswer(q);
+    return;
+  }
+  if (act === 'up' || act === 'down') {
+    const rating = act === 'up' ? 1 : -1;
+    msg.querySelectorAll('[data-act="up"],[data-act="down"]').forEach(b => {
+      b.classList.toggle('on', b === btn);
+      b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+    });
+    if (eid != null) {
+      await rateExperience(eid, rating);
+      showToast(rating > 0 ? '记下了，以后会更往这边靠' : '记下了，下次换个说法');
+    }
+  }
+});

@@ -79,6 +79,7 @@ import {
 import { initFontSize } from './font-size.js';
 import { initWeather, getWxGeo } from './ui/weather.js';
 import { initOnboarding } from './onboarding.js';
+import { initEvolveUI } from './evolve/ui.js';
 /* tools2 改为动态 import（见文件末尾 bootstrap 处）：
    工具系统体积大且非首屏必需，独立成异步 chunk，缩小主包。 */
 
@@ -88,6 +89,7 @@ initSectionTabs();
 initNavigationUI();
 initAISettings();
 initFontSize();
+initEvolveUI();
 
 /* ============================================================
    全局函数暴露：index.html 和动态生成的 onclick 需要全局访问

@@ -3,7 +3,8 @@ import { KB } from '../ai/kb.js';
 export function formatAIText(text){let h=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<span class="hl">$1</span>').replace(/【(.+?)】/g,'<span class="tg">$1</span>').replace(/#{1,4}\s*(.+)/g,'<h4>$1</h4>').split(/\n{2,}/).map(p=>p.trim()?`<p>${p.replace(/\n/g,'<br>')}</p>`:'').join('');return h||`<p>${text.replace(/\n/g,'<br>')}</p>`;}
 
 export function renderSmartAnswer(res,q){
-  const head=`<div class="ai-kb-head"><span class="ai-kb-badge">${res.kind==='term'?'术语':'信息库'}</span><span class="ai-kb-q">${res.title}</span></div>`;
+  const badge=res.kind==='term'?'术语':res.kind==='personal'?'记得你':'信息库';
+  const head=`<div class="ai-kb-head"><span class="ai-kb-badge${res.kind==='personal'?' personal':''}">${badge}</span><span class="ai-kb-q">${res.title}</span></div>`;
   const body=res.sections.map((s,i)=>`<div class="ai-step"><div class="ai-step-icon">${i+1}</div><div class="ai-step-body"><div class="ai-step-title">${s.title}</div><div class="ai-step-text">${String(s.content||'').replace(/\n/g,'<br>')}</div></div></div>`).join('');
   let footer='';
   if(res.links&&res.links.length){

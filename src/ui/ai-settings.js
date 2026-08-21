@@ -1,4 +1,5 @@
 import { probeConnection, getProvider, setProvider } from '../ai/index.js';
+import { mountEvolveSettings } from '../evolve/ui.js';
 
 const defaults = { natural: true, context: true, length: 'short' };
 
@@ -168,6 +169,7 @@ function _buildPanel(sheet) {
     });
   }
 
+  mountEvolveSettings(panel);
   return panel;
 }
 

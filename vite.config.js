@@ -15,6 +15,7 @@ export default defineConfig({
           groups: [
             { name: 'engines', test: /\/src\/engines\//, priority: 10 },
             { name: 'ai', test: /\/src\/ai\//, priority: 10 },
+            { name: 'evolve', test: /\/src\/evolve\//, priority: 10 },
             { name: 'render', test: /\/src\/render\//, priority: 10 },
             { name: 'tools', test: /\/src\/tools\//, priority: 10 },
           ],
