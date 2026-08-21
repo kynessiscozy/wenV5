@@ -73,7 +73,7 @@ import {
   setGlassMode, toggleLgPanel, moveTabIndicator, initNavigationUI,
   openAsk, closeAsk, newAskChat, aiToolRequest, doAsk, doAskCustom,
   aiSwitchCat, aiRefreshChips, aiOnInputSuggest, generateAnswer,
-  getAISettings, getApiKey, toggleAISettings, initAISettings,
+  getAISettings, getApiKey, toggleAISettings, initAISettings, buildAISettingsPanel,
   initTheme, toggleTheme, applyThemePref, getThemePref
 } from './ui/index.js';
 import { initFontSize } from './font-size.js';
@@ -692,23 +692,13 @@ function _buildGlobalSettingsPanel(){
         '<button class="gs-seg-opt'+(themePref==='system'?' active':'')+'" data-val="system">跟随</button>'+
       '</div>'+
     '</div>'+
-    '<div class="gs-row">'+
-      '<div><div class="gs-row-label">玻璃质感</div><div class="gs-row-hint">调节卡片毛玻璃强度</div></div>'+
-      '<div class="gs-seg" id="gsGlassSeg">'+
-        '<button class="gs-seg-opt" data-val="clear">清澈</button>'+
-        '<button class="gs-seg-opt active" data-val="standard">标准</button>'+
-        '<button class="gs-seg-opt" data-val="tinted">凝重</button>'+
-      '</div>'+
-    '</div>'+
     '<div class="gs-section-title">阅读</div>'+
     '<div class="gs-row">'+
       '<div><div class="gs-row-label">信息密度</div><div class="gs-row-hint">紧凑模式可显示更多内容</div></div>'+
       '<div class="gs-switch'+(document.body.classList.contains('density-compact')?' on':'')+'" id="gsDensitySw"></div>'+
     '</div>'+
-    '<div class="gs-row">'+
-      '<div><div class="gs-row-label">星轨动画</div><div class="gs-row-hint">首页背景星环效果</div></div>'+
-      '<div class="gs-switch'+((localStorage.getItem(GS_KEY_STAR)||'classic')==='august'?' on':'')+'" id="gsStarSw"></div>'+
-    '</div>';
+    '<div class="gs-section-title">AI 设置</div>'+
+    '<div id="gsAIContainer"></div>';
 
   /* 主题切换 */
   panel.querySelector('#gsThemeSeg').addEventListener('click',e=>{
@@ -716,17 +706,6 @@ function _buildGlobalSettingsPanel(){
     if(!btn)return;
     applyThemePref(btn.dataset.val);
     panel.querySelectorAll('#gsThemeSeg .gs-seg-opt').forEach(b=>b.classList.toggle('active',b===btn));
-  });
-
-  /* 玻璃质感切换 */
-  const glassSeg=panel.querySelector('#gsGlassSeg');
-  const curGlass=document.body.getAttribute('data-glass')||'standard';
-  glassSeg.querySelectorAll('.gs-seg-opt').forEach(b=>b.classList.toggle('active',b.dataset.val===curGlass));
-  glassSeg.addEventListener('click',e=>{
-    const btn=e.target.closest('.gs-seg-opt');
-    if(!btn)return;
-    if(typeof window.setGlassMode==='function')window.setGlassMode(btn.dataset.val);
-    glassSeg.querySelectorAll('.gs-seg-opt').forEach(b=>b.classList.toggle('active',b===btn));
   });
 
   /* 信息密度开关 */
@@ -737,18 +716,11 @@ function _buildGlobalSettingsPanel(){
     try{localStorage.setItem(GS_KEY_DENSITY,document.body.classList.contains('density-compact')?'1':'0');}catch(e){}
   });
 
-  /* 星轨开关 */
-  const starSw=panel.querySelector('#gsStarSw');
-  starSw.addEventListener('click',()=>{
-    const cur=localStorage.getItem(GS_KEY_STAR)||'classic';
-    const next=cur==='august'?'classic':'august';
-    try{localStorage.setItem(GS_KEY_STAR,next);}catch(e){}
-    starSw.classList.toggle('on',next==='august');
-    if(window._tjArm&&typeof window._tjArm.stop==='function')window._tjArm.stop();
-    if(typeof window.createArm==='function'){
-      window._tjArm=window.createArm(next);
-    }
-  });
+  /* AI 设置面板嵌入 */
+  const aiContainer=panel.querySelector('#gsAIContainer');
+  if(aiContainer && typeof buildAISettingsPanel==='function'){
+    buildAISettingsPanel(aiContainer);
+  }
 
   return panel;
 }

@@ -30,7 +30,7 @@ export function getAISettings() {
 }
 
 /* ============================================================
-   弹窗开关
+   弹窗开关（聊天工具栏入口，可独立使用）
    ============================================================ */
 export function toggleAISettings() {
   const modal = document.getElementById('aiSettingsModal');
@@ -50,7 +50,6 @@ export function openAISettingsModal() {
     _buildPanel(panel);
   }
   modal.classList.add('open');
-  // 隐藏 dock 栏，避免底部按钮被遮挡
   const dock = document.querySelector('.ig-dock.tab-bar');
   if (dock) dock.style.display = 'none';
   document.querySelector('.ai-settings')?.setAttribute('aria-expanded', 'true');
@@ -60,7 +59,6 @@ export function closeAISettingsModal() {
   const modal = document.getElementById('aiSettingsModal');
   if (!modal) return;
   modal.classList.remove('open');
-  // 恢复 dock 栏显示
   const dock = document.querySelector('.ig-dock.tab-bar');
   if (dock) dock.style.display = '';
   document.querySelector('.ai-settings')?.setAttribute('aria-expanded', 'false');
@@ -74,6 +72,13 @@ function _providerInfo(p) {
     return 'Key 保存在本地浏览器，不会上传。<br>获取地址：<a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com/api_keys</a>';
   }
   return 'Key 保存在本地浏览器，不会上传。<br>获取地址：<a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>';
+}
+
+/* ============================================================
+   构建设置面板 DOM（导出供全局设置嵌入）
+   ============================================================ */
+export function buildAISettingsPanel(container) {
+  return _buildPanel(container);
 }
 
 /* ============================================================
