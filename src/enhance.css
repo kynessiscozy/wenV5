@@ -26,6 +26,10 @@
   border-radius:22px!important;
   overflow:hidden;
 }
+/* 关闭按钮：确保 z-index 高于 hero 和 panel */
+.ai-settings-sheet .modal-close{
+  z-index:10;
+}
 .ai-settings-hero{
   padding:18px 24px 14px;
   text-align:center;
