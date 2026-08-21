@@ -27,34 +27,16 @@
   overflow:hidden;
 }
 .ai-settings-hero{
-  padding:28px 24px 20px;
+  padding:18px 24px 14px;
   text-align:center;
-  background:linear-gradient(135deg, var(--c-accent-soft, rgba(217,119,87,.12)), transparent 60%);
   border-bottom:1px solid var(--c-border);
 }
-.ai-settings-icon{
-  width:56px;height:56px;
-  margin:0 auto 12px;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:16px;
-  background:linear-gradient(135deg, var(--c-accent, #d97757), color-mix(in srgb, var(--c-accent, #d97757) 70%, #c75a2a));
-  color:#fff;
-  box-shadow:0 6px 20px rgba(217,119,87,.25);
-  animation:aiHeroIn .5s cubic-bezier(.2,.8,.3,1.2) both;
-}
-@keyframes aiHeroIn{
-  from{transform:scale(.6) rotate(-10deg);opacity:0}
-  to{transform:scale(1) rotate(0);opacity:1}
-}
 .ai-settings-sheet .ai-settings-title{
-  font-size:1.1em;
-  font-weight:800;
-  color:var(--c-text-hi, #1a1915);
-  margin:0 0 4px;
-}
-.ai-settings-subtitle{
-  font-size:.8em;
-  color:var(--c-text-3, #888);
+  font-size:.95em;
+  font-weight:600;
+  color:var(--c-text-hi);
+  margin:0;
+  letter-spacing:.5px;
 }
 .ai-settings-panel-modal{
   padding:20px 22px 22px;
@@ -715,12 +697,28 @@ body.beginner-mode .qr-acts{display:none!important}
 
 /* ============================================================
    新手模式显示修复：
-   styles.css 中有两条顺序颠倒的规则会错误地隐藏 beginner-brief
-   并显示 .glass 卡片。这里用更高优先级纠正。
+   styles.css 中 .sec .beginner-brief 特异性(3 class)高于
+   .beginner-brief(2 class)，导致新手简介被隐藏。
+   这里用更高特异性（加 ID）纠正显示逻辑。
    ============================================================ */
-body.beginner-mode section.sec > .beginner-brief{display:block!important}
-body.beginner-mode section.sec > .glass{display:none!important}
-body.beginner-mode section.sec > .qr-card{display:none!important}
+/* 新手模式：强制显示新手简介，隐藏专业版内容 */
+body.beginner-mode #p2Inner .sec .beginner-brief,
+body.beginner-mode #p2Inner .sec > .beginner-brief {
+  display: block !important;
+}
+body.beginner-mode #p2Inner .sec .glass,
+body.beginner-mode #p2Inner .sec > .glass,
+body.beginner-mode #p2Inner .sec .qr-card,
+body.beginner-mode #p2Inner .sec > .qr-card,
+body.beginner-mode #p2Inner .sec .ai-sum,
+body.beginner-mode #p2Inner .sec > .ai-sum {
+  display: none !important;
+}
+body.beginner-mode .beginner-brief {
+  margin-bottom: 16px !important;
+  padding: 20px !important;
+  border-radius: 16px !important;
+}
 
 /* ============================================================
    改动10：首页汉堡菜单
@@ -1463,3 +1461,71 @@ button:active{transform:scale(.97)}
 .fs-opt[data-key="xlarge"]   .fs-opt-a { font-size: 26px; }
 .fs-opt-l { font-size: .7em; }
 .fs-panel-hint { margin-top: 10px; font-size: .66em; color: var(--c-text-4); text-align: center; }
+
+/* ============================================================
+   AI 聊天面板头部精简
+   ============================================================ */
+.ai-sheet .ai-head {
+  padding: 8px 4px 10px !important;
+  margin-bottom: 8px !important;
+}
+.ai-sheet .ai-title {
+  font-size: .95em !important;
+  margin-bottom: 6px !important;
+  margin-right: 80px !important;
+}
+.ai-sheet .ai-context {
+  padding: 7px 10px !important;
+  margin-bottom: 6px !important;
+  font-size: .65em !important;
+}
+.ai-sheet .ai-free-prompt {
+  font-size: .7em !important;
+  line-height: 1.5 !important;
+}
+
+/* ============================================================
+   字体大小选项（AI 设置弹窗内）
+   ============================================================ */
+.ai-font-size-opts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ai-fs-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--c-border-2);
+  background: var(--c-surface);
+  cursor: pointer;
+  transition: all .15s;
+}
+.ai-fs-opt:hover {
+  border-color: var(--c-accent);
+  background: var(--c-accent-soft);
+}
+.ai-fs-opt.active {
+  border-color: var(--c-accent);
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+}
+.ai-fs-a {
+  font-weight: 700;
+  font-family: serif;
+  line-height: 1;
+}
+.ai-fs-opt[data-key="small"] .ai-fs-a { font-size: 14px; }
+.ai-fs-opt[data-key="standard"] .ai-fs-a { font-size: 17px; }
+.ai-fs-opt[data-key="large"] .ai-fs-a { font-size: 20px; }
+.ai-fs-opt[data-key="xlarge"] .ai-fs-a { font-size: 24px; }
+.ai-fs-l {
+  font-size: .7em;
+  color: inherit;
+  opacity: .8;
+}

@@ -1,5 +1,6 @@
 import { probeConnection, getProvider, setProvider } from '../ai/index.js';
 import { mountEvolveSettings } from '../evolve/ui.js';
+import { applyFontSize, getFontSizeKey } from '../font-size.js';
 
 const defaults = { natural: true, context: true, length: 'short' };
 
@@ -118,6 +119,29 @@ function _buildPanel(container) {
       <label class="ai-setting-row"><span>回复长度</span><select id="aiSettingLength"><option value="short">简洁</option><option value="standard">标准</option></select></label>
     </div>
 
+    <div class="ai-setting-section">
+      <div class="ai-setting-section-title">文字大小</div>
+      <div class="ai-font-size-opts">
+        <button type="button" class="ai-fs-opt" data-key="small">
+          <span class="ai-fs-a">A</span>
+          <span class="ai-fs-l">小</span>
+        </button>
+        <button type="button" class="ai-fs-opt" data-key="standard">
+          <span class="ai-fs-a">A</span>
+          <span class="ai-fs-l">标准</span>
+        </button>
+        <button type="button" class="ai-fs-opt" data-key="large">
+          <span class="ai-fs-a">A</span>
+          <span class="ai-fs-l">大</span>
+        </button>
+        <button type="button" class="ai-fs-opt" data-key="xlarge">
+          <span class="ai-fs-a">A</span>
+          <span class="ai-fs-l">特大</span>
+        </button>
+      </div>
+      <div class="ai-setting-hint">仅调整聊天文字显示大小，不影响推演结果</div>
+    </div>
+
     <div class="ai-settings-note">设置只影响后续 AI 回复，不会修改已有对话。</div>
   `;
 
@@ -134,6 +158,17 @@ function _buildPanel(container) {
       try { localStorage.setItem(LS_KEY, JSON.stringify(n)); } catch (e) {}
     })
   );
+
+  // —— 文字大小设置 ——
+  const currentFsKey = getFontSizeKey();
+  container.querySelectorAll('.ai-fs-opt').forEach(btn => {
+    if (btn.dataset.key === currentFsKey) btn.classList.add('active');
+    btn.addEventListener('click', () => {
+      container.querySelectorAll('.ai-fs-opt').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyFontSize(btn.dataset.key);
+    });
+  });
 
   // —— 服务商切换 ——
   const provSel = container.querySelector('#aiProviderSelect');
