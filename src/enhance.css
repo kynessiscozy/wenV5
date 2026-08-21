@@ -14,6 +14,245 @@
   color:var(--c-text-3);
 }
 
+/* ============================================================
+   AI 设置弹窗
+   ============================================================ */
+.ai-settings-sheet{
+  width:min(440px,92vw);
+  padding:0!important;
+  border-radius:22px!important;
+  overflow:hidden;
+}
+.ai-settings-hero{
+  padding:28px 24px 20px;
+  text-align:center;
+  background:linear-gradient(135deg, var(--c-accent-soft, rgba(217,119,87,.12)), transparent 60%);
+  border-bottom:1px solid var(--c-border);
+}
+.ai-settings-icon{
+  width:56px;height:56px;
+  margin:0 auto 12px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:16px;
+  background:linear-gradient(135deg, var(--c-accent, #d97757), color-mix(in srgb, var(--c-accent, #d97757) 70%, #c75a2a));
+  color:#fff;
+  box-shadow:0 6px 20px rgba(217,119,87,.25);
+  animation:aiHeroIn .5s cubic-bezier(.2,.8,.3,1.2) both;
+}
+@keyframes aiHeroIn{
+  from{transform:scale(.6) rotate(-10deg);opacity:0}
+  to{transform:scale(1) rotate(0);opacity:1}
+}
+.ai-settings-sheet .ai-settings-title{
+  font-size:1.1em;
+  font-weight:800;
+  color:var(--c-text-hi, #1a1915);
+  margin:0 0 4px;
+}
+.ai-settings-subtitle{
+  font-size:.8em;
+  color:var(--c-text-3, #888);
+}
+.ai-settings-panel-modal{
+  padding:20px 22px 22px;
+  max-height:65vh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.ai-settings-panel-modal .ai-setting-section{
+  margin-bottom:14px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--c-border);
+}
+.ai-settings-panel-modal .ai-setting-section:last-of-type{
+  border-bottom:none;
+  margin-bottom:0;
+  padding-bottom:0;
+}
+.ai-settings-panel-modal .ai-setting-section-title{
+  font-size:.75em;
+  font-weight:700;
+  color:var(--c-text-2);
+  margin-bottom:10px;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+}
+.ai-settings-panel-modal .ai-setting-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 0;
+  font-size:.82em;
+}
+.ai-settings-panel-modal .ai-setting-row span{
+  color:var(--c-text-hi);
+  font-weight:500;
+}
+.ai-settings-panel-modal .ai-setting-row input[type="checkbox"]{
+  width:18px;height:18px;
+  accent-color:var(--c-accent, #d97757);
+  cursor:pointer;
+}
+.ai-settings-panel-modal .ai-provider-select{
+  width:100%;
+  padding:10px 14px;
+  border-radius:10px;
+  border:1px solid var(--c-border-2, #e8e4da);
+  background:var(--c-surface, #fff);
+  color:var(--c-text-hi);
+  font-family:inherit;
+  font-size:.82em;
+  cursor:pointer;
+  outline:none;
+  margin-bottom:6px;
+}
+.ai-settings-panel-modal .ai-provider-select:focus{
+  border-color:var(--c-accent, #d97757);
+  box-shadow:0 0 0 3px rgba(217,119,87,.15);
+}
+.ai-settings-panel-modal .ai-setting-hint{
+  font-size:.7em;
+  color:var(--c-text-4, #bbb);
+  line-height:1.5;
+  margin-top:4px;
+}
+.ai-settings-panel-modal .ai-key-status{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;
+  border-radius:10px;
+  background:var(--c-surface-2, #f8f6f0);
+  margin-bottom:10px;
+  font-size:.78em;
+}
+.ai-settings-panel-modal .ai-key-badge{
+  padding:2px 8px;
+  border-radius:6px;
+  font-size:.8em;
+  font-weight:700;
+  flex-shrink:0;
+}
+.ai-settings-panel-modal .ai-key-badge.builtin{
+  background:rgba(90,138,106,.15);
+  color:var(--c-teal, #5a8a6a);
+}
+.ai-settings-panel-modal .ai-key-badge.custom{
+  background:var(--c-accent-soft, rgba(217,119,87,.12));
+  color:var(--c-accent-text, #c75a2a);
+}
+.ai-settings-panel-modal .ai-key-badge.none{
+  background:rgba(212,101,74,.12);
+  color:rgba(212,101,74,.9);
+}
+.ai-settings-panel-modal .ai-key-masked{
+  font-family:var(--font-mono, monospace);
+  font-size:.9em;
+  color:var(--c-text-2);
+  letter-spacing:.5px;
+}
+.ai-settings-panel-modal .ai-key-hint{
+  color:var(--c-text-3);
+  font-size:.9em;
+}
+.ai-settings-panel-modal .ai-key-input-row{
+  display:flex;gap:8px;
+  margin-bottom:10px;
+}
+.ai-settings-panel-modal .ai-key-input{
+  flex:1;
+  padding:10px 14px;
+  border-radius:10px;
+  border:1px solid var(--c-border-2, #e8e4da);
+  background:var(--c-surface, #fff);
+  color:var(--c-text-hi);
+  font-family:inherit;
+  font-size:.82em;
+  outline:none;
+}
+.ai-settings-panel-modal .ai-key-input:focus{
+  border-color:var(--c-accent, #d97757);
+  box-shadow:0 0 0 3px rgba(217,119,87,.15);
+}
+.ai-settings-panel-modal .ai-key-save{
+  padding:10px 16px;
+  border-radius:10px;
+  border:0;
+  background:var(--c-accent, #d97757);
+  color:#fff;
+  font-family:inherit;
+  font-size:.82em;
+  font-weight:600;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.ai-settings-panel-modal .ai-key-save:hover{
+  background:color-mix(in srgb, var(--c-accent, #d97757) 90%, #000);
+}
+.ai-settings-panel-modal .ai-key-actions{
+  display:flex;gap:8px;
+  margin-bottom:8px;
+}
+.ai-settings-panel-modal .ai-key-action{
+  flex:1;
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid var(--c-border-2, #e8e4da);
+  background:var(--c-surface, #fff);
+  color:var(--c-text-2);
+  font-family:inherit;
+  font-size:.78em;
+  cursor:pointer;
+  transition:all .15s;
+}
+.ai-settings-panel-modal .ai-key-action:hover{
+  border-color:var(--c-accent, #d97757);
+  color:var(--c-accent-text, #c75a2a);
+}
+.ai-settings-panel-modal .ai-key-action.danger{
+  color:var(--c-warn, #d9654b);
+  border-color:rgba(217,101,75,.3);
+}
+.ai-settings-panel-modal .ai-key-action.danger:hover{
+  background:rgba(217,101,75,.08);
+}
+.ai-settings-panel-modal .ai-key-note{
+  font-size:.68em;
+  color:var(--c-text-4, #aaa);
+  line-height:1.6;
+}
+.ai-settings-panel-modal .ai-key-note a{
+  color:var(--c-accent, #d97757);
+  word-break:break-all;
+}
+.ai-settings-panel-modal .ai-settings-note{
+  font-size:.7em;
+  color:var(--c-text-4, #bbb);
+  text-align:center;
+  padding-top:12px;
+  line-height:1.5;
+}
+/* 设置行内 select */
+.ai-settings-panel-modal .ai-setting-row select{
+  padding:6px 10px;
+  border-radius:8px;
+  border:1px solid var(--c-border-2, #e8e4da);
+  background:var(--c-surface, #fff);
+  color:var(--c-text-hi);
+  font-family:inherit;
+  font-size:.95em;
+  cursor:pointer;
+  outline:none;
+}
+.ai-settings-panel-modal .ai-setting-row select:focus{
+  border-color:var(--c-accent, #d97757);
+}
+
+@media(max-width:560px){
+  .ai-settings-sheet{
+    width:94vw;
+  }
+  .ai-settings-panel-modal{
+    max-height:55vh;
+  }
+}
+
 /* ---- 卡片头部的分享小按钮 ---- */
 body .card-share{
   margin-left:auto;flex:0 0 auto;

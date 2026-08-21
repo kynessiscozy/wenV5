@@ -28,17 +28,38 @@ export function getAISettings() {
   }
 }
 
+/* ============================================================
+   弹窗开关
+   ============================================================ */
 export function toggleAISettings() {
-  const sheet = document.getElementById('aiSheet');
-  if (!sheet) return;
-  let panel = sheet.querySelector('.ai-settings-panel');
-  if (!panel) {
-    panel = _buildPanel(sheet);
+  const modal = document.getElementById('aiSettingsModal');
+  if (!modal) return;
+  if (modal.classList.contains('open')) {
+    closeAISettingsModal();
+  } else {
+    openAISettingsModal();
   }
-  const open = panel.hidden !== false;
-  panel.hidden = !open;
-  document.querySelector('.ai-settings')?.setAttribute('aria-expanded', String(open));
 }
+
+export function openAISettingsModal() {
+  const modal = document.getElementById('aiSettingsModal');
+  if (!modal) return;
+  const panel = document.getElementById('aiSettingsPanel');
+  if (panel && !panel.children.length) {
+    _buildPanel(panel);
+  }
+  modal.classList.add('open');
+  document.querySelector('.ai-settings')?.setAttribute('aria-expanded', 'true');
+}
+
+export function closeAISettingsModal() {
+  const modal = document.getElementById('aiSettingsModal');
+  if (!modal) return;
+  modal.classList.remove('open');
+  document.querySelector('.ai-settings')?.setAttribute('aria-expanded', 'false');
+}
+
+window.closeAISettingsModal = closeAISettingsModal;
 
 /* 提供方对应密钥说明 */
 function _providerInfo(p) {
@@ -51,18 +72,14 @@ function _providerInfo(p) {
 /* ============================================================
    构建设置面板 DOM
    ============================================================ */
-function _buildPanel(sheet) {
+function _buildPanel(container) {
   const v = getAISettings();
   const savedKey = _getSavedCustomKey();
   const maskedKey = savedKey ? _maskKey(savedKey) : '';
   const hasCustom = !!savedKey;
   const p = getProvider();
 
-  const panel = document.createElement('div');
-  panel.className = 'ai-settings-panel';
-  panel.innerHTML = `
-    <div class="ai-settings-title">AI 设置</div>
-
+  container.innerHTML = `
     <div class="ai-setting-section">
       <div class="ai-setting-section-title">服务提供商</div>
       <select id="aiProviderSelect" class="ai-provider-select">
@@ -104,38 +121,36 @@ function _buildPanel(sheet) {
     <div class="ai-settings-note">设置只影响后续 AI 回复，不会修改已有对话。</div>
   `;
 
-  sheet.appendChild(panel);
-  panel.hidden = true;
-  panel.querySelector('#aiSettingLength').value = v.length;
+  container.querySelector('#aiSettingLength').value = v.length;
 
   // —— 对话偏好监听 ——
-  panel.querySelectorAll('#aiSettingNatural,#aiSettingContext,#aiSettingLength').forEach(x =>
+  container.querySelectorAll('#aiSettingNatural,#aiSettingContext,#aiSettingLength').forEach(x =>
     x.addEventListener('change', () => {
       const n = {
-        natural: panel.querySelector('#aiSettingNatural').checked,
-        context: panel.querySelector('#aiSettingContext').checked,
-        length:  panel.querySelector('#aiSettingLength').value
+        natural: container.querySelector('#aiSettingNatural').checked,
+        context: container.querySelector('#aiSettingContext').checked,
+        length:  container.querySelector('#aiSettingLength').value
       };
       try { localStorage.setItem(LS_KEY, JSON.stringify(n)); } catch (e) {}
     })
   );
 
   // —— 服务商切换 ——
-  const provSel = panel.querySelector('#aiProviderSelect');
+  const provSel = container.querySelector('#aiProviderSelect');
   provSel.addEventListener('change', () => {
     const np = provSel.value;
     setProvider(np);
-    panel.querySelector('#aiKeyNote').innerHTML = _providerInfo(np);
-    _refreshKeyStatus(panel);
+    container.querySelector('#aiKeyNote').innerHTML = _providerInfo(np);
+    _refreshKeyStatus(container);
     probeConnection(getApiKey());
   });
 
   // —— API Key 交互 ——
-  const editBtn  = panel.querySelector('#aiKeyEditBtn');
-  const resetBtn = panel.querySelector('#aiKeyResetBtn');
-  const inputRow = panel.querySelector('#aiKeyInputRow');
-  const input    = panel.querySelector('#aiKeyInput');
-  const saveBtn  = panel.querySelector('#aiKeySave');
+  const editBtn  = container.querySelector('#aiKeyEditBtn');
+  const resetBtn = container.querySelector('#aiKeyResetBtn');
+  const inputRow = container.querySelector('#aiKeyInputRow');
+  const input    = container.querySelector('#aiKeyInput');
+  const saveBtn  = container.querySelector('#aiKeySave');
 
   editBtn.addEventListener('click', () => {
     inputRow.style.display = inputRow.style.display === 'none' ? 'flex' : 'none';
@@ -151,8 +166,7 @@ function _buildPanel(sheet) {
     if (!val) return;
     try { localStorage.setItem(LS_APIKEY, val); } catch (_) {}
     inputRow.style.display = 'none';
-    _refreshKeyStatus(panel);
-    // 自动重新探测连接
+    _refreshKeyStatus(container);
     probeConnection(val);
   });
 
@@ -164,13 +178,13 @@ function _buildPanel(sheet) {
     resetBtn.addEventListener('click', () => {
       try { localStorage.removeItem(LS_APIKEY); } catch (_) {}
       inputRow.style.display = 'none';
-      _refreshKeyStatus(panel);
+      _refreshKeyStatus(container);
       probeConnection(getApiKey());
     });
   }
 
-  mountEvolveSettings(panel);
-  return panel;
+  mountEvolveSettings(container);
+  return container;
 }
 
 /* ============================================================
@@ -185,10 +199,10 @@ function _maskKey(key) {
   return key.slice(0, 8) + '••••' + key.slice(-4);
 }
 
-function _refreshKeyStatus(panel) {
-  const statusEl = panel.querySelector('#aiKeyStatus');
-  const editBtn  = panel.querySelector('#aiKeyEditBtn');
-  const actionsEl = panel.querySelector('.ai-key-actions');
+function _refreshKeyStatus(container) {
+  const statusEl = container.querySelector('#aiKeyStatus');
+  const editBtn  = container.querySelector('#aiKeyEditBtn');
+  const actionsEl = container.querySelector('.ai-key-actions');
   const savedKey = _getSavedCustomKey();
   const hasCustom = !!savedKey;
 
@@ -203,8 +217,8 @@ function _refreshKeyStatus(panel) {
       btn.textContent = '恢复内置';
       btn.addEventListener('click', () => {
         try { localStorage.removeItem(LS_APIKEY); } catch (_) {}
-        panel.querySelector('#aiKeyInputRow').style.display = 'none';
-        _refreshKeyStatus(panel);
+        container.querySelector('#aiKeyInputRow').style.display = 'none';
+        _refreshKeyStatus(container);
         probeConnection(getApiKey());
       });
       actionsEl.appendChild(btn);
@@ -226,13 +240,6 @@ export function initAISettings() {
   window.getAISettings = getAISettings;
   window.getApiKey = getApiKey;
   window.toggleAISettings = toggleAISettings;
-
-  document.addEventListener('click', e => {
-    const panel = document.querySelector('.ai-settings-panel');
-    const btn = e.target.closest?.('.ai-settings');
-    if (panel && !panel.hidden && !panel.contains(e.target) && !btn) {
-      panel.hidden = true;
-      document.querySelector('.ai-settings')?.setAttribute('aria-expanded', 'false');
-    }
-  });
+  window.openAISettingsModal = openAISettingsModal;
+  window.closeAISettingsModal = closeAISettingsModal;
 }
