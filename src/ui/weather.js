@@ -101,18 +101,54 @@ async function fetchWeather(lat, lon) {
 }
 
 /* ---- 渲染天气模块 ---- */
-async function refreshWeather() {
-  const card = document.getElementById('wxLine');
+/* 同时刷新首页和 p2 菜单的天气卡片 */
+function _setWxLoading(prefix) {
+  const card = document.getElementById(prefix + 'WxLine');
   if (!card) return;
-
   card.style.display = 'block';
   card.classList.add('is-loading');
-  const iconEl = document.getElementById('wxIcon');
-  const primaryEl = document.getElementById('wxPrimary');
-  const secondaryEl = document.getElementById('wxSecondary');
+  const iconEl = document.getElementById(prefix + 'WxIcon');
+  const primaryEl = document.getElementById(prefix + 'WxPrimary');
+  const secondaryEl = document.getElementById(prefix + 'WxSecondary');
   if (primaryEl) primaryEl.innerHTML = '天气加载中…';
   if (secondaryEl) secondaryEl.innerHTML = '';
   if (iconEl) iconEl.innerHTML = '<svg viewBox="0 0 26 26" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="13" cy="12" r="4.5" fill="currentColor" fill-opacity=".12"/><path d="M13 1.5v2M13 22.5v1.5M3.5 12h2M20.5 12h2M6.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M6.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>';
+}
+
+function _setWxContent(prefix, icon, temp, label, city, hum, wind) {
+  const card = document.getElementById(prefix + 'WxLine');
+  if (!card) return;
+  card.classList.remove('is-loading');
+  const iconEl = document.getElementById(prefix + 'WxIcon');
+  const primaryEl = document.getElementById(prefix + 'WxPrimary');
+  const secondaryEl = document.getElementById(prefix + 'WxSecondary');
+  if (iconEl) iconEl.innerHTML = wxIconBig(icon);
+  if (primaryEl) primaryEl.innerHTML = `<span class="t">${temp}°</span>${label}`;
+  if (secondaryEl) {
+    let parts = [];
+    if (city) parts.push(`<span class="wx-meta-item">${miniLoc}${city}</span>`);
+    parts.push(`<span class="wx-meta-item">${miniHum}${hum}%</span>`);
+    parts.push(`<span class="wx-meta-item">${miniWnd}${wind} km/h</span>`);
+    secondaryEl.innerHTML = parts.join('<span class="wx-meta-sep">·</span>');
+  }
+}
+
+function _setWxError(prefix) {
+  const card = document.getElementById(prefix + 'WxLine');
+  if (!card) return;
+  card.classList.remove('is-loading');
+  const iconEl = document.getElementById(prefix + 'WxIcon');
+  const primaryEl = document.getElementById(prefix + 'WxPrimary');
+  const secondaryEl = document.getElementById(prefix + 'WxSecondary');
+  if (primaryEl) primaryEl.innerHTML = '天气暂不可用';
+  if (secondaryEl) secondaryEl.innerHTML = '';
+  if (iconEl) iconEl.innerHTML = '<svg viewBox="0 0 26 26" width="26" height="26"><circle cx="13" cy="13" r="5" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"/><path d="M10 10l6 6M10 16l6-6" stroke="currentColor" stroke-width="1.5" opacity=".4" stroke-linecap="round"/></svg>';
+}
+
+const WX_PREFIXES = ['wx', 'p2Wx']; /* 首页 + p2菜单 */
+
+async function refreshWeather() {
+  WX_PREFIXES.forEach(p => _setWxLoading(p));
 
   try {
     let lat, lon, city = '';
@@ -140,22 +176,10 @@ async function refreshWeather() {
     // 缓存最近天气，供工具（如能量穿搭）结合使用
     _wxNow = { city, temp, hum, wind, label: wx.label, code: cur.weather_code, icon: wx.icon };
 
-    card.classList.remove('is-loading');
-    if (iconEl) iconEl.innerHTML = wxIconBig(wx.icon);
-    if (primaryEl) primaryEl.innerHTML = `<span class="t">${temp}°</span>${wx.label}`;
-    if (secondaryEl) {
-      let parts = [];
-      if (city) parts.push(`<span class="wx-meta-item">${miniLoc}${city}</span>`);
-      parts.push(`<span class="wx-meta-item">${miniHum}${hum}%</span>`);
-      parts.push(`<span class="wx-meta-item">${miniWnd}${wind} km/h</span>`);
-      secondaryEl.innerHTML = parts.join('<span class="wx-meta-sep">·</span>');
-    }
+    WX_PREFIXES.forEach(p => _setWxContent(p, wx.icon, temp, wx.label, city, hum, wind));
   } catch (e) {
     console.warn('天气获取失败:', e);
-    card.classList.remove('is-loading');
-    if (primaryEl) primaryEl.innerHTML = '天气暂不可用';
-    if (secondaryEl) secondaryEl.innerHTML = '';
-    if (iconEl) iconEl.innerHTML = '<svg viewBox="0 0 26 26" width="26" height="26"><circle cx="13" cy="13" r="5" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"/><path d="M10 10l6 6M10 16l6-6" stroke="currentColor" stroke-width="1.5" opacity=".4" stroke-linecap="round"/></svg>';
+    WX_PREFIXES.forEach(p => _setWxError(p));
   }
 }
 
@@ -182,8 +206,11 @@ export function initWeather() {
   _lastFetch = Date.now();
 
   const observer = new MutationObserver(() => {
-    const drawer = document.getElementById('homeMenuDrawer');
-    if (drawer && drawer.classList.contains('open')) {
+    const homeDrawer = document.getElementById('homeMenuDrawer');
+    const p2Drawer = document.getElementById('p2MenuDrawer');
+    const isOpen = (homeDrawer && homeDrawer.classList.contains('open')) ||
+                   (p2Drawer && p2Drawer.classList.contains('open'));
+    if (isOpen) {
       const now = Date.now();
       if (now - _lastFetch > 600000) {
         refreshWeather();
@@ -192,8 +219,12 @@ export function initWeather() {
     }
   });
 
-  const drawer = document.getElementById('homeMenuDrawer');
-  if (drawer) {
-    observer.observe(drawer, { attributes: true, attributeFilter: ['class'] });
+  const homeDrawer = document.getElementById('homeMenuDrawer');
+  if (homeDrawer) {
+    observer.observe(homeDrawer, { attributes: true, attributeFilter: ['class'] });
+  }
+  const p2Drawer = document.getElementById('p2MenuDrawer');
+  if (p2Drawer) {
+    observer.observe(p2Drawer, { attributes: true, attributeFilter: ['class'] });
   }
 }
