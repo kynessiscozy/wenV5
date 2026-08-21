@@ -17,6 +17,9 @@
 /* ============================================================
    AI 设置弹窗
    ============================================================ */
+#aiSettingsModal{
+  z-index: 400 !important;
+}
 .ai-settings-sheet{
   width:min(440px,92vw);
   padding:0!important;
@@ -709,6 +712,15 @@ body.beginner-mode .qr-acts{display:none!important}
 .beginner-brief .bb-master{display:none!important}
 /* 底部提醒小字：精简信息密度 */
 .beginner-brief .bb-note{display:none!important}
+
+/* ============================================================
+   新手模式显示修复：
+   styles.css 中有两条顺序颠倒的规则会错误地隐藏 beginner-brief
+   并显示 .glass 卡片。这里用更高优先级纠正。
+   ============================================================ */
+body.beginner-mode section.sec > .beginner-brief{display:block!important}
+body.beginner-mode section.sec > .glass{display:none!important}
+body.beginner-mode section.sec > .qr-card{display:none!important}
 
 /* ============================================================
    改动10：首页汉堡菜单
