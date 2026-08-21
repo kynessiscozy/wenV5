@@ -66,5 +66,62 @@ const rLeap=calcSynastry({...base,partner:{y:2000,m:2,d:29,hourZhi:null}});
 t('闰日 2000-02-29 可计算', Number.isFinite(rLeap.score));
 t('五行占比合计接近 100', Math.abs(Object.values(rLeap.theirWx.pct).reduce((a,b)=>a+b,0)-100)<=3);
 
+console.log('\n[6] 时辰缺失→三柱模式→UI标注一致性');
+// 场景一：对方时辰缺失（hourZhi=null），引擎应降级为 day 精度，而非 full
+const rDay = calcSynastry({
+  ...base,
+  partner: { y: 1992, m: 8, d: 20, hourZhi: null },
+});
+t('时辰缺失时 precision=day（而非 full）', rDay.precision === 'day' && rDay.precision !== 'full');
+t('partnerPillars 仅含三柱（Y/M/D，无 H）',
+  rDay.partnerPillars.length === 3 && !rDay.partnerPillars.includes('H'));
+
+// 边界：hourZhi 越界或未传同样应进入三柱模式（与 null 同等处理）
+const rOob1 = buildPartnerChart({ y: 1992, m: 8, d: 20, hourZhi: 12 });
+const rOob2 = buildPartnerChart({ y: 1992, m: 8, d: 20, hourZhi: -1 });
+const rOob3 = buildPartnerChart({ y: 1992, m: 8, d: 20, hourZhi: undefined });
+t('hourZhi=12 越界→day 模式', rOob1.precision === 'day');
+t('hourZhi=-1 越界→day 模式', rOob2.precision === 'day');
+t('hourZhi=undefined→day 模式', rOob3.precision === 'day');
+
+// 场景二：三柱模式下日柱比对仍然成立（日柱不依赖时辰）
+// 同一日期：给定时辰 vs 时辰缺失，日柱干支应完全一致
+const rFull = calcSynastry({
+  ...base,
+  partner: { y: 1992, m: 8, d: 20, hourZhi: 5 },
+});
+t('日柱干支在两种精度下一致',
+  rDay.partnerChart.D.g === rFull.partnerChart.D.g &&
+  rDay.partnerChart.D.z === rFull.partnerChart.D.z,
+  `${rDay.partnerChart.D.g}${rDay.partnerChart.D.z} vs ${rFull.partnerChart.D.g}${rFull.partnerChart.D.z}`);
+t('dayPair 在三柱模式下仍被计算（夫妻宫不因缺时辰而丢失）',
+  typeof rDay.dayPair === 'object' && rDay.dayPair !== null &&
+  typeof rDay.dayPair.heZhi === 'boolean');
+// 日柱直接关系（dayPair）在两种精度下结构一致
+t('dayPair 字段集合在两种精度下一致',
+  Object.keys(rDay.dayPair).sort().join(',') === Object.keys(rFull.dayPair).sort().join(','));
+
+// 场景三：三柱模式下不应访问时柱相关数据（不应报错）
+// 所有互动条目的 where 不应出现「对方时柱」，证明未触碰对方 H 柱
+const allHits = [...rDay.positives, ...rDay.frictions];
+const leakH = allHits.some(h => h.where && h.where.includes('对方时柱'));
+t('三柱模式下互动条目不涉及对方时柱', !leakH);
+// 关键结构在三柱模式下完整、可计算（不抛错）
+t('三柱模式下 dayMaster 仍可计算', !!rDay.dm && !!rDay.dm.ss);
+t('三柱模式下五行互补仍可计算', !!rDay.comp && !!rDay.comp.text);
+t('三柱模式下分数有限且落在合理区间', Number.isFinite(rDay.score) && rDay.score >= 5 && rDay.score <= 97);
+// theirWx 仅按三柱统计，不应包含占位时柱的影响（total 不为 0）
+t('三柱模式下对方五行分布可计算', rDay.theirWx.total > 0);
+
+// 场景四：UI 标注应明确显示「仅三柱」或类似提示
+// precision 字段是 UI 显示「仅三柱」提示的唯一依据：
+// full 模式下应为 full，day 模式下应为 day，二者可被 UI 区分
+t('full 模式 precision=full', rFull.precision === 'full');
+t('day 与 full 的 precision 可区分（UI 据此显示「仅三柱」）',
+  rDay.precision === 'day' && rFull.precision === 'full' && rDay.precision !== rFull.precision);
+// partnerPillars 长度亦可作为 UI 判定三柱/四柱的辅助依据
+t('UI 可据 partnerPillars 长度区分三柱/四柱',
+  rDay.partnerPillars.length === 3 && rFull.partnerPillars.length === 4);
+
 console.log(`\n结果： ${pass} 通过 / ${fail} 失败\n`);
 process.exit(fail?1:0);

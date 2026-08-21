@@ -106,14 +106,12 @@ body { font-size: var(--fs-md); line-height: 1.6; }
   width: 40px !important; min-width: 40px !important;
   height: 40px !important; min-height: 40px !important;
 }
-/* 覆盖 styles.css 中 #aiSheet 高优先级的 29/30px 收缩规则 */
-#aiSheet .ai-new, #aiSheet .ai-settings, #aiSheet .ai-close,
+/* 覆盖 styles.css 中 .ai-sheet 高优先级的 29/30px 收缩规则 */
 .ai-sheet .ai-new, .ai-sheet .ai-settings, .ai-sheet .ai-close {
   width: 40px !important; min-width: 40px !important;
   height: 40px !important; min-height: 40px !important;
 }
 @media (max-width: 560px) {
-  #aiSheet .ai-new, #aiSheet .ai-settings, #aiSheet .ai-close,
   .ai-sheet .ai-new, .ai-sheet .ai-settings, .ai-sheet .ai-close {
     width: 40px !important; min-width: 40px !important;
     height: 40px !important; min-height: 40px !important;
@@ -584,22 +582,22 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
    ============================================================ */
 
 /* ---- 16.1 工具中心：360px 下塌成单列，116px 高的卡只放两行短文字 ---- */
-#s-adv .tool-grid,
-#s-adv .tool-grid-full {
+.sec .tool-grid,
+.sec .tool-grid-full {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: var(--sp-2) !important;
 }
-#s-adv .tool-tile {
+.sec .tool-tile {
   min-height: 92px !important;
   padding: var(--sp-3) !important;
   justify-content: center !important;
   gap: 4px !important;
 }
-#s-adv .tool-tile .tool-label {
+.sec .tool-tile .tool-label {
   font-size: var(--fs-base) !important;
   line-height: 1.4 !important;
 }
-#s-adv .tool-tile .tool-tag {
+.sec .tool-tile .tool-tag {
   font-size: var(--fs-micro) !important;
   color: var(--c-text-3) !important;
   background: transparent !important;
@@ -608,8 +606,8 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
   line-height: 1.45 !important;
 }
 @media (max-width: 380px) {
-  #s-adv .tool-tile { min-height: 86px !important; padding: 10px !important; }
-  #s-adv .tool-tile .tool-label { font-size: var(--fs-sm) !important; }
+  .sec .tool-tile { min-height: 86px !important; padding: 10px !important; }
+  .sec .tool-tile .tool-label { font-size: var(--fs-sm) !important; }
 }
 
 /* ---- 16.2 筛选条：360px 下末项被截断且无滚动提示 ---- */
@@ -707,14 +705,14 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
 }
 
 /* ---- 16.9 工具卡内部间距：隐藏的 .tool-icon 仍占 12px 外边距 ---- */
-#s-adv .tool-tile .tool-icon { display: none !important; margin: 0 !important; }
-#s-adv .tool-tile > b,
-#s-adv .tool-tile .tool-label {
+.sec .tool-tile .tool-icon { display: none !important; margin: 0 !important; }
+.sec .tool-tile > b,
+.sec .tool-tile .tool-label {
   margin: 0 !important;
   line-height: 1.35 !important;
 }
-#s-adv .tool-tile > small,
-#s-adv .tool-tile .tool-tag {
+.sec .tool-tile > small,
+.sec .tool-tile .tool-tag {
   margin-top: 2px !important;
 }
 
@@ -826,18 +824,15 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
 /* ---- 18.1 问问大师：发送按钮贴边、输入框里再套一层灰框 ----
    实测 .ai-input-row padding:0，按钮右缘距边框仅 1px，视觉上"挂在框外"；
    .ai-input 又有自己的灰底，形成框中框。 */
-#aiSheet .ai-input-row,
 .ai-sheet .ai-input-row {
   padding: 6px !important;
   gap: 6px !important;
   align-items: flex-end !important;
   overflow: hidden;            /* 圆角内收，按钮不会溢出描边 */
 }
-/* :focus 态另有一条 #aiSheet .ai-input:focus{background:var(--c-surface-3)!important}
+/* :focus 态另有一条 .ai-sheet .ai-input:focus{background:var(--c-surface-3)!important}
    会在聚焦时把灰底加回来，必须一并覆盖 */
-#aiSheet .ai-input,
 .ai-sheet .ai-input,
-#aiSheet .ai-input:focus,
 .ai-sheet .ai-input:focus {
   background: transparent !important;
   border: 0 !important;
@@ -845,8 +840,7 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
   padding: 9px 8px !important;
   box-shadow: none !important;
 }
-#aiSheet .ai-input-wrap { flex: 1 1 auto; min-width: 0; }
-#aiSheet .ai-send,
+.ai-sheet .ai-input-wrap { flex: 1 1 auto; min-width: 0; }
 .ai-sheet .ai-send {
   flex: 0 0 auto;
   width: 38px !important; min-width: 38px !important;
@@ -857,7 +851,7 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
 
 /* ---- 18.2 工具页顶部多出的方形外框 ----
    .tools-toolbar 是纯白实心块，与下方卡片之间形成一条突兀的方形边界。 */
-#s-adv .tools-toolbar {
+.sec .tools-toolbar {
   background: transparent !important;
   border: 0 !important;
   border-bottom: 1px solid var(--c-border) !important;
@@ -866,10 +860,10 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
   padding: 0 0 var(--sp-3) !important;
   margin-bottom: var(--sp-3) !important;
 }
-#s-adv .tools-toolbar::before,
-#s-adv .tools-toolbar::after { display: none !important; }
+.sec .tools-toolbar::before,
+.sec .tools-toolbar::after { display: none !important; }
 /* 搜索框自己保留描边即可 */
-#s-adv .tools-search input {
+.sec .tools-search input {
   background: var(--c-surface) !important;
   border: 1px solid var(--c-border-2) !important;
   border-radius: 10px !important;
@@ -925,18 +919,15 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
    ============================================================ */
 
 /* ---- 19.1 输入框与发送键等高（实测差 6px：44 vs 38）---- */
-#aiSheet .ai-input-row,
 .ai-sheet .ai-input-row {
   align-items: center !important;      /* 原为 flex-end，单行时两者不对齐 */
 }
-#aiSheet .ai-input,
 .ai-sheet .ai-input {
   min-height: 40px !important;
   max-height: 132px !important;
   padding: 9px 10px !important;
   line-height: 22px !important;
 }
-#aiSheet .ai-send,
 .ai-sheet .ai-send {
   width: 40px !important; min-width: 40px !important;
   height: 40px !important; min-height: 40px !important;
@@ -945,7 +936,7 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
 
 /* ---- 19.2 底部圆角：面板并未贴到屏幕底（实测悬空 87~92px），
         却用了「上圆下方」的贴底样式，看起来像被截断 ---- */
-#aiSheet, .ai-sheet {
+.ai-sheet {
   border-radius: var(--c-r-xl) !important;
   bottom: max(10px, env(safe-area-inset-bottom)) !important;
   overflow: hidden;
@@ -954,7 +945,7 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
 /* ---- 19.3 桌面端放大：原固定 430px 宽、56% 屏高，
         大屏上浪费了大量空间 ---- */
 @media (min-width: 768px) {
-  #aiSheet, .ai-sheet {
+  .ai-sheet {
     width: min(720px, calc(100vw - 48px)) !important;
     max-width: min(720px, calc(100vw - 48px)) !important;
     left: 50% !important;
@@ -966,14 +957,14 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
     border-radius: var(--c-r-xl) !important;
   }
   /* 打开动画同样要带上 translateX，否则会先跳到左侧 */
-  #aiSheet:not(.open), .ai-sheet:not(.open) {
+  .ai-sheet:not(.open) {
     transform: translateX(-50%) translateY(24px) !important;
   }
   #askResult { max-height: none !important; }
   .ai-overlay { backdrop-filter: blur(3px); }
 }
 @media (min-width: 1200px) {
-  #aiSheet, .ai-sheet {
+  .ai-sheet {
     width: min(860px, calc(100vw - 64px)) !important;
     max-width: min(860px, calc(100vw - 64px)) !important;
     height: min(82vh, 880px) !important;
@@ -985,12 +976,12 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
    styles.css 有 `text-shadow: 0 1px 8px rgba(0,0,0,.75)`，
    那是为「白字压在深色 WEBP 上」设计的。底图已换成浅色 SVG 纹理，
    这层黑色投影在亮色模式下变成明显的脏边。 */
-#s-adv .tool-tile b,
-#s-adv .tool-tile small,
-#s-adv .tool-tile[data-group] b,
-#s-adv .tool-tile[data-group] small,
-#s-adv .tool-tile .tool-label,
-#s-adv .tool-tile .tool-tag {
+.sec .tool-tile b,
+.sec .tool-tile small,
+.sec .tool-tile[data-group] b,
+.sec .tool-tile[data-group] small,
+.sec .tool-tile .tool-label,
+.sec .tool-tile .tool-tag {
   text-shadow: none !important;
 }
 
@@ -1199,17 +1190,17 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
    ============================================================ */
 :root { --ai-dock-gap: 10px; }
 
-#aiSheet, .ai-sheet {
+.ai-sheet {
   /* Dock 高度 + 安全区 + Dock 自身的 12px 底距 + 间隙 */
   bottom: calc(var(--ig-dock-height, 66px) + env(safe-area-inset-bottom, 0px) + 12px + var(--ai-dock-gap)) !important;
   max-height: calc(100dvh - var(--ig-dock-height, 66px) - env(safe-area-inset-bottom, 0px) - 12px - var(--ai-dock-gap) - 16px) !important;
 }
 /* Dock 必须浮在遮罩之上才能点得到 */
 body .ig-dock.tab-bar { z-index: 210 !important; }
-#aiSheet, .ai-sheet { z-index: 301 !important; }
+.ai-sheet { z-index: 301 !important; }
 
 @media (min-width: 768px) {
-  #aiSheet, .ai-sheet {
+  .ai-sheet {
     bottom: calc(var(--ig-dock-height, 66px) + env(safe-area-inset-bottom, 0px) + 12px + var(--ai-dock-gap)) !important;
     height: auto !important;
     max-height: calc(100dvh - var(--ig-dock-height, 66px) - env(safe-area-inset-bottom, 0px) - 12px - var(--ai-dock-gap) - 24px) !important;
@@ -1218,7 +1209,7 @@ body .ig-dock.tab-bar { z-index: 210 !important; }
   }
 }
 @media (min-width: 1200px) {
-  #aiSheet, .ai-sheet {
+  .ai-sheet {
     height: auto !important;
     min-height: min(700px, calc(100dvh - 220px)) !important;
   }

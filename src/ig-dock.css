@@ -253,8 +253,8 @@ body .ig-dock .ig-ai-icon{filter:drop-shadow(0 1px 3px rgba(0,0,0,.23))!importan
 @media(max-width:560px){.ai-sheet .ai-title{padding-right:70px!important}}
 
 /* 新对话与 AI 设置使用完全一致的触控尺寸，覆盖旧样式的独立宽高。 */
-#aiSheet .ai-new,
-#aiSheet .ai-settings{
+.ai-sheet .ai-new,
+.ai-sheet .ai-settings{
   width:29px!important;
   height:29px!important;
   min-width:29px!important;
@@ -266,4 +266,4 @@ body .ig-dock .ig-ai-icon{filter:drop-shadow(0 1px 3px rgba(0,0,0,.23))!importan
   border-radius:50%!important;
   box-sizing:border-box!important;
 }
-@media(max-width:560px){#aiSheet .ai-new,#aiSheet .ai-settings{width:29px!important;height:29px!important;min-width:29px!important;min-height:29px!important}}
+@media(max-width:560px){.ai-sheet .ai-new,.ai-sheet .ai-settings{width:29px!important;height:29px!important;min-width:29px!important;min-height:29px!important}}

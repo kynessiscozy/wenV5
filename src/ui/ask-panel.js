@@ -11,6 +11,7 @@ import {
   lastExperienceId, flagLastFollowUp, chartKeyOf, getGenome
 } from '../evolve/index.js';
 import { showToast } from './toast.js';
+import { filterAiResponse } from '../ai/filter.js';
 
 /* ============================================================
    问问大师 · 重构版 — ChatGPT 气泡式对话
@@ -555,6 +556,16 @@ export async function generateAnswer(q) {
 
     clearTimeout(slowTimer);
     _hideTyping(el);
+
+    // AI 输出兜底过滤：扫描最终文本中的黑名单词
+    if (textEl) {
+      const rendered = textEl.innerHTML;
+      const { html: filteredHtml, filtered } = filterAiResponse(result.text, rendered);
+      if (filtered) {
+        textEl.innerHTML = filteredHtml;
+        _scrollToBottom(el);
+      }
+    }
 
     _setModelLabel(result.model);
 

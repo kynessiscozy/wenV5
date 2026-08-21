@@ -83,3 +83,96 @@
   background: var(--ac1);
   color: var(--ac-text);
 }
+
+/* ============================================================
+   自进化仪表盘
+   ============================================================ */
+.evo-dash{
+  margin:10px 0 8px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.evo-dash-section{
+  background:var(--c-surface-2);
+  border-radius:12px;
+  padding:12px 14px;
+}
+.evo-dash-title{
+  font-size:.65em;
+  font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:var(--c-text-3);
+  margin-bottom:8px;
+}
+.evo-bar-row{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:5px;
+  font-size:.72em;
+}
+.evo-bar-row:last-child{margin-bottom:0}
+.evo-bar-label{
+  flex:0 0 56px;
+  color:var(--c-text-2);
+  font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.evo-bar-track{
+  flex:1 1 auto;
+  height:8px;
+  border-radius:999px;
+  background:var(--c-surface-3, rgba(0,0,0,.06));
+  overflow:hidden;
+}
+.evo-bar-fill{
+  height:100%;
+  border-radius:999px;
+  background:var(--c-accent, #d97757);
+  transition:width .4s cubic-bezier(.2,.8,.3,1);
+}
+.evo-bar-tone{
+  background:color-mix(in srgb, var(--c-accent, #d97757) 70%, var(--c-text-3, #888));
+}
+.evo-bar-val{
+  flex:0 0 32px;
+  text-align:right;
+  color:var(--c-text-hi);
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  font-size:.9em;
+}
+.evo-src-row{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:5px;
+  font-size:.72em;
+}
+.evo-src-row:last-child{margin-bottom:0}
+.evo-src-label{
+  flex:0 0 56px;
+  color:var(--c-text-2);
+  font-weight:500;
+}
+.evo-src-ai{background:var(--c-accent, #d97757)}
+.evo-src-kb{background:color-mix(in srgb, var(--c-teal, #5a8a6a) 80%, transparent)}
+.evo-src-personal{background:color-mix(in srgb, var(--c-accent, #d97757) 60%, var(--c-text-3, #888))}
+.evo-src-fallback{background:var(--c-text-4, #aaa)}
+.evo-lesson{
+  display:flex;align-items:flex-start;gap:8px;
+  font-size:.7em;
+  line-height:1.6;
+  color:var(--c-text-2);
+  margin-bottom:6px;
+}
+.evo-lesson:last-child{margin-bottom:0}
+.evo-lesson-dot{
+  flex:0 0 6px;
+  width:6px;height:6px;
+  margin-top:7px;
+  border-radius:50%;
+  background:var(--c-accent, #d97757);
+  flex-shrink:0;
+}
+.evolve-empty{
+  font-size:.72em;
+  color:var(--c-text-4);
+  padding:4px 0;
+}

@@ -4,6 +4,16 @@
    全部使用既有主题变量，自动适配明暗模式。
    ============================================================ */
 
+/* AI 输出兜底过滤提示 */
+.ai-filter-notice{
+  margin-top:8px;padding:6px 10px;
+  border-radius:8px;
+  background:var(--c-surface-2);
+  border:1px solid var(--c-border);
+  font-size:.66em;line-height:1.5;
+  color:var(--c-text-3);
+}
+
 /* ---- 卡片头部的分享小按钮 ---- */
 body .card-share{
   margin-left:auto;flex:0 0 auto;
@@ -442,14 +452,14 @@ body.beginner-mode .qr-acts{display:none!important}
 /* ============================================================
    改动7：工具页顶部筛选条——滚动时去掉突兀的底框/色块
    ============================================================ */
-#s-adv .tools-toolbar{
+.sec .tools-toolbar{
   background:var(--c-bg)!important;
   backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
   border:0!important;border-bottom:1px solid var(--c-border)!important;
   border-radius:0!important;box-shadow:none!important;
   margin-left:0!important;margin-right:0!important;
 }
-#s-adv .tools-toolbar::before,#s-adv .tools-toolbar::after{display:none!important}
+.sec .tools-toolbar::before,.sec .tools-toolbar::after{display:none!important}
 
 /* ============================================================
    改动8：新手版精简——隐藏与顶部模式切换重复的冗余元素

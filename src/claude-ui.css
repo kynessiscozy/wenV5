@@ -292,27 +292,31 @@ body .ig-dock .ai-fab:hover { background: var(--c-accent-hover) !important; filt
   background: transparent !important; border: 0 !important;
   color: var(--c-text) !important; font-family: var(--sf) !important;
 }
-#aiSheet .ai-input, .ai-input {
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 8px !important;
-  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-  color: var(--c-text) !important;
+/* 输入框：透明背景，由 .ai-input-row 提供视觉外框 */
+.ai-sheet .ai-input {
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: var(--c-text);
 }
-#aiSheet .ai-input-row {
-  background: var(--c-surface) !important;
-  border: 1px solid var(--c-border-2) !important;
-  border-radius: 14px !important;
+/* 输入行：卡片化外框（覆盖 styles.css 的无边框布局） */
+.ai-sheet .ai-input-row {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-2);
+  border-radius: 14px;
 }
-.ai-send, #aiSheet .ai-send {
-  background: var(--c-accent) !important;
-  color: var(--c-on-accent) !important;
-  border: 0 !important; border-radius: 10px !important;
-  width: 38px !important; min-height: 38px !important; height: 38px !important;
+/* 发送按钮：实心强调色 */
+.ai-sheet .ai-send {
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  border: 0; border-radius: 10px;
+  width: 38px; min-height: 38px; height: 38px;
   align-self: flex-end;
 }
-.ai-send:hover, #aiSheet .ai-send:hover { background: var(--c-accent-hover) !important; }
-#aiSheet .ai-send:disabled { opacity: .35 !important; filter: none !important; }
+.ai-sheet .ai-send:hover { background: var(--c-accent-hover); }
+.ai-sheet .ai-send:disabled { opacity: .35; filter: none; }
 .ai-actions {
   background: transparent !important;
   border: 0 !important;
@@ -437,31 +441,32 @@ table, .fine-table, .god-table { border-collapse: collapse; width: 100%; }
 
 /* ---------- 12. 工具中心 ---------- */
 /* 底纹改为 SVG（随 currentColor 适配明暗），不再用深色 WEBP */
-#s-adv .tool-tile {
+/* 工具卡片：纸感底纹（底色 + 右侧 SVG 纹理），保留 !important 以覆盖 styles.css 共享规则 */
+.sec .tool-tile {
   position: relative;
   background-color: var(--c-surface) !important;
-  background-repeat: no-repeat !important;
-  background-position: right -14px center !important;
-  background-size: auto 150% !important;
+  background-repeat: no-repeat;
+  background-position: right -14px center;
+  background-size: auto 150%;
   border: 1px solid var(--c-border) !important;
-  border-radius: var(--c-r) !important;
+  border-radius: var(--c-r);
   box-shadow: none !important;
   overflow: hidden;
 }
 /* SVG 是外部文档拿不到 currentColor，统一用 opacity 控制存在感：
    浅色下 .12、深色下调低，始终不与文字抢注意力 */
-#s-adv .tool-tile { --art-op: .14; }
-[data-theme="dark"] #s-adv .tool-tile { --art-op: .20; }
-#s-adv .tool-tile::after {
+.sec .tool-tile { --art-op: .14; }
+[data-theme="dark"] .sec .tool-tile { --art-op: .20; }
+.sec .tool-tile::after {
   content: ''; position: absolute; inset: 0; z-index: 0;
-  background: inherit; background-color: transparent !important;
+  background: inherit; background-color: transparent;
   opacity: var(--art-op); pointer-events: none;
 }
-#s-adv .tool-tile > * { position: relative; z-index: 1; }
-#s-adv .tool-tile:hover { background-color: var(--c-surface-3) !important; border-color: var(--c-border-2) !important; }
-#s-adv .tool-tile:hover::after { opacity: calc(var(--art-op) * 1.5); }
-#s-adv .tool-tile .tool-label, #s-adv .tool-tile > b { color: var(--c-text) !important; }
-#s-adv .tool-tile .tool-tag, #s-adv .tool-tile > small { color: var(--c-text-3) !important; }
+.sec .tool-tile > * { position: relative; z-index: 1; }
+.sec .tool-tile:hover { background-color: var(--c-surface-3) !important; border-color: var(--c-border-2) !important; }
+.sec .tool-tile:hover::after { opacity: calc(var(--art-op) * 1.5); }
+.sec .tool-tile .tool-label, .sec .tool-tile > b { color: var(--c-text) !important; }
+.sec .tool-tile .tool-tag, .sec .tool-tile > small { color: var(--c-text-3) !important; }
 .tools-toolbar {
   background: var(--c-bg) !important;
   background-image: none !important;
@@ -474,7 +479,7 @@ table, .fine-table, .god-table { border-collapse: collapse; width: 100%; }
 }
 .tools-search input { border-radius: 10px !important; }
 .tool-icon { color: var(--c-accent) !important; filter: none !important; }
-#s-adv .tool-tile::before, #s-adv .tool-tile::after { display: none !important; }
+.sec .tool-tile::before, .sec .tool-tile::after { display: none; }
 .tool-banner { border-radius: var(--c-r-lg) !important; }
 .tool-banner-overlay {
   background: linear-gradient(180deg, transparent, color-mix(in srgb, #141413 72%, transparent)) !important;
@@ -522,7 +527,7 @@ table, .fine-table, .god-table { border-collapse: collapse; width: 100%; }
 body:not(.home) .theme-toggle-home { display: none; }
 
 /* 旧的「玻璃质感」入口在扁平设计中已无意义 */
-#lgFab, .lg-panel { display: none !important; }
+.lg-panel { display: none; }
 
 
 /* ---------- 15. 派生变量（放在最后，覆盖 styles.css 的 :root） ---------- */
