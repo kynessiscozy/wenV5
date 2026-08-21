@@ -50,6 +50,9 @@ export function openAISettingsModal() {
     _buildPanel(panel);
   }
   modal.classList.add('open');
+  // 隐藏 dock 栏，避免底部按钮被遮挡
+  const dock = document.querySelector('.ig-dock.tab-bar');
+  if (dock) dock.style.display = 'none';
   document.querySelector('.ai-settings')?.setAttribute('aria-expanded', 'true');
 }
 
@@ -57,6 +60,9 @@ export function closeAISettingsModal() {
   const modal = document.getElementById('aiSettingsModal');
   if (!modal) return;
   modal.classList.remove('open');
+  // 恢复 dock 栏显示
+  const dock = document.querySelector('.ig-dock.tab-bar');
+  if (dock) dock.style.display = '';
   document.querySelector('.ai-settings')?.setAttribute('aria-expanded', 'false');
 }
 

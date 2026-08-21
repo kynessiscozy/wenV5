@@ -1275,6 +1275,11 @@ body.report-active .home-menu-drawer{display:none}
     align-items:flex-end!important;
     padding:0!important;
   }
+  /* 弹窗打开时隐藏 dock 栏，避免遮挡底部按钮 */
+  #saveModal.open ~ .ig-dock.tab-bar,
+  body:has(#saveModal.open) .ig-dock.tab-bar{
+    display:none!important;
+  }
   #saveModal .modal-sheet{
     width:100vw!important;max-width:100vw!important;
     border-radius:20px 20px 0 0!important;

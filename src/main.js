@@ -514,6 +514,9 @@ function openSaveModal(){
   const m=document.getElementById('saveModal');
   if(!m)return;
   m.classList.add('open');
+  // 隐藏 dock 栏，避免底部按钮被遮挡
+  const dock=document.querySelector('.ig-dock.tab-bar');
+  if(dock)dock.style.display='none';
   const n=document.getElementById('saveName');
   n.value='';
   updateSaveNameCount();
@@ -546,7 +549,12 @@ function openSaveModal(){
     }
   }
 }
-function closeSaveModal(){document.getElementById('saveModal').classList.remove('open');}
+function closeSaveModal(){
+  document.getElementById('saveModal').classList.remove('open');
+  // 恢复 dock 栏显示
+  const dock=document.querySelector('.ig-dock.tab-bar');
+  if(dock)dock.style.display='';
+}
 function updateSaveNameCount(){
   const n=document.getElementById('saveName');
   const c=document.getElementById('saveNameCount');
