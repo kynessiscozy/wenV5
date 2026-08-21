@@ -554,6 +554,7 @@ export async function generateAnswer(q) {
     });
 
     clearTimeout(slowTimer);
+    _hideTyping(el);
 
     _setModelLabel(result.model);
 
