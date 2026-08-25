@@ -180,14 +180,18 @@ export function goResult(container, toolName, innerHtml, opts = {}) {
   /* —— 全面接入 AI：统一放在结果正文底部，不混进吸底操作栏 —— */
   const aiMount = result.querySelector('.tw-ai-mount');
   if (aiMount) {
-    attachToolAI({
-      root: result,
-      typeLabel: toolName,
-      getSource: opts.getSource || (() => (result.querySelector('.tw-result-page-body')?.innerText || '').slice(0, 1800)),
-      slot: aiMount,
-      extraSystem: opts.aiExtraSystem || '',
-      depth: !!opts.aiDepth,
-    });
+    if (opts.noAI) {
+      aiMount.remove();
+    } else {
+      attachToolAI({
+        root: result,
+        typeLabel: toolName,
+        getSource: opts.getSource || (() => (result.querySelector('.tw-result-page-body')?.innerText || '').slice(0, 1800)),
+        slot: aiMount,
+        extraSystem: opts.aiExtraSystem || '',
+        depth: !!opts.aiDepth,
+      });
+    }
   }
 
   /* 返回栏图层：仅当内容滚动遮挡到返回栏下方时才出现 */

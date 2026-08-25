@@ -736,6 +736,9 @@ button,input,select,textarea{font:inherit;-webkit-tap-highlight-color:transparen
 .sec .tool-tile[data-tool="lottery"]{background-image:linear-gradient(145deg,transparent,transparent),url('/art/lottery.svg')!important}
 /* 生肖与关系使用对应的关系主题图，并以不同裁切和染色区分。 */
 .sec .tool-tile[data-tool="zodiac"]{background-image:linear-gradient(145deg,transparent,transparent),url('/art/group-relation.svg')!important;background-position:left center!important}
+.sec .tool-tile[data-tool="horoscope"]{background-image:linear-gradient(145deg,transparent,transparent),url('/art/group-relation.svg')!important;background-position:center!important}
+.sec .tool-tile[data-tool="tarot"]{background-image:linear-gradient(145deg,transparent,transparent),url('/art/oracle.svg')!important;background-position:center!important}
+.sec .tool-tile[data-tool="mbti"]{background-image:linear-gradient(145deg,transparent,transparent),url('/art/style.svg')!important;background-position:center!important}
 .sec .tool-tile[data-tool="relation"]{background-image:linear-gradient(145deg,transparent,transparent),url('/art/group-relation.svg')!important;background-position:right center!important}
 
 /* 工具详情页复用入口插画，在标题区延续同一视觉语义。 */
@@ -1777,3 +1780,455 @@ button,input,select,textarea{font:inherit;-webkit-tap-highlight-color:transparen
    .ai-sheet 基准字号 = 15px × --font-scale；聊天正文/气泡均为 em 体系，根一缩放即整体联动。
    --font-scale 由 src/font-size.js 仅写入 .ai-sheet，故全站其余页面不受影响。 */
 .ai-sheet{font-size:calc(15px * var(--font-scale, 1))}
+
+/* ============================================================
+   体系模式控制：东方命理 vs 西方星相
+   ============================================================ */
+body[data-system-mode="eastern"] .sys-western,
+html[data-system-mode="eastern"] .sys-western { display: none !important; }
+
+body[data-system-mode="western"] .sys-eastern,
+html[data-system-mode="western"] .sys-eastern { display: none !important; }
+
+body[data-system-mode="eastern"] .ig-nav-icon-western,
+html[data-system-mode="eastern"] .ig-nav-icon-western,
+body[data-system-mode="eastern"] .ig-dock .ig-nav-icon-western { display: none !important; }
+
+body[data-system-mode="western"] .ig-nav-icon-eastern,
+html[data-system-mode="western"] .ig-nav-icon-eastern,
+body[data-system-mode="western"] .ig-dock .ig-nav-icon-eastern { display: none !important; }
+
+body[data-system-mode="western"] .ig-nav-icon-western,
+html[data-system-mode="western"] .ig-nav-icon-western,
+body[data-system-mode="western"] .ig-dock .ig-nav-icon-western { display: block !important; }
+
+body[data-system-mode="eastern"] .ig-nav-icon-eastern,
+html[data-system-mode="eastern"] .ig-nav-icon-eastern,
+body[data-system-mode="eastern"] .ig-dock .ig-nav-icon-eastern { display: block !important; }
+
+/* ============================================================
+   西方星相专属视觉组件（直观图形化体系）
+   ============================================================ */
+.w-visual-banner {
+  padding: 16px 18px; border-radius: 18px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ac) 14%, var(--c-surface-2)), var(--c-surface-2));
+  border: 1px solid color-mix(in srgb, var(--ac) 28%, transparent);
+  margin-bottom: 14px;
+}
+.w-visual-banner .wb-top { display: flex; align-items: center; gap: 14px; }
+.w-visual-banner .wb-sign-badge {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 54px; height: 54px; border-radius: 14px; border: 1.5px solid currentColor; flex-shrink: 0;
+}
+.w-visual-banner .wb-sign-badge .sym { font-size: 24px; line-height: 1; }
+.w-visual-banner .wb-sign-badge b { font-size: 11px; margin-top: 2px; }
+.w-visual-banner .wb-meta { flex: 1; }
+.w-visual-banner .wb-title { font-size: 1.08em; font-weight: 800; font-family: var(--serif); color: var(--c-text-hi); }
+.w-visual-banner .wb-sub { font-size: .78em; color: var(--ac-text); margin-top: 3px; font-weight: 600; }
+.w-visual-banner .wb-takeaway {
+  margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--c-border);
+  font-size: .82em; line-height: 1.6; color: var(--c-text);
+}
+.w-visual-banner .wb-takeaway b { color: var(--c-text-hi); }
+
+/* 本命星盘圆盘 (SVG 500px High-End Natal Wheel) */
+.w-wheel-container {
+  display: flex; flex-direction: column; align-items: center; margin: 14px auto 10px; width: 100%; max-width: 440px;
+}
+.w-wheel-stage {
+  position: relative; width: 100%; max-width: 400px; margin: 0 auto;
+}
+.w-wheel-svg {
+  width: 100%; height: auto; display: block; filter: drop-shadow(0 8px 24px rgba(0,0,0,.22));
+}
+.planet-glyph-group {
+  cursor: pointer; transition: transform .2s cubic-bezier(.2,.8,.2,1);
+}
+.planet-glyph-group:hover {
+  transform: scale(1.18); transform-origin: center;
+}
+.w-wheel-aspect-legend {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px; margin-top: 14px; width: 100%;
+}
+@media (max-width: 420px) { .w-wheel-aspect-legend { grid-template-columns: 1fr; } }
+.aspect-pill {
+  display: flex; align-items: center; gap: 8px; font-size: .74em; color: var(--c-text-2);
+  padding: 5px 10px; border-radius: 8px; background: var(--c-surface-3); border: 1px solid var(--c-border);
+}
+.aspect-pill i { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.aspect-pill span { white-space: nowrap; }
+
+/* 三核星盘卡 */
+.w-trio-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;
+}
+@media (max-width: 560px) { .w-trio-grid { grid-template-columns: 1fr; } }
+.w-trio-card {
+  padding: 14px 12px; border-radius: 14px; background: var(--c-surface-2);
+  border: 1px solid var(--c-border); text-align: center;
+}
+.w-trio-card.sun { border-top: 3px solid #d97757; }
+.w-trio-card.moon { border-top: 3px solid #6b8ba4; }
+.w-trio-card.asc { border-top: 3px solid #b5838d; }
+.w-trio-card .kicker { font-size: .72em; font-weight: 700; color: var(--ac-text); margin-bottom: 4px; }
+.w-trio-card .symbol { font-size: 2.2em; line-height: 1; margin: 4px 0; color: var(--c-text-hi); }
+.w-trio-card .name { font-size: 1.1em; font-weight: 800; font-family: var(--serif); color: var(--c-text-hi); }
+.w-trio-card .tag { font-size: .72em; color: var(--c-text-2); margin: 4px 0 6px; }
+.w-trio-card p { font-size: .76em; line-height: 1.6; color: var(--c-text-2); margin: 0; text-align: left; }
+
+/* 四象与六维雷达并列排版 */
+.w-elem-radar-layout {
+  display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; margin-top: 10px; align-items: center;
+}
+@media (max-width: 600px) { .w-elem-radar-layout { grid-template-columns: 1fr; } }
+.w-elem-title { font-size: .82em; font-weight: 700; color: var(--c-text-hi); margin-bottom: 10px; }
+.w-elem-bar-row { margin-bottom: 8px; }
+.w-elem-bar-row .lab { display: flex; justify-content: space-between; font-size: .78em; color: var(--c-text); margin-bottom: 3px; font-weight: 600; }
+.w-elem-bar-row .track { height: 7px; border-radius: 99px; background: var(--c-surface-3); overflow: hidden; }
+.w-elem-bar-row .fill { height: 100%; border-radius: 99px; }
+.w-elem-bar-row .meta { font-size: .68em; color: var(--c-text-3); margin-top: 2px; }
+
+.w-radar-box { width: 100%; max-width: 220px; margin: 0 auto; }
+.w-radar-svg { width: 100%; height: auto; display: block; }
+
+/* 十大星体网格卡 */
+.w-planet-cards-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px;
+}
+@media (max-width: 600px) { .w-planet-cards-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 380px) { .w-planet-cards-grid { grid-template-columns: 1fr; } }
+.w-planet-tile {
+  padding: 10px 12px; border-radius: 12px; background: var(--c-surface-2); border: 1px solid var(--c-border);
+}
+.w-planet-tile .top { display: flex; align-items: baseline; justify-content: space-between; gap: 4px; font-size: .8em; font-weight: 700; }
+.w-planet-tile .sym { color: var(--ac-text); font-size: 1.1em; }
+.w-planet-tile .pname { color: var(--c-text-hi); flex: 1; margin-left: 4px; }
+.w-planet-tile .pdeg { color: var(--c-text-3); font-size: .85em; }
+.w-planet-tile .mid { font-size: .82em; font-weight: 800; margin: 3px 0 2px; }
+.w-planet-tile .house { font-size: .7em; color: var(--ac-text); background: var(--ac1); padding: 1px 6px; border-radius: 4px; display: inline-block; }
+.w-planet-tile .desc { font-size: .72em; color: var(--c-text-2); margin-top: 4px; line-height: 1.4; }
+
+/* 运势 Hero 卡片 */
+.w-horo-hero {
+  display: flex; align-items: center; gap: 16px; padding: 14px; border-radius: 14px;
+  background: var(--c-surface-2); border: 1px solid var(--c-border); margin-top: 10px;
+}
+@media (max-width: 500px) { .w-horo-hero { flex-direction: column; text-align: center; } }
+.score-ring-box { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
+.score-ring-box .ring-svg { width: 100%; height: 100%; }
+.score-ring-box .score-txt {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; font-size: 1.5em; font-weight: 900;
+  font-family: var(--serif); color: var(--c-text-hi); line-height: 1;
+}
+.score-ring-box .score-txt small { font-size: .45em; font-weight: normal; color: var(--c-text-3); margin-top: 2px; }
+
+.hero-details .mood-tag {
+  display: inline-block; font-size: .86em; font-weight: 800; color: var(--ac-text);
+  padding: 3px 10px; border-radius: 99px; background: var(--ac1); border: 1px solid var(--ac4); margin-bottom: 6px;
+}
+.guide-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.guide-chips .chip {
+  font-size: .75em; padding: 3px 8px; border-radius: 8px; background: var(--c-surface-3); color: var(--c-text);
+}
+
+/* 运势四项分栏 */
+.w-aspect-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;
+}
+@media (max-width: 520px) { .w-aspect-grid { grid-template-columns: 1fr; } }
+.w-aspect-card {
+  padding: 11px 13px; border-radius: 12px; background: var(--c-surface-2); border: 1px solid var(--c-border);
+}
+.w-aspect-card .hd { display: flex; justify-content: space-between; font-size: .82em; font-weight: 700; color: var(--c-text-hi); margin-bottom: 4px; }
+.w-aspect-card .hd b { color: var(--ac-text); }
+.w-aspect-card p { margin: 0; font-size: .76em; line-height: 1.6; color: var(--c-text-2); }
+
+.w-yiji-banner {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; padding: 10px 12px;
+  border-radius: 12px; background: var(--c-surface-2); border: 1px solid var(--c-border); font-size: .78em;
+}
+@media (max-width: 480px) { .w-yiji-banner { grid-template-columns: 1fr; } }
+.w-yiji-banner .col.yi b { color: var(--c-green, #7ab648); }
+.w-yiji-banner .col.ji b { color: var(--c-red, #d4654a); }
+
+/* 12星座黄道网格 */
+.w-all-signs-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px;
+}
+@media (max-width: 560px) { .w-all-signs-grid { grid-template-columns: repeat(3, 1fr); } }
+.w-sign-tile {
+  padding: 9px 6px; border-radius: 10px; background: var(--c-surface-2); border: 1px solid var(--c-border); text-align: center; font-size: .74em;
+}
+.w-sign-tile.is-me { border-color: var(--ac); background: var(--ac1); }
+.w-sign-tile .sym { font-size: 1.5em; line-height: 1; margin-bottom: 2px; }
+.w-sign-tile .name { font-weight: 700; color: var(--c-text-hi); }
+.w-sign-tile .me-tag { font-size: .75em; padding: 1px 4px; border-radius: 4px; background: var(--ac); color: #000; margin-left: 2px; }
+.w-sign-tile .score { color: var(--ac-text); font-weight: 700; margin-top: 2px; }
+.w-sign-tile .mood { color: var(--c-text-3); font-size: .85em; }
+
+/* 生命灵数图腾大卡 */
+.w-num-trio-box {
+  display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-top: 10px;
+}
+@media (max-width: 560px) { .w-num-trio-box { grid-template-columns: 1fr; } }
+.main-archetype-card {
+  padding: 16px; border-radius: 14px; background: var(--c-surface-2); border: 1px solid var(--c-border); text-align: center;
+}
+.main-archetype-card .kicker { font-size: .72em; font-weight: 700; color: var(--ac-text); margin-bottom: 4px; letter-spacing: 1px; }
+.main-archetype-card .big-num { font-size: 3.6em; font-weight: 900; font-family: var(--serif); color: var(--c-text-hi); line-height: 1; }
+.main-archetype-card .arch-name { font-size: 1.2em; font-weight: 800; font-family: var(--serif); color: var(--c-text-hi); margin: 6px 0 2px; }
+.main-archetype-card .arch-tag { font-size: .75em; color: var(--c-text-2); margin-bottom: 8px; }
+.main-archetype-card .arch-desc { font-size: .78em; line-height: 1.65; color: var(--c-text-2); margin: 0; text-align: left; }
+
+.sub-numbers-col { display: flex; flex-direction: column; gap: 8px; }
+.sub-num-card {
+  padding: 12px 14px; border-radius: 12px; background: var(--c-surface-2); border: 1px solid var(--c-border);
+}
+.sub-num-card .kicker { font-size: .7em; font-weight: 700; color: var(--ac-text); margin-bottom: 2px; }
+.sub-num-card .mid-num { font-size: 1.4em; font-weight: 800; font-family: var(--serif); color: var(--c-text-hi); margin-bottom: 2px; }
+.sub-num-card p { font-size: .72em; line-height: 1.5; color: var(--c-text-3); margin: 0; }
+
+/* 九宫图阵与连线 */
+.w-num-grid-layout {
+  display: grid; grid-template-columns: 140px 1fr; gap: 14px; align-items: start; margin-top: 10px;
+}
+@media (max-width: 500px) { .w-num-grid-layout { grid-template-columns: 1fr; } }
+.num-3x3-matrix {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 140px; margin: 0 auto;
+}
+.matrix-cell {
+  aspect-ratio: 1; border-radius: 10px; background: var(--c-surface-3); border: 1px solid var(--c-border);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all .2s;
+}
+.matrix-cell.is-active { background: var(--ac1); border-color: var(--ac4); box-shadow: 0 0 10px var(--ac2); }
+.matrix-cell .num-val { font-size: 1.25em; font-weight: 900; color: var(--c-text-hi); line-height: 1; }
+.matrix-cell .num-cnt { font-size: .62em; color: var(--c-text-3); margin-top: 1px; }
+.matrix-cell.is-active .num-cnt { color: var(--ac-text); font-weight: 700; }
+
+.lines-analysis-box { font-size: .78em; line-height: 1.6; color: var(--c-text-2); }
+.lines-analysis-box .lines-title { font-weight: 700; color: var(--ac-text); margin-bottom: 6px; font-size: .88em; }
+.lines-analysis-box .line-item { margin-bottom: 6px; }
+.lines-analysis-box .line-item b { color: var(--c-text-hi); }
+.missing-box {
+  margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--c-border); font-size: .92em; color: var(--c-text-2);
+}
+
+/* 流年卡片 */
+.w-py-box {
+  padding: 14px 16px; border-radius: 12px; background: var(--c-surface-2); border: 1px solid var(--c-border); margin-top: 8px;
+}
+.w-py-box .py-badge { font-size: .9em; font-weight: 800; color: var(--ac-text); margin-bottom: 4px; }
+.w-py-box .py-text { margin: 0; font-size: .8em; line-height: 1.65; color: var(--c-text); }
+
+
+/* 问问大师依据流派切换（东方命理 vs 西方星相） */
+.ai-basis-row {
+  display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: .75em;
+}
+.ai-basis-label {
+  color: var(--c-text-3); font-weight: 600; flex-shrink: 0;
+}
+.ai-basis-pills {
+  display: flex; gap: 6px; flex: 1;
+}
+.ai-basis-pill {
+  flex: 1; padding: 5px 10px; font-size: .88em; font-weight: 700; border-radius: 999px;
+  border: 1px solid var(--c-border-2); background: var(--c-surface-3); color: var(--c-text-2);
+  cursor: pointer; transition: all .18s ease; text-align: center; white-space: nowrap;
+}
+.ai-basis-pill:hover {
+  background: var(--c-surface-4); color: var(--c-text-hi);
+}
+.ai-basis-pill.active {
+  background: var(--ac); color: #000; border-color: var(--ac); font-weight: 800;
+  box-shadow: 0 2px 8px var(--ac3);
+}
+
+/* ============================================================
+   工具中心 V4 卡片全新直观改版
+   ============================================================ */
+.tool-grid-v4 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+}
+@media (max-width: 600px) {
+  .tool-grid-v4 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+.tool-card-v4 {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 16px 14px;
+  border-radius: 16px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  cursor: pointer;
+  text-align: left;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform .35s cubic-bezier(.2,.8,.2,1.2), border-color .3s, background .3s, box-shadow .3s;
+  box-shadow: none;
+  overflow: hidden;
+  animation: toolCard3DIn .5s cubic-bezier(.16, 1, .3, 1) backwards;
+  animation-delay: calc(var(--card-idx, 0) * 35ms);
+}
+.tool-card-v4::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle 180px at var(--mx, 50%) var(--my, 50%), hsla(var(--accent-h), var(--accent-s), 75%, 0.14), transparent 70%);
+  opacity: 0;
+  transition: opacity .35s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+.tool-card-v4:hover::before {
+  opacity: 1;
+}
+.tool-card-v4:hover {
+  border-color: var(--ac4);
+  background: var(--c-surface-3);
+  box-shadow: 0 12px 30px -8px rgba(0,0,0,.14), 0 0 0 1px var(--ac1);
+}
+.tool-card-v4:active {
+  transform: perspective(1000px) scale3d(0.96, 0.96, 0.96) translateZ(-6px) !important;
+}
+.tool-card-v4.is-filter-hidden {
+  display: none !important;
+}
+
+@keyframes toolCard3DIn {
+  from {
+    opacity: 0;
+    transform: perspective(900px) rotateX(14deg) translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(900px) rotateX(0deg) translateY(0) scale(1);
+  }
+}
+
+.tool-card-v4 .tc-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  transform: translateZ(22px);
+  transform-style: preserve-3d;
+  position: relative;
+  z-index: 2;
+}
+.tool-card-v4 .tc-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transform: translateZ(32px);
+  transition: transform .3s cubic-bezier(.2,.8,.3,1.2);
+  box-shadow: 0 4px 10px rgba(0,0,0,.08);
+}
+.tool-card-v4:hover .tc-icon {
+  transform: translateZ(42px) scale(1.12);
+}
+.tool-card-v4 .tc-icon svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.tool-card-v4 .tc-titles {
+  flex: 1;
+  min-width: 0;
+  transform: translateZ(24px);
+}
+.tool-card-v4 .tc-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--c-text-hi);
+  line-height: 1.25;
+  letter-spacing: .2px;
+}
+.tool-card-v4 .tc-badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid;
+  margin-top: 3px;
+  transform: translateZ(26px);
+}
+.tool-card-v4 .tc-arrow {
+  color: var(--c-text-3);
+  font-size: 18px;
+  font-weight: 800;
+  transform: translateZ(28px);
+  transition: transform .25s ease, color .25s ease;
+  margin-left: auto;
+}
+.tool-card-v4:hover .tc-arrow {
+  transform: translateZ(36px) translateX(5px);
+  color: var(--ac-text);
+}
+
+.tool-card-v4 .tc-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 8px;
+  transform: translateZ(16px);
+  position: relative;
+  z-index: 2;
+}
+.tool-card-v4 .tc-pills span {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--c-surface-3);
+  color: var(--c-text-2);
+  border: 1px solid var(--c-border-2);
+  transition: transform .2s ease;
+}
+.tool-card-v4:hover .tc-pills span {
+  transform: translateY(-1px);
+}
+
+.tool-card-v4 .tc-desc {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--c-text-2);
+  margin-top: auto;
+  transform: translateZ(12px);
+  position: relative;
+  z-index: 2;
+}
+
+/* 工具栏搜索美化 */
+.tools-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+}
+.tools-search-wrap .search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--c-text-3);
+  pointer-events: none;
+}
+.tools-search-wrap .tools-search {
+  width: 100%;
+  padding-left: 36px;
+}

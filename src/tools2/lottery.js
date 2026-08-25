@@ -76,7 +76,8 @@ export const lottery = {
           '<div class="tw-actions">' +
             '<button type="button" class="tw-btn tw-btn-primary" id="twLotCopy">复制号码</button>' +
             '<button type="button" class="tw-btn tw-btn-ghost" id="twLotAgain">↻ 换一组</button>' +
-          '</div>'
+          '</div>',
+          { noAI: true }
         );
         // 结果页内的再次摇号
         const resultEl = container.querySelector('.tw-view-result');

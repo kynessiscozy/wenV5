@@ -38,7 +38,7 @@ const energyColor = e => {
 
 export const date = {
   id: 'date',
-  name: '重要事项择日助手',
+  name: '择日助手',
   cat: '日常决策',
   icon: '择',
   desc: '结合你的命盘节奏与近期日期，逐日计算适配度，筛选更适合推进重要事项的时间。',

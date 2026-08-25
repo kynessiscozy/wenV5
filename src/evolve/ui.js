@@ -170,7 +170,7 @@ export function mountEvolveSettings(panel) {
   section.id = 'evolveSection';
   section.innerHTML = `<div class="ai-setting-section-title">自进化</div>` + renderBody(snap);
   const note = panel.querySelector('.ai-settings-note');
-  if (note) panel.insertBefore(section, note);
+  if (note && note.parentNode === panel) panel.insertBefore(section, note);
   else panel.appendChild(section);
   bind(section, snap);
 

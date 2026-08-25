@@ -10,6 +10,13 @@ import { showToast } from '../ui/toast.js';
 import { calcSynastry } from '../engines/synastry.js';
 import { calcLiuRi, calcLiuZhou, TONE_COPY } from '../engines/liuri.js';
 import { calcPattern } from '../state/scoring.js';
+import {
+  renderWesternAstrologySection,
+  renderWesternHoroscopeSection,
+  renderWesternNumerologySection,
+  bindWesternAIEvents
+} from './western-view.js';
+import { renderToolsHubHtml } from './tools-catalog.js';
 
 export function getPersona(dg,wx,st,ss){const P={甲:{思维:'目标导向，擅长搭建框架',情绪:'直来直去，不喜绕弯',人际:'领袖型，易成核心',决策:'果断，但易武断',压力:'目标未达成时焦躁'},乙:{思维:'灵活变通，善于借力',情绪:'细腻敏感，易内耗',人际:'润滑剂型，人缘好',决策:'犹豫但周全',压力:'被否定、被忽视时低落'},丙:{思维:'发散创意，喜新厌旧',情绪:'来得快去得快',人际:'阳光型，感染力强',决策:'凭直觉，敢赌',压力:'无聊、被束缚时崩溃'},丁:{思维:'深度钻研，追根究底',情绪:'内敛深沉，积压型',人际:'少而精，重质量',决策:'谨慎，谋定后动',压力:'不确定性、失控感'},戊:{思维:'务实落地，重可行性',情绪:'稳定迟缓，不易波动',人际:'可靠型，但略显沉闷',决策:'保守，厌恶风险',压力:'变动频繁、计划被打乱'},己:{思维:'调和矛盾，八面玲珑',情绪:'隐忍包容，自我消化',人际:'老好人，边界模糊',决策:'折中，和稀泥',压力:'冲突场面、被当工具人'},庚:{思维:'逻辑清晰，黑白分明',情绪:'刚硬直接，易冲突',人际:'义气型，兄弟多',决策:'快刀斩乱麻',压力:'不公平、被算计时暴怒'},辛:{思维:'精致挑剔，追求细节',情绪:'含蓄压抑，表面冷静',人际:'高冷型，慢热',决策:'反复比较，宁缺毋滥',压力:'粗制滥造、审美被毁'},壬:{思维:'宏观视野，系统思考',情绪:'随境而转，适应力强',人际:'广泛交际，三教九流',决策:'顺势而为，灵活调整',压力:'被困住、重复枯燥时抑郁'},癸:{思维:'洞察人心，直觉敏锐',情绪:'深沉暗涌，不易外露',人际:'倾听者型，易成知己',决策:'凭感觉，重视精神契合',压力:'被误解、精神孤立时低落'}};const base=P[dg]||P['甲'];const mode=st?'（偏主动型）':'（偏内敛型）';return{思维:base.思维+mode,情绪:base.情绪,人际:base.人际,决策:base.决策,压力:base.压力};}
 export function getTimeline(dy,by,wx,b,dg,gen,age){
@@ -261,6 +268,7 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   let H='';
 
   H+=`<div class="sec active" id="s-ming">`;
+  H+=`<div class="sys-block sys-eastern">`;
   H+=renderQuickRead('ming',ctx);
   H+=renderBeginnerBrief('ming',ctx);
 
@@ -308,6 +316,11 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   H+=`<div class="ps-foot">标签由十神分布、入命神煞与五行旺衰推导，是倾向参考，不是性格定论。</div></div>`;
 
   H+=renderThreeStylesCard(zw,qm,mh);
+  H+=`</div>`; // end of .sys-eastern
+  H+=`<div class="sys-block sys-western">`;
+  H+=renderWesternAstrologySection(ctx);
+  H+=`</div>`;
+  H+=`</div>`; // end of #s-ming
 
   // 运势页按 年/月/周/日 四档组织，先分桶再统一装进子标签
   let yYear='',yMonth='',yWeek='',yDay='';
@@ -354,7 +367,6 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
     </div>`;
   }).join('')}</div>`;
   yYear+=`<div class="tl-foot">※ 大运十年一变，干主前五年、支主后五年；分数为命局用神匹配度的相对参考。</div></div>`;
-  H+=`</div>`;
   const av={c:wx.ys==='木'?'青绿色':wx.ys==='火'?'红色、紫色':wx.ys==='土'?'黄色、棕色':wx.ys==='金'?'白色、银色':'黑色、蓝色',n:wx.ys==='木'?'3、8':wx.ys==='火'?'2、7':wx.ys==='土'?'5、0':wx.ys==='金'?'4、9':'1、6',d:wx.ys==='木'?'东方':wx.ys==='火'?'南方':wx.ys==='土'?'中央':wx.ys==='金'?'西方':'北方',g:wx.ys==='木'?'翡翠、木质饰品':wx.ys==='火'?'红玛瑙、紫水晶':wx.ys==='土'?'黄水晶、陶瓷':wx.ys==='金'?'白水晶、金属':'黑曜石、海蓝宝',t:wx.ys==='木'?'寅卯时（3-7点）':wx.ys==='火'?'巳午时（9-13点）':wx.ys==='土'?'辰丑时（7-9点,1-3点）':wx.ys==='金'?'申酉时（15-19点）':'亥子时（21-1点）',f:wx.ys==='木'?'绿色蔬菜、酸味食物':wx.ys==='火'?'红色食物、苦味茶':wx.ys==='土'?'谷物、根茎类':wx.ys==='金'?'白色食品、百合':'黑色食品、海鲜'};
   const todayJ=getTodayGZ();
   // 今日流日（与日签同源）：今日建议的宜忌由它实时推导，并为分享卡片保留数据
@@ -365,6 +377,7 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   const _advDomain=_todayLr&&_todayLr.roleInfo&&_todayLr.roleInfo.domain?('适合：'+_todayLr.roleInfo.domain):'';
 
   H+=`<div class="sec" id="s-yun">`;
+  H+=`<div class="sys-block sys-eastern">`;
   H+=renderQuickRead('yun',ctx);
   H+=renderBeginnerBrief('yun',ctx);
   H+=`<div class="yun-tabs" role="tablist" aria-label="运势时间粒度"><button class="yun-tab active" type="button" data-yun="year" role="tab" aria-selected="true" onclick="TJActivateYunTab('year')">当年</button><button class="yun-tab" type="button" data-yun="month" role="tab" aria-selected="false" onclick="TJActivateYunTab('month')">流月</button><button class="yun-tab" type="button" data-yun="week" role="tab" aria-selected="false" onclick="TJActivateYunTab('week')">本周</button><button class="yun-tab" type="button" data-yun="day" role="tab" aria-selected="false" onclick="TJActivateYunTab('day')">当下关注</button></div>`;
@@ -429,14 +442,19 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   H+=`<div class="yun-pane" data-yun="month">${yMonth}</div>`;
   H+=`<div class="yun-pane" data-yun="week">${yWeek}</div>`;
   H+=`<div class="yun-pane" data-yun="day">${yDay}</div>`;
+  H+=`</div>`; // end of .yun-panes
+  H+=`</div>`; // end of .sys-eastern
+  H+=`<div class="sys-block sys-western">`;
+  H+=renderWesternHoroscopeSection(ctx);
   H+=`</div>`;
-  H+=`</div>`;
+  H+=`</div>`; // end of #s-yun
 
   const rmode=getRelationMode(dg,ss,gen);
   const stype=getSuitableType(wx,dg);
   const rrisks=getRelationRisks(wx,dg,ss);
   const layoffTrend=getLayoffAstroRisk(ctx);
   H+=`<div class="sec" id="s-rel">`;
+  H+=`<div class="sys-block sys-eastern">`;
   H+=renderQuickRead('rel',ctx);
   H+=renderBeginnerBrief('rel',ctx);
   H+=`<div class="glass card-1" data-card="loveMode"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><div><div class="card-tt">感情模式</div></div></div>`;
@@ -470,28 +488,34 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   H+=`<div class="hh-form" id="relForm"><div><div class="fd" style="margin-bottom:10px"><label>对方出生日期</label><input type="date" id="rDate" value="1992-08-20"></div><div class="fd" style="margin-bottom:10px"><label>对方出生时辰（可不填）</label><select id="rHour"><option value="">时辰不详 · 用三柱比对</option><option value="0">子 23:00–00:59</option><option value="1">丑 01:00–02:59</option><option value="2">寅 03:00–04:59</option><option value="3">卯 05:00–06:59</option><option value="4">辰 07:00–08:59</option><option value="5">巳 09:00–10:59</option><option value="6">午 11:00–12:59</option><option value="7">未 13:00–14:59</option><option value="8">申 15:00–16:59</option><option value="9">酉 17:00–18:59</option><option value="10">戌 19:00–20:59</option><option value="11">亥 21:00–22:59</option></select></div></div></div>`;
   H+=`<div class="cta-row" style="margin-top:10px"><button class="cta" style="padding:12px 28px;font-size:.95em;letter-spacing:1px" onclick="calcRelation()">开始合盘</button></div>`;
   H+=`<div id="relResult" style="margin-top:10px"></div></div>`;
+  H+=`</div>`; // end of .sys-eastern
+  H+=`<div class="sys-block sys-western">`;
+  H+=renderWesternNumerologySection(ctx);
   H+=`</div>`;
+  H+=`</div>`; // end of #s-rel
 
   
 
   H+=`<div class="sec" id="s-adv">`;
-  H+=renderBeginnerBrief('adv',ctx);
-  H+=`<div class="glass card-1 tool-hub" data-card="toolHub"><div class="card-hd"><div class="card-ic">⌘</div><div><div class="card-tt">决策小工具</div><div class="card-st">把命盘提示转成当下可执行的选择</div></div></div><div class="tool-grid tool-grid-full"><button class="tool-tile" type="button" onclick="openToolPage('wealth')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7v10M8 10.5h8M8 14h6"/></svg></span><b>财运与理财罗盘</b><small>收入节奏 · 理财取向</small></button><button class="tool-tile" type="button" onclick="openToolPage('career')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17 17 5M9 5h8v8"/></svg></span><b>转行与副业测评</b><small>方向匹配 · 行动窗口</small></button><button class="tool-tile" type="button" onclick="openToolPage('date')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M7 11h10M9 15h3"/></svg></span><b>重要事项择日助手</b><small>事项提醒 · 时间建议</small></button><button class="tool-tile" type="button" onclick="openToolPage('fengshui')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 20h18L12 3Z"/><circle cx="12" cy="14" r="2.4"/><path d="M12 11V8"/></svg></span><b>风水大师</b><small>定位 · 八宅 · 飞星</small></button><button class="tool-tile" type="button" onclick="openToolPage('layoff')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 17H3L12 3Z"/><path d="M12 9v5M12 17h.01"/></svg></span><b>裁员风险检测</b><small>现实信号 · 行动预案</small></button><button class="tool-tile" type="button" onclick="openToolPage('daily')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4m0-12.8-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg></span><b>今日日签</b><small>宜忌 · 节奏 · 提醒</small></button><button class="tool-tile" type="button" onclick="openToolPage('name')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M7 5v4c0 3 2 5 5 5s5-2 5-5V5M5 19h14"/></svg></span><b>智能起名工具</b><small>用字偏好 · 名称灵感</small></button><button class="tool-tile" type="button" onclick="openToolPage('oracle')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h6m4 0h6M4 12h16M4 18h6m4 0h6"/></svg></span><b>摇签问卜</b><small>聚焦问题 · 随机启示</small></button><button class="tool-tile" type="button" onclick="openToolPage('answerbook')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 9a2.7 2.7 0 1 1 4.8 1.7c-1.3 1.7-2.3 2-2.3 4"/><path d="M12 18h.01"/><circle cx="12" cy="12" r="9"/></svg></span><b>答案之书</b><small>输入问题 · 翻开答案</small></button><button class="tool-tile" type="button" onclick="openToolPage('lottery')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></span><b>双色球 / 大乐透</b><small>娱乐选号 · 理性提示</small></button><button class="tool-tile" type="button" onclick="openToolPage('zodiac')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-6M12 14c-4 0-6-2.2-6-5a3 3 0 0 1 5.4-1.8A3 3 0 0 1 17 9c0 2.8-2 5-5 5Z"/></svg></span><b>生肖合冲分析</b><small>相处节奏 · 合作提醒</small></button><button class="tool-tile" type="button" onclick="openToolPage('relation')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 8.5c0 4.5-8 9.5-8 9.5s-8-5-8-9.5A4 4 0 0 1 12 6a4 4 0 0 1 8 2.5Z"/></svg></span><b>八字合盘</b><small>双人信息 · 相处建议</small></button><button class="tool-tile" type="button" onclick="openToolPage('export')"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6M9 15l3 3 3-3"/></svg></span><b>报告完整导出PDF</b><small>视觉完整版 / 纯文本版</small></button></div></div>`;
+  H+=renderToolsHubHtml();
   H+=`</div>`;
 
   document.getElementById('p2Inner').innerHTML=H;
   // —— 唯一全局上下文（_baziData / _reportData 作兼容别名）——
   ctx.P=P;ctx.shensha=shensha;ctx.liuyue=liuyue;ctx.zw=zw;ctx.qm=qm;ctx.mh=mh;
   organizeMasterReportLayout(ctx);
+  bindWesternAIEvents(document.getElementById('p2Inner'));
   window._ctx=ctx;
   window._baziData=ctx;
   window._reportData=ctx;
 
-  requestAnimationFrame(()=>{
-    document.querySelectorAll('.wxf,.ff').forEach(el=>{setTimeout(()=>{el.style.width=el.dataset.w},200)});
-    const tl=document.getElementById('daYunTl');
-    if(tl){const cu=tl.querySelector('.ti.cu');if(cu){cu.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});}}
-  });
+  if(typeof requestAnimationFrame==='function'){
+    requestAnimationFrame(()=>{
+      document.querySelectorAll('.wxf,.ff').forEach(el=>{setTimeout(()=>{el.style.width=el.dataset.w},200)});
+      const tl=document.getElementById('daYunTl');
+      if(tl){const cu=tl.querySelector('.ti.cu');if(cu){cu.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});}}
+    });
+  }
 }
 
 /* ====== 信息密度优化：速读卡 + 章节导航 ====== */
@@ -641,7 +665,9 @@ export function organizeMasterReportLayout(ctx){
     }).join('');
     const gods=document.createElement('div');gods.className='structure-mini structure-subcard';
     gods.innerHTML='<div class="structure-mini-tt">十神</div><div class="structure-mini-bd"><div class="god-core-grid"><div><span>年干</span><b>'+termLabel(ctx.ss.yg)+'</b></div><div><span>月干</span><b>'+termLabel(ctx.ss.mg)+'</b></div><div><span>日主</span><b>'+ctx.dg+ctx.dw+'</b></div><div><span>时干</span><b>'+termLabel(ctx.ss.hg)+'</b></div></div><div class="god-method-note"><b>判读口径</b><span>以日主「'+ctx.dg+ctx.dw+'」为唯一参照，按五行生克与阴阳同异定十神；天干为“透干”，地支按主气／中气／余气记录。呈现层级仅说明本命盘出现位置，不替代旺衰、月令、通根、合冲及大运流年的综合判断。</span></div><button class="full-gods-btn" type="button" onclick="toggleFullGods(this)">查看完整十神 <span>▾</span></button><div class="full-gods" style="display:none;margin-top:9px;"><div class="fine-table-wrap god-table-wrap"><table class="fine-table god-table"><thead><tr><th>十神</th><th>五行关系</th><th>出现层级</th><th>位置（含藏干）</th><th>核心释义</th></tr></thead><tbody>'+godRows+'</tbody></table></div><div class="god-disclaimer">注：十神是传统命理中的关系模型，不等同于现实事件或人格定论；实际判断须结合命局整体与现实条件。</div></div></div>';
-    makePane('detail',details);makePane('gods',gods);ming.insertBefore(structure,persona);
+    makePane('detail',details);makePane('gods',gods);
+    if(persona.parentNode)persona.parentNode.insertBefore(structure,persona);
+    else ming.appendChild(structure);
   }
   // 推理依据链：让大师版的结论有可回看的推导路径。
   if(persona&&!ming.querySelector('[data-card="reasoning"]')){

@@ -35,6 +35,9 @@ const LABELS = {
   intimacy: '亲密关系', friends: '朋友', family: '亲人', relAi: '八字合盘',
   loveMode: '感情模式', loveMatch: '适合对象', loveRisk: '关系风险',
   layoffRisk: '裁员风险', toolHub: '小工具',
+  'astro-core': '三核星体', 'astro-planets': '十大星曜', 'astro-elements': '四象能量', 'astro-portrait': '性格画像',
+  'horoscope-today': '今日运势', 'horoscope-all': '黄道全览', 'horoscope-macro': '宏观星象',
+  'num-core': '生命密码', 'num-grid': '九宫图阵', 'num-year': '流年灵数'
 };
 
 function _rawTitle(card) {
@@ -118,11 +121,16 @@ function build(sec) {
   const wrapEl = sec.querySelector(':scope > .sec-tabs-wrap');
   // 关键：已经归位到面板里的卡片也要算进来，否则每轮轮询都会看到
   // 「.sec 直接子里没有卡片」→ 误判为需要拆除 → 拆了又建，无限循环
+  const curSys = document.body.getAttribute('data-system-mode') || document.documentElement.getAttribute('data-system-mode') || 'eastern';
   const cards = [
     ...[...sec.children].filter(c => c.classList && (c.classList.contains('glass') || c.classList.contains('beginner-brief'))),
     ...(wrapEl ? [...wrapEl.querySelectorAll(':scope > .sec-panes > .sec-pane > *')] : []),
   ];
-  const tabbable = cards.filter(c => !_isPinned(c));
+  const tabbable = cards.filter(c => {
+    if (_isPinned(c)) return false;
+    const cardSys = c.dataset.system || (c.classList.contains('western-card') ? 'western' : 'eastern');
+    return cardSys === curSys;
+  });
 
   // 少于 2 张无需标签页
   if (tabbable.length < 2) { teardown(sec); return; }

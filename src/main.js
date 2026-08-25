@@ -71,7 +71,7 @@ import {
   applyTheme, jumpTo, showPage2, goBack, scrollToForm, switchTab,
   setGlassMode, toggleLgPanel, moveTabIndicator, initNavigationUI,
   openAsk, closeAsk, newAskChat, aiToolRequest, doAsk, doAskCustom,
-  aiSwitchCat, aiRefreshChips, aiOnInputSuggest, generateAnswer,
+  aiSwitchCat, aiRefreshChips, aiOnInputSuggest, generateAnswer, getAiBasis, setAiBasis,
   getAISettings, getApiKey, toggleAISettings, initAISettings, buildAISettingsPanel,
   initTheme, toggleTheme, applyThemePref, getThemePref
 } from './ui/index.js';
@@ -108,7 +108,9 @@ initEvolveUI();
   window.calcRelation=calcRelation;
   window.switchStructureTab=switchStructureTab;
   window.toggleFullGods=toggleFullGods;
-  window.setUserMode=setUserMode;
+  window.setUserMode=setSystemMode;
+  window.setSystemMode=setSystemMode;
+  window.setAiBasis=setAiBasis;
   window.toggleUserMode=toggleUserMode;
   window.doAsk=doAsk;
   window.toggleAISettings=toggleAISettings;
@@ -1134,7 +1136,7 @@ function toggleDensity(){
     tick();
   }
 
-  // ---- 表单卡片视差倾斜 ----
+  // ---- 表单与工具卡片 3D 视差倾斜 ----
   function bindTilt(el){
     if(!el||isMobile)return;
     let raf=null;
@@ -1147,19 +1149,23 @@ function toggleDensity(){
       el.style.setProperty('--my',(py*100).toFixed(1)+'%');
       if(raf)cancelAnimationFrame(raf);
       raf=requestAnimationFrame(()=>{
-        const rx=(0.5-py)*4,ry=(px-0.5)*4;
-        el.style.transform='perspective(900px) rotateX('+rx.toFixed(2)+'deg) rotateY('+ry.toFixed(2)+'deg)';
+        const rx=(0.5-py)*8,ry=(px-0.5)*8;
+        el.style.setProperty('--rx', rx.toFixed(2)+'deg');
+        el.style.setProperty('--ry', ry.toFixed(2)+'deg');
+        el.style.transform='perspective(1000px) rotateX('+rx.toFixed(2)+'deg) rotateY('+ry.toFixed(2)+'deg) translateY(-4px) scale3d(1.02, 1.02, 1.02)';
       });
     });
     el.addEventListener('mouseleave',()=>{
-      el.style.transform='perspective(900px) rotateX(0) rotateY(0)';
+      el.style.transform='perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0) scale3d(1, 1, 1)';
       el.style.setProperty('--mx','50%');el.style.setProperty('--my','50%');
+      el.style.setProperty('--rx','0deg');el.style.setProperty('--ry','0deg');
     });
   }
-  // —— 全局：绑定到 .home-card 与所有 page2 内的 .glass 卡片 ——
+  // —— 全局：绑定到 .home-card 与所有 page2 内的 .glass / .tool-card-v4 卡片 ——
   function bindAllTilt(){
     document.querySelectorAll('.home-card:not([data-tilted])').forEach(el=>{bindTilt(el);el.setAttribute('data-tilted','1');});
     document.querySelectorAll('#page2 .glass:not([data-tilted])').forEach(el=>{bindTilt(el);el.setAttribute('data-tilted','1');});
+    document.querySelectorAll('.tool-card-v4:not([data-tilted])').forEach(el=>{bindTilt(el);el.setAttribute('data-tilted','1');});
   }
   window.addEventListener('load',bindAllTilt);
   // 推算完成后 page2 内容会被重渲染，提供一个全局钩子
@@ -1674,7 +1680,7 @@ document.addEventListener('click',function(e){
 function wrapProCollapsibles(root){
   if(!root)return;
   root.querySelectorAll('.pls, .qr-grid, table').forEach(el=>{
-    if(el.dataset.proWrapped)return;
+    if(el.dataset.proWrapped || !el.parentNode)return;
     el.dataset.proWrapped='1';
     const wrap=document.createElement('div');
     wrap.className='pro-wrap collapsed';
@@ -1687,42 +1693,64 @@ function wrapProCollapsibles(root){
       const collapsed=wrap.classList.toggle('collapsed');
       btn.textContent=collapsed?'查看专业数值 ▾':'收起专业数值 ▴';
     });
-    wrap.parentNode.insertBefore(btn,wrap);
+    if(wrap.parentNode)wrap.parentNode.insertBefore(btn,wrap);
   });
 }
 
 function enrichBeginnerContent(root){annotateGlossary(root);wrapProCollapsibles(root);}
 
-function setUserMode(mode){
-  const isBeginner=mode==='beginner';
-  document.body.classList.toggle('beginner-mode',isBeginner);
-  try{localStorage.setItem('tj_user_mode',mode);}catch(e){}
-  const beginnerBtn=document.getElementById('modeBeginner');
-  const masterBtn=document.getElementById('modeMaster');
-  if(beginnerBtn&&masterBtn){
-    beginnerBtn.classList.toggle('active',isBeginner);
-    masterBtn.classList.toggle('active',!isBeginner);
-    beginnerBtn.setAttribute('aria-selected',isBeginner?'true':'false');
-    masterBtn.setAttribute('aria-selected',isBeginner?'false':'true');
+function setSystemMode(mode){
+  const isWestern=mode==='western';
+  const sysMode=isWestern?'western':'eastern';
+  document.body.setAttribute('data-system-mode',sysMode);
+  document.documentElement.setAttribute('data-system-mode',sysMode);
+  try{localStorage.setItem('tj_system_mode',sysMode);}catch(e){}
+  const easternBtn=document.getElementById('modeEastern');
+  const westernBtn=document.getElementById('modeWestern');
+  if(easternBtn&&westernBtn){
+    easternBtn.classList.toggle('active',!isWestern);
+    westernBtn.classList.toggle('active',isWestern);
+    easternBtn.setAttribute('aria-selected',!isWestern?'true':'false');
+    westernBtn.setAttribute('aria-selected',isWestern?'true':'false');
   }
+
+  // 底部 Dock 标签文案与图标切换
+  const labelMing=document.getElementById('tabLabelMing');
+  const labelYun=document.getElementById('tabLabelYun');
+  const labelRel=document.getElementById('tabLabelRel');
+  if(labelMing)labelMing.textContent=isWestern?'占星术':'命盘';
+  if(labelYun)labelYun.textContent=isWestern?'星座全览':'运势';
+  if(labelRel)labelRel.textContent=isWestern?'生命灵术':'关系';
+
+  document.querySelectorAll('.ig-nav-icon-eastern').forEach(el=>{
+    el.style.setProperty('display',isWestern?'none':'block','important');
+  });
+  document.querySelectorAll('.ig-nav-icon-western').forEach(el=>{
+    el.style.setProperty('display',isWestern?'block':'none','important');
+  });
+
   const pop=document.getElementById('glossPop');if(pop)pop.classList.remove('open');
-  // 初次切入新手版时，确保动态生成的报告也完成了术语标注和数据折叠。
-  if(isBeginner)enrichBeginnerContent(document.getElementById('p2Inner'));
+
+  // 重构标签页
+  if(typeof window.TJBuildSectionTabs==='function'){
+    window.TJBuildSectionTabs();
+  }
+
+  // 触发 indicator 居中重算
+  const activeTab=document.querySelector('.tab-item.active');
+  if(activeTab&&typeof moveTabIndicator==='function'){
+    moveTabIndicator(activeTab);
+  }
 }
-/* 顶部右侧圆形按钮：打开日历模式（不改变新手/大师阅读模式） */
+function setUserMode(mode){setSystemMode(mode==='beginner'?'eastern':'western');}
+/* 顶部右侧圆形按钮：打开日历模式 */
 function openCalendarMode(){
   const fab=document.getElementById('calFab');
   if(fab)fab.classList.add('active');
-  /* 日历模式：必须由 tools2 的 calendar 工具接管。
-     注意：旧版 openToolPage（center.js）在页面加载时已同步挂载到 window，
-     但它没有 calendar 分支，最后的 else 会误导向「八字合盘」页面。
-     因此不能用 typeof window.openToolPage==='function' 判断 tools2 是否就绪，
-     必须用 window._tools2Ready 标记（由 runtime.js installGlobal 设置）。 */
   try{
     if(window._tools2Ready){
       window.openToolPage('calendar');
     }else{
-      // tools2 尚未加载完（动态 import 异步），轮询等待就绪后打开
       let tries=0;
       const t=setInterval(()=>{
         tries++;
@@ -1732,12 +1760,14 @@ function openCalendarMode(){
     }
   }catch(e){console.error('[openCalendarMode]',e);}
 }
-function toggleUserMode(){setUserMode(document.body.classList.contains('beginner-mode')?'master':'beginner');}
-(function initUserMode(){
-  // 默认给首次使用者更易读的新手版；用户的手动选择会被记住。
-  let mode='beginner';
-  try{mode=localStorage.getItem('tj_user_mode')||'beginner';}catch(e){}
-  setUserMode(mode);
+function toggleUserMode(){
+  const cur=document.body.getAttribute('data-system-mode')||'eastern';
+  setSystemMode(cur==='eastern'?'western':'eastern');
+}
+(function initSystemMode(){
+  let mode='eastern';
+  try{mode=localStorage.getItem('tj_system_mode')||'eastern';}catch(e){}
+  setSystemMode(mode);
 })();
 (function observeReportContent(){
   const target=document.getElementById('p2Inner');
@@ -1753,32 +1783,52 @@ function toggleUserMode(){setUserMode(document.body.classList.contains('beginner
 /* 工具中心增强：搜索、分类、键盘可用性与更清晰的工具入口 */
 (function(){
   const groups={
-    all:'全部',money:'财富与事业',life:'日常决策',relation:'关系与沟通',play:'灵感与娱乐'
+    all:'全部',western:'✦ 西方大师',money:'财富与事业',life:'日常决策',relation:'关系与沟通',play:'灵感与娱乐'
   };
-  const map={wealth:'money',career:'money',layoff:'money',date:'life',daily:'life',fengshui:'life',relation:'relation',zodiac:'relation',name:'play',oracle:'play',answerbook:'play',lottery:'play',export:'life'};
-  const labels={wealth:'收入与理财',career:'职业选择',date:'重要事项',fengshui:'风水方位',layoff:'职场预案',daily:'今日节奏',name:'名称灵感',oracle:'自我反思',answerbook:'快速答案',lottery:'娱乐选号',zodiac:'生肖关系',relation:'关系分析',export:'报告导出'};
   function mount(){
-    const hub=document.querySelector('#s-adv .tool-hub'),grid=hub&&hub.querySelector('.tool-grid');
+    const hub=document.querySelector('#s-adv .tool-hub'),grid=hub&&hub.querySelector('#toolGrid, .tool-grid-v4, .tool-grid');
     if(!hub||!grid||document.getElementById('toolsToolbar'))return;
-    grid.id='toolGrid';
-    const toolIds=['wealth','career','date','layoff','daily','name','oracle','answerbook','lottery','zodiac','relation','export','fengshui'];
-    grid.querySelectorAll('.tool-tile').forEach((tile,index)=>{
-      const m=(tile.getAttribute('onclick')||'').match(/openToolPage\(\s*['\"]([^'\"]+)['\"]\s*\)/);
-      const id=(m&&m[1])||toolIds[index];
-      if(!id)return;
-      tile.dataset.tool=id;
-      tile.dataset.group=map[id]||'life';
-      tile.setAttribute('aria-label',labels[id]||'决策工具');
-    });
     const bar=document.createElement('div');bar.className='tools-toolbar';bar.id='toolsToolbar';
-    bar.innerHTML='<input class="tools-search" id="toolsSearch" type="search" placeholder="输入工具名称或关键词" aria-label="搜索工具"><div class="tools-filter" role="tablist">'+Object.entries(groups).map(([k,v])=>'<button type="button" data-group="'+k+'" class="'+(k==='all'?'active':'')+'">'+v+'</button>').join('')+'</div>';
-    hub.insertBefore(bar,grid);
+    bar.innerHTML='<div class="tools-search-wrap"><svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="tools-search" id="toolsSearch" type="search" placeholder="搜索工具名称、功能或关键词..." aria-label="搜索工具"></div><div class="tools-filter" role="tablist">'+Object.entries(groups).map(([k,v])=>'<button type="button" data-group="'+k+'" class="'+(k==='all'?'active':'')+'">'+v+'</button>').join('')+'</div>';
+    if(grid&&grid.parentNode)grid.parentNode.insertBefore(bar,grid);
+    else if(hub)hub.prepend(bar);
+
     let active='all';
-    function render(){const q=(document.getElementById('toolsSearch').value||'').trim().toLowerCase();let count=0;grid.querySelectorAll('.tool-tile').forEach(t=>{const ok=(active==='all'||t.dataset.group===active)&&(!q||(t.textContent+' '+(labels[t.dataset.tool]||'')).toLowerCase().includes(q));t.classList.toggle('is-filter-hidden',!ok);if(ok)count++;});let empty=grid.querySelector('.tool-empty');if(!count){if(!empty){empty=document.createElement('div');empty.className='tool-empty';grid.appendChild(empty)}empty.textContent='没有找到匹配的工具，换个关键词试试。'}else if(empty)empty.remove();}
-    bar.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.group;bar.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));render();}));
-    bar.querySelector('input').addEventListener('input',render);render();
+    function render(){
+      const q=(document.getElementById('toolsSearch')?.value||'').trim().toLowerCase();
+      let count=0;
+      grid.querySelectorAll('.tool-card-v4, .tool-tile').forEach(t=>{
+        const grp=t.dataset.group||'';
+        const txt=t.textContent.toLowerCase();
+        const ok=(active==='all'||grp===active)&&(!q||txt.includes(q));
+        t.classList.toggle('is-filter-hidden',!ok);
+        if(ok)count++;
+      });
+      let empty=grid.querySelector('.tool-empty');
+      if(!count){
+        if(!empty){
+          empty=document.createElement('div');
+          empty.className='tool-empty';
+          grid.appendChild(empty);
+        }
+        empty.textContent='没有找到匹配的工具，换个关键词或切换专栏试试。';
+      }else if(empty){
+        empty.remove();
+      }
+    }
+    bar.querySelectorAll('.tools-filter button').forEach(b=>b.addEventListener('click',()=>{
+      active=b.dataset.group;
+      bar.querySelectorAll('.tools-filter button').forEach(x=>x.classList.toggle('active',x===b));
+      render();
+    }));
+    bar.querySelector('input')?.addEventListener('input',render);
+    render();
   }
-  const oldSwitch=window.switchTab;window.switchTab=function(el){if(oldSwitch)oldSwitch(el);if(el&&el.dataset.sec==='s-adv')setTimeout(mount,0)};
+  const oldSwitch=window.switchTab;
+  window.switchTab=function(el){
+    if(oldSwitch)oldSwitch(el);
+    if(el&&el.dataset.sec==='s-adv')setTimeout(mount,0);
+  };
   document.addEventListener('DOMContentLoaded',mount);
   new MutationObserver(mount).observe(document.body,{childList:true,subtree:true});
 })();

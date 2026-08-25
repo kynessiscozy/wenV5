@@ -7,10 +7,8 @@
    ============================================================ */
 import './tools2.css';
 import { register, installGlobal } from './runtime.js';
-import { wealth } from './wealth.js';
 import { career } from './career.js';
 import { date } from './date.js';
-import { layoff } from './layoff.js';
 import { daily } from './daily.js';
 import { name } from './name.js';
 import { oracle } from './oracle.js';
@@ -19,14 +17,16 @@ import { zodiac } from './zodiac.js';
 import { relation } from './relation.js';
 import { answerbook } from './answerbook.js';
 import { calendar } from './calendar.js';
-import { exportPdfTool } from './export.js';
 import { fengshui } from './fengshui.js';
 import { style } from './style.js';
+import { horoscope } from './horoscope.js';
+import { tarot } from './tarot.js';
+import { mbti } from './mbti.js';
 
 [
-  wealth, career, date, style, layoff, daily,
-  name, oracle, lottery, zodiac, relation, answerbook, calendar,
-  exportPdfTool, fengshui,
+  career, date, style, daily,
+  name, oracle, lottery, zodiac, horoscope, tarot, mbti, relation, answerbook, calendar,
+  fengshui,
 ].forEach(register);
 
 export function bootstrap() {

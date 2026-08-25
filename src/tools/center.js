@@ -8,7 +8,7 @@ function closeToolPage(){document.getElementById('toolModal').classList.remove('
    这些工具（answerbook / export / calendar）在 tools2 加载完成前
    被点击时，显示加载提示并轮询等待 tools2 就绪后自动打开。
    避免落入下方 else 分支误导向「八字合盘」页面。 */
-const TOOLS2_ONLY=['answerbook','export','calendar'];
+const TOOLS2_ONLY=['answerbook','calendar','horoscope','tarot','mbti','fengshui','style','career','date','relation','zodiac','name','oracle','lottery','daily'];
 function delegateToTools2(type){
   const modal=document.getElementById('toolModal'),out=document.getElementById('toolModalContent');
   if(!modal||!out)return;

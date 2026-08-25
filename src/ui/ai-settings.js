@@ -4,8 +4,8 @@ import { applyFontSize, getFontSizeKey } from '../font-size.js';
 
 const defaults = { natural: true, context: true, length: 'short' };
 
-const BUILTIN_KEY          = import.meta.env.VITE_API_KEY || '';
-const BUILTIN_DEEPSEEK_KEY = import.meta.env.VITE_DEEPSEEK_KEY || '';
+const BUILTIN_KEY          = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) || '';
+const BUILTIN_DEEPSEEK_KEY = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_DEEPSEEK_KEY) || '';
 const LS_KEY      = 'tj_ai_settings';
 const LS_APIKEY   = 'tj_ai_apikey';
 
@@ -64,7 +64,9 @@ export function closeAISettingsModal() {
   document.querySelector('.ai-settings')?.setAttribute('aria-expanded', 'false');
 }
 
-window.closeAISettingsModal = closeAISettingsModal;
+if (typeof window !== 'undefined') {
+  window.closeAISettingsModal = closeAISettingsModal;
+}
 
 /* 提供方对应密钥说明 */
 function _providerInfo(p) {

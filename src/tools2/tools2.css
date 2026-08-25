@@ -1385,3 +1385,746 @@
 .tw-fs-compass { width: 100%; max-width: 320px; margin: 6px auto 8px; }
 .tw-fs-compass-svg { width: 100%; height: auto; display: block; }
 .tw-fs-compass-empty { font-size: 12.5px; color: var(--tw-ink-3); line-height: 1.7; padding: 20px 16px; border: 1px dashed var(--tw-line-2); border-radius: 14px; text-align: center; }
+
+/* ============================================================
+   16 horoscope · 星座大师
+   ============================================================ */
+.tw-tool-horoscope { --tw-accent: #783f59; }
+[data-theme="dark"] .tw-tool-horoscope { --tw-accent: #c47ba0; }
+
+.tw-h-tabs {
+  display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 10px; margin-bottom: 12px;
+  border-bottom: 1px solid var(--tw-line-2); scrollbar-width: none;
+}
+.tw-h-tabs::-webkit-scrollbar { display: none; }
+.tw-h-tab {
+  flex: 1 0 auto; padding: 8px 14px; font-size: 13px; font-weight: 600;
+  border-radius: 20px; border: 1px solid var(--tw-line); background: var(--tw-card);
+  color: var(--tw-ink-2); cursor: pointer; transition: all .18s ease; white-space: nowrap;
+}
+.tw-h-tab.active {
+  background: var(--tw-ink); color: var(--tw-paper); border-color: var(--tw-ink);
+}
+
+.tw-h-selector-bar {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 10px; margin-bottom: 14px; padding: 10px 14px; border-radius: 12px;
+  background: color-mix(in srgb, var(--tw-accent) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tw-accent) 20%, transparent);
+}
+.tw-field-inline { display: flex; align-items: center; gap: 8px; }
+.tw-field-inline label { font-size: 12px; font-weight: 600; color: var(--tw-ink-3); }
+.tw-field-inline select {
+  padding: 6px 12px; font-size: 13px; font-weight: 600; border-radius: 8px;
+  border: 1px solid var(--tw-line-2); background: var(--tw-card); color: var(--tw-ink);
+}
+.tw-h-selector-hint { font-size: 11.5px; color: var(--tw-ink-3); }
+
+/* 三核星盘卡片 */
+.tw-h-trio-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px;
+}
+@media (max-width: 520px) {
+  .tw-h-trio-grid { grid-template-columns: 1fr; gap: 8px; }
+}
+.tw-h-trio-card {
+  padding: 14px 12px; border-radius: 12px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); text-align: center; position: relative; overflow: hidden;
+}
+.tw-h-trio-card.sun { border-top: 3px solid #d97757; }
+.tw-h-trio-card.moon { border-top: 3px solid #6b8ba4; }
+.tw-h-trio-card.asc { border-top: 3px solid #b5838d; }
+.tw-h-trio-card .kicker { font-size: 11px; font-weight: 600; color: var(--tw-ink-3); margin-bottom: 6px; }
+.tw-h-trio-card .symbol { font-size: 32px; line-height: 1; margin: 4px 0; color: var(--tw-ink); }
+.tw-h-trio-card .name { font-size: 16px; font-weight: 700; color: var(--tw-ink); }
+.tw-h-trio-card .tag { font-size: 11px; color: var(--tw-ink-2); margin: 4px 0 6px; }
+.tw-h-trio-card p { font-size: 11.5px; line-height: 1.5; color: var(--tw-ink-3); margin: 0; }
+
+/* 通用卡片容器 */
+.tw-h-card {
+  padding: 14px 16px; border-radius: 12px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); margin-bottom: 12px;
+}
+.tw-h-card-hd {
+  display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;
+}
+.tw-h-card-hd b { font-size: 14px; color: var(--tw-ink); }
+.tw-h-card-hd .sub { font-size: 11.5px; color: var(--tw-ink-3); }
+
+/* 四象能量条 */
+.tw-h-elem-bars { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.tw-h-elem-row .lab { display: flex; justify-content: space-between; font-size: 12px; color: var(--tw-ink-2); margin-bottom: 3px; }
+.tw-h-elem-row .track { height: 7px; border-radius: 99px; background: var(--tw-line-2); overflow: hidden; }
+.tw-h-elem-row .bar { height: 100%; border-radius: 99px; transition: width .5s ease; }
+.tw-h-elem-row .bar.fire { background: #e05a47; }
+.tw-h-elem-row .bar.earth { background: #5c8d62; }
+.tw-h-elem-row .bar.air { background: #d4a34b; }
+.tw-h-elem-row .bar.water { background: #5e7fa2; }
+.tw-h-elem-verdict {
+  font-size: 12px; line-height: 1.6; color: var(--tw-ink-2); padding-top: 8px;
+  border-top: 1px dashed var(--tw-line-2);
+}
+.tw-h-elem-verdict .tag-g { color: var(--tw-g); font-weight: 600; }
+
+/* 标签行与排版 */
+.tw-h-tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.tw-h-tag {
+  font-size: 11px; padding: 3px 8px; border-radius: 99px;
+  background: color-mix(in srgb, var(--tw-ink) 7%, transparent); color: var(--tw-ink-2);
+}
+.tw-h-prose p { margin: 6px 0; font-size: 13px; line-height: 1.65; color: var(--tw-ink-2); }
+.tw-h-prose b { color: var(--tw-ink); }
+
+/* 六维雷达进度 */
+.tw-h-radar-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+@media (max-width: 480px) { .tw-h-radar-list { grid-template-columns: 1fr; } }
+.tw-h-radar-it { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.tw-h-radar-it .k { width: 72px; flex-shrink: 0; color: var(--tw-ink-2); }
+.tw-h-radar-it .bar-wrap { flex: 1; height: 6px; background: var(--tw-line-2); border-radius: 99px; overflow: hidden; }
+.tw-h-radar-it .val { height: 100%; border-radius: 99px; }
+.tw-h-radar-it .v { width: 24px; text-align: right; font-weight: 700; color: var(--tw-ink); font-size: 11.5px; }
+
+/* 运势周期胶囊 */
+.tw-h-pills { display: flex; gap: 4px; }
+.tw-h-pill {
+  padding: 5px 10px; font-size: 12px; font-weight: 600; border-radius: 14px;
+  border: 1px solid var(--tw-line-2); background: var(--tw-card); color: var(--tw-ink-2);
+  cursor: pointer; transition: all .15s ease;
+}
+.tw-h-pill.active { background: var(--tw-accent); color: #fff; border-color: var(--tw-accent); }
+
+/* 运势 Hero 卡片 */
+.tw-h-forecast-hero {
+  display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 14px;
+  background: var(--tw-card); border: 1px solid var(--tw-line); margin-bottom: 12px;
+}
+@media (max-width: 480px) { .tw-h-forecast-hero { flex-direction: column; text-align: center; } }
+.tw-h-ring-box { position: relative; width: 90px; height: 90px; flex-shrink: 0; }
+.tw-h-ring-box .ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.tw-h-ring-box .num {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; font-size: 24px; font-weight: 800;
+  font-family: var(--tw-serif); color: var(--tw-ink);
+}
+.tw-h-ring-box .num small { font-size: 9px; font-weight: normal; color: var(--tw-ink-3); margin-top: -2px; }
+
+.tw-h-forecast-hero .info { flex: 1; }
+.tw-h-forecast-hero .kicker { font-size: 10.5px; letter-spacing: 1px; color: var(--tw-accent); font-weight: 700; }
+.tw-h-forecast-hero .title { margin: 2px 0; font-size: 16px; font-weight: 700; color: var(--tw-ink); }
+.tw-h-forecast-hero .sub { font-size: 12px; color: var(--tw-ink-3); margin-bottom: 6px; }
+.tw-h-forecast-hero .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.tw-h-forecast-hero .chip {
+  font-size: 11px; padding: 2px 7px; border-radius: 99px;
+  background: color-mix(in srgb, var(--tw-accent) 10%, transparent); color: var(--tw-ink-2);
+}
+
+/* 运势分项 */
+.tw-h-aspect-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+@media (max-width: 520px) { .tw-h-aspect-grid { grid-template-columns: 1fr; gap: 8px; } }
+.tw-h-aspect-card {
+  padding: 12px 14px; border-radius: 12px; border: 1px solid var(--tw-line);
+  background: var(--tw-card);
+}
+.tw-h-aspect-card .hd { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--tw-ink); margin-bottom: 6px; }
+.tw-h-aspect-card .hd b { color: var(--tw-accent); }
+.tw-h-aspect-card p { margin: 0; font-size: 12px; line-height: 1.55; color: var(--tw-ink-2); }
+
+/* 宜忌行 */
+.tw-h-yiji-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tw-h-yiji-row .col .tag { font-size: 11.5px; font-weight: 700; margin-bottom: 6px; }
+.tw-h-yiji-row .col.yi .tag { color: var(--tw-g); }
+.tw-h-yiji-row .col.ji .tag { color: var(--tw-r); }
+.tw-h-yiji-row .list { display: flex; flex-wrap: wrap; gap: 4px; }
+.tw-h-yiji-row .list span {
+  font-size: 11.5px; padding: 3px 8px; border-radius: 6px;
+}
+.tw-h-yiji-row .col.yi span { background: color-mix(in srgb, var(--tw-g) 12%, transparent); color: var(--tw-g); }
+.tw-h-yiji-row .col.ji span { background: color-mix(in srgb, var(--tw-r) 10%, transparent); color: var(--tw-r); }
+
+/* 星座合盘速配 */
+.tw-h-synastry-picker {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 14px; border-radius: 14px; background: color-mix(in srgb, var(--tw-accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tw-accent) 24%, transparent); margin-bottom: 12px;
+}
+.tw-h-synastry-picker .pick-box { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.tw-h-synastry-picker .pick-box label { font-size: 11px; font-weight: 600; color: var(--tw-ink-3); }
+.tw-h-synastry-picker .pick-box select {
+  padding: 8px 10px; font-size: 14px; font-weight: 700; border-radius: 8px;
+  border: 1px solid var(--tw-line-2); background: var(--tw-card); color: var(--tw-ink);
+}
+.tw-h-synastry-picker .vs-heart { font-size: 22px; color: var(--tw-accent); }
+
+.tw-h-synastry-hero {
+  display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 14px;
+  background: var(--tw-card); border: 1px solid var(--tw-line); margin-bottom: 12px;
+}
+@media (max-width: 480px) { .tw-h-synastry-hero { flex-direction: column; text-align: center; } }
+.tw-h-gauge-box { position: relative; width: 96px; height: 96px; flex-shrink: 0; }
+.tw-h-gauge-box .gauge-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.tw-h-gauge-box .center {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.tw-h-gauge-box .score { font-size: 26px; font-weight: 800; font-family: var(--tw-serif); line-height: 1; }
+.tw-h-gauge-box .score small { font-size: 12px; }
+.tw-h-gauge-box .tag { font-size: 10px; color: var(--tw-ink-3); margin-top: 2px; }
+
+.tw-h-synastry-hero .hero-info { flex: 1; }
+.tw-h-synastry-hero .pair-title { font-size: 18px; font-weight: 800; font-family: var(--tw-serif); color: var(--tw-ink); }
+.tw-h-synastry-hero .pair-title .mul { font-size: 14px; color: var(--tw-accent); font-weight: normal; margin: 0 4px; }
+.tw-h-synastry-hero .pair-badge {
+  display: inline-block; font-size: 11.5px; font-weight: 700; padding: 2px 8px;
+  border-radius: 99px; border: 1px solid currentColor; margin: 4px 0 8px;
+}
+.tw-h-synastry-hero .scores-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.tw-h-synastry-hero .s-it { font-size: 12px; color: var(--tw-ink-2); }
+.tw-h-synastry-hero .s-it .k { color: var(--tw-ink-3); margin-right: 4px; }
+.tw-h-synastry-hero .s-it b { color: var(--tw-ink); }
+
+.tw-h-desc { font-size: 13px; line-height: 1.65; color: var(--tw-ink-2); margin: 0; }
+.tw-h-rows { display: flex; flex-direction: column; gap: 8px; }
+.tw-h-rows .it { font-size: 12.5px; line-height: 1.6; color: var(--tw-ink-2); }
+.tw-h-rows .it b { color: var(--tw-ink); margin-right: 4px; }
+
+/* 12星座图鉴 */
+.tw-h-catalog-filter { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; }
+.tw-h-filter-btn {
+  padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 12px;
+  border: 1px solid var(--tw-line); background: var(--tw-card); color: var(--tw-ink-2);
+  cursor: pointer; transition: all .15s ease; white-space: nowrap;
+}
+.tw-h-filter-btn.active { background: var(--tw-ink); color: var(--tw-paper); border-color: var(--tw-ink); }
+
+.tw-h-catalog-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;
+}
+@media (max-width: 600px) { .tw-h-catalog-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 380px) { .tw-h-catalog-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.tw-h-cat-tile {
+  padding: 10px 8px; border-radius: 10px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); text-align: center; cursor: pointer; transition: all .15s ease;
+}
+.tw-h-cat-tile:hover { transform: translateY(-2px); border-color: var(--tw-line-2); }
+.tw-h-cat-tile.sel {
+  border-color: var(--tw-accent); background: color-mix(in srgb, var(--tw-accent) 8%, transparent);
+  box-shadow: 0 0 0 1.5px var(--tw-accent);
+}
+.tw-h-cat-tile .sym { font-size: 22px; line-height: 1; margin-bottom: 4px; }
+.tw-h-cat-tile .name { font-size: 13px; font-weight: 700; color: var(--tw-ink); }
+.tw-h-cat-tile .date { font-size: 10px; color: var(--tw-ink-3); margin: 2px 0; }
+.tw-h-cat-tile .elem { font-size: 10px; color: var(--tw-ink-3); }
+
+.tw-h-detail-card {
+  padding: 16px; border-radius: 14px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); margin-bottom: 12px;
+}
+.tw-h-detail-card .detail-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.tw-h-detail-card .detail-hd .symbol { font-size: 38px; line-height: 1; }
+.tw-h-detail-card .detail-hd h3 { margin: 0; font-size: 18px; font-weight: 800; font-family: var(--tw-serif); color: var(--tw-ink); }
+.tw-h-detail-card .detail-hd h3 small { font-size: 12px; font-weight: normal; color: var(--tw-ink-3); }
+.tw-h-detail-card .detail-hd .meta-tag { font-size: 11.5px; color: var(--tw-ink-2); margin-top: 2px; }
+
+.tw-h-detail-card .detail-quick {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 12px;
+  padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--tw-ink) 4%, transparent);
+}
+.tw-h-detail-card .detail-quick b { color: var(--tw-ink-3); }
+.tw-h-detail-card .detail-quick span { color: var(--tw-ink); font-weight: 600; }
+
+/* ============================================================
+   17 tarot · 塔罗大师 / 卡罗牌测算
+   ============================================================ */
+.tw-tool-tarot { --tw-accent: #6b4c82; }
+[data-theme="dark"] .tw-tool-tarot { --tw-accent: #b388d9; }
+
+.tw-t-nav {
+  display: flex; gap: 8px; margin-bottom: 14px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--tw-line-2);
+}
+.tw-t-nav-btn {
+  flex: 1; padding: 9px 14px; font-size: 13px; font-weight: 700;
+  border-radius: 12px; border: 1px solid var(--tw-line); background: var(--tw-card);
+  color: var(--tw-ink-2); cursor: pointer; transition: all .18s ease;
+}
+.tw-t-nav-btn.active {
+  background: var(--tw-ink); color: var(--tw-paper); border-color: var(--tw-ink);
+}
+
+/* 牌阵选择网格 */
+.tw-t-spread-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px;
+}
+@media (max-width: 480px) { .tw-t-spread-grid { grid-template-columns: 1fr; } }
+.tw-t-spread-card {
+  padding: 12px 14px; border-radius: 12px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); cursor: pointer; transition: all .15s ease;
+}
+.tw-t-spread-card:hover { border-color: var(--tw-line-2); transform: translateY(-1px); }
+.tw-t-spread-card.active {
+  border-color: var(--tw-accent); background: color-mix(in srgb, var(--tw-accent) 8%, transparent);
+  box-shadow: 0 0 0 1.5px var(--tw-accent);
+}
+.tw-t-spread-card .name { font-size: 13.5px; font-weight: 700; color: var(--tw-ink); }
+.tw-t-spread-card .name .cnt { font-size: 11px; font-weight: normal; color: var(--tw-accent); margin-left: 4px; }
+.tw-t-spread-card .desc { font-size: 11.5px; color: var(--tw-ink-3); margin-top: 4px; line-height: 1.4; }
+
+/* 洗牌舞台 */
+.tw-t-deck-stage {
+  padding: 24px 16px; border-radius: 14px; border: 1px dashed var(--tw-line-2);
+  background: color-mix(in srgb, var(--tw-accent) 4%, transparent);
+  text-align: center; margin: 14px 0 10px;
+}
+.tw-t-deck-visual {
+  position: relative; width: 140px; height: 100px; margin: 0 auto 14px;
+}
+.tw-t-deck-visual .deck-card {
+  position: absolute; width: 60px; height: 90px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.3); background: linear-gradient(135deg, #44325a, #201330);
+  box-shadow: 0 4px 10px rgba(0,0,0,.15); transition: all .4s cubic-bezier(.2,.8,.3,1);
+  top: 5px; left: 40px;
+}
+.tw-t-deck-visual .c1 { transform: rotate(-12deg) translate(-20px, 0); }
+.tw-t-deck-visual .c2 { transform: rotate(-6deg) translate(-10px, 0); }
+.tw-t-deck-visual .c3 { transform: rotate(0deg) translate(0, 0); }
+.tw-t-deck-visual .c4 { transform: rotate(6deg) translate(10px, 0); }
+.tw-t-deck-visual .c5 { transform: rotate(12deg) translate(20px, 0); }
+
+.tw-t-deck-visual.shuffling .c1 { animation: tarotShuffle 1.2s infinite ease-in-out alternate; }
+.tw-t-deck-visual.shuffling .c2 { animation: tarotShuffle 1.2s infinite ease-in-out alternate .1s; }
+.tw-t-deck-visual.shuffling .c3 { animation: tarotShuffle 1.2s infinite ease-in-out alternate .2s; }
+.tw-t-deck-visual.shuffling .c4 { animation: tarotShuffle 1.2s infinite ease-in-out alternate .3s; }
+.tw-t-deck-visual.shuffling .c5 { animation: tarotShuffle 1.2s infinite ease-in-out alternate .4s; }
+
+@keyframes tarotShuffle {
+  0% { transform: rotate(-15deg) translate(-30px, -5px); }
+  50% { transform: rotate(15deg) translate(30px, 5px); }
+  100% { transform: rotate(-5deg) translate(0, 0); }
+}
+.tw-t-deck-status { font-size: 12.5px; color: var(--tw-ink-2); font-weight: 500; }
+
+/* 测算结果顶部条 */
+.tw-t-result-header {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 12px; background: var(--tw-card);
+  border: 1px solid var(--tw-line); margin-bottom: 12px;
+}
+.tw-t-result-header .kicker { font-size: 11px; font-weight: 700; color: var(--tw-accent); letter-spacing: .5px; }
+.tw-t-result-header .q { font-size: 12.5px; font-weight: 600; color: var(--tw-ink); margin-top: 2px; }
+.tw-t-btn-sm {
+  padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 8px;
+  border: 1px solid var(--tw-line-2); background: var(--tw-card); color: var(--tw-ink-2);
+  cursor: pointer; transition: all .15s ease;
+}
+.tw-t-btn-sm:hover { border-color: var(--tw-accent); color: var(--tw-accent); }
+
+/* 牌阵展示区与 3D 翻牌效果 */
+.tw-t-spread-display {
+  display: flex; justify-content: center; flex-wrap: wrap; gap: 12px;
+  margin: 12px 0 16px; padding: 14px 8px; border-radius: 14px;
+  background: color-mix(in srgb, var(--tw-accent) 5%, transparent);
+}
+.tw-t-card-slot {
+  width: 105px; display: flex; flex-direction: column; align-items: center;
+  perspective: 900px; cursor: pointer;
+}
+@media (max-width: 420px) { .tw-t-card-slot { width: 92px; } }
+.tw-t-card-slot .pos-badge {
+  font-size: 10.5px; font-weight: 700; color: var(--tw-ink-3); margin-bottom: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+
+.tw-t-card-slot .card-inner {
+  position: relative; width: 100%; height: 155px; border-radius: 10px;
+  transition: transform .6s cubic-bezier(.2,.8,.2,1); transform-style: preserve-3d;
+}
+@media (max-width: 420px) { .tw-t-card-slot .card-inner { height: 138px; } }
+
+.tw-t-card-slot.flipped .card-inner { transform: rotateY(180deg); }
+.tw-t-card-slot.flipped .card-inner.is-reversed { transform: rotateY(180deg) rotateZ(180deg); }
+
+.tw-t-card-slot .card-face {
+  position: absolute; inset: 0; border-radius: 10px; backface-visibility: hidden;
+  -webkit-backface-visibility: hidden; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,.12);
+}
+
+.tw-t-card-slot .card-back {
+  background: linear-gradient(135deg, #37284b, #190f24);
+  border: 1.5px solid #6b4c82; color: #f0e6ff; text-align: center;
+}
+.tw-t-card-slot .card-back .back-pattern { font-size: 24px; opacity: .7; margin-bottom: 4px; }
+.tw-t-card-slot .card-back .tap-hint { font-size: 10px; opacity: .8; letter-spacing: 1px; }
+
+.tw-t-card-slot .card-front {
+  transform: rotateY(180deg); background: var(--tw-card);
+  border: 2px solid var(--tw-accent); color: var(--tw-ink); padding: 8px 6px; text-align: center;
+}
+.tw-t-card-slot .card-front .card-num { font-size: 11px; font-weight: 700; color: var(--tw-ink-3); }
+.tw-t-card-slot .card-front .card-symbol { font-size: 28px; line-height: 1; margin: 4px 0; }
+.tw-t-card-slot .card-front .card-name { font-size: 12px; font-weight: 800; }
+.tw-t-card-slot .card-front .card-en { font-size: 9px; color: var(--tw-ink-3); margin-top: 2px; }
+.tw-t-card-slot .card-front .rev-tag {
+  display: block; font-size: 9.5px; color: var(--tw-r); font-weight: 700; margin-top: 1px;
+}
+.tw-t-card-slot .card-front .up-tag {
+  display: block; font-size: 9.5px; color: var(--tw-g); font-weight: 700; margin-top: 1px;
+}
+
+/* 牌义解读列表卡 */
+.tw-t-meanings-wrap { display: flex; flex-direction: column; gap: 10px; }
+.tw-t-meaning-card {
+  padding: 14px 16px; border-radius: 12px; border: 1px solid var(--tw-line);
+  background: var(--tw-card);
+}
+.tw-t-meaning-card .hd {
+  display: flex; justify-content: space-between; align-items: center; padding-left: 10px;
+  margin-bottom: 8px;
+}
+.tw-t-meaning-card .hd .idx { font-size: 11px; font-weight: 700; color: var(--tw-ink-3); display: block; }
+.tw-t-meaning-card .hd .title { margin: 2px 0 0; font-size: 15px; font-weight: 800; color: var(--tw-ink); }
+.tw-t-meaning-card .hd .orient.up { color: var(--tw-g); font-size: 12px; font-weight: 700; }
+.tw-t-meaning-card .hd .orient.rev { color: var(--tw-r); font-size: 12px; font-weight: 700; }
+.tw-t-meaning-card .hd .elem-tag { font-size: 11px; color: var(--tw-ink-3); }
+
+.tw-t-meaning-card .pos-desc {
+  font-size: 11.5px; color: var(--tw-accent); background: color-mix(in srgb, var(--tw-accent) 8%, transparent);
+  padding: 4px 8px; border-radius: 6px; margin-bottom: 8px;
+}
+.tw-t-meaning-card .kw-row { font-size: 12.5px; color: var(--tw-ink-2); margin-bottom: 8px; }
+.tw-t-meaning-card .kw-row .k { font-weight: 700; color: var(--tw-ink); }
+.tw-t-meaning-card .prose p { margin: 6px 0; font-size: 13px; line-height: 1.6; color: var(--tw-ink-2); }
+.tw-t-meaning-card .prose b { color: var(--tw-ink); }
+
+/* 图鉴分类与网格 */
+.tw-t-filter-bar {
+  display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px;
+}
+.tw-t-filter-btn {
+  padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 12px;
+  border: 1px solid var(--tw-line); background: var(--tw-card); color: var(--tw-ink-2);
+  cursor: pointer; transition: all .15s ease; white-space: nowrap;
+}
+.tw-t-filter-btn.active { background: var(--tw-ink); color: var(--tw-paper); border-color: var(--tw-ink); }
+
+.tw-t-comp-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;
+}
+@media (max-width: 600px) { .tw-t-comp-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 380px) { .tw-t-comp-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.tw-t-comp-tile {
+  padding: 10px 8px; border-radius: 10px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); text-align: center; cursor: pointer; transition: all .15s ease;
+}
+.tw-t-comp-tile:hover { transform: translateY(-2px); border-color: var(--tw-line-2); }
+.tw-t-comp-tile.sel {
+  border-color: var(--tw-accent); background: color-mix(in srgb, var(--tw-accent) 8%, transparent);
+  box-shadow: 0 0 0 1.5px var(--tw-accent);
+}
+.tw-t-comp-tile .sym { font-size: 22px; line-height: 1; margin-bottom: 3px; }
+.tw-t-comp-tile .num { font-size: 10.5px; font-weight: 700; color: var(--tw-ink-3); }
+.tw-t-comp-tile .name { font-size: 12.5px; font-weight: 700; color: var(--tw-ink); margin: 2px 0; }
+.tw-t-comp-tile .elem { font-size: 10px; color: var(--tw-ink-3); }
+
+.tw-t-detail-card {
+  padding: 16px; border-radius: 14px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); margin-bottom: 12px;
+}
+.tw-t-detail-card .detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.tw-t-detail-card .detail-header .sym { font-size: 36px; line-height: 1; }
+.tw-t-detail-card .detail-header h3 { margin: 0; font-size: 18px; font-weight: 800; font-family: var(--tw-serif); color: var(--tw-ink); }
+.tw-t-detail-card .detail-header h3 small { font-size: 12px; font-weight: normal; color: var(--tw-ink-3); }
+.tw-t-detail-card .detail-header .tags { display: flex; gap: 4px; margin-top: 4px; }
+.tw-t-detail-card .detail-header .t-tag {
+  font-size: 10.5px; padding: 2px 6px; border-radius: 4px; background: var(--tw-line); color: var(--tw-ink-2);
+}
+.tw-t-detail-card .detail-img-desc {
+  font-size: 12px; line-height: 1.55; color: var(--tw-ink-2); padding: 8px 10px;
+  background: color-mix(in srgb, var(--tw-ink) 4%, transparent); border-radius: 8px; margin-bottom: 12px;
+}
+.tw-t-detail-card .detail-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .tw-t-detail-card .detail-columns { grid-template-columns: 1fr; gap: 8px; } }
+.tw-t-detail-card .col { padding: 12px; border-radius: 10px; border: 1px solid var(--tw-line); }
+.tw-t-detail-card .col.up { border-top: 3px solid var(--tw-g); }
+.tw-t-detail-card .col.rev { border-top: 3px solid var(--tw-r); }
+.tw-t-detail-card .col .c-hd { font-size: 12.5px; font-weight: 700; margin-bottom: 6px; }
+.tw-t-detail-card .col.up .c-hd { color: var(--tw-g); }
+.tw-t-detail-card .col.rev .c-hd { color: var(--tw-r); }
+.tw-t-detail-card .col .kw { font-size: 11.5px; color: var(--tw-ink-2); margin-bottom: 6px; }
+.tw-t-detail-card .col p { margin: 5px 0; font-size: 12px; line-height: 1.55; color: var(--tw-ink-2); }
+.tw-t-detail-card .col b { color: var(--tw-ink); }
+
+/* ============================================================
+   18 mbti · 人格大师 / MBTI 深度测评
+   ============================================================ */
+.tw-tool-mbti { --tw-accent: #2a9d8f; }
+[data-theme="dark"] .tw-tool-mbti { --tw-accent: #52b788; }
+
+.tw-m-nav {
+  display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 10px; margin-bottom: 12px;
+  border-bottom: 1px solid var(--tw-line-2); scrollbar-width: none;
+}
+.tw-m-nav::-webkit-scrollbar { display: none; }
+.tw-m-nav-btn {
+  flex: 1 0 auto; padding: 8px 14px; font-size: 13px; font-weight: 700;
+  border-radius: 20px; border: 1px solid var(--tw-line); background: var(--tw-card);
+  color: var(--tw-ink-2); cursor: pointer; transition: all .18s ease; white-space: nowrap;
+}
+.tw-m-nav-btn.active {
+  background: var(--tw-ink); color: var(--tw-paper); border-color: var(--tw-ink);
+}
+
+/* 引导界面卡片 */
+.tw-m-intro-box {
+  padding: 24px 20px; border-radius: 16px; text-align: center;
+  background: color-mix(in srgb, var(--tw-accent) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tw-accent) 20%, transparent);
+  margin-bottom: 14px;
+}
+.tw-m-intro-box .icon { font-size: 40px; margin-bottom: 8px; }
+.tw-m-intro-box .title { margin: 0 0 6px; font-size: 18px; font-weight: 800; font-family: var(--tw-serif); color: var(--tw-ink); }
+.tw-m-intro-box .desc { margin: 0 auto 16px; font-size: 13px; line-height: 1.6; color: var(--tw-ink-2); max-width: 420px; }
+.tw-m-intro-box .btn-group { display: flex; flex-direction: column; gap: 8px; max-width: 320px; margin: 0 auto; }
+
+/* 快捷直接选择 */
+.tw-m-direct-wrap .hd {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+}
+.tw-m-direct-wrap h4 { margin: 0; font-size: 15px; font-weight: 700; color: var(--tw-ink); }
+.tw-m-type-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;
+}
+@media (max-width: 560px) { .tw-m-type-grid { grid-template-columns: repeat(2, 1fr); } }
+.tw-m-type-tile {
+  padding: 12px 10px; border-radius: 10px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); text-align: center; cursor: pointer; transition: all .15s ease;
+}
+.tw-m-type-tile:hover { transform: translateY(-2px); border-color: var(--tw-accent); }
+.tw-m-type-tile .code { font-size: 15px; font-weight: 800; color: var(--tw-ink); }
+.tw-m-type-tile .name { font-size: 12px; font-weight: 600; color: var(--tw-ink-2); margin: 2px 0; }
+.tw-m-type-tile .quad { font-size: 10.5px; color: var(--tw-ink-3); }
+
+/* 答题问卷区 */
+.tw-m-quiz-box {
+  padding: 18px 16px; border-radius: 14px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); margin-bottom: 14px;
+}
+.quiz-progress-bar { margin-bottom: 14px; }
+.quiz-progress-bar .bar-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--tw-ink-3); margin-bottom: 4px; }
+.quiz-progress-bar .track { height: 6px; border-radius: 99px; background: var(--tw-line-2); overflow: hidden; }
+.quiz-progress-bar .fill { height: 100%; border-radius: 99px; background: var(--tw-accent); transition: width .3s ease; }
+
+.quiz-question { font-size: 15px; font-weight: 700; color: var(--tw-ink); line-height: 1.6; margin-bottom: 14px; }
+.quiz-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.quiz-opt {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid var(--tw-line); background: var(--tw-card); color: var(--tw-ink-2);
+  cursor: pointer; text-align: left; transition: all .15s ease;
+}
+.quiz-opt:hover { border-color: var(--tw-accent); transform: translateY(-1px); }
+.quiz-opt.sel {
+  border-color: var(--tw-accent); background: color-mix(in srgb, var(--tw-accent) 10%, transparent);
+  box-shadow: 0 0 0 1.5px var(--tw-accent);
+}
+.quiz-opt .letter {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--tw-line); font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; color: var(--tw-ink);
+}
+.quiz-opt.sel .letter { background: var(--tw-accent); color: #fff; }
+.quiz-opt .text { font-size: 13px; line-height: 1.5; }
+.quiz-nav-row { display: flex; justify-content: space-between; gap: 8px; }
+
+/* 报告 Hero 卡片 */
+.tw-m-hero-card {
+  padding: 18px 16px; border-radius: 14px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); margin-bottom: 12px;
+}
+.tw-m-hero-card .hero-top { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.tw-m-hero-card .sym { font-size: 38px; line-height: 1; }
+.tw-m-hero-card .titles { flex: 1; }
+.tw-m-hero-card .kicker { font-size: 11px; font-weight: 700; color: var(--tw-accent); letter-spacing: .5px; }
+.tw-m-hero-card h2 { margin: 2px 0; font-size: 20px; font-weight: 800; font-family: var(--tw-serif); color: var(--tw-ink); }
+.tw-m-hero-card h2 small { font-size: 13px; font-weight: normal; color: var(--tw-ink-3); }
+.tw-m-hero-card .tag { font-size: 12px; color: var(--tw-ink-2); }
+.cognition-strip {
+  font-size: 11.5px; color: var(--tw-ink-2); padding: 6px 10px; border-radius: 8px;
+  background: color-mix(in srgb, var(--tw-ink) 5%, transparent);
+}
+
+/* 成熟度卡片 */
+.maturity-card {
+  border-left: 4px solid var(--tw-accent) !important;
+}
+.mat-hd { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.mat-hd .k { font-size: 11px; color: var(--tw-ink-3); font-weight: 600; display: block; }
+.mat-hd .title { margin: 2px 0 0; font-size: 16px; font-weight: 800; color: var(--tw-ink); }
+.mat-hd .mat-tag {
+  font-size: 11.5px; font-weight: 700; color: var(--tw-accent);
+  padding: 2px 8px; border-radius: 99px; background: color-mix(in srgb, var(--tw-accent) 12%, transparent);
+}
+.mat-desc { margin: 0 0 8px; font-size: 12.5px; line-height: 1.6; color: var(--tw-ink-2); }
+.mat-growth { font-size: 12px; line-height: 1.55; color: var(--tw-accent); }
+
+/* 四大维度条 */
+.tw-m-card {
+  padding: 14px 16px; border-radius: 12px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); margin-bottom: 12px;
+}
+.tw-m-dim-list { display: flex; flex-direction: column; gap: 10px; }
+.tw-m-dim-it .labels { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--tw-ink); margin-bottom: 4px; }
+.tw-m-dim-it .track { height: 8px; border-radius: 99px; background: var(--tw-line-2); overflow: hidden; }
+.tw-m-dim-it .fill { height: 100%; border-radius: 99px; transition: width .5s ease; }
+
+.tw-m-prose { margin: 0 0 10px; font-size: 13px; line-height: 1.65; color: var(--tw-ink-2); }
+.tw-m-prose p { margin: 6px 0; }
+.tw-m-prose b { color: var(--tw-ink); }
+.match-badge {
+  display: inline-block; padding: 2px 7px; border-radius: 6px;
+  background: color-mix(in srgb, var(--tw-accent) 12%, transparent);
+  color: var(--tw-accent); font-weight: 700; font-size: 11px;
+}
+
+.tw-m-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 520px) { .tw-m-columns { grid-template-columns: 1fr; } }
+.tw-m-columns .col { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--tw-line); }
+.tw-m-columns .col.good { border-top: 3px solid var(--tw-g); }
+.tw-m-columns .col.warn { border-top: 3px solid var(--tw-y); }
+.tw-m-columns .c-hd { font-size: 12.5px; font-weight: 700; margin-bottom: 6px; }
+.tw-m-columns .col.good .c-hd { color: var(--tw-g); }
+.tw-m-columns .col.warn .c-hd { color: var(--tw-y); }
+.tw-m-columns ul { margin: 0; padding-left: 16px; font-size: 12px; line-height: 1.6; color: var(--tw-ink-2); }
+
+/* 历史记录 */
+.tw-m-history-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px;
+}
+.tw-m-history-header small { color: var(--tw-ink-3); }
+.tw-m-history-list { display: flex; flex-direction: column; gap: 8px; }
+.tw-m-history-card {
+  padding: 12px 14px; border-radius: 12px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); cursor: pointer; transition: all .15s ease;
+}
+.tw-m-history-card:hover { border-color: var(--tw-line-2); transform: translateY(-1px); }
+.tw-m-history-card .top-row { display: flex; align-items: center; gap: 8px; }
+.tw-m-history-card .badge {
+  padding: 2px 7px; border-radius: 6px; color: #fff; font-size: 11.5px; font-weight: 800;
+}
+.tw-m-history-card .title { font-size: 13.5px; font-weight: 700; color: var(--tw-ink); flex: 1; }
+.tw-m-history-card .title small { font-weight: normal; color: var(--tw-ink-3); }
+.tw-m-history-card .date { font-size: 11px; color: var(--tw-ink-3); }
+.tw-m-history-card .mid-row {
+  display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; font-size: 11.5px;
+}
+.tw-m-history-card .mat-label { color: var(--tw-accent); font-weight: 600; }
+.tw-m-history-card .dim-summary { color: var(--tw-ink-3); }
+
+/* 图鉴与速配 */
+.match-box .match-picker-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px;
+}
+.match-picker-row select {
+  flex: 1; padding: 7px 10px; font-size: 13px; font-weight: 700; border-radius: 8px;
+  border: 1px solid var(--tw-line-2); background: var(--tw-card); color: var(--tw-ink);
+}
+.match-picker-row .heart { font-size: 18px; color: var(--tw-accent); }
+.match-res-hero {
+  padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--tw-accent) 6%, transparent);
+}
+.match-res-hero .score-badge { font-size: 14px; font-weight: 800; color: var(--tw-accent); margin-bottom: 4px; }
+.match-res-hero .desc { margin: 0 0 6px; font-size: 12px; line-height: 1.55; color: var(--tw-ink-2); }
+.match-res-hero .advice { font-size: 12px; color: var(--tw-ink); }
+
+.tw-m-comp-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;
+}
+@media (max-width: 600px) { .tw-m-comp-grid { grid-template-columns: repeat(2, 1fr); } }
+.tw-m-comp-tile {
+  padding: 10px 8px; border-radius: 10px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); text-align: center; cursor: pointer; transition: all .15s ease;
+}
+.tw-m-comp-tile:hover { transform: translateY(-2px); border-color: var(--tw-line-2); }
+.tw-m-comp-tile.sel {
+  border-color: var(--tw-accent); background: color-mix(in srgb, var(--tw-accent) 8%, transparent);
+  box-shadow: 0 0 0 1.5px var(--tw-accent);
+}
+.tw-m-comp-tile .sym { font-size: 20px; margin-bottom: 2px; }
+.tw-m-comp-tile .code { font-size: 13.5px; font-weight: 800; color: var(--tw-ink); }
+.tw-m-comp-tile .name { font-size: 11.5px; color: var(--tw-ink-2); margin: 1px 0; }
+.tw-m-comp-tile .quad { font-size: 10px; color: var(--tw-ink-3); }
+
+.tw-m-detail-card {
+  padding: 16px; border-radius: 14px; border: 1px solid var(--tw-line);
+  background: var(--tw-card); margin-bottom: 12px;
+}
+.tw-m-detail-card .detail-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.tw-m-detail-card .detail-hd .sym { font-size: 34px; line-height: 1; }
+.tw-m-detail-card .detail-hd h3 { margin: 0; font-size: 18px; font-weight: 800; font-family: var(--tw-serif); color: var(--tw-ink); }
+.tw-m-detail-card .detail-hd h3 small { font-size: 12px; font-weight: normal; color: var(--tw-ink-3); }
+.tw-m-detail-card .detail-hd .meta { font-size: 11.5px; color: var(--tw-ink-2); margin-top: 2px; }
+
+.tw-m-empty {
+  text-align: center; padding: 40px 16px; color: var(--tw-ink-3); font-size: 13px;
+}
+.tw-m-empty .icon { font-size: 36px; margin-bottom: 8px; }
+.tw-m-empty h4 { margin: 0 0 6px; font-size: 15px; color: var(--tw-ink); }
+
+/* ============================================================
+   工具内 AI 解读参考依据选择器
+   ============================================================ */
+.tw-ai-mount-container {
+  display: flex; flex-direction: column; gap: 8px; margin-top: 14px;
+}
+.tw-ai-basis-panel {
+  padding: 10px 14px; border-radius: 12px;
+  background: color-mix(in srgb, var(--tw-accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tw-accent) 22%, transparent);
+}
+.tw-ai-basis-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+}
+.tw-ai-basis-header .label {
+  font-size: 12px; font-weight: 700; color: var(--tw-ink-3); flex-shrink: 0;
+}
+.tw-ai-basis-pill-group {
+  display: flex; gap: 6px;
+}
+.tw-ai-basis-chip {
+  padding: 4px 11px; font-size: 11.5px; font-weight: 700; border-radius: 999px;
+  border: 1px solid var(--tw-line); background: var(--tw-card); color: var(--tw-ink-2);
+  cursor: pointer; transition: all .15s ease;
+}
+.tw-ai-basis-chip:hover {
+  border-color: var(--tw-accent); color: var(--tw-accent);
+}
+.tw-ai-basis-chip.active {
+  background: var(--tw-accent); color: #fff; border-color: var(--tw-accent);
+}
+
+.tw-ai-basis-hint {
+  font-size: 11.5px; line-height: 1.5; color: var(--tw-ink-2); margin-top: 6px;
+  padding-top: 6px; border-top: 1px dashed color-mix(in srgb, var(--tw-accent) 20%, transparent);
+}
+.tw-ai-basis-hint .k {
+  font-size: 10.5px; font-weight: 700; color: var(--tw-accent); margin-right: 4px;
+}
+.tw-ai-basis-hint b {
+  color: var(--tw-ink); font-weight: 600;
+}
+
+.tw-ai-act-row {
+  display: flex; margin-top: 4px;
+}
+.tw-ai-act-row .tw-btn-ai {
+  width: 100%;
+}
+
+.tw-ai-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+}
+.tw-ai-head .basis-badge {
+  font-size: 11px; color: var(--tw-accent); font-weight: 700;
+  padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--tw-accent) 12%, transparent);
+}

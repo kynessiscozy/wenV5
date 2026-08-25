@@ -44,6 +44,6 @@ export const MODEL_LABELS         = openrouter.MODEL_LABELS;
 
 /* —— 命理/知识库能力（与提供方无关）—— */
 export { KB } from './kb.js';
-export { KBSearch, smartAnswer, extractIntents, buildBaziContext } from './smart-answer.js';
+export { KBSearch, smartAnswer, extractIntents, buildBaziContext, buildWesternContext } from './smart-answer.js';
 export { getLayoffAstroRisk } from './risk.js';
 export { generateAnswerFallback } from './fallback.js';

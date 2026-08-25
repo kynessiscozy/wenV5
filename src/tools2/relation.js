@@ -45,7 +45,7 @@ function tone(r) {
 
 export const relation = {
   id: 'relation',
-  name: '八字合盘 · 关系分析',
+  name: '合盘助手',
   cat: '关系与沟通',
   icon: '合',
   desc: '为对方真实排盘，比对日主、五行与干支关系，并给出可直接使用的沟通方案。',

@@ -19,7 +19,7 @@ const ELEM_LABEL = { 木: 'WOOD', 火: 'FIRE', 土: 'EARTH', 金: 'METAL', 水: 
 
 export const name = {
   id: 'name',
-  name: '智能起名工具',
+  name: '起名助手',
   cat: '灵感与娱乐',
   icon: '名',
   desc: '生成的是灵感方向，不替代读音、字义、重名和家族规范的核验。',

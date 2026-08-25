@@ -1,6 +1,7 @@
 import { getCtx } from '../state/context.js';
 import { KB } from '../ai/kb.js';
-import { KBSearch, smartAnswer, extractIntents, buildBaziContext } from '../ai/smart-answer.js';
+import { KBSearch, smartAnswer, extractIntents, buildBaziContext, buildWesternContext } from '../ai/index.js';
+import { calcWesternChart, calcNumerology } from '../engines/western.js';
 import { generateAnswerFallback } from '../ai/fallback.js';
 import { streamAskAnswer, probeConnection, getConnState, onConnChange, modelLabel } from '../ai/index.js';
 import { getApiKey } from './ai-settings.js';
@@ -311,6 +312,74 @@ function _scrollToBottom(el) { requestAnimationFrame(() => { el.scrollTo({ top: 
 function _delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 /* ============================================================
+   依据体系管理：东方命理 vs 西方星相
+   ============================================================ */
+const LS_AI_BASIS = 'tj_ai_basis';
+
+export function getAiBasis() {
+  try {
+    const saved = localStorage.getItem(LS_AI_BASIS);
+    if (saved === 'western' || saved === 'eastern') return saved;
+  } catch (e) {}
+  const sys = document.body.getAttribute('data-system-mode') || document.documentElement.getAttribute('data-system-mode') || 'eastern';
+  return sys === 'western' ? 'western' : 'eastern';
+}
+
+export function setAiBasis(basis) {
+  const isWestern = basis === 'western';
+  const val = isWestern ? 'western' : 'eastern';
+  try { localStorage.setItem(LS_AI_BASIS, val); } catch (e) {}
+
+  const btnE = document.getElementById('aiBasisEastern');
+  const btnW = document.getElementById('aiBasisWestern');
+  if (btnE && btnW) {
+    btnE.classList.toggle('active', !isWestern);
+    btnW.classList.toggle('active', isWestern);
+    btnE.setAttribute('aria-checked', !isWestern ? 'true' : 'false');
+    btnW.setAttribute('aria-checked', isWestern ? 'true' : 'false');
+  }
+
+  _syncAiContext();
+}
+window.setAiBasis = setAiBasis;
+
+function _syncAiContext() {
+  const context = document.getElementById('aiContext');
+  const freePrompt = document.getElementById('aiFreePrompt');
+  const d = window._ctx;
+  const basis = getAiBasis();
+  const isWestern = basis === 'western';
+
+  const btnE = document.getElementById('aiBasisEastern');
+  const btnW = document.getElementById('aiBasisWestern');
+  if (btnE && btnW) {
+    btnE.classList.toggle('active', !isWestern);
+    btnW.classList.toggle('active', isWestern);
+  }
+
+  if (context) {
+    if (!d) {
+      context.innerHTML = `<span>✦ ${isWestern ? '西方星相依据' : '东方命理依据'}</span><b>输入你的问题，获取结合分析的专属建议</b>`;
+    } else if (isWestern) {
+      const input = d.input || d._input || {};
+      const y = input.by || 1995, m = input.bm || 6, dDate = input.bd || 15;
+      const [h, min] = (input.timeStr || '12:00').split(':').map(Number);
+      const chart = calcWesternChart(y, m, dDate, h || 12, min || 0);
+      const num = calcNumerology(y, m, dDate);
+      context.innerHTML = `<span>✦ 西方星相依据</span><b>太阳 ${chart.sun.name} ｜ 上升 ${chart.asc.name} ｜ 月亮 ${chart.moon.name} ｜ 主命数 ${num.lifePath}号</b>`;
+    } else {
+      context.innerHTML = `<span>✦ 东方命理依据</span><b>${d.dg}${d.dw} · ${d.wx.st ? '身旺' : '身弱'} ｜ 大运 ${d.cDy.g}${d.cDy.z} ｜ 用神 ${d.wx.ys}</b>`;
+    }
+  }
+
+  if (freePrompt) {
+    freePrompt.textContent = isWestern
+      ? '以本命星盘、行星相位、四象能量与生命灵数为分析依据。'
+      : '以四柱八字、五行生克、十神大运与格局流年为分析依据。';
+  }
+}
+
+/* ============================================================
    公开 API
    ============================================================ */
 
@@ -323,12 +392,8 @@ export function openAsk() {
   document.getElementById('aiOverlay').classList.add('open');
   document.getElementById('aiSheet').classList.add('open');
 
-  // 上下文
-  const context = document.getElementById('aiContext');
-  const d = window._ctx;
-  if (context && d) {
-    context.innerHTML = '<span>✦ 当前命盘</span><b>' + d.dg + d.dw + ' · ' + (d.wx.st ? '行动型节奏' : '蓄力型节奏') + '</b>';
-  }
+  // 同步依据状态与上下文
+  _syncAiContext();
 
   // 连接状态栏
   _ensureConnBar();
@@ -366,23 +431,25 @@ export function aiToolRequest(q) {
   const x = String(q || '').trim();
   if (!/(打开|使用|开始|做一下|帮我|调用|进入|测一下|测评)/.test(x)) return false;
   const rules = [
-    [/财运|理财|现金流|财富/, 'wealth', '财运与理财罗盘'],
-    [/转行|副业|职业选择|换工作/, 'career', '转行与副业测评'],
-    [/裁员|失业|职场风险/, 'layoff', '裁员风险检测'],
-    [/关系沟通|伴侣沟通|感情沟通/, 'relation', '关系沟通分析'],
-    [/风水|环境/, 'fengshui', '风水大师'],
-    [/择日|重要事项|安排日期/, 'date', '重要事项择日助手'],
+    [/事业|转行|副业|职业选择|裁员|失业|职场风险/, 'career', '事业大师'],
+    [/合盘|伴侣合盘|感情合盘|八字合盘/, 'relation', '合盘助手'],
+    [/生肖|属相|生肖合冲|生肖关系/, 'zodiac', '生肖助手'],
+    [/风水|环境|罗盘/, 'fengshui', '风水大师'],
+    [/择日|选日子|重要事项|安排日期/, 'date', '择日助手'],
     [/今日日签|今日提醒|日签/, 'daily', '今日日签'],
-    [/起名|取名|名字/, 'name', '智能起名工具'],
+    [/起名|取名|名字|选字/, 'name', '起名助手'],
+    [/答案之书|翻答案/, 'answerbook', '答案之书'],
     [/摇签|问卜|抽签/, 'oracle', '摇签问卜'],
     [/彩票|双色球|大乐透|选号/, 'lottery', '娱乐选号'],
-    [/生肖合冲|生肖关系/, 'zodiac', '生肖合冲分析']
+    [/星座|星盘|上升星座|月亮星座|太阳星座|占星/, 'horoscope', '星座大师'],
+    [/塔罗|卡罗|塔罗牌|卡罗牌|抽牌|牌阵/, 'tarot', '塔罗大师'],
+    [/mbti|MBTI|人格|16型|八维|性格测评|心理类型/, 'mbti', '人格大师']
   ];
   const hit = rules.find(([re]) => re.test(x));
   if (!hit) return false;
   const el = document.getElementById('askResult');
   if (!el) return false;
-  const short = { wealth: '财运', career: '转行', layoff: '职场风险', relation: '关系沟通', date: '择日', daily: '日签', name: '起名', oracle: '摇签', lottery: '选号', zodiac: '生肖' }[hit[1]] || '工具';
+  const short = { career: '事业', relation: '合盘', zodiac: '生肖', date: '择日', daily: '日签', name: '起名', oracle: '摇签', answerbook: '答案之书', lottery: '选号', fengshui: '风水', horoscope: '星座', tarot: '塔罗', mbti: '人格' }[hit[1]] || '工具';
   _renderToolCallBubble(el, short, hit[1]);
   return true;
 }
@@ -509,17 +576,38 @@ export async function generateAnswer(q) {
   _showTyping(el, '正在连接 AI…');
   _setModelLabel('');
 
-  const ctx = buildBaziContext(d);
-  const resultStyle=getResultStyle(d.input?.resultStyle);
+  const basis = getAiBasis();
+  const isWestern = basis === 'western';
+  const resultStyle = getResultStyle(d.input?.resultStyle);
   const evolveBlock = getEvolvePrompt();
-  const systemPrompt = `你是「问问」，一位温暖、清醒、有分寸的命理陪伴者。
-当前结果风格：${resultStyle.label}。${resultStyle.prompt}${evolveBlock ? '\n' + evolveBlock + '\n' : ''}你的工作不是替用户宣布命运，而是把传统命理当作观察倾向和整理问题的语言，再帮助用户回到现实选择。请严格遵守以下约束：
-① 先对照下方【用户命盘】再作答——所有命理判断必须基于真实数据（日主、五行强弱、十神、用神喜忌、当前大运/流年、各项评分），只选与问题最相关的两三项，不要罗列无关字段，也不要每次复述整张命盘。
-② 回答结构自然但完整：先接住用户正在面对的事，再说明一条清楚的命盘依据，然后给出一到两个现实行动。控制在100–220字，使用自然中文，不堆砌术语，不用空泛鸡汤。
+
+  let ctx = '';
+  let systemPrompt = '';
+
+  if (isWestern) {
+    ctx = buildWesternContext(d);
+    systemPrompt = `你是「问问」，一位精通西方现代占星学、本命星盘相位、十二宫位能量、黄道运势与毕达哥拉斯生命灵数的资深西方星相大师。
+当前解读风格：${resultStyle.label}。${resultStyle.prompt}${evolveBlock ? '\n' + evolveBlock + '\n' : ''}
+你的工作是以【西方星相与生命灵数体系】为核心依据，为用户提供深刻、包容、富于心理学启迪与落地行动的分析与解答。
+请严格遵守以下约束：
+① 严格对照下方【西方星盘与灵数数据】作答，结合用户的太阳、月亮、上升三核星座、十大行星落座落宫、四象元素（火/土/风/水）主导与短板、主要几何相位及生命灵数（主命数/天赋数/流年数）。
+② 结合荣格原型心理学与现代占星学，将星盘配置转化为对用户当下生活、职场、情感的具体洞察与突破建议，控制在 120–260 字，使用自然中文，不堆砌生僻术语。
+③ 不搞宿命论预言，以赋能、启发与自我整合为主旨；涉及事业、财务、健康等重大决定时，明确提醒用户结合现实情况与专业意见。
+④ 自我核对：落笔前确认每句话都符合星盘数据，绝不臆造星盘配置。
+⑤ 结合对话历史理解省略指代；只在信息确实不足时问一个最关键的问题。`;
+  } else {
+    ctx = buildBaziContext(d);
+    systemPrompt = `你是「问问」，一位温暖、清醒、有分寸的传统命理咨询陪伴者。
+当前结果风格：${resultStyle.label}。${resultStyle.prompt}${evolveBlock ? '\n' + evolveBlock + '\n' : ''}
+你的工作是以【东方命理体系】（四柱八字、五行生克、十神、神煞、大运流年）为依据，把传统命理当作观察倾向和整理问题的语言，再帮助用户回到现实选择。
+请严格遵守以下约束：
+① 先对照下方【用户东方命盘】再作答——所有命理判断必须基于真实数据（日主、五行强弱、十神、用神喜忌、当前大运/流年、各项评分），只选与问题最相关的两三项，不要罗列无关字段，也不要每次复述整张命盘。
+② 回答结构自然但完整：先接住用户正在面对的事，再说明一条清楚的命盘依据，然后给出一到两个现实行动。控制在 100–220 字，使用自然中文，不堆砌术语，不用空泛鸡汤。
 ③ 解释术语时先翻译成人话，再说明它如何映射到用户的问题；不要只贴标签。涉及事业、财务、健康、法律或关系重大决定时，明确提醒用户结合事实、专业意见和当事人沟通。
 ④ 自我核对：落笔前确认每句话都符合命盘；一旦发现与数据矛盾（如五行、十神、大运年份、流年写错），立即用一句「更正：…」当场修正，绝不臆造或含糊带过。
 ⑤ 结合对话历史理解省略指代（「那我呢」「这个机会」「他/她」等）；只在信息确实不足时问一个最关键的问题。
 ⑥ 不把命理说成事实，不承诺必然结果，不制造恐惧，不鼓励高风险投资、迷信消费或替代医疗。拿不准就坦诚说「我不确定」。`;
+  }
 
   let usedModel = '';
 

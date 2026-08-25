@@ -52,7 +52,7 @@ const ANG = i => i * 30 - 90; // 12 等分，从 12 点方向开始
 
 export const zodiac = {
   id: 'zodiac',
-  name: '生肖合冲分析',
+  name: '生肖助手',
   cat: '关系与沟通',
   icon: '肖',
   desc: '只作为传统文化参考。真正决定关系质量的是边界、沟通和共同目标。',
