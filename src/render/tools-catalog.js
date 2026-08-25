@@ -1,12 +1,12 @@
 /* ============================================================
-   tools-catalog.js · 工具中心结构化目录与直观卡片渲染
+   tools-catalog.js · 工具中心结构化目录与磨砂玻璃 3D 轮播渲染
    ------------------------------------------------------------
-   精简整合后的工具矩阵：
-     - 🏛️ 西方大师专栏：星座大师、塔罗大师、人格大师
-     - 💼 财富与事业：事业大师（转行副业+职场风控）
-     - 🧭 日常决策：择日助手、风水大师、今日日签
-     - 💕 关系与沟通：合盘助手、生肖助手
-     - 🎲 灵感与娱乐：答案之书、摇签问卜、起名助手、双色球/大乐透
+   精简整合后的 13 款工具矩阵：
+     - 🏛️ 西方大师专栏 (western): 星座助手、塔罗大师、人格大师
+     - 💼 财富与事业 (money): 事业大师（转行副业+职场风控）
+     - 🧭 日常决策 (life): 择日助手、风水大师、今日日签
+     - 💕 关系与沟通 (relation): 合盘助手、生肖助手
+     - 🎲 灵感与娱乐 (play): 答案之书、摇签问卜、起名助手、双色球/大乐透
    ============================================================ */
 
 export const TOOL_DEFINITIONS = [
@@ -15,7 +15,7 @@ export const TOOL_DEFINITIONS = [
     id: 'horoscope',
     group: 'western',
     groupName: '西方大师',
-    name: '星座大师',
+    name: '星座助手',
     badge: '星相首选',
     color: '#9d4edd',
     bgColor: 'rgba(157, 78, 221, 0.15)',
@@ -179,32 +179,62 @@ export const TOOL_DEFINITIONS = [
 
 export function renderToolsHubHtml() {
   const cardsHtml = TOOL_DEFINITIONS.map((t, idx) => {
-    return `<button class="tool-card-v4" type="button" data-tool="${t.id}" data-group="${t.group}" style="--card-idx:${idx}" onclick="openToolPage('${t.id}')">
-      <div class="tc-top">
-        <div class="tc-icon" style="background:${t.bgColor};color:${t.color}">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7">${t.iconSvg}</svg>
+    return `<div class="tool-card-portrait tool-card-ring tool-card-v4" data-tool="${t.id}" data-group="${t.group}" style="--card-idx:${idx};--tool-color:${t.color}" role="button" tabindex="0" onclick="openToolPage('${t.id}')">
+      <div class="tc-p-header">
+        <div class="tc-p-icon" style="background:${t.bgColor};color:${t.color}">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">${t.iconSvg}</svg>
         </div>
-        <div class="tc-titles">
-          <div class="tc-name">${t.name}</div>
-          <span class="tc-badge" style="color:${t.color};background:${t.bgColor};border-color:${t.color}44">${t.badge}</span>
+        <span class="tc-p-badge" style="color:${t.color};background:${t.bgColor};border-color:${t.color}44">${t.badge}</span>
+      </div>
+      <div class="tc-p-body">
+        <h3 class="tc-p-title">${t.name}</h3>
+        <div class="tc-p-group">${t.groupName}</div>
+        <div class="tc-p-pills">
+          ${t.pills.map(p => `<span>${p}</span>`).join('')}
         </div>
-        <span class="tc-arrow">→</span>
+        <p class="tc-p-desc">${t.desc}</p>
       </div>
-      <div class="tc-pills">
-        ${t.pills.map(p => `<span>${p}</span>`).join('')}
+      <div class="tc-p-footer">
+        <div class="tc-p-btn">
+          <span>立即开启</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
       </div>
-      <div class="tc-desc">${t.desc}</div>
-    </button>`;
+    </div>`;
   }).join('');
 
-  return `<div class="glass card-1 tool-hub" data-card="toolHub">
+  return `<div class="glass card-1 tool-hub view-mode-ring" data-card="toolHub" id="toolHubRoot">
     <div class="card-hd">
       <div class="card-ic">⌘</div>
-      <div>
+      <div style="flex:1">
         <div class="card-tt">决策与命理工具中心</div>
-        <div class="card-st">涵盖西方大师、事业决策、日常指引、人际关系与灵感工具</div>
+        <div class="card-st">3D 弧面轮播 ｜ 磨砂玻璃通透质感 · 支持一键平铺模式</div>
+      </div>
+      <div class="tool-hub-controls">
+        <button type="button" class="tool-view-toggle-btn" id="toolViewTogglePill" onclick="window._tools3DRing && window._tools3DRing.toggleViewMode()" title="一键切换视图模式">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          <span id="toolViewToggleText">一键切换为平铺模式</span>
+        </button>
+        <button type="button" class="tool-ctrl-btn active" id="toolRingPlayBtn" onclick="window._tools3DRing && window._tools3DRing.toggleAutoPlay()" title="切换自动轮播">⟲ 自轮播</button>
+        <button type="button" class="tool-ctrl-btn tool-ctrl-nav" onclick="window._tools3DRing && window._tools3DRing.prev()" title="上一个">‹</button>
+        <button type="button" class="tool-ctrl-btn tool-ctrl-nav" onclick="window._tools3DRing && window._tools3DRing.next()" title="下一个">›</button>
       </div>
     </div>
-    <div class="tool-grid-v4" id="toolGrid">${cardsHtml}</div>
+
+    <!-- 3D 环形轮播舞台 (All cards in continuous 3D carousel) -->
+    <div class="tool-row-stage tool-ring-stage" id="toolRingStage">
+      <div class="tool-row-track tool-ring-carousel" id="toolRingCarousel">
+        ${cardsHtml}
+      </div>
+      <div class="tool-ring-empty" style="display:none;color:var(--c-text-3);padding:40px 0;text-align:center">没有找到匹配的工具，换个关键词或切换专栏试试。</div>
+    </div>
+
+    <!-- 底部操作提示与指示圆点 -->
+    <div class="tool-ring-bottom-bar">
+      <div class="tool-ring-dots" id="toolRingDots"></div>
+      <div class="tool-ring-hint">
+        <span>✦ 提示：鼠标左键/触控拖拽 3D 转盘，滚轮平滑旋转，点击卡片直接开启</span>
+      </div>
+    </div>
   </div>`;
 }

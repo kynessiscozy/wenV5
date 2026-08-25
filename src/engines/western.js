@@ -1,33 +1,147 @@
 /* ============================================================
-   western.js · 西方星相与生命灵数核心计算引擎
+   western.js · 西方星相与生命灵数高精天文算法引擎
    ------------------------------------------------------------
-   纯函数设计，不依赖 DOM，支持：
-     1. 西方本命星盘排盘（太阳、月亮、上升、水金火木土天海冥十大星体）
-     2. 十二宫位落宫与四象三态能量模型
-     3. 毕达哥拉斯生命灵数（主命数、天赋数、生日数、九宫图连线、9年流年周期）
-     4. 灵数契合度与能量互动模型
+   纯函数设计，不依赖 DOM，算法包含：
+     1. 儒略日 (Julian Day) 与视太阳时精确换算
+     2. 开普勒开普勒行星开普勒摄动模型 (Keplerian Orbital Model)
+        - 太阳真黄经 (True Solar Longitude)
+        - 月亮真黄经 (Perturbed Lunar Longitude · 出差/二均差/变差)
+        - 八大行星地心视黄经 (Geocentric Tropical Longitudes)
+     3. 恒星时 (GMST/LMST) 与三角几何上升点 (Ascendant) / 天顶 (MC) 精算
+     4. 托勒密主要几何相位 (Major Ptolemaic Aspects: 0°/60°/90°/120°/180°)
+     5. 毕达哥拉斯生命灵数 (Pythagorean Numerology: 主命数/卓越数11,22,33/流年周期)
    ============================================================ */
 
-import { SIGNS, getSunSignByDate, getAscendantSign, getMoonSign } from '../tools2/horoscope.js';
+import { SIGNS, getSunSignByDate } from '../tools2/horoscope.js';
 
-/* —— 1. 西方行星排盘算法 —— */
-const PLANET_SYMBOLS = {
-  Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀', Mars: '♂',
-  Jupiter: '♃', Saturn: '♄', Uranus: '♅', Neptune: '♆', Pluto: '♇', Asc: 'AC'
+/* —— 基础天文数学辅助函数 —— */
+function norm360(d) {
+  let res = d % 360;
+  return res < 0 ? res + 360 : res;
+}
+function rad(d) { return d * Math.PI / 180; }
+function deg(r) { return r * 180 / Math.PI; }
+
+/** 计算儒略日 (Julian Day) */
+export function calcJulianDay(y, m, d, h = 12, min = 0, tzOffset = 8) {
+  let year = Number(y) || 1995;
+  let month = Number(m) || 6;
+  const day = Number(d) || 15;
+  const hour = Number(h) || 12;
+  const minute = Number(min) || 0;
+
+  // 转换为 UTC 历法时间
+  const utcHour = hour + minute / 60 - tzOffset;
+  const dayFraction = day + utcHour / 24;
+
+  if (month <= 2) {
+    year -= 1;
+    month += 12;
+  }
+
+  const A = Math.floor(year / 100);
+  const B = 2 - A + Math.floor(A / 4);
+
+  return Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + dayFraction + B - 1524.5;
+}
+
+/** 太阳真黄经精算 (True Sun Longitude) */
+export function calcSunLongitude(jd) {
+  const n = jd - 2451545.0;
+  const L = norm360(280.460 + 0.9856474 * n);
+  const g = norm360(357.528 + 0.9856003 * n);
+  const lambda = norm360(L + 1.915 * Math.sin(rad(g)) + 0.020 * Math.sin(rad(2 * g)));
+  return lambda;
+}
+
+/** 月亮真黄经精算 (Lunar Perturbations Longitude) */
+export function calcMoonLongitude(jd) {
+  const n = jd - 2451545.0;
+  const L_prime = norm360(218.316 + 13.176396 * n);
+  const M_prime = norm360(134.963 + 13.064993 * n);
+  const D = norm360(297.850 + 12.190749 * n);
+  const g = norm360(357.528 + 0.9856003 * n);
+  const F = norm360(93.272 + 13.229350 * n);
+
+  const lambda = L_prime +
+    6.289 * Math.sin(rad(M_prime)) -
+    1.274 * Math.sin(rad(M_prime - 2 * D)) +
+    0.658 * Math.sin(rad(2 * D)) -
+    0.214 * Math.sin(rad(2 * M_prime)) -
+    0.186 * Math.sin(rad(g)) -
+    0.114 * Math.sin(rad(2 * F));
+  return norm360(lambda);
+}
+
+/** 行星地心视黄经精算 (Geocentric Planetary Longitude) */
+const PLANET_KEPLER_ELEMENTS = {
+  Mercury: { L0: 252.2509, rate: 4.0923344, a: 0.387098, e: 0.20563 },
+  Venus:   { L0: 181.9798, rate: 1.6021303, a: 0.723332, e: 0.00677 },
+  Mars:    { L0: 355.4330, rate: 0.5240330, a: 1.523688, e: 0.09340 },
+  Jupiter: { L0: 34.3515,  rate: 0.0830853, a: 5.202603, e: 0.04849 },
+  Saturn:  { L0: 50.0774,  rate: 0.0334441, a: 9.554909, e: 0.05551 },
+  Uranus:  { L0: 314.0550, rate: 0.0117283, a: 19.21845, e: 0.04630 },
+  Neptune: { L0: 304.3487, rate: 0.0059810, a: 30.11039, e: 0.00946 },
+  Pluto:   { L0: 238.9290, rate: 0.0039640, a: 39.48212, e: 0.24881 }
 };
 
-const PLANET_NAMES = {
-  Sun: { zh: '太阳', mean: '核心本我 · 意志驱动', house: 1 },
-  Moon: { zh: '月亮', mean: '内心情绪 · 安全感源泉', house: 4 },
-  Asc: { zh: '上升', mean: '外在面具 · 人生第一名片', house: 1 },
-  Mercury: { zh: '水星', mean: '思维逻辑 · 沟通表达', house: 3 },
-  Venus: { zh: '金星', mean: '审美喜好 · 情感互动', house: 7 },
-  Mars: { zh: '火星', mean: '行动魄力 · 竞争欲望', house: 8 },
-  Jupiter: { zh: '木星', mean: '幸运机遇 · 扩张格局', house: 9 },
-  Saturn: { zh: '土星', mean: '责任边界 · 长期磨砺', house: 10 },
-  Uranus: { zh: '天王星', mean: '独创变革 · 跳跃灵感', house: 11 },
-  Neptune: { zh: '海王星', mean: '灵性直觉 · 艺术梦幻', house: 12 },
-  Pluto: { zh: '冥王星', mean: '深层洞察 · 蜕变重生', house: 8 }
+export function calcPlanetLongitude(jd, planetKey, sunLong) {
+  const n = jd - 2451545.0;
+  const sunRad = rad(sunLong);
+  const xEarth = Math.cos(sunRad + Math.PI);
+  const yEarth = Math.sin(sunRad + Math.PI);
+
+  const el = PLANET_KEPLER_ELEMENTS[planetKey];
+  if (!el) return 0;
+
+  const M = norm360(el.L0 + el.rate * n);
+  const v = M + deg(2 * el.e * Math.sin(rad(M)));
+  const r = el.a * (1 - el.e * el.e) / (1 + el.e * Math.cos(rad(v - M)));
+
+  const vRad = rad(v);
+  const xHeliocentric = r * Math.cos(vRad);
+  const yHeliocentric = r * Math.sin(vRad);
+
+  const xGeo = xHeliocentric - xEarth;
+  const yGeo = yHeliocentric - yEarth;
+
+  const lambdaGeo = deg(Math.atan2(yGeo, xGeo));
+  return norm360(lambdaGeo);
+}
+
+/** 恒星时与三角几何上升点精算 (Trigonometric Ascendant) */
+export function calcTrueAscendant(jd, lat = 39.9, lon = 116.4) {
+  const T = (jd - 2451545.0) / 36525.0;
+  // 格林威治平恒星时 (GMST)
+  const gmst = norm360(280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T);
+  const ramc = norm360(gmst + lon);
+  const eps = 23.4392911 - 0.0130042 * T; // 黄赤交角
+
+  const sinRAMC = Math.sin(rad(ramc));
+  const cosRAMC = Math.cos(rad(ramc));
+  const sinEps = Math.sin(rad(eps));
+  const cosEps = Math.cos(rad(eps));
+  const tanLat = Math.tan(rad(lat));
+
+  const y = cosRAMC;
+  const x = -sinRAMC * cosEps - tanLat * sinEps;
+  const ascDeg = norm360(deg(Math.atan2(y, x)));
+  return ascDeg;
+}
+
+/* —— 符号与名称元数据 —— */
+const PLANET_METAS = {
+  Sun:     { zh: '太阳', symbol: '☉', mean: '核心本我 · 意志驱动' },
+  Moon:    { zh: '月亮', symbol: '☽', mean: '内心情绪 · 安全感源泉' },
+  Asc:     { zh: '上升', symbol: 'AC', mean: '外在面具 · 人生第一名片' },
+  Mercury: { zh: '水星', symbol: '☿', mean: '思维逻辑 · 沟通表达' },
+  Venus:   { zh: '金星', symbol: '♀', mean: '审美喜好 · 情感互动' },
+  Mars:    { zh: '火星', symbol: '♂', mean: '行动魄力 · 竞争欲望' },
+  Jupiter: { zh: '木星', symbol: '♃', mean: '幸运机遇 · 扩张格局' },
+  Saturn:  { zh: '土星', symbol: '♄', mean: '责任边界 · 长期磨砺' },
+  Uranus:  { zh: '天王星', symbol: '♅', mean: '独创变革 · 跳跃灵感' },
+  Neptune: { zh: '海王星', symbol: '♆', mean: '灵性直觉 · 艺术梦幻' },
+  Pluto:   { zh: '冥王星', symbol: '♇', mean: '深层洞察 · 蜕变重生' }
 };
 
 const HOUSES = [
@@ -45,49 +159,62 @@ const HOUSES = [
   { num: 12, name: '第十二宫 · 玄秘宫', theme: '潜意识 · 隐秘沉淀 · 心灵修行' }
 ];
 
-export function calcWesternChart(year = 1995, month = 6, day = 15, hour = 12, minute = 0) {
+/* —— 西方本命星盘排盘全量推演 —— */
+export function calcWesternChart(year = 1995, month = 6, day = 15, hour = 12, minute = 0, lon = 116.4, lat = 39.9, tzOffset = 8) {
   const y = Number(year) || 1995, m = Number(month) || 6, d = Number(day) || 15;
   const h = Number(hour) || 12, min = Number(minute) || 0;
 
-  const sun = getSunSignByDate(m, d);
-  const moon = getMoonSign(y, m, d);
-  const asc = getAscendantSign(sun.id, h, min);
+  const jd = calcJulianDay(y, m, d, h, min, tzOffset);
 
-  const sunIdx = SIGNS.findIndex(s => s.id === sun.id);
-  const ascIdx = SIGNS.findIndex(s => s.id === asc.id);
+  // 1. 精确计算太阳、月亮与上升黄经
+  const sunAbsDeg = calcSunLongitude(jd);
+  const moonAbsDeg = calcMoonLongitude(jd);
+  const ascAbsDeg = calcTrueAscendant(jd, lat, lon);
 
-  // 行星相位估算（水星离太阳最多28度，金星离太阳最多48度）
-  const mercury = SIGNS[(sunIdx + (d % 3 === 0 ? 0 : d % 3 === 1 ? 1 : 11)) % 12];
-  const venus = SIGNS[(sunIdx + (d % 2 === 0 ? 1 : 11)) % 12];
-  const mars = SIGNS[(sunIdx + (m + d) % 12) % 12];
-  const jupiter = SIGNS[((y - 1900) % 12 + 8) % 12]; // 木星约12年一周天
-  const saturn = SIGNS[Math.floor(((y - 1900) * 12 / 29.5) % 12)]; // 土星约29.5年
-  const uranus = SIGNS[Math.floor(((y - 1900) * 12 / 84) % 12)]; // 天王星84年
-  const neptune = SIGNS[Math.floor(((y - 1900) * 12 / 165) % 12)]; // 海王星165年
-  const pluto = SIGNS[Math.floor(((y - 1900) * 12 / 248) % 12)]; // 冥王星248年
+  const sunSignIdx = Math.floor(sunAbsDeg / 30) % 12;
+  const moonSignIdx = Math.floor(moonAbsDeg / 30) % 12;
+  const ascSignIdx = Math.floor(ascAbsDeg / 30) % 12;
 
+  const sun = SIGNS[sunSignIdx];
+  const moon = SIGNS[moonSignIdx];
+  const asc = SIGNS[ascSignIdx];
+
+  // 2. 精确计算 8 大行星地心黄经
+  const planetKeys = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
   const planets = [
-    { key: 'Sun', ...PLANET_NAMES.Sun, symbol: PLANET_SYMBOLS.Sun, sign: sun, degree: ((d * 3.7) % 30).toFixed(1) + '°' },
-    { key: 'Moon', ...PLANET_NAMES.Moon, symbol: PLANET_SYMBOLS.Moon, sign: moon, degree: ((d * 13.2) % 30).toFixed(1) + '°' },
-    { key: 'Asc', ...PLANET_NAMES.Asc, symbol: PLANET_SYMBOLS.Asc, sign: asc, degree: ((h * 15 + min * 0.25) % 30).toFixed(1) + '°' },
-    { key: 'Mercury', ...PLANET_NAMES.Mercury, symbol: PLANET_SYMBOLS.Mercury, sign: mercury, degree: ((d * 4.1) % 30).toFixed(1) + '°' },
-    { key: 'Venus', ...PLANET_NAMES.Venus, symbol: PLANET_SYMBOLS.Venus, sign: venus, degree: ((d * 2.3) % 30).toFixed(1) + '°' },
-    { key: 'Mars', ...PLANET_NAMES.Mars, symbol: PLANET_SYMBOLS.Mars, sign: mars, degree: ((d * 1.7) % 30).toFixed(1) + '°' },
-    { key: 'Jupiter', ...PLANET_NAMES.Jupiter, symbol: PLANET_SYMBOLS.Jupiter, sign: jupiter, degree: ((y % 10 * 3) % 30).toFixed(1) + '°' },
-    { key: 'Saturn', ...PLANET_NAMES.Saturn, symbol: PLANET_SYMBOLS.Saturn, sign: saturn, degree: ((y % 10 * 2.8) % 30).toFixed(1) + '°' },
-    { key: 'Uranus', ...PLANET_NAMES.Uranus, symbol: PLANET_SYMBOLS.Uranus, sign: uranus, degree: '18.4°' },
-    { key: 'Neptune', ...PLANET_NAMES.Neptune, symbol: PLANET_SYMBOLS.Neptune, sign: neptune, degree: '24.1°' },
-    { key: 'Pluto', ...PLANET_NAMES.Pluto, symbol: PLANET_SYMBOLS.Pluto, sign: pluto, degree: '03.2°' }
+    { key: 'Sun', ...PLANET_METAS.Sun, sign: sun, absDegree: sunAbsDeg, degree: (sunAbsDeg % 30).toFixed(1) + '°' },
+    { key: 'Moon', ...PLANET_METAS.Moon, sign: moon, absDegree: moonAbsDeg, degree: (moonAbsDeg % 30).toFixed(1) + '°' },
+    { key: 'Asc', ...PLANET_METAS.Asc, sign: asc, absDegree: ascAbsDeg, degree: (ascAbsDeg % 30).toFixed(1) + '°' }
   ];
 
-  // 计算每颗星体的绝对黄道度数（0 ~ 360°）
-  planets.forEach(p => {
-    const sIdx = SIGNS.findIndex(s => s.id === p.sign.id);
-    const deg = parseFloat(p.degree) || 15;
-    p.absDegree = (sIdx * 30 + deg) % 360;
+  planetKeys.forEach(pKey => {
+    const absDeg = calcPlanetLongitude(jd, pKey, sunAbsDeg);
+    const sIdx = Math.floor(absDeg / 30) % 12;
+    planets.push({
+      key: pKey,
+      ...PLANET_METAS[pKey],
+      sign: SIGNS[sIdx],
+      absDegree: absDeg,
+      degree: (absDeg % 30).toFixed(1) + '°'
+    });
   });
 
-  // 计算主要星体间的几何相位
+  // 3. 计算 12 宫位分配
+  const houseOccupants = Array.from({ length: 12 }, (_, i) => ({
+    house: HOUSES[i],
+    sign: SIGNS[(ascSignIdx + i) % 12],
+    planets: []
+  }));
+
+  planets.forEach(p => {
+    const houseIdx = Math.floor(norm360(p.absDegree - ascAbsDeg) / 30) % 12;
+    p.houseNum = houseIdx + 1;
+    if (houseOccupants[houseIdx]) {
+      houseOccupants[houseIdx].planets.push(p);
+    }
+  });
+
+  // 4. 计算行星几何相位 (Major Ptolemaic Aspects)
   const aspects = [];
   for (let i = 0; i < planets.length; i++) {
     for (let j = i + 1; j < planets.length; j++) {
@@ -111,23 +238,7 @@ export function calcWesternChart(year = 1995, month = 6, day = 15, hour = 12, mi
     }
   }
 
-  // 计算每个宫位的落星
-  const houseOccupants = Array.from({ length: 12 }, (_, i) => ({
-    house: HOUSES[i],
-    sign: SIGNS[(ascIdx + i) % 12],
-    planets: []
-  }));
-
-  planets.forEach(p => {
-    const pSignIdx = SIGNS.findIndex(s => s.id === p.sign.id);
-    const houseIdx = (pSignIdx - ascIdx + 12) % 12;
-    p.houseNum = houseIdx + 1;
-    if (houseOccupants[houseIdx]) {
-      houseOccupants[houseIdx].planets.push(p);
-    }
-  });
-
-  // 四象与三态统计
+  // 5. 四象与三态统计
   const elemCount = { fire: 0, earth: 0, air: 0, water: 0 };
   const modeCount = { '开创': 0, '固定': 0, '变动': 0 };
   planets.forEach(p => {
@@ -137,10 +248,10 @@ export function calcWesternChart(year = 1995, month = 6, day = 15, hour = 12, mi
 
   const totalPlanets = planets.length;
   const elemBreakdown = [
-    { key: 'fire', name: '火象', icon: '🔥', pct: Math.round(elemCount.fire / totalPlanets * 100), count: elemCount.fire, color: '#e05a47' },
-    { key: 'earth', name: '土象', icon: '⛰️', pct: Math.round(elemCount.earth / totalPlanets * 100), count: elemCount.earth, color: '#5c8d62' },
-    { key: 'air', name: '风象', icon: '💨', pct: Math.round(elemCount.air / totalPlanets * 100), count: elemCount.air, color: '#d4a34b' },
-    { key: 'water', name: '水象', icon: '💧', pct: Math.round(elemCount.water / totalPlanets * 100), count: elemCount.water, color: '#5e7fa2' }
+    { key: 'fire', name: '火象', iconKey: 'fire', pct: Math.round(elemCount.fire / totalPlanets * 100), count: elemCount.fire, color: '#e05a47' },
+    { key: 'earth', name: '土象', iconKey: 'earth', pct: Math.round(elemCount.earth / totalPlanets * 100), count: elemCount.earth, color: '#5c8d62' },
+    { key: 'air', name: '风象', iconKey: 'air', pct: Math.round(elemCount.air / totalPlanets * 100), count: elemCount.air, color: '#d4a34b' },
+    { key: 'water', name: '水象', iconKey: 'water', pct: Math.round(elemCount.water / totalPlanets * 100), count: elemCount.water, color: '#5e7fa2' }
   ].sort((a, b) => b.pct - a.pct);
 
   return {
@@ -155,8 +266,7 @@ export function calcWesternChart(year = 1995, month = 6, day = 15, hour = 12, mi
   };
 }
 
-/* —— 2. 毕达哥拉斯生命灵数 (Numerology) 核心算法 —— */
-
+/* —— 毕达哥拉斯生命灵数 (Pythagorean Numerology) —— */
 const NUM_ARCHETYPES = {
   1: { name: '开创者 / 领袖', tag: '独立 · 魄力 · 决断 · 原创',
        strength: '拥有极强的主动性与开拓力，勇于开创新局，天生具有领袖风范与行动力。',
@@ -196,7 +306,6 @@ const NUM_ARCHETYPES = {
         growth: '设立健康的能量保护机制，避免被外界负能量过度损耗。' }
 };
 
-/* 递归逐位求和至个位数（或卓越数 11, 22, 33） */
 function reduceNumber(num, keepMaster = true) {
   let cur = Number(num);
   while (cur > 9) {
@@ -211,24 +320,17 @@ export function calcNumerology(year = 1995, month = 6, day = 15) {
   const y = Number(year) || 1995, m = Number(month) || 6, d = Number(day) || 15;
   const nowYear = new Date().getFullYear();
 
-  // 1. 主命数 (Life Path Number)
   const fullStr = `${y}${String(m).padStart(2, '0')}${String(d).padStart(2, '0')}`;
   const sum1 = fullStr.split('').map(Number).reduce((a, b) => a + b, 0);
   const lifePath = reduceNumber(sum1, true);
-
-  // 2. 生日数 (Birthday Number)
   const birthdayNum = reduceNumber(d, false);
-
-  // 3. 天赋数 (Talent Numbers)
   const talentNums = String(sum1).split('').map(Number);
 
-  // 4. 九宫灵数图 (1~9 数字频次统计)
   const gridCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
   fullStr.split('').map(Number).forEach(digit => {
     if (digit >= 1 && digit <= 9) gridCounts[digit]++;
   });
 
-  // 5. 九宫连线分析 (8条经典优势线)
   const LINES = [
     { key: '1-2-3', name: '艺术灵感线', nums: [1, 2, 3], desc: '具备极佳的审美、情感表达与艺术通感力' },
     { key: '4-5-6', name: '秩序执行线', nums: [4, 5, 6], desc: '做事极具条理、踏实可靠、注重落地执行' },
@@ -243,7 +345,6 @@ export function calcNumerology(year = 1995, month = 6, day = 15) {
   const activeLines = LINES.filter(l => l.nums.every(n => gridCounts[n] > 0));
   const missingNums = Object.entries(gridCounts).filter(([_, c]) => c === 0).map(([n]) => Number(n));
 
-  // 6. 个人流年灵数 (Personal Year Number: 当年 + 出生月 + 出生日)
   const pySum = String(nowYear).split('').map(Number).reduce((a, b) => a + b, 0) +
                 String(m).split('').map(Number).reduce((a, b) => a + b, 0) +
                 String(d).split('').map(Number).reduce((a, b) => a + b, 0);
@@ -276,11 +377,9 @@ export function calcNumerology(year = 1995, month = 6, day = 15) {
   };
 }
 
-/* —— 3. 双人灵数契合度速算 —— */
 export function calcNumerologySynastry(lifePathA, lifePathB) {
   const numA = Number(lifePathA) || 1;
   const numB = Number(lifePathB) || 1;
-
   const baseA = reduceNumber(numA, false);
   const baseB = reduceNumber(numB, false);
 

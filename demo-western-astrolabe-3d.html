@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>问问大师 · 西方星相天象仪 3D 庆典演示</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#121110;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#fff}
+canvas{display:block;position:fixed;top:0;left:0;width:100%;height:100%}
+.overlay{position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:10;text-align:center;pointer-events:none}
+.overlay h1{font-size:1.6em;font-weight:800;color:rgba(255,230,195,.95);letter-spacing:3px;text-shadow:0 0 24px rgba(217,119,87,.5)}
+.overlay p{font-size:.78em;color:rgba(255,210,170,.6);letter-spacing:4px;margin-top:6px}
+.controls{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:12px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);background:rgba(30,24,20,0.65);padding:8px 16px;border-radius:999px;border:1px solid rgba(217,119,87,0.3)}
+.controls button{padding:8px 18px;border-radius:999px;border:none;background:transparent;color:rgba(255,230,200,0.8);font-size:.82em;font-weight:600;cursor:pointer;transition:all .2s ease}
+.controls button.active{background:#d97757;color:#fff;box-shadow:0 2px 10px rgba(217,119,87,0.4)}
+.controls button:hover:not(.active){color:#fff;background:rgba(255,255,255,0.1)}
+</style>
+</head>
+<body class="home">
+<canvas id="brand3d"></canvas>
+<div class="overlay">
+  <h1>问问大师 · 3D 黄道天象仪</h1>
+  <p>庆祝西方星相板块重磅上线 · 黄道十二宫与十大行星</p>
+</div>
+
+<div class="controls">
+  <button class="active" onclick="switchMode('western', this)">黄道天象仪 (Western)</button>
+  <button onclick="switchMode('fusion', this)">双纪元交融 (Fusion)</button>
+  <button onclick="switchMode('eastern', this)">太极浑天 (Eastern)</button>
+  <button onclick="triggerSurge()">✦ 庆典光爆</button>
+</div>
+
+<script type="module">
+import { initArmillaryWestern } from './src/fx/armillary-western.js';
+
+const cv = document.getElementById('brand3d');
+const arm = initArmillaryWestern(cv, 'western');
+arm.start();
+window._arm = arm;
+
+window.switchMode = function(mode, btn) {
+  arm.setMode(mode);
+  document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+};
+
+window.triggerSurge = function() {
+  arm.surge(2500);
+};
+</script>
+</body>
+</html>

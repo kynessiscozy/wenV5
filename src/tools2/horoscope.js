@@ -15,6 +15,7 @@
 import { masthead, notice, esc, attachToolAI } from './runtime.js';
 import { getCtx } from '../state/context.js';
 import { showToast } from '../ui/toast.js';
+import { getZodiacSvg } from '../render/western-view.js';
 
 /* —— 12 星座基础元数据与深度知识库 —— */
 export const SIGNS = [
@@ -257,10 +258,10 @@ export function calcElementBreakdown(sunSign, moonSign, ascSign) {
   const firePct = pct('fire'), earthPct = pct('earth'), airPct = pct('air'), waterPct = pct('water');
   
   const entries = [
-    { key: 'fire', name: '火象能量', char: '火', icon: '🔥', pct: firePct, desc: '代表热情、行动力、魄力与开拓愿景' },
-    { key: 'earth', name: '土象能量', char: '土', icon: '⛰️', pct: earthPct, desc: '代表务实、定力、秩序与资源掌控' },
-    { key: 'air', name: '风象能量', char: '风', icon: '💨', pct: airPct, desc: '代表逻辑、敏锐思维、社交与灵感' },
-    { key: 'water', name: '水象能量', char: '水', icon: '💧', pct: waterPct, desc: '代表共情、直觉洞察、情感与灵性' },
+    { key: 'fire', name: '火象能量', char: '火', iconKey: 'fire', pct: firePct, desc: '代表热情、行动力、魄力与开拓愿景' },
+    { key: 'earth', name: '土象能量', char: '土', iconKey: 'earth', pct: earthPct, desc: '代表务实、定力、秩序与资源掌控' },
+    { key: 'air', name: '风象能量', char: '风', iconKey: 'air', pct: airPct, desc: '代表逻辑、敏锐思维、社交与灵感' },
+    { key: 'water', name: '水象能量', char: '水', iconKey: 'water', pct: waterPct, desc: '代表共情、直觉洞察、情感与灵性' },
   ].sort((a, b) => b.pct - a.pct);
 
   const dominant = entries[0];
@@ -506,10 +507,10 @@ export const horoscope = {
     const render = () => {
       container.innerHTML =
         masthead(horoscope, { sub: horoscope.desc }) +
-        // 顶部两大核心功能导航 Tabs
+        // 顶部两大核心功能导航 Tabs (纯 SVG 矢量微标)
         '<div class="tw-t-nav">' +
-          '<button type="button" class="tw-t-nav-btn' + (S.activeTab === 'synastry' ? ' active' : '') + '" data-tab="synastry">💕 星座速配合盘</button>' +
-          '<button type="button" class="tw-t-nav-btn' + (S.activeTab === 'compendium' ? ' active' : '') + '" data-tab="compendium">📖 12星座图鉴</button>' +
+          '<button type="button" class="tw-t-nav-btn' + (S.activeTab === 'synastry' ? ' active' : '') + '" data-tab="synastry"><svg viewBox="0 0 24 24" width="15" height="15" class="w-svg-ic" style="vertical-align:-2px;margin-right:4px;color:currentColor" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M 12 20 C 12 20 4 15 4 9 C 4 6 6 4 9 4 C 10.8 4 12 5.2 12 5.2 C 12 5.2 13.2 4 15 4 C 18 4 20 6 20 9 C 20 15 12 20 12 20 Z"/></svg>星座速配合盘</button>' +
+          '<button type="button" class="tw-t-nav-btn' + (S.activeTab === 'compendium' ? ' active' : '') + '" data-tab="compendium"><svg viewBox="0 0 24 24" width="15" height="15" class="w-svg-ic" style="vertical-align:-2px;margin-right:4px;color:currentColor" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M 4 19.5 C 4 17 6 17 12 17 C 18 17 20 17 20 19.5 M 4 4.5 C 4 7 6 7 12 7 C 18 7 20 7 20 4.5 M 4 4.5 L 4 19.5 M 20 4.5 L 20 19.5 M 12 7 L 12 17"/></svg>12星座图鉴</button>' +
         '</div>' +
         '<div class="tw-h-body" id="twHBody"></div>';
 
@@ -555,14 +556,14 @@ export const horoscope = {
           '<div class="pick-box">' +
             '<label>我的星座</label>' +
             '<select id="twHSynMe">' +
-              SIGNS.map(s => '<option value="' + s.id + '"' + (s.id === sA.id ? ' selected' : '') + '>' + s.symbol + ' ' + s.name + '</option>').join('') +
+              SIGNS.map(s => '<option value="' + s.id + '"' + (s.id === sA.id ? ' selected' : '') + '>' + s.name + ' (' + s.en + ')</option>').join('') +
             '</select>' +
           '</div>' +
-          '<div class="vs-heart">⚡</div>' +
+          '<div class="vs-heart"><svg viewBox="0 0 24 24" width="18" height="18" class="w-svg-ic" style="color:var(--tw-accent)" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M 13 2 L 4 14 L 11 14 L 11 22 L 20 10 L 13 10 Z"/></svg></div>' +
           '<div class="pick-box">' +
             '<label>对方星座</label>' +
             '<select id="twHSynOther">' +
-              SIGNS.map(s => '<option value="' + s.id + '"' + (s.id === sB.id ? ' selected' : '') + '>' + s.symbol + ' ' + s.name + '</option>').join('') +
+              SIGNS.map(s => '<option value="' + s.id + '"' + (s.id === sB.id ? ' selected' : '') + '>' + s.name + ' (' + s.en + ')</option>').join('') +
             '</select>' +
           '</div>' +
         '</div>' +
@@ -662,19 +663,19 @@ export const horoscope = {
       const sel = S.selectedCatalogSign || SIGNS[0];
 
       el.innerHTML =
-        // 元素过滤器
+        // 元素过滤器 (纯 SVG 矢量微标)
         '<div class="tw-h-catalog-filter">' +
-          ['all:全部星座', 'fire:🔥 火象', 'earth:⛰️ 土象', 'air:💨 风象', 'water:💧 水象'].map(p => {
+          ['all:全部星座', 'fire:火象星座', 'earth:土象星座', 'air:风象星座', 'water:水象星座'].map(p => {
             const [k, label] = p.split(':');
             return '<button type="button" class="tw-h-filter-btn' + (S.elemFilter === k ? ' active' : '') + '" data-elem="' + k + '">' + label + '</button>';
           }).join('') +
         '</div>' +
 
-        // 12星座网格矩阵
+        // 12星座网格矩阵 (纯 SVG 矢量微标)
         '<div class="tw-h-catalog-grid">' +
           filtered.map(s =>
             '<div class="tw-h-cat-tile' + (s.id === sel.id ? ' sel' : '') + '" data-sign="' + s.id + '">' +
-              '<div class="sym" style="color:' + s.color + '">' + s.symbol + '</div>' +
+              '<div class="sym" style="color:' + s.color + '">' + getZodiacSvg(s.id, 28, s.color) + '</div>' +
               '<div class="name">' + s.name + '</div>' +
               '<div class="date">' + s.date + '</div>' +
               '<div class="elem">' + s.elem + '象 · ' + s.mode + '</div>' +
@@ -685,7 +686,7 @@ export const horoscope = {
         // 当前选中星座的深度全景档案
         '<div class="tw-h-detail-card" style="border-top: 3px solid ' + sel.color + '">' +
           '<div class="detail-hd">' +
-            '<span class="symbol" style="color:' + sel.color + '">' + sel.symbol + '</span>' +
+            '<span class="symbol" style="color:' + sel.color + '">' + getZodiacSvg(sel.id, 36, sel.color) + '</span>' +
             '<div class="title-wrap">' +
               '<h3>' + sel.name + ' <small>' + sel.en + ' (' + sel.date + ')</small></h3>' +
               '<div class="meta-tag">' + sel.elem + '象星座 ｜ ' + sel.mode + '形态 ｜ 守护星：' + sel.ruler + '</div>' +

@@ -30,11 +30,33 @@ import { runZodiacTool } from './tools/zodiac.js';
 import { runRelationTool } from './tools/relation.js';
 import { openAnswerBook } from './tools/answerbook-v2.js';
 import { renderShareCard, exportShareCard } from './share/card.js';
+import {
+  openFullReportShare,
+  closeFullReportShare,
+  switchFullReportShareMode,
+  renderLongReportCanvas,
+  exportFullReportImage,
+  copyFullReportImage,
+  printFullReport
+} from './share/long-report.js';
+import { initTools3DRingCarousel } from './render/tools-ring.js';
 import { initArmillary } from './fx/armillary.js';
 import { initArmillaryAugust } from './fx/armillary-august.js';
+import { initArmillaryWestern } from './fx/armillary-western.js';
 import { burstToArmillary } from './fx/burst.js';
 import { TJX } from './state/tjx.js';
 import { getResultStyle } from './state/result-style.js';
+
+window.openFullReportShare = openFullReportShare;
+window.closeFullReportShare = closeFullReportShare;
+window.switchFullReportShareMode = switchFullReportShareMode;
+window.renderLongReportCanvas = renderLongReportCanvas;
+window.exportFullReportImage = exportFullReportImage;
+window.copyFullReportImage = copyFullReportImage;
+window.printFullReport = printFullReport;
+window.openNoviceGuide = openNoviceGuide;
+window.closeNoviceGuide = closeNoviceGuide;
+window.switchNoviceGuideTab = switchNoviceGuideTab;
 
 window.selectResultStyle=function(value){
   const hidden=document.getElementById('bResultStyle');
@@ -77,7 +99,7 @@ import {
 } from './ui/index.js';
 import { initFontSize } from './font-size.js';
 import { initWeather, getWxGeo } from './ui/weather.js';
-import { initOnboarding } from './onboarding.js';
+import { initOnboarding, openNoviceGuide, closeNoviceGuide, switchNoviceGuideTab, initGlobalNoviceGuide } from './onboarding.js';
 import { initEvolveUI } from './evolve/ui.js';
 /* tools2 改为动态 import（见文件末尾 bootstrap 处）：
    工具系统体积大且非首屏必需，独立成异步 chunk，缩小主包。 */
@@ -1136,9 +1158,10 @@ function toggleDensity(){
     tick();
   }
 
-  // ---- 表单与工具卡片 3D 视差倾斜 ----
+  // ---- 表单与独立卡片 3D 视差倾斜 (自动跳过 3D 轮播卡片避免矩阵冲突) ----
   function bindTilt(el){
     if(!el||isMobile)return;
+    if(el.closest('.tool-hub, .tool-ring-stage, .tool-row-stage, .tool-card-portrait, .tool-card-ring'))return;
     let raf=null;
     el.addEventListener('mousemove',e=>{
       const r=el.getBoundingClientRect();
@@ -1161,11 +1184,10 @@ function toggleDensity(){
       el.style.setProperty('--rx','0deg');el.style.setProperty('--ry','0deg');
     });
   }
-  // —— 全局：绑定到 .home-card 与所有 page2 内的 .glass / .tool-card-v4 卡片 ——
+  // —— 全局：绑定到 .home-card 与 page2 内的独立 .glass 卡片 ——
   function bindAllTilt(){
     document.querySelectorAll('.home-card:not([data-tilted])').forEach(el=>{bindTilt(el);el.setAttribute('data-tilted','1');});
-    document.querySelectorAll('#page2 .glass:not([data-tilted])').forEach(el=>{bindTilt(el);el.setAttribute('data-tilted','1');});
-    document.querySelectorAll('.tool-card-v4:not([data-tilted])').forEach(el=>{bindTilt(el);el.setAttribute('data-tilted','1');});
+    document.querySelectorAll('#page2 .glass:not(.tool-hub):not([data-tilted])').forEach(el=>{bindTilt(el);el.setAttribute('data-tilted','1');});
   }
   window.addEventListener('load',bindAllTilt);
   // 推算完成后 page2 内容会被重渲染，提供一个全局钩子
@@ -1188,67 +1210,131 @@ function toggleDensity(){
 })();
 
 /* ============================================================
-   首页 3D 品牌特效（浑天仪星环）：
+   首页 3D 品牌特效（西方黄道天象仪与浑天星轨庆典版）：
    只在 body.home 时运行，进报告页停笔并清空。
    ============================================================ */
 (function(){
-  let arm=null;
+  let arm = null;
   function sync(){
-    if(!arm)return;
-    if(document.body.classList.contains('home'))arm.start();else arm.stop();
+    if (!arm) return;
+    if (document.body.classList.contains('home')) arm.start(); else arm.stop();
   }
   function createArm(mode){
-    const cv=document.getElementById('brand3d');
-    if(!cv)return null;
-    return mode==='august'?initArmillaryAugust(cv):initArmillary(cv);
+    const cv = document.getElementById('brand3d');
+    if (!cv) return null;
+    if (mode === 'august' || mode === 'eastern') return initArmillaryAugust(cv);
+    if (mode === 'classic') return initArmillary(cv);
+    // 默认与 'western' / 'fusion' 均采用全新西方黄道天象仪 3D 庆典引擎
+    return initArmillaryWestern(cv, mode || 'western');
   }
   function showToast(text){
-    const t=document.createElement('div');
-    t.textContent=text;
-    t.style.cssText='position:fixed;left:50%;bottom:calc(28vh + 10px);transform:translateX(-50%) translateY(12px);z-index:9999;padding:12px 28px;border-radius:999px;background:rgba(217,119,87,0.92);color:#fff;font-size:.9em;letter-spacing:2px;pointer-events:none;opacity:0;transition:opacity .3s ease,transform .3s cubic-bezier(.2,.8,.3,1.2);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)';
+    const t = document.createElement('div');
+    t.textContent = text;
+    t.style.cssText = 'position:fixed;left:50%;bottom:calc(28vh + 10px);transform:translateX(-50%) translateY(12px);z-index:9999;padding:12px 28px;border-radius:999px;background:rgba(217,119,87,0.92);color:#fff;font-size:.88em;letter-spacing:1.5px;pointer-events:none;opacity:0;transition:opacity .3s ease,transform .3s cubic-bezier(.2,.8,.3,1.2);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(217,119,87,0.35);';
     document.body.appendChild(t);
-    requestAnimationFrame(function(){t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';});
-    setTimeout(function(){t.style.opacity='0';t.style.transform='translateX(-50%) translateY(12px)';setTimeout(function(){t.remove();},300);},2200);
+    requestAnimationFrame(function(){ t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
+    setTimeout(function(){
+      t.style.opacity = '0';
+      t.style.transform = 'translateX(-50%) translateY(12px)';
+      setTimeout(function(){ t.remove(); }, 300);
+    }, 2400);
   }
+
+  function updatePillUI(mode) {
+    const textEl = document.getElementById('homeStarModeText');
+    const tagEl = document.getElementById('homeStarModeTag');
+    if (!textEl || !tagEl) return;
+    if (mode === 'fusion') {
+      textEl.textContent = '双星纪元交融 · 东西方共鸣';
+      tagEl.textContent = '双星交融';
+    } else if (mode === 'eastern' || mode === 'august') {
+      textEl.textContent = '东方太极浑天 · 二十八宿星轨';
+      tagEl.textContent = '东方浑天';
+    } else {
+      textEl.textContent = '庆西方星相上线 · 3D黄道天象仪';
+      tagEl.textContent = '黄道星盘';
+    }
+  }
+
   function switchStarMode(){
-    var cur=localStorage.getItem('tj_star_mode')||'classic';
-    var next=cur==='august'?'classic':'august';
-    localStorage.setItem('tj_star_mode',next);
-    if(arm)arm.stop();
-    arm=createArm(next);
-    if(!arm)return;
-    window._tjArm=arm;
-    if(document.body.classList.contains('home'))arm.start();
-    showToast(next==='august'?'\u2726 \u516b\u6708\u661f\u76d8\u5df2\u5f00\u542f':'\u2726 \u7ecf\u5178\u661f\u73af\u5df2\u6062\u590d');
+    const modes = ['western', 'fusion', 'eastern'];
+    const cur = localStorage.getItem('tj_star_mode') || 'western';
+    let curIdx = modes.indexOf(cur);
+    if (curIdx === -1) curIdx = 0;
+    const next = modes[(curIdx + 1) % modes.length];
+    localStorage.setItem('tj_star_mode', next);
+
+    if (arm && arm.setMode) {
+      arm.setMode(next);
+    } else {
+      if (arm) arm.stop();
+      arm = createArm(next);
+      if (arm) {
+        window._tjArm = arm;
+        if (document.body.classList.contains('home')) arm.start();
+      }
+    }
+    if (arm && arm.surge) arm.surge(2000);
+    updatePillUI(next);
+
+    const toastMap = {
+      western: '✦ 西方黄道天象仪已就绪 · 12星座与十大行星',
+      fusion: '✦ 东西双星纪元交融 · 浑天与黄道共鸣',
+      eastern: '✦ 东方浑天星轨已开启 · 二十八宿与太极'
+    };
+    showToast(toastMap[next] || '✦ 3D天象星轨已切换');
   }
-  window.addEventListener('load',function(){
-    var mode=localStorage.getItem('tj_star_mode')||'classic';
-    arm=createArm(mode);
-    if(!arm)return;
-    window._tjArm=arm;
-    new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilter:['class']});
+
+  window.switchStarMode = switchStarMode;
+
+  window.addEventListener('load', function(){
+    const mode = localStorage.getItem('tj_star_mode') || 'western';
+    arm = createArm(mode);
+    if (!arm) return;
+    window._tjArm = arm;
+    updatePillUI(mode);
+    new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     sync();
-    /* 彩蛋：长按「输入信息」5 秒切换星轨模式 */
-    var HOLD=5000,timer=null,triggered=false;
-    var btn=document.querySelector('.home-cta:not(.home-cta-ghost)');
-    if(btn){
-      btn.addEventListener('pointerdown',function(){
-        triggered=false;
-        btn.style.transition='box-shadow 5s ease,transform 5s ease';
-        btn.style.boxShadow='0 0 0 2px rgba(217,119,87,0.4),0 0 40px rgba(217,119,87,0.5)';
-        btn.style.transform='scale(0.97)';
-        timer=setTimeout(function(){triggered=true;timer=null;switchStarMode();},HOLD);
+
+    /* 启动时自动触发一次轻微的星轨庆典流光 */
+    setTimeout(() => {
+      if (arm && arm.surge && document.body.classList.contains('home')) {
+        arm.surge(1800);
+      }
+    }, 600);
+
+    /* 彩蛋：长按「输入信息」3 秒切换星轨模式 */
+    const HOLD = 3000;
+    let timer = null, triggered = false;
+    const btn = document.querySelector('.home-cta:not(.home-cta-ghost)');
+    if (btn) {
+      btn.addEventListener('pointerdown', function(){
+        triggered = false;
+        btn.style.transition = 'box-shadow 3s ease, transform 3s ease';
+        btn.style.boxShadow = '0 0 0 2px rgba(217,119,87,0.4),0 0 40px rgba(217,119,87,0.5)';
+        btn.style.transform = 'scale(0.97)';
+        timer = setTimeout(function(){
+          triggered = true;
+          timer = null;
+          switchStarMode();
+        }, HOLD);
       });
       function clearHold(){
-        if(timer){clearTimeout(timer);timer=null;}
-        btn.style.transition='';
-        btn.style.boxShadow='';
-        btn.style.transform='';
+        if (timer) { clearTimeout(timer); timer = null; }
+        btn.style.transition = '';
+        btn.style.boxShadow = '';
+        btn.style.transform = '';
       }
-      btn.addEventListener('pointerup',clearHold);
-      btn.addEventListener('pointerleave',clearHold);
-      btn.addEventListener('pointercancel',clearHold);
-      btn.addEventListener('click',function(e){if(triggered){e.preventDefault();e.stopImmediatePropagation();triggered=false;}},true);
+      btn.addEventListener('pointerup', clearHold);
+      btn.addEventListener('pointerleave', clearHold);
+      btn.addEventListener('pointercancel', clearHold);
+      btn.addEventListener('click', function(e){
+        if (triggered) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          triggered = false;
+        }
+      }, true);
     }
   });
 })();
@@ -1786,48 +1872,34 @@ function toggleUserMode(){
     all:'全部',western:'✦ 西方大师',money:'财富与事业',life:'日常决策',relation:'关系与沟通',play:'灵感与娱乐'
   };
   function mount(){
-    const hub=document.querySelector('#s-adv .tool-hub'),grid=hub&&hub.querySelector('#toolGrid, .tool-grid-v4, .tool-grid');
-    if(!hub||!grid||document.getElementById('toolsToolbar'))return;
-    const bar=document.createElement('div');bar.className='tools-toolbar';bar.id='toolsToolbar';
-    bar.innerHTML='<div class="tools-search-wrap"><svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="tools-search" id="toolsSearch" type="search" placeholder="搜索工具名称、功能或关键词..." aria-label="搜索工具"></div><div class="tools-filter" role="tablist">'+Object.entries(groups).map(([k,v])=>'<button type="button" data-group="'+k+'" class="'+(k==='all'?'active':'')+'">'+v+'</button>').join('')+'</div>';
-    if(grid&&grid.parentNode)grid.parentNode.insertBefore(bar,grid);
-    else if(hub)hub.prepend(bar);
+    const hub=document.querySelector('#s-adv .tool-hub');
+    if(!hub)return;
 
-    let active='all';
-    function render(){
-      const q=(document.getElementById('toolsSearch')?.value||'').trim().toLowerCase();
-      let count=0;
-      grid.querySelectorAll('.tool-card-v4, .tool-tile').forEach(t=>{
-        const grp=t.dataset.group||'';
-        const txt=t.textContent.toLowerCase();
-        const ok=(active==='all'||grp===active)&&(!q||txt.includes(q));
-        t.classList.toggle('is-filter-hidden',!ok);
-        if(ok)count++;
-      });
-      let empty=grid.querySelector('.tool-empty');
-      if(!count){
-        if(!empty){
-          empty=document.createElement('div');
-          empty.className='tool-empty';
-          grid.appendChild(empty);
-        }
-        empty.textContent='没有找到匹配的工具，换个关键词或切换专栏试试。';
-      }else if(empty){
-        empty.remove();
-      }
+    if(!window._tools3DRing || !window._tools3DRing.stage?.isConnected){
+      initTools3DRingCarousel(hub);
     }
+
+    const stage=hub.querySelector('.tool-ring-stage, #toolGrid, .tool-grid-v4');
+    if(!stage||document.getElementById('toolsToolbar'))return;
+    const bar=document.createElement('div');bar.className='tools-toolbar';bar.id='toolsToolbar';
+    bar.innerHTML='<div class="tools-filter" role="tablist">'+Object.entries(groups).map(([k,v])=>'<button type="button" data-group="'+k+'" class="'+(k==='all'?'active':'')+'">'+v+'</button>').join('')+'</div>';
+    stage.parentNode.insertBefore(bar,stage);
+
     bar.querySelectorAll('.tools-filter button').forEach(b=>b.addEventListener('click',()=>{
-      active=b.dataset.group;
+      const active=b.dataset.group;
       bar.querySelectorAll('.tools-filter button').forEach(x=>x.classList.toggle('active',x===b));
-      render();
+      if(window._tools3DRing) window._tools3DRing.setFilter(active);
     }));
-    bar.querySelector('input')?.addEventListener('input',render);
-    render();
   }
   const oldSwitch=window.switchTab;
   window.switchTab=function(el){
     if(oldSwitch)oldSwitch(el);
-    if(el&&el.dataset.sec==='s-adv')setTimeout(mount,0);
+    if(el&&el.dataset.sec==='s-adv'){
+      setTimeout(()=>{
+        mount();
+        if(window._tools3DRing) window._tools3DRing.onTabShow();
+      },50);
+    }
   };
   document.addEventListener('DOMContentLoaded',mount);
   new MutationObserver(mount).observe(document.body,{childList:true,subtree:true});

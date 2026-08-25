@@ -122,8 +122,9 @@
       </div>
     </div>
   </div>
-  <!-- 关于问问大师 / 免责声明：固定在菜单底部 -->
+  <!-- 关于问问大师 / 新手指引 / 免责声明：固定在菜单底部 -->
   <div class="home-menu-footer" style="padding:12px 16px;border-top:1px solid var(--c-border);display:flex;flex-direction:column;gap:8px">
+    <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleHomeMenu(false);openNoviceGuide()">新手指引</button>
     <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleHomeMenu(false);openAboutModal()">关于问问大师</button>
     <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleHomeMenu(false);openDisclaimerModal()">免责声明</button>
   </div>
@@ -137,6 +138,11 @@
         <div class="home-hero-copy">
           <h1 class="home-hero-title" style="font-weight:800;text-align:center">问问大师</h1>
           <p class="home-hero-sub">从命盘看倾向，把选择落到行动</p>
+          <div class="home-celebrate-pill anim-in d2" id="homeStarModePill" onclick="switchStarMode()" role="button" tabindex="0" title="点击切换 3D 星轨天象模式" aria-label="点击切换 3D 星轨天象模式">
+            <span class="home-celebrate-sparkle">✦</span>
+            <span class="home-celebrate-text" id="homeStarModeText">庆西方星相上线 · 3D黄道天象仪</span>
+            <span class="home-celebrate-badge-tag" id="homeStarModeTag">黄道星盘</span>
+          </div>
         </div>
         <div class="home-hero-actions">
           <button class="home-cta" id="homeCtaMain" type="button" onclick="TJOpenForm()">输入信息</button>
@@ -175,7 +181,9 @@
       <span class="p2-menu-bars"></span>
     </button>
     <div class="mode-top-group" role="tablist" aria-label="体系模式切换"><button class="mode-top-switch active" id="modeEastern" type="button" role="tab" aria-selected="true" onclick="setSystemMode('eastern')">东方命理</button><button class="mode-top-switch" id="modeWestern" type="button" role="tab" aria-selected="false" onclick="setSystemMode('western')">西方星相</button></div>
-    <div class="p2-actions"><button class="p2-act cal-fab" id="calFab" type="button" onclick="openCalendarMode()" title="日历模式" aria-label="日历模式"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>
+    <div class="p2-actions">
+      <button class="p2-act share-fab" id="p2ShareBtn" type="button" onclick="openFullReportShare()" title="分享长报告" aria-label="分享长报告"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
+      <button class="p2-act cal-fab" id="calFab" type="button" onclick="openCalendarMode()" title="日历模式" aria-label="日历模式"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>
     </div>
   </div>
   <div class="p2-scroll" id="p2Scroll"><button class="back-to-top" id="backToTop" onclick="document.getElementById('p2Scroll').scrollTo({top:0,behavior:'smooth'})"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg></button>
@@ -234,6 +242,10 @@
     <button class="p2-menu-close" type="button" onclick="toggleP2Menu(false)" aria-label="关闭">×</button>
   </div>
   <div class="p2-menu-body">
+    <button type="button" class="p2-menu-item p2-menu-item-guide" onclick="toggleP2Menu(false);openNoviceGuide()">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,3 14.8,8.5 21,9.3 16.5,13.7 17.6,19.8 12,16.8 6.4,19.8 7.5,13.7 3,9.3 9.2,8.5"/></svg>
+      <span>新手指引</span>
+    </button>
     <button type="button" class="p2-menu-item" onclick="toggleP2Menu(false);goBack()">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8"/><path d="M3 3v5h5"/></svg>
       <span>重新推演</span>
@@ -246,9 +258,13 @@
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v13a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2z"/><path d="M8 3h8a1 1 0 0 1 1 1v3H7V4a1 1 0 0 1 1-1z"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
       <span>档案库</span>
     </button>
+    <button type="button" class="p2-menu-item" onclick="toggleP2Menu(false);openFullReportShare()">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      <span>分享长报告</span>
+    </button>
     <button type="button" class="p2-menu-item" onclick="toggleP2Menu(false);TJShareReport()">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-      <span>分享命盘</span>
+      <span>分享卡片</span>
     </button>
     <button type="button" class="p2-menu-item" onclick="toggleP2Menu(false);TJShareRiQian()">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 10h18M8 2v4M16 2v4"/><path d="M9 16l2 2 4-4"/></svg>
@@ -281,8 +297,9 @@
       </div>
     </div>
   </div>
-  <!-- 关于 / 免责声明 -->
+  <!-- 关于 / 新手指引 / 免责声明 -->
   <div class="p2-menu-footer" style="padding:12px 16px;border-top:1px solid var(--c-border);display:flex;flex-direction:column;gap:8px">
+    <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleP2Menu(false);openNoviceGuide()">新手指引</button>
     <button type="button" class="pf-io-btn" id="aboutBtnP2" style="width:100%;padding:10px;font-size:.82em" onclick="toggleP2Menu(false);openAboutModal()">关于问问大师</button>
     <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleP2Menu(false);openDisclaimerModal()">免责声明</button>
   </div>
