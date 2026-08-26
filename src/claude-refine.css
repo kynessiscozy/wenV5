@@ -149,7 +149,7 @@ body { font-size: var(--fs-md); line-height: 1.6; }
 .ai-context, .tj-ai-box, .ai-user-bubble, .tool-banner {
   border-radius: var(--c-r) !important;      /* 12px 内容块 */
 }
-input, select, textarea, .ai-input-row, .tools-search input,
+input, select, textarea, .ai-input-row,
 .cta, .tj-submit, .tool-primary, .ai-btn-go, .ai-send, .bb-master {
   border-radius: 10px !important;            /* 10px 控件 */
 }
@@ -610,19 +610,6 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
   .sec .tool-tile .tool-label { font-size: var(--fs-sm) !important; }
 }
 
-/* ---- 16.2 筛选条：360px 下末项被截断且无滚动提示 ---- */
-.tools-filter {
-  overflow-x: auto !important;
-  flex-wrap: nowrap !important;
-  scroll-snap-type: x proximity;
-  /* 右侧渐隐，暗示还能横滑 */
-  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
-          mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
-  padding-right: 20px !important;
-}
-.tools-filter::-webkit-scrollbar { display: none; }
-.tools-filter > * { scroll-snap-align: start; flex: 0 0 auto; }
-
 /* ---- 16.3 工具弹层：关闭按钮压在简介卡上（实测重叠） ---- */
 #toolModal .tj-tool-intro {
   padding-right: 52px !important;
@@ -846,26 +833,6 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
   width: 38px !important; min-width: 38px !important;
   height: 38px !important; min-height: 38px !important;
   margin: 0 !important;
-  border-radius: 10px !important;
-}
-
-/* ---- 18.2 工具页顶部多出的方形外框 ----
-   .tools-toolbar 是纯白实心块，与下方卡片之间形成一条突兀的方形边界。 */
-.sec .tools-toolbar {
-  background: transparent !important;
-  border: 0 !important;
-  border-bottom: 1px solid var(--c-border) !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  padding: 0 0 var(--sp-3) !important;
-  margin-bottom: var(--sp-3) !important;
-}
-.sec .tools-toolbar::before,
-.sec .tools-toolbar::after { display: none !important; }
-/* 搜索框自己保留描边即可 */
-.sec .tools-search input {
-  background: var(--c-surface) !important;
-  border: 1px solid var(--c-border-2) !important;
   border-radius: 10px !important;
 }
 

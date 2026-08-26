@@ -12,11 +12,9 @@
         - 拖动时 0 延迟即刻跟手，松手后带平滑物理惯性阻尼滑行与中心卡片磁吸卡位
      5. 滚轮横向驱动 (Wheel Interaction): 滚轮在工具区域任意位置均可平滑驱动 3D 旋转
      6. 点击即开 (Instant Click): 点击正中或侧翼卡片直接打开工具
-     7. 专栏分类过滤与实时搜索联动: 动态自适应重算 3D 分度角
+     7. 轮播下方分类标签筛选: 按功能分组即时重算轮播卡片
      8. 3D 环形 / 2D 平铺网格双视图一键切换
    ============================================================ */
-
-import { TOOL_DEFINITIONS } from './tools-catalog.js';
 
 class Tools3DRingCarousel {
   constructor(container) {
@@ -51,8 +49,7 @@ class Tools3DRingCarousel {
 
     // 视图模式: 'ring' (3D 环形) | 'grid' (2D 网格)
     this.viewMode = 'ring';
-    this.activeFilter = 'all';
-    this.searchQuery = '';
+    this.activeCategory = 'all';
 
     this.rafId = 0;
     this.snapTimer = null;
@@ -67,6 +64,7 @@ class Tools3DRingCarousel {
     if (!this.stage || !this.track) return;
 
     this.cards = Array.from(this.track.querySelectorAll('.tool-card-portrait, .tool-card-ring'));
+    this.placeToolbarForView(this.viewMode);
     this.updateRadius();
     this.updateVisibleCards();
     this.bindEvents();
@@ -93,29 +91,40 @@ class Tools3DRingCarousel {
   updateVisibleCards() {
     this.visibleIndices = [];
     this.cards.forEach((card, idx) => {
-      const group = card.dataset.group || '';
-      const text = card.textContent.toLowerCase();
-      const matchFilter = this.activeFilter === 'all' || group === this.activeFilter;
-      const matchSearch = !this.searchQuery || text.includes(this.searchQuery);
-      const isVisible = matchFilter && matchSearch;
-
-      card.classList.toggle('is-hidden', !isVisible);
+      const isVisible = this.activeCategory === 'all' || card.dataset.category === this.activeCategory;
+      card.classList.toggle('is-category-hidden', !isVisible);
+      card.tabIndex = isVisible ? 0 : -1;
       if (isVisible) {
+        card.removeAttribute('aria-hidden');
         this.visibleIndices.push(idx);
+      } else {
+        card.setAttribute('aria-hidden', 'true');
+        card.classList.remove('is-active-center');
       }
     });
 
-    const emptyTip = this.container.querySelector('.tool-ring-empty');
-    if (emptyTip) {
-      emptyTip.style.display = this.visibleIndices.length === 0 ? 'block' : 'none';
-    }
-
+    this.syncCategoryControls();
     this.updateRadius();
     this.updateIndicators();
   }
 
+  syncCategoryControls() {
+    this.container.querySelectorAll('.tool-category-chip').forEach((button) => {
+      const isActive = button.dataset.toolCategory === this.activeCategory;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', String(isActive));
+    });
+  }
+
   updateIndicators() {
     const dotsContainer = this.container.querySelector('.tool-ring-dots');
+
+    // 左右切换箭头仅在「筛选状态」下生效（未筛选时顶部已有切换控件）
+    const showNav = this.viewMode === 'ring' && this.activeCategory !== 'all' && this.visibleIndices.length > 1;
+    this.container.querySelectorAll('.tool-ring-arrow').forEach((btn) => {
+      btn.hidden = !showNav;
+    });
+
     if (!dotsContainer) return;
 
     const count = this.visibleIndices.length;
@@ -130,6 +139,7 @@ class Tools3DRingCarousel {
   }
 
   onTabShow() {
+    this.placeToolbarForView(this.viewMode);
     this.updateRadius();
     this.updateVisibleCards();
     this.isDragging = false;
@@ -138,6 +148,23 @@ class Tools3DRingCarousel {
   }
 
   bindEvents() {
+    // 分类标签
+    const categoryButtons = Array.from(this.container.querySelectorAll('.tool-category-chip'));
+    categoryButtons.forEach((button, index) => {
+      button.addEventListener('click', () => this.setCategory(button.dataset.toolCategory));
+      button.addEventListener('keydown', (event) => {
+        let nextIndex = null;
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % categoryButtons.length;
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (index - 1 + categoryButtons.length) % categoryButtons.length;
+        if (event.key === 'Home') nextIndex = 0;
+        if (event.key === 'End') nextIndex = categoryButtons.length - 1;
+        if (nextIndex !== null) {
+          event.preventDefault();
+          categoryButtons[nextIndex].focus();
+        }
+      });
+    });
+
     // 1. 鼠标与触控拖拽 (1:1 即时跟手拖拽)
     const onStart = (clientX, clientY) => {
       if (this.viewMode !== 'ring' || this.visibleIndices.length <= 1) return;
@@ -187,6 +214,8 @@ class Tools3DRingCarousel {
 
     // Pointer Events (现代浏览器标准支持)
     this.stage.addEventListener('pointerdown', (e) => {
+      // 点击左右切换箭头不触发拖拽
+      if (e.target && e.target.closest && e.target.closest('.tool-ring-arrow')) return;
       const card = e.target && e.target.closest ? e.target.closest('.tool-card-portrait') : null;
       this._downCard = card;
       onStart(e.clientX, e.clientY);
@@ -228,6 +257,8 @@ class Tools3DRingCarousel {
     // 采用舞台级事件委托：以 pointerdown 时锁定的卡片为准，规避 3D
     // 弹簧动画使卡片滑离指针、导致真实 click 命中舞台而失效的问题。
     this.stage.addEventListener('click', (e) => {
+      // 点击左右切换箭头不触发卡片打开
+      if (e.target && e.target.closest && e.target.closest('.tool-ring-arrow')) return;
       // 明显拖拽后忽略误触
       if (this.hasMoved) return;
       // 优先使用按下时锁定的卡片；兜底用事件目标向上查找
@@ -306,14 +337,37 @@ class Tools3DRingCarousel {
     this.setViewMode(nextMode);
   }
 
+  placeToolbarForView(mode) {
+    const toolbar = this.container.querySelector('.tool-catalog-toolbar');
+    if (!toolbar || !this.stage) return;
+    if (mode === 'grid' && typeof this.container.insertBefore === 'function') {
+      this.container.insertBefore(toolbar, this.stage);
+      return;
+    }
+    if (mode === 'ring') {
+      // 筛选栏置于 3D 卡片上部（舞台之前）
+      if (typeof this.container.insertBefore === 'function') {
+        this.container.insertBefore(toolbar, this.stage);
+      }
+    }
+  }
+
   setViewMode(mode) {
     this.viewMode = mode;
     this.container.classList.toggle('view-mode-grid', mode === 'grid');
     this.container.classList.toggle('view-mode-ring', mode === 'ring');
+    this.placeToolbarForView(mode);
 
+    const toggle = this.container.querySelector('#toolViewTogglePill');
     const toggleText = this.container.querySelector('#toolViewToggleText');
+    if (toggle) {
+      const isGrid = mode === 'grid';
+      toggle.setAttribute('aria-pressed', String(isGrid));
+      toggle.setAttribute('title', isGrid ? '切换为 3D 环形视图' : '切换为网格视图');
+      toggle.classList.toggle('is-grid', isGrid);
+    }
     if (toggleText) {
-      toggleText.textContent = mode === 'grid' ? '一键切换为3D环形' : '一键切换为平铺模式';
+      toggleText.textContent = mode === 'grid' ? '切换为 3D 环形' : '切换为网格';
     }
 
     const btnGrid = this.container.querySelector('#toolViewGridBtn');
@@ -338,16 +392,13 @@ class Tools3DRingCarousel {
     }
   }
 
-  setFilter(groupKey) {
-    this.activeFilter = groupKey;
-    this.updateVisibleCards();
+  setCategory(categoryKey) {
+    const categoryExists = this.cards.some(card => card.dataset.category === categoryKey);
+    this.activeCategory = categoryKey === 'all' || categoryExists ? categoryKey : 'all';
     this.targetAngle = 0;
     this.currentAngle = 0;
-  }
-
-  setSearch(query) {
-    this.searchQuery = (query || '').trim().toLowerCase();
     this.updateVisibleCards();
+    if (this.viewMode === 'ring') this.render();
   }
 
   startLoop() {

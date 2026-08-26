@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+import { readFileSync } from 'node:fs';
 
 console.log('═══════════════════════════════════════════════');
 console.log('  工具中心 3D 卡片轮播 (3D Card Carousel) 单元测试');
@@ -17,15 +18,19 @@ class MockElement {
     };
     this.style = {};
     this.dataset = {};
+    this.attributes = {};
     this.children = [];
     this.textContent = '';
+    this.tabIndex = 0;
     this.offsetWidth = 800;
   }
+  setAttribute(name, value) { this.attributes[name] = String(value); }
+  removeAttribute(name) { delete this.attributes[name]; }
+  focus() {}
   querySelector(sel) {
     if (sel.includes('stage')) return this.stage || (this.stage = new MockElement('div'));
     if (sel.includes('carousel') || sel.includes('track')) return this.track || (this.track = new MockElement('div'));
     if (sel.includes('dots')) return new MockElement('div');
-    if (sel.includes('empty')) return new MockElement('div');
     return new MockElement('div');
   }
   querySelectorAll(sel) {
@@ -34,7 +39,7 @@ class MockElement {
         this.cards = Array.from({ length: 13 }, (_, i) => {
           const el = new MockElement('div');
           el.dataset.tool = 'tool_' + i;
-          el.dataset.group = i < 3 ? 'western' : i < 6 ? 'life' : 'play';
+          el.dataset.category = i < 3 ? 'western' : i === 3 ? 'money' : i < 7 ? 'life' : i < 9 ? 'relation' : 'play';
           el.textContent = 'Tool ' + i;
           return el;
         });
@@ -59,8 +64,26 @@ global.performance = { now: () => Date.now() };
 
 async function runTests() {
   const { initTools3DRingCarousel } = await import('../src/render/tools-ring.js');
+  const { renderToolsHubHtml, TOOL_DEFINITIONS } = await import('../src/render/tools-catalog.js');
 
-  console.log('【1】3D 卡片轮播组件实例化与初始化');
+  console.log('【0】工具目录结构与视图切换控件');
+  const catalogHtml = renderToolsHubHtml();
+  assert.strictEqual(TOOL_DEFINITIONS.length, 13, '工具目录必须保留全部 13 款工具');
+  assert.strictEqual((catalogHtml.match(/id="toolViewTogglePill"/g) || []).length, 1, '视图切换按钮必须唯一且位于可见工具栏');
+  const stagePosition = catalogHtml.indexOf('id="toolRingStage"');
+  const toolbarPosition = catalogHtml.indexOf('class="tool-catalog-toolbar"');
+  const bottomBarPosition = catalogHtml.indexOf('class="tool-ring-bottom-bar"');
+  assert.ok(stagePosition < bottomBarPosition && bottomBarPosition < toolbarPosition, '环形模式的筛选栏必须位于完整卡片轮播及其指示区下方');
+  assert.doesNotMatch(catalogHtml, /tools?-search|toolsToolbar|<input\b/i, '工具页不得残留搜索栏结构或输入框');
+  assert.strictEqual((catalogHtml.match(/class="tc-p-icon"/g) || []).length, 0, '工具卡片不得再渲染图标');
+  assert.strictEqual((catalogHtml.match(/class="tc-p-title"/g) || []).length, 13, '13 款工具都必须保留主标题');
+  const styles = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  assert.match(styles, /grid-template-columns:\s*repeat\(auto-fill,\s*minmax\(190px,\s*1fr\)\)/, '桌面网格必须使用紧凑三列尺寸');
+  assert.match(styles, /\.view-mode-grid \.tool-card-portrait\s*\{[\s\S]*?height:\s*320px\s*!important;[\s\S]*?min-height:\s*320px\s*!important;/, '桌面网格卡片高度必须保持紧凑');
+  assert.match(styles, /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/, '移动端网格必须使用紧凑双列布局');
+  console.log('  ✓ 筛选栏位于轮播下方，紧凑网格与 13 个主标题完整');
+
+  console.log('\n【1】3D 卡片轮播组件实例化与初始化');
   const mockContainer = new MockElement('div');
   const ring = initTools3DRingCarousel(mockContainer);
   assert.ok(ring, '3D 卡片轮播实例必须创建成功');
@@ -95,18 +118,25 @@ async function runTests() {
   ring.prev();
   console.log('  ✓ 3D 自动轮播与角度步进控制自洽');
 
-  console.log('\n【4】分类过滤 (Filter) 与视图切换 (View Mode)');
-  ring.setFilter('western');
-  assert.strictEqual(ring.visibleIndices.length, 3, '过滤 western 专栏后卡片应为 3');
-
-  ring.setFilter('all');
-  assert.strictEqual(ring.visibleIndices.length, 13, '恢复全部后卡片应为 13');
+  console.log('\n【4】分类标签筛选与视图切换');
+  assert.strictEqual(ring.visibleIndices.length, 13, '默认应展示全部 13 款工具卡片');
+  ring.setCategory('western');
+  assert.strictEqual(ring.visibleIndices.length, 3, '西方大师分类应展示 3 款工具');
+  assert.strictEqual(ring.cards.filter(card => card.classList.contains('is-category-hidden')).length, 10, '其余卡片应退出轮播与键盘焦点');
+  ring.setCategory('money');
+  assert.strictEqual(ring.visibleIndices.length, 1, '财富与事业分类应展示 1 款工具');
+  ring.setCategory('unknown');
+  assert.strictEqual(ring.activeCategory, 'all', '无效分类应安全回退到全部');
+  assert.strictEqual(ring.visibleIndices.length, 13, '回退后应恢复全部工具');
 
   ring.setViewMode('grid');
-  assert.strictEqual(ring.viewMode, 'grid', '视图模式应成功切换为 2D 网格');
+  ring.setCategory('relation');
+  assert.strictEqual(ring.visibleIndices.length, 2, '平铺模式下分类筛选仍应生效');
+  assert.strictEqual(ring.viewMode, 'grid', '视图模式应保持为 2D 网格');
+  ring.setCategory('all');
   ring.setViewMode('ring');
   assert.strictEqual(ring.viewMode, 'ring', '视图模式应成功切回 3D 环形');
-  console.log('  ✓ 专栏过滤与 3D 轮播/2D 网格视图切换通过');
+  console.log('  ✓ 分类标签与 3D 轮播/2D 网格视图联动通过');
 
   ring.destroy();
   console.log('\n═══════════════════════════════════════════════');

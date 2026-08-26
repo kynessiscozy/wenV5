@@ -1866,30 +1866,14 @@ function toggleUserMode(){
   obs.observe(target,{childList:true,subtree:true});
 })();
 
-/* 工具中心增强：搜索、分类、键盘可用性与更清晰的工具入口 */
+/* 工具中心 3D 环形轮播初始化 */
 (function(){
-  const groups={
-    all:'全部',western:'✦ 西方大师',money:'财富与事业',life:'日常决策',relation:'关系与沟通',play:'灵感与娱乐'
-  };
   function mount(){
     const hub=document.querySelector('#s-adv .tool-hub');
     if(!hub)return;
-
     if(!window._tools3DRing || !window._tools3DRing.stage?.isConnected){
       initTools3DRingCarousel(hub);
     }
-
-    const stage=hub.querySelector('.tool-ring-stage, #toolGrid, .tool-grid-v4');
-    if(!stage||document.getElementById('toolsToolbar'))return;
-    const bar=document.createElement('div');bar.className='tools-toolbar';bar.id='toolsToolbar';
-    bar.innerHTML='<div class="tools-filter" role="tablist">'+Object.entries(groups).map(([k,v])=>'<button type="button" data-group="'+k+'" class="'+(k==='all'?'active':'')+'">'+v+'</button>').join('')+'</div>';
-    stage.parentNode.insertBefore(bar,stage);
-
-    bar.querySelectorAll('.tools-filter button').forEach(b=>b.addEventListener('click',()=>{
-      const active=b.dataset.group;
-      bar.querySelectorAll('.tools-filter button').forEach(x=>x.classList.toggle('active',x===b));
-      if(window._tools3DRing) window._tools3DRing.setFilter(active);
-    }));
   }
   const oldSwitch=window.switchTab;
   window.switchTab=function(el){

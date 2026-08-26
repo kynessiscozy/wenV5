@@ -181,7 +181,7 @@ p, .at, .at p, .ai-sum-body, .tj-tool-desc, .mini-note {
   font-size: .78em !important; font-weight: 500 !important; letter-spacing: 0 !important;
 }
 .fd input, .fd select, .tj-field input, .tj-field select, .tj-field textarea,
-.layoff-field input, .layoff-field select, .tools-search input, .ai-key-input,
+.layoff-field input, .layoff-field select, .ai-key-input,
 .ai-setting-row select, input[type="text"], input[type="date"], input[type="time"], select, textarea {
   background: var(--c-surface) !important;
   border: 1px solid var(--c-border-2) !important;
@@ -467,17 +467,6 @@ table, .fine-table, .god-table { border-collapse: collapse; width: 100%; }
 .sec .tool-tile:hover::after { opacity: calc(var(--art-op) * 1.5); }
 .sec .tool-tile .tool-label, .sec .tool-tile > b { color: var(--c-text) !important; }
 .sec .tool-tile .tool-tag, .sec .tool-tile > small { color: var(--c-text-3) !important; }
-.tools-toolbar {
-  background: var(--c-bg) !important;
-  background-image: none !important;
-  border: 0 !important;
-  border-bottom: 1px solid var(--c-border) !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-  padding: 10px 0 !important;
-}
-.tools-search input { border-radius: 10px !important; }
 .tool-icon { color: var(--c-accent) !important; filter: none !important; }
 .sec .tool-tile::before, .sec .tool-tile::after { display: none; }
 .tool-banner { border-radius: var(--c-r-lg) !important; }

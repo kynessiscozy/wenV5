@@ -24,7 +24,7 @@ function buildPrintCSS(mode) {
 @media print {
   /* ===== 隐藏所有 UI 壳，只保留报告 ===== */
   .mesh, .tab-bar, .p2-top, .ld-ov, .ai-overlay, .ai-sheet,
-  .modal, .toast, .tools-toolbar, .tool-search, .tool-filter,
+  .modal, .toast, .tool-catalog-toolbar, .tool-category-filter,
   .nav-back, .p2-fab, .floating-btns, .fab-stack,
   #page1, #toolModal, .tw-tool-export,
   .sec-plain > .close-btn, .qr-close,

@@ -502,10 +502,6 @@ node tools/archive/test-syn-fold.mjs      # 折叠结构 / 展开收起 / 高度
 修复：容器补 6px 内距 + `overflow:hidden`，输入框底色透明。
 注意 `#aiSheet .ai-input:focus` 另有一条 `!important` 会在聚焦时把灰底加回来，需一并覆盖。
 
-### 15.2 工具页顶部方形外框
-`.tools-toolbar` 是纯白实心块（`bg: #fff`），与下方米色背景形成一条突兀的方形边界。
-改为透明 + 仅保留一条下边框作分隔。
-
 ### 15.3 梅花易数显示不完整
 **真实原因不是文字缺失，而是卦象根本没画出来。**
 `_hexLines()` 生成的爻线 `<span>` 没有宽度，父级是 flex 行 → 实测塌成 **0×8px**；
