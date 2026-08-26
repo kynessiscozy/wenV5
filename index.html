@@ -21,6 +21,8 @@
       document.documentElement.setAttribute('data-theme', m);
       document.documentElement.style.colorScheme = m;
     } catch (e) {}
+    /* fail-open 标记：脚本可用时才启用入场隐藏、动效等 */
+    document.documentElement.classList.add('has-js');
   })();
 </script>
 
@@ -31,6 +33,7 @@
 <link rel="stylesheet" href="/src/claude-refine.css">
 <link rel="stylesheet" href="/src/enhance.css">
 <link rel="stylesheet" href="/src/evolve.css">
+<link rel="stylesheet" href="/src/liquid-glass.css">
 <style>
 .result-style-heading{display:flex;align-items:baseline;gap:8px;margin-bottom:7px;min-width:0}
 .result-style-label{font-size:.72em;font-weight:500;color:var(--c-text-2);white-space:nowrap}

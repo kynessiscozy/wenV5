@@ -1,0 +1,906 @@
+/* ========================================================================
+ *  Liquid Glass — 大艺术家式结果页视觉重塑
+ *  灵感：Apple Vision Pro Liquid Glass + 东方水墨
+ *  原则：transform/opacity only，60fps，prefers-reduced-motion 友好
+ * ======================================================================== */
+
+/* ---------- 1. 注册可动画的自定义属性（@property） ---------- */
+@property --lg-softness {
+  syntax: '<percentage>';
+  initial-value: 50%;
+  inherits: false;
+}
+@property --lg-ink-flow {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@property --lg-grain {
+  syntax: '<number>';
+  initial-value: 0.4;
+  inherits: false;
+}
+
+/* ---------- 2. 液态玻璃基础 token ---------- */
+:root {
+  --lg-ink: #0e0e10;
+  --lg-ink-2: #1a1a1e;
+  --lg-ink-3: #26262c;
+  --lg-paper: #f5f1e8;
+  --lg-paper-2: #ebe6d8;
+  --lg-vermilion: #c23b22;
+  --lg-ochre: #d4a23a;
+  --lg-jade: #3a6b58;
+  --lg-azure: #2a5d8c;
+  --lg-ink-color: #16161a;
+  --lg-paper-color: #f6f1e6;
+
+  /* 玻璃厚度 */
+  --lg-bg-1: rgba(255, 252, 246, 0.42);
+  --lg-bg-2: rgba(255, 252, 246, 0.18);
+  --lg-stroke-1: rgba(255, 255, 255, 0.55);
+  --lg-stroke-2: rgba(28, 28, 32, 0.08);
+  --lg-shadow-1: 0 30px 60px -20px rgba(20, 20, 24, 0.18),
+                 0 12px 28px -10px rgba(20, 20, 24, 0.10),
+                 inset 0 1px 0 rgba(255, 255, 255, 0.6),
+                 inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  --lg-shadow-2: 0 10px 30px -12px rgba(20, 20, 24, 0.10),
+                 inset 0 1px 0 rgba(255, 255, 255, 0.4);
+
+  /* 缓动（参考 motion-design：ease-out-expo / 自定义 spring） */
+  --ease-liquid-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-liquid-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-water: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 暗色模式：墨色玻璃 */
+body.dark-mode,
+[data-theme="dark"] {
+  --lg-bg-1: rgba(22, 22, 26, 0.55);
+  --lg-bg-2: rgba(22, 22, 26, 0.20);
+  --lg-stroke-1: rgba(255, 255, 255, 0.10);
+  --lg-stroke-2: rgba(255, 255, 255, 0.04);
+  --lg-shadow-1: 0 30px 60px -20px rgba(0, 0, 0, 0.55),
+                 0 12px 28px -10px rgba(0, 0, 0, 0.40),
+                 inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                 inset 0 -1px 0 rgba(0, 0, 0, 0.30);
+  --lg-paper-color: #f6f1e6;
+  --lg-ink-color: #f6f1e6;
+}
+
+/* ---------- 3. 结果页背景：缓慢流动的墨色水波 ---------- */
+.p2-scroll {
+  position: relative;
+  background:
+    radial-gradient(circle at 18% 12%, color-mix(in oklab, var(--lg-vermilion) 7%, transparent) 0, transparent 38%),
+    radial-gradient(circle at 82% 88%, color-mix(in oklab, var(--lg-jade) 6%, transparent) 0, transparent 42%),
+    radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--lg-ochre) 4%, transparent) 0, transparent 70%),
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--lg-paper) 96%, white 0%) 0%,
+      color-mix(in oklab, var(--lg-paper) 88%, var(--lg-paper-2) 0%) 100%);
+  background-attachment: scroll, scroll, scroll, fixed;
+  isolation: isolate;
+}
+body.dark-mode .p2-scroll,
+[data-theme="dark"] .p2-scroll {
+  background:
+    radial-gradient(circle at 18% 12%, color-mix(in oklab, var(--lg-vermilion) 12%, transparent) 0, transparent 38%),
+    radial-gradient(circle at 82% 88%, color-mix(in oklab, var(--lg-jade) 10%, transparent) 0, transparent 42%),
+    radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--lg-ochre) 6%, transparent) 0, transparent 70%),
+    linear-gradient(180deg, #0e0e10 0%, #1a1a1e 100%);
+}
+
+/* 背景墨水流动：单层 SVG turbulence 动画（GPU 合成） */
+.p2-scroll::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.012 0.018' numOctaves='2' seed='4'/><feColorMatrix values='0 0 0 0 0.78  0 0 0 0 0.40  0 0 0 0 0.20  0 0 0 0.05 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 480px 480px;
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+  filter: blur(40px) saturate(120%);
+  animation: inkDrift 26s var(--ease-water) infinite alternate;
+  will-change: transform, background-position;
+}
+body.dark-mode .p2-scroll::before,
+[data-theme="dark"] .p2-scroll::before {
+  mix-blend-mode: screen;
+  opacity: 0.32;
+  filter: blur(50px) saturate(140%) hue-rotate(-12deg);
+}
+@keyframes inkDrift {
+  0%   { transform: translate3d(-2%, 1%, 0) scale(1.02); background-position: 0 0; }
+  50%  { transform: translate3d(1.5%, -1%, 0) scale(1.06); background-position: 40% 30%; }
+  100% { transform: translate3d(-1%, 2%, 0) scale(1.03); background-position: 80% 60%; }
+}
+
+/* 内容浮在背景之上 */
+.p2-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- 4. 液态玻璃卡片：取代原 .glass.card-2 视觉 ---------- */
+.glass.card-2 {
+  position: relative;
+  background:
+    linear-gradient(135deg,
+      var(--lg-bg-1) 0%,
+      var(--lg-bg-2) 100%);
+  border: 1px solid var(--lg-stroke-1);
+  border-radius: 22px;
+  box-shadow: var(--lg-shadow-1);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 600ms var(--ease-liquid-out),
+              box-shadow 600ms var(--ease-liquid-out),
+              border-color 600ms var(--ease-liquid-out);
+  --lg-softness: 50%;
+  --lg-ink-flow: 0deg;
+}
+
+/* 卡片内层：极薄墨水流光（CSS only，复合在 backdrop-filter 之上） */
+.glass.card-2::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    conic-gradient(from calc(var(--lg-ink-flow)) at 30% 20%,
+      transparent 0deg,
+      color-mix(in oklab, white 28%, transparent) 30deg,
+      transparent 80deg,
+      color-mix(in oklab, var(--lg-vermilion) 8%, transparent) 160deg,
+      transparent 220deg,
+      color-mix(in oklab, var(--lg-ochre) 10%, transparent) 300deg,
+      transparent 360deg);
+  opacity: 0.55;
+  filter: blur(28px);
+  transition: opacity 500ms var(--ease-liquid-out);
+  animation: liquidConic 22s linear infinite;
+}
+@keyframes liquidConic {
+  to { --lg-ink-flow: 360deg; }
+}
+
+.glass.card-2::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(120% 80% at 50% -10%,
+      rgba(255, 255, 255, 0.55) 0%,
+      transparent 60%),
+    radial-gradient(120% 80% at 50% 110%,
+      rgba(0, 0, 0, 0.10) 0%,
+      transparent 60%);
+  opacity: 0.7;
+  transition: opacity 500ms var(--ease-liquid-out);
+}
+
+/* 卡片头部标题：墨意横卷 */
+.card-hd {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid color-mix(in oklab, var(--lg-ink-color) 6%, transparent);
+}
+.card-hd::after {
+  content: "";
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--lg-vermilion) 35%, transparent) 30%,
+    color-mix(in oklab, var(--lg-ochre) 35%, transparent) 70%,
+    transparent 100%);
+  opacity: 0.5;
+}
+
+.card-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg,
+    color-mix(in oklab, var(--lg-vermilion) 20%, transparent),
+    color-mix(in oklab, var(--lg-ochre) 24%, transparent));
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.10),
+    0 4px 12px -2px color-mix(in oklab, var(--lg-vermilion) 35%, transparent);
+  flex-shrink: 0;
+}
+.card-ic svg { stroke: #fff; }
+
+.card-tt {
+  font-size: 1.02em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--lg-ink-color);
+  margin-top: 2px;
+}
+.card-st {
+  font-size: 0.74em;
+  color: color-mix(in oklab, var(--lg-ink-color) 55%, transparent);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+
+/* ---------- 5. 卡片入场：墨晕从下方涌出 ---------- */
+.glass.card-2 {
+  animation: cardRise 700ms var(--ease-liquid-out) both;
+  animation-delay: calc(var(--li, 0) * 70ms);
+}
+@keyframes cardRise {
+  0%   { opacity: 0; transform: translate3d(0, 28px, 0) scale(0.985); filter: blur(8px); }
+  60%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+
+/* 卡片悬停：轻微"漂" */
+.glass.card-2:hover {
+  transform: translate3d(0, -2px, 0) scale(1.005);
+  box-shadow: var(--lg-shadow-1),
+              0 0 0 1px color-mix(in oklab, var(--lg-vermilion) 18%, transparent);
+  --lg-ink-flow: 30deg;
+}
+
+/* ---------- 6. 命盘四柱：液态漂浮 ---------- */
+.pl {
+  position: relative;
+  transition: transform 400ms var(--ease-spring),
+              background 400ms var(--ease-liquid-out);
+  background: color-mix(in oklab, var(--lg-paper) 35%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in oklab, var(--lg-ink-color) 8%, transparent);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.pl::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    color-mix(in oklab, white 30%, transparent) 0%,
+    transparent 50%);
+  opacity: 0;
+  transition: opacity 400ms var(--ease-liquid-out);
+  pointer-events: none;
+}
+.pl:hover {
+  transform: translate3d(0, -3px, 0);
+  background: color-mix(in oklab, var(--lg-paper) 55%, transparent);
+}
+.pl:hover::before { opacity: 1; }
+.pl.open {
+  background: color-mix(in oklab, var(--lg-paper) 60%, transparent);
+  box-shadow: 0 10px 24px -10px color-mix(in oklab, var(--lg-vermilion) 25%, transparent);
+}
+
+.pl-l {
+  color: color-mix(in oklab, var(--lg-ink-color) 60%, transparent);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.pl-g {
+  font-size: 1.6em;
+  font-weight: 800;
+  color: var(--lg-ink-color);
+  letter-spacing: -0.02em;
+  background: linear-gradient(180deg,
+    var(--lg-ink-color) 0%,
+    color-mix(in oklab, var(--lg-vermilion) 70%, var(--lg-ink-color)) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---------- 7. 标签 / Chip 视觉：液态胶囊 ---------- */
+.sstag,
+.ps-tag,
+.tab,
+.ig-nav-label,
+.qr-badge,
+.mode-top-switch,
+.result-style-option {
+  position: relative;
+  border-radius: 999px !important;
+  transition: all 280ms var(--ease-liquid-out);
+}
+
+.mode-top-switch {
+  background: transparent !important;
+  color: color-mix(in oklab, var(--lg-ink-color) 65%, transparent);
+}
+.mode-top-switch.active {
+  background: linear-gradient(135deg, var(--lg-vermilion), color-mix(in oklab, var(--lg-vermilion) 70%, var(--lg-ochre))) !important;
+  color: #fff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 6px 16px -4px color-mix(in oklab, var(--lg-vermilion) 50%, transparent);
+}
+
+.result-style-option {
+  background: color-mix(in oklab, var(--lg-paper) 50%, transparent) !important;
+  border: 1px solid color-mix(in oklab, var(--lg-ink-color) 8%, transparent) !important;
+  color: color-mix(in oklab, var(--lg-ink-color) 70%, transparent) !important;
+  backdrop-filter: blur(8px);
+}
+.result-style-option.active {
+  background: var(--lg-ink-color) !important;
+  color: var(--lg-paper) !important;
+  border-color: transparent !important;
+  transform: scale(1.04);
+}
+
+/* ---------- 8. 进度条：液态填充 ---------- */
+.wxf,
+.tl-bar,
+.fate-bar {
+  position: relative;
+  background: linear-gradient(90deg,
+    var(--accent, var(--lg-vermilion)) 0%,
+    color-mix(in oklab, var(--accent, var(--lg-vermilion)) 50%, var(--lg-ochre)) 100%) !important;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.wxf::after,
+.tl-bar::after,
+.fate-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 100%);
+  transform: translateX(-100%);
+  animation: liquidShimmer 2.4s var(--ease-water) infinite;
+}
+@keyframes liquidShimmer {
+  to { transform: translateX(100%); }
+}
+
+/* ---------- 9. 时间线 SVG：流光描边 ---------- */
+.tl-curve path:last-of-type {
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: tlDraw 1.6s var(--ease-liquid-out) forwards;
+  animation-delay: 400ms;
+}
+@keyframes tlDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ---------- 10. 顶部顶栏：液态玻璃浮岛 ---------- */
+.p2-top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: linear-gradient(180deg,
+    color-mix(in oklab, var(--lg-paper) 70%, transparent) 0%,
+    color-mix(in oklab, var(--lg-paper) 30%, transparent) 100%);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border-bottom: 1px solid color-mix(in oklab, var(--lg-ink-color) 5%, transparent);
+}
+
+/* ---------- 11. 底部 tab bar：液态玻璃悬浮条 ---------- */
+.ig-dock.tab-bar {
+  background: linear-gradient(180deg,
+    color-mix(in oklab, var(--lg-paper) 65%, transparent) 0%,
+    color-mix(in oklab, var(--lg-paper) 25%, transparent) 100%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border-top: 1px solid color-mix(in oklab, var(--lg-ink-color) 6%, transparent) !important;
+  box-shadow: 0 -10px 30px -10px rgba(0, 0, 0, 0.08);
+}
+.tab-item.active {
+  color: var(--lg-vermilion) !important;
+  background: color-mix(in oklab, var(--lg-vermilion) 10%, transparent) !important;
+  border-radius: 14px;
+}
+.tab-indicator {
+  background: linear-gradient(135deg, var(--lg-vermilion), var(--lg-ochre)) !important;
+  box-shadow:
+    0 4px 12px -2px color-mix(in oklab, var(--lg-vermilion) 50%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-radius: 14px !important;
+}
+
+/* ---------- 12. AI 速读卡：液态金边 ---------- */
+.qr-card {
+  position: relative;
+  border-radius: 18px;
+  background: linear-gradient(135deg,
+    color-mix(in oklab, var(--lg-paper) 60%, transparent) 0%,
+    color-mix(in oklab, var(--lg-paper) 30%, transparent) 100%);
+  border: 1px solid color-mix(in oklab, var(--lg-vermilion) 14%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 20px 40px -16px color-mix(in oklab, var(--lg-vermilion) 30%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+}
+.qr-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--lg-vermilion) 20%,
+    var(--lg-ochre) 50%,
+    var(--lg-vermilion) 80%,
+    transparent 100%);
+  background-size: 200% 100%;
+  animation: qrEdge 4s linear infinite;
+}
+@keyframes qrEdge {
+  to { background-position: 200% 0; }
+}
+.qr-badge {
+  background: linear-gradient(135deg, var(--lg-vermilion), var(--lg-ochre)) !important;
+  color: #fff !important;
+  font-weight: 700;
+  box-shadow: 0 4px 12px -2px color-mix(in oklab, var(--lg-vermilion) 40%, transparent);
+}
+
+/* ---------- 13. SVG 滤镜：让关键插画有"墨韵" ---------- */
+.card-ic svg,
+.pl-g {
+  filter: drop-shadow(0 2px 4px color-mix(in oklab, var(--lg-ink-color) 20%, transparent));
+}
+
+/* ---------- 14. 减少动效：全部静态化 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .p2-scroll::before,
+  .glass.card-2,
+  .glass.card-2::before,
+  .glass.card-2:hover,
+  .pl,
+  .wxf::after,
+  .tl-bar::after,
+  .fate-bar::after,
+  .tl-curve path:last-of-type,
+  .qr-card::before,
+  .tab-indicator {
+    animation: none !important;
+    transition: none !important;
+  }
+  .glass.card-2 { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+}
+
+/* ---------- 15. 旧版兼容：给所有 card 追加液态入场 ---------- */
+.sec.active > * {
+  --li: 0;
+}
+.sec.active > *:nth-child(1)  { --li: 0; }
+.sec.active > *:nth-child(2)  { --li: 1; }
+.sec.active > *:nth-child(3)  { --li: 2; }
+.sec.active > *:nth-child(4)  { --li: 3; }
+.sec.active > *:nth-child(5)  { --li: 4; }
+.sec.active > *:nth-child(6)  { --li: 5; }
+.sec.active > *:nth-child(7)  { --li: 6; }
+.sec.active > *:nth-child(8)  { --li: 7; }
+.sec.active > *:nth-child(9)  { --li: 8; }
+.sec.active > *:nth-child(n+10) { --li: 9; }
+
+/* ========================================================================
+ *  16. 引擎驱动：液态光斑 / 入场触发 / 卡片 3D / 时间线 / 墨韵粒子
+ *  这些选择器由 src/liquid-engine.js 触发；静态时为不可见。
+ * ======================================================================== */
+
+/* 16.1 启用态：套在 #p2Scroll 上 */
+.p2-scroll.lg-on {
+  isolation: isolate;
+  background:
+    radial-gradient(120% 80% at 50% -10%, color-mix(in oklab, var(--lg-vermilion) 5%, transparent) 0%, transparent 60%),
+    radial-gradient(80% 60% at 100% 100%, color-mix(in oklab, var(--lg-azure) 6%, transparent) 0%, transparent 65%),
+    var(--lg-paper);
+}
+
+/* 16.2 光斑层（cursor-tracking） */
+.lg-specular {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(360px 360px at var(--lg-mx, 50%) var(--lg-my, 30%),
+      color-mix(in oklab, var(--lg-vermilion) 22%, transparent) 0%,
+      color-mix(in oklab, var(--lg-ochre)     10%, transparent) 30%,
+      transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  transition: opacity 600ms var(--ease-liquid-out);
+}
+.p2-scroll:not(:hover) .lg-specular { opacity: 0.55; }
+
+/* 16.3 墨韵粒子 canvas */
+canvas.lg-ink {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: multiply;
+  opacity: 0.9;
+}
+
+/* 16.4 内容层（保证卡片在光斑/粒子之上） */
+.p2-scroll.lg-on #p2Inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* 16.5 卡片入场：仅在 .has-js 标记下隐藏，避免脚本失败时全页空白
+   （fail-open：见 motion-design.md "Reveal Animations Must Fail Open"） */
+.has-js .glass.card-2 {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0) scale(0.985);
+  filter: blur(6px);
+  transition:
+    opacity 700ms var(--ease-liquid-out),
+    transform 800ms var(--ease-liquid-out),
+    filter   700ms var(--ease-liquid-out);
+  transition-delay: calc(var(--li, 0) * 70ms);
+  will-change: transform, opacity;
+}
+.has-js .glass.card-2.lg-in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
+}
+
+/* 16.6 卡片 3D 倾斜 */
+.glass.card-2.lg-tilt {
+  transform:
+    perspective(1100px)
+    rotateX(var(--lg-rx, 0deg))
+    rotateY(var(--lg-ry, 0deg))
+    translateZ(0);
+  transition: transform 240ms var(--ease-liquid-out);
+}
+.glass.card-2.lg-tilt.lg-in {
+  /* 复合变换：入场完成后，tilt 完全生效 */
+  transform:
+    perspective(1100px)
+    rotateX(var(--lg-rx, 0deg))
+    rotateY(var(--lg-ry, 0deg))
+    translate3d(0, 0, 0) scale(1);
+}
+/* 玻璃光斑跟随 tilt 焦点 */
+.glass.card-2.lg-tilt::after {
+  background: radial-gradient(360px 360px at var(--lg-gx, 50%) var(--lg-gy, 50%),
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.06) 35%,
+    transparent 70%);
+}
+
+/* 16.7 时间线描边：仅 has-js 下隐藏描边（fail-open） */
+.has-js .tl-curve path.lg-tl-draw {
+  stroke-dasharray: var(--lg-tl-len, 1200);
+  stroke-dashoffset: var(--lg-tl-len, 1200);
+  animation: tlDraw 1.8s var(--ease-liquid-out) forwards;
+  animation-delay: 200ms;
+}
+.has-js .tl-curve circle.lg-tl-dot {
+  opacity: 0;
+  transform: scale(0.4);
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: tlDot 480ms var(--ease-spring) forwards;
+  animation-delay: calc(700ms + var(--li, 0) * 60ms);
+}
+@keyframes tlDot {
+  0%   { opacity: 0; transform: scale(0.4); }
+  60%  { opacity: 1; transform: scale(1.25); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* 16.8 进度条流光填充：仅在 has-js + .lg-flow 时执行 */
+.has-js .wxf.lg-flow {
+  animation: wxFlow 1.6s var(--ease-liquid-out) forwards;
+  animation-delay: calc(var(--li, 0) * 80ms);
+  position: relative;
+  overflow: hidden;
+}
+.wxf.lg-flow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 100%);
+  transform: translateX(-100%);
+  animation: wxShimmer 2.4s ease-in-out infinite;
+  animation-delay: 1.2s;
+}
+@keyframes wxFlow {
+  from { width: 0 !important; }
+  to   { width: var(--lg-wx-pct, 50%) !important; }
+}
+@keyframes wxShimmer {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* 16.9 标题字符：进入视口时浮起（不破坏子元素的行内色） */
+.card-tt {
+  letter-spacing: 0.005em;
+  font-weight: 600;
+}
+.card-st {
+  letter-spacing: 0;
+}
+
+/* 16.10 当 prefers-reduced-motion 启用：禁用所有自定义入场/tilt */
+@media (prefers-reduced-motion: reduce) {
+  .glass.card-2 {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
+  .glass.card-2.lg-tilt { transform: none !important; }
+  canvas.lg-ink, .lg-specular { display: none !important; }
+  .tl-curve path.lg-tl-draw,
+  .wxf.lg-flow,
+  .tl-curve circle.lg-tl-dot {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .wxf.lg-flow { width: var(--lg-wx-pct, 50%) !important; }
+}
+
+/* ========================================================================
+ *  17. 提炼型阅读体验（TL;DR + 关键句 + 首句锚定 + 速查清单）
+ *  由 src/reading-refine.js 注入。
+ *  设计原则：不加装饰，只做信息层级整理。
+ * ======================================================================== */
+
+/* 17.1 TL;DR 本节重点 —— 每节第一张卡片，让用户 30 秒抓住核心 */
+.tldr-block {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 14px;
+  background:
+    linear-gradient(135deg,
+      color-mix(in oklab, var(--ac) 8%, transparent),
+      color-mix(in oklab, var(--ac) 2%, transparent) 60%),
+    var(--c-surface-2);
+  border: 1px solid color-mix(in oklab, var(--ac) 28%, var(--c-border));
+  border-radius: 18px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.6) inset,
+    0 12px 32px -20px color-mix(in oklab, var(--ac) 45%, transparent);
+}
+.tldr-block::before {
+  content: '';
+  position: absolute;
+  top: -40%; right: -20%;
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, color-mix(in oklab, var(--ac) 18%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+}
+.tldr-block .card-hd {
+  border-bottom: 1px dashed color-mix(in oklab, var(--ac) 20%, var(--c-border));
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+}
+.tldr-block .card-tt {
+  font-size: .98em;
+  font-weight: 600;
+  color: var(--c-text-hi);
+  letter-spacing: .3px;
+}
+.tldr-block .card-st {
+  font-size: .76em;
+  color: var(--ac-text);
+  opacity: .85;
+}
+.tldr-block .card-ic {
+  background: var(--ac1);
+  border-color: var(--ac4);
+  color: var(--ac-text);
+}
+
+/* 17.2 TL;DR 三/四宫格 */
+.tldr-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: color-mix(in oklab, var(--ac) 18%, var(--c-border));
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--ac) 18%, var(--c-border));
+}
+.tldr-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.tldr-item {
+  background: var(--c-surface-2);
+  padding: 12px 12px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.tldr-k {
+  font-size: .65em;
+  color: var(--c-text-3);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.tldr-v {
+  font-size: .92em;
+  font-weight: 600;
+  color: var(--c-text-hi);
+  line-height: 1.35;
+  font-feature-settings: "tnum";
+}
+.tldr-v small {
+  font-size: .7em;
+  font-weight: 400;
+  color: var(--c-text-3);
+  margin-left: 1px;
+}
+.tldr-n {
+  font-size: .7em;
+  color: var(--c-text-2);
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+/* 17.3 TL;DR 底部 takeaway */
+.tldr-takeaways {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.tldr-takeaway {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  font-size: .74em;
+  line-height: 1.45;
+  background: var(--c-surface-3);
+  border: 1px solid var(--c-border);
+}
+.tldr-takeaway span {
+  flex-shrink: 0;
+  font-size: .65em;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-weight: 500;
+  letter-spacing: .3px;
+}
+.tldr-takeaway.good span {
+  background: color-mix(in srgb, var(--c-green) 14%, transparent);
+  color: var(--c-green);
+}
+.tldr-takeaway.warn span {
+  background: color-mix(in srgb, var(--c-orange) 14%, transparent);
+  color: var(--c-orange);
+}
+.tldr-takeaway b {
+  color: var(--c-text-hi);
+  font-weight: 600;
+}
+
+/* 17.4 TL;DR 行动指引（底部一行） */
+.tldr-action {
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px dashed color-mix(in oklab, var(--ac) 16%, var(--c-border));
+  font-size: .74em;
+  color: var(--c-text-2);
+  line-height: 1.55;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.tldr-action > span:first-child {
+  color: var(--ac-text);
+  font-weight: 600;
+  flex-shrink: 0;
+  margin-top: -1px;
+}
+.tldr-action b {
+  color: var(--c-text-hi);
+  font-weight: 600;
+}
+
+/* 17.5 卡片关键句 kicker */
+.card-kicker {
+  font-size: .78em;
+  line-height: 1.6;
+  color: var(--c-text-2);
+  padding: 0 2px 11px;
+  margin: -3px 0 10px;
+  border-bottom: 1px solid var(--c-border);
+  position: relative;
+  padding-left: 14px;
+}
+.card-kicker::before {
+  content: '';
+  position: absolute;
+  left: 2px; top: .6em;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--ac);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 18%, transparent);
+}
+
+/* 17.6 段落首句锚定：第一句加粗，方便扫读 */
+.at p .lead {
+  color: var(--c-text-hi);
+  font-weight: 600;
+  font-feature-settings: "tnum";
+}
+
+/* 17.7 关键数字视觉强调 */
+.refine-num {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+/* 17.8 今日建议卡片视觉权重强化 */
+.refine-focus-card {
+  position: relative;
+  border-color: color-mix(in oklab, var(--ac) 32%, var(--c-border)) !important;
+}
+.refine-focus-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--ac) 0%, transparent),
+    var(--ac) 50%,
+    color-mix(in oklab, var(--ac) 0%, transparent));
+  border-radius: 3px 3px 0 0;
+  opacity: .8;
+}
+
+/* 17.9 响应式：TL;DR 移动端单列 */
+@media (max-width: 560px) {
+  .tldr-grid { grid-template-columns: 1fr 1fr; }
+  .tldr-grid-4 { grid-template-columns: 1fr 1fr; }
+  .tldr-takeaways { grid-template-columns: 1fr; }
+  .tldr-item { padding: 11px 11px 10px; }
+  .tldr-v { font-size: .95em; }
+  .card-kicker { font-size: .76em; padding-left: 13px; }
+}
+@media (max-width: 360px) {
+  .tldr-grid { grid-template-columns: 1fr; }
+  .tldr-grid-4 { grid-template-columns: 1fr 1fr; }
+}
