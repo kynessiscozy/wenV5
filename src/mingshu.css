@@ -1,0 +1,586 @@
+/* ============================================================================
+   命书化阅读 · mingshu.css
+   半文半白 · 卷→章→回 三段式 · 单层展示
+   克制:仅保留卷首渐入与章回翻页,无 3D、无高光跟随
+   fail-open: 全部效果在不启用 has-js 时退化为静态
+   ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+   1. 命书化总开关
+   - 仅在 .has-js.mingshu-on 命中时启用入场动效
+   - 不影响非命书模式
+   ---------------------------------------------------------------------------- */
+.has-js.mingshu-on .ms-card {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+  transition:
+    opacity .6s cubic-bezier(.2,.7,.2,1),
+    transform .6s cubic-bezier(.2,.7,.2,1);
+  transition-delay: calc(var(--ms-i, 0) * 60ms);
+}
+.has-js.mingshu-on .ms-card.ms-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .has-js.mingshu-on .ms-card,
+  .has-js.mingshu-on .ms-card.ms-in {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   2. 卷首语 (Volume Preface)
+   命书开篇气口:大字 + 命师题字 + 关键签条
+   ---------------------------------------------------------------------------- */
+.ms-volume {
+  position: relative;
+  margin: 24px 0 28px;
+  padding: 28px 24px 24px;
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--ac) 4%, transparent) 0%,
+      transparent 60%),
+    var(--c-surface-2);
+  border: 1px solid color-mix(in oklab, var(--ac) 18%, var(--c-border));
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.5) inset,
+    0 1px 0 color-mix(in oklab, var(--ac) 12%, transparent) inset,
+    0 12px 28px -22px color-mix(in oklab, var(--ac) 30%, transparent);
+  overflow: hidden;
+}
+.ms-volume::before {
+  /* 竖排落款线 */
+  content: '';
+  position: absolute;
+  top: 18px;
+  bottom: 18px;
+  right: 18px;
+  width: 1px;
+  background: linear-gradient(180deg,
+    transparent,
+    color-mix(in oklab, var(--ac) 24%, transparent) 30%,
+    color-mix(in oklab, var(--ac) 24%, transparent) 70%,
+    transparent);
+  opacity: .6;
+}
+.ms-volume-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.ms-volume-no {
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+  font-size: 1.6em;
+  font-weight: 500;
+  color: var(--ac);
+  letter-spacing: .12em;
+  line-height: 1;
+}
+.ms-volume-title {
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+  font-size: 1.15em;
+  font-weight: 500;
+  color: var(--c-text-hi);
+  letter-spacing: .04em;
+}
+.ms-volume-sub {
+  font-size: .76em;
+  color: var(--c-text-3);
+  letter-spacing: .04em;
+  margin-top: 2px;
+}
+.ms-volume-yu {
+  /* 卷首语:一段话定调 */
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+  font-size: 1em;
+  line-height: 1.95;
+  color: var(--c-text);
+  margin: 0 0 16px;
+  text-indent: 2em;
+  letter-spacing: .02em;
+}
+.ms-volume-yu::first-letter {
+  font-size: 1.15em;
+  color: var(--ac);
+  font-weight: 500;
+}
+.ms-volume-yu .hl {
+  color: var(--c-text-hi);
+  font-weight: 500;
+  border-bottom: 1px dashed color-mix(in oklab, var(--ac) 40%, transparent);
+  padding-bottom: 1px;
+}
+.ms-volume-yu .tg {
+  color: var(--ac);
+  font-weight: 500;
+}
+
+/* 签条:横向一行关键数据,半文半白 */
+.ms-qr {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin: 14px 0 12px;
+  background: color-mix(in oklab, var(--ac) 12%, var(--c-border));
+  border: 1px solid color-mix(in oklab, var(--ac) 12%, var(--c-border));
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ms-qr-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.ms-qr-item {
+  background: var(--c-surface-2);
+  padding: 10px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+.ms-qr-k {
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+  font-size: .72em;
+  color: var(--c-text-3);
+  letter-spacing: .12em;
+}
+.ms-qr-v {
+  font-size: .92em;
+  font-weight: 500;
+  color: var(--c-text-hi);
+  line-height: 1.3;
+  font-feature-settings: "tnum";
+}
+.ms-qr-v .ms-wuxing {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  vertical-align: -1px;
+  margin-right: 4px;
+}
+
+/* 卷末落款 */
+.ms-volume-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px dashed color-mix(in oklab, var(--ac) 20%, transparent);
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+  font-size: .78em;
+  color: var(--c-text-3);
+  letter-spacing: .08em;
+}
+.ms-volume-author {
+  font-style: italic;
+}
+.ms-volume-seal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in oklab, var(--c-red, #c53b3b) 50%, transparent);
+  color: var(--c-red, #c53b3b);
+  border-radius: 2px;
+  font-size: .85em;
+  transform: rotate(-2deg);
+  background: color-mix(in oklab, var(--c-red, #c53b3b) 6%, transparent);
+}
+
+/* ----------------------------------------------------------------------------
+   3. 章回标号 (Chapter Marker)
+   每张 card-2 顶部的「卷X·第Y章 XXX」+ 命师批注
+   ---------------------------------------------------------------------------- */
+.ms-chapter {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 18px 0 8px;
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+}
+.ms-chapter-no {
+  font-size: .9em;
+  color: var(--ac);
+  letter-spacing: .14em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.ms-chapter-title {
+  font-size: 1.05em;
+  color: var(--c-text-hi);
+  font-weight: 500;
+  letter-spacing: .04em;
+}
+.ms-chapter-rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--ac) 30%, transparent),
+    transparent);
+  align-self: center;
+}
+
+/* 命师批注 (kicker) */
+.ms-pizhu {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 8px 0 12px;
+  padding: 8px 12px 8px 14px;
+  background: color-mix(in oklab, var(--ac) 4%, transparent);
+  border-left: 3px solid var(--ac);
+  border-radius: 0 4px 4px 0;
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+  font-size: .82em;
+  line-height: 1.7;
+  color: var(--c-text-2);
+  letter-spacing: .02em;
+}
+.ms-pizhu::before {
+  content: '批';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  font-size: .85em;
+  font-weight: 500;
+  color: var(--ac);
+  background: var(--c-surface-2);
+  border: 1px solid color-mix(in oklab, var(--ac) 30%, var(--c-border));
+  border-radius: 2px;
+  font-family: inherit;
+  margin-top: 1px;
+}
+.ms-pizhu-text {
+  flex: 1;
+}
+.ms-pizhu-text .hl {
+  color: var(--ac);
+}
+
+/* ----------------------------------------------------------------------------
+   4. 卷目录 (Volume Index)
+   每卷之首页 / 浮在卷首语上方的章回导航
+   ---------------------------------------------------------------------------- */
+.ms-toc {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  background: var(--c-surface-1);
+  border: 1px dashed color-mix(in oklab, var(--ac) 22%, var(--c-border));
+  border-radius: 2px;
+}
+.ms-toc-tt {
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+  font-size: .76em;
+  color: var(--c-text-3);
+  letter-spacing: .14em;
+  margin-bottom: 6px;
+}
+.ms-toc-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ms-toc-list li {
+  font-size: .82em;
+  color: var(--c-text-2);
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+  letter-spacing: .04em;
+}
+.ms-toc-list li::before {
+  content: '·';
+  color: var(--ac);
+  margin-right: 4px;
+}
+.ms-toc-list a {
+  color: inherit;
+  text-decoration: none;
+  transition: color .2s;
+}
+.ms-toc-list a:hover {
+  color: var(--ac);
+}
+
+/* ----------------------------------------------------------------------------
+   5. 卷末结语 (Volume Closing)
+   每卷末段总评
+   ---------------------------------------------------------------------------- */
+.ms-closing {
+  margin: 24px 0 12px;
+  padding: 20px 22px;
+  text-align: center;
+  background: var(--c-surface-1);
+  border-top: 1px solid color-mix(in oklab, var(--ac) 24%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--ac) 24%, transparent);
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+}
+.ms-closing-text {
+  font-size: .95em;
+  line-height: 1.9;
+  color: var(--c-text);
+  letter-spacing: .04em;
+  margin: 0 0 6px;
+}
+.ms-closing-text .hl {
+  color: var(--ac);
+  font-weight: 500;
+}
+.ms-closing-sign {
+  display: inline-block;
+  font-size: .78em;
+  color: var(--c-text-3);
+  letter-spacing: .2em;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* ----------------------------------------------------------------------------
+   6. 命书化卷/年/月 列表 (替代 SVG 时间线)
+   ---------------------------------------------------------------------------- */
+.ms-juan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 8px 0 12px;
+  border-top: 1px solid color-mix(in oklab, var(--ac) 18%, var(--c-border));
+}
+.ms-juan-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 8px;
+  border-bottom: 1px solid color-mix(in oklab, var(--ac) 12%, var(--c-border));
+  transition: background .2s;
+  cursor: default;
+}
+.ms-juan-item:hover {
+  background: color-mix(in oklab, var(--ac) 4%, transparent);
+}
+.ms-juan-age {
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+  font-size: 1.1em;
+  color: var(--ac);
+  letter-spacing: .04em;
+  text-align: center;
+  font-feature-settings: "tnum";
+  line-height: 1.2;
+}
+.ms-juan-age small {
+  display: block;
+  font-size: .6em;
+  color: var(--c-text-3);
+  font-weight: normal;
+  letter-spacing: .1em;
+  margin-top: 2px;
+}
+.ms-juan-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ms-juan-gz {
+  font-size: 1.05em;
+  font-weight: 500;
+  font-feature-settings: "tnum";
+  letter-spacing: .04em;
+}
+.ms-juan-gz .ms-gz-g,
+.ms-juan-gz .ms-gz-z {
+  display: inline-block;
+  margin-right: 2px;
+}
+.ms-juan-theme {
+  font-size: .82em;
+  color: var(--c-text-2);
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+  letter-spacing: .02em;
+}
+.ms-juan-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.ms-juan-year {
+  font-size: .78em;
+  color: var(--c-text-3);
+  font-feature-settings: "tnum";
+  letter-spacing: .02em;
+}
+.ms-juan-stars {
+  display: inline-flex;
+  gap: 1px;
+  font-size: .85em;
+  letter-spacing: 0;
+}
+.ms-juan-stars span {
+  color: var(--c-border-2);
+}
+.ms-juan-stars span.on {
+  color: currentColor;
+}
+.ms-juan-state {
+  font-size: .7em;
+  padding: 1px 6px;
+  border-radius: 2px;
+  letter-spacing: .08em;
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+}
+.ms-juan-state.active {
+  background: color-mix(in oklab, var(--ac) 14%, transparent);
+  color: var(--ac);
+}
+.ms-juan-state.past {
+  background: color-mix(in oklab, var(--c-text-3) 14%, transparent);
+  color: var(--c-text-3);
+}
+.ms-juan-state.future {
+  background: transparent;
+  color: var(--c-text-3);
+  border: 1px dashed var(--c-border);
+}
+
+/* 移除 SVG 时间线,在命书模式下不展示 */
+.has-js.mingshu-on .tl-curve-wrap,
+.has-js.mingshu-on .tl-curve-axis,
+.has-js.mingshu-on .tl-curve {
+  display: none !important;
+}
+
+/* ----------------------------------------------------------------------------
+   7. 命书化下的正文微调
+   - 提升段落首行缩进
+   - 章节标题加书卷线
+   - 半文半白氛围
+   ---------------------------------------------------------------------------- */
+.has-js.mingshu-on .at p {
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+  font-size: 1.02em;
+  line-height: 1.95;
+  text-indent: 2em;
+  letter-spacing: .02em;
+  margin: 8px 0;
+  color: var(--c-text);
+}
+.has-js.mingshu-on .at p .lead {
+  color: var(--c-text-hi);
+  font-weight: 600;
+  font-family: inherit;
+  font-feature-settings: "tnum";
+}
+
+/* 命书模式下隐藏原 .card-2 自带的内边距,改为外层 ms-card 控制 */
+.has-js.mingshu-on .glass.card-2 {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0 0 18px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.has-js.mingshu-on .glass.card-1 {
+  background: var(--c-surface-2);
+  border: 1px solid color-mix(in oklab, var(--ac) 16%, var(--c-border));
+  box-shadow: 0 1px 0 rgba(255,255,255,.5) inset;
+}
+
+/* 命书模式下隐藏原 .card-hd 中的 icon,把标题交给章回标号 */
+.has-js.mingshu-on .glass.card-2 > .card-hd {
+  display: none;
+}
+
+/* 命书模式下隐藏液动的 3D 倾斜与高光(保留 transform 自身的位移) */
+.has-js.mingshu-on .glass.card-2.lg-tilt,
+.has-js.mingshu-on .glass.card-2.lg-specular {
+  transform: none !important;
+  filter: none !important;
+}
+
+/* ----------------------------------------------------------------------------
+   8. 签条 (Qian Tie) - 命书风的关键数据胶囊
+   沿用现有 .adv-tag / .sstag / .risk-pill 但加书卷感
+   ---------------------------------------------------------------------------- */
+.has-js.mingshu-on .adv-tag,
+.has-js.mingshu-on .risk-pill,
+.has-js.mingshu-on .sstag {
+  font-family: "STKaiti", "KaiTi", "Songti SC", "STSong", serif;
+  letter-spacing: .04em;
+  border-radius: 2px;
+}
+
+/* ----------------------------------------------------------------------------
+   9. 移动端
+   ---------------------------------------------------------------------------- */
+@media (max-width: 560px) {
+  .ms-volume {
+    margin: 16px 0 20px;
+    padding: 22px 18px 20px;
+  }
+  .ms-volume-no {
+    font-size: 1.4em;
+  }
+  .ms-volume-title {
+    font-size: 1em;
+  }
+  .ms-qr {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ms-qr-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ms-chapter {
+    gap: 6px;
+  }
+  .ms-chapter-no {
+    font-size: .82em;
+  }
+  .ms-chapter-title {
+    font-size: 1em;
+  }
+  .ms-juan-item {
+    grid-template-columns: 48px 1fr;
+    grid-template-rows: auto auto;
+    gap: 4px 10px;
+  }
+  .ms-juan-meta {
+    grid-column: 2;
+    grid-row: 2;
+    flex-direction: row;
+    align-items: center;
+  }
+  .ms-juan-year {
+    margin-right: 6px;
+  }
+  .ms-toc-list {
+    gap: 2px 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .ms-volume {
+    padding: 18px 14px 16px;
+  }
+  .ms-volume-yu {
+    font-size: .92em;
+  }
+  .ms-qr {
+    grid-template-columns: 1fr;
+  }
+}
