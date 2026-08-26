@@ -304,6 +304,8 @@ async function calc(isDemoPreview=false){
     renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,y,shensha,liuyue);
     // 命书化阅读：卷首语 + 章回标号 + 命师批注 + 纯章节列表(替代液态提炼式)
     try { mountMingshu(); autoMountMingshu(); } catch(e) { /* fail-open：内容始终可见 */ }
+    // 线装书阅读：把整份报告做成一本三卷线装书(总封/目录/三卷/页码/书签/翻页)
+    try { mountBook(); autoMountBook(); } catch(e) { console.warn('[mingshu-book] autoMount failed:', e); }
     // 让问问大师与报告顶部共享“示例报告”状态。
     if(window._ctx)window._ctx.isDemoPreview=!!isDemoPreview;
     if(window._baziData)window._baziData.isDemoPreview=!!isDemoPreview;
