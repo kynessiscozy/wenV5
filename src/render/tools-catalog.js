@@ -214,18 +214,6 @@ export function renderToolsHubHtml() {
       </div>
     </div>
 
-    <div class="tool-catalog-toolbar">
-      <div class="tool-category-filter" role="toolbar" aria-label="按分类筛选工具">
-        ${categoryFiltersHtml}
-      </div>
-      <button type="button" class="tool-view-toggle-btn" id="toolViewTogglePill"
-        onclick="window._tools3DRing && window._tools3DRing.toggleViewMode()"
-        aria-pressed="false" title="切换为网格视图">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-        <span id="toolViewToggleText">切换为网格</span>
-      </button>
-    </div>
-
     <!-- 3D 环形轮播舞台 (All cards in continuous 3D carousel) -->
     <div class="tool-row-stage tool-ring-stage" id="toolRingStage">
       <div class="tool-row-track tool-ring-carousel" id="toolRingCarousel">
@@ -241,6 +229,18 @@ export function renderToolsHubHtml() {
       <div class="tool-ring-hint">
         <span>✦ 提示：鼠标左键/触控拖拽 3D 转盘，滚轮平滑旋转，点击卡片直接开启</span>
       </div>
+    </div>
+
+    <div class="tool-catalog-toolbar">
+      <div class="tool-category-filter" role="toolbar" aria-label="按分类筛选工具">
+        ${categoryFiltersHtml}
+      </div>
+      <button type="button" class="tool-view-toggle-btn" id="toolViewTogglePill"
+        onclick="window._tools3DRing && window._tools3DRing.toggleViewMode()"
+        aria-pressed="false" title="切换为网格视图">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span id="toolViewToggleText">切换为网格</span>
+      </button>
     </div>
   </div>`;
 }
