@@ -103,6 +103,7 @@ import { initOnboarding, openNoviceGuide, closeNoviceGuide, switchNoviceGuideTab
 import { initEvolveUI } from './evolve/ui.js';
 import { mountLiquid, autoMountLiquid, refreshLiquid } from './liquid-engine.js';
 import { mountMingshu, autoMountMingshu } from './reading-mingshu.js';
+import { mountBook, autoMountBook, destroyBook } from './mingshu-book.js';
 /* tools2 改为动态 import（见文件末尾 bootstrap 处）：
    工具系统体积大且非首屏必需，独立成异步 chunk，缩小主包。 */
 
@@ -305,7 +306,7 @@ async function calc(isDemoPreview=false){
     // 命书化阅读：卷首语 + 章回标号 + 命师批注 + 纯章节列表(替代液态提炼式)
     try { mountMingshu(); autoMountMingshu(); } catch(e) { /* fail-open：内容始终可见 */ }
     // 线装书阅读：把整份报告做成一本三卷线装书(总封/目录/三卷/页码/书签/翻页)
-    try { mountBook(); autoMountBook(); } catch(e) { console.warn('[mingshu-book] autoMount failed:', e); }
+    try { mountBook(); autoMountBook(); } catch(e) { console.warn('[mingshu-book] autoMount failed:', e && (e.stack || e.message || e), e); }
     // 让问问大师与报告顶部共享“示例报告”状态。
     if(window._ctx)window._ctx.isDemoPreview=!!isDemoPreview;
     if(window._baziData)window._baziData.isDemoPreview=!!isDemoPreview;

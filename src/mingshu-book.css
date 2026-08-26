@@ -234,37 +234,51 @@
   perspective: 2400px;
   perspective-origin: 50% 50%;
   overflow: hidden;
-  min-height: 720px;
-  display: flex;
-  align-items: stretch;
+  height: 70vh;
+  min-height: 560px;
+  max-height: 820px;
+  display: block;
 }
 
+/* 舞台:每页一张纸,绝对定位堆叠,翻页时整张 rotateY */
 .mb-page {
-  position: relative;
-  flex: 1 1 50%;
-  min-width: 0;
-  padding: 32px 28px 40px;
+  position: absolute;
+  inset: 0;
+  padding: 36px 36px 56px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  background: var(--mb-paper);
+  transform-origin: left center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .8s var(--mb-ease-page), opacity .4s ease;
 }
-.mb-page.left {
-  align-items: flex-end;
-  text-align: right;
-  border-right: 1px solid var(--mb-paper-edge);
+.mb-page.active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
 }
-.mb-page.right {
-  align-items: flex-start;
-  text-align: left;
-  border-left: 1px solid var(--mb-paper-edge);
+.mb-page.gone-forward {
+  transform: rotateY(-180deg);
+  opacity: 0;
 }
-
-/* 单页:小屏或单页内容时占满 */
-.mb-page.full {
-  flex-basis: 100%;
-  text-align: left;
-  align-items: flex-start;
-  border: none;
+.mb-page.gone-backward {
+  transform: rotateY(180deg);
+  opacity: 0;
+}
+.mb-page.entering-forward {
+  transform: rotateY(180deg);
+  opacity: 0;
+  z-index: 1;
+}
+.mb-page.entering-backward {
+  transform: rotateY(-180deg);
+  opacity: 0;
+  z-index: 1;
 }
 
 /* 纸张做旧纹理:用 SVG noise 滤镜内联到 data-url,避免外链 */
@@ -846,6 +860,12 @@
 .has-js.mb-on #p2Inner {
   display: block;
 }
+/* 隐藏底部 tab dock,避免遮挡书页 */
+.has-js.mb-on .ig-dock,
+.has-js.mb-on #tabBar { display: none !important; }
+/* 隐藏报告 tab,让 mb-stage 直接占位 */
+.has-js.mb-on .p2-tabs,
+.has-js.mb-on [class*="p2-tab"] { display: none !important; }
 
 /* ----------------------------------------------------------------------------
    14. 命书卷首/结语在书页中的小屏排版调整

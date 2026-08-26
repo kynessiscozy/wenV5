@@ -356,7 +356,7 @@ export function mountBook() {
     // 缓存所有页 HTML,后续只切数据,不重渲整个舞台
     bookState = {
       pages: allPages,
-      current: 0,
+      current: null,
       total: allPages.length,
       original: { html: original, classes: originalClasses, dataset: originalDataset },
       inner,
@@ -393,6 +393,9 @@ export function mountBook() {
   } catch (err) {
     // fail-open:清理舞台,恢复原报告
     console.warn('[mingshu-book] mount failed, fallback:', err);
+    window.__bookErr = err;
+    window.__bookStack = err && err.stack ? err.stack : '(no stack)';
+    console.warn('[mingshu-book] STACK:', window.__bookStack);
     unmountBook();
   }
 }
@@ -420,69 +423,110 @@ function renderSpread(idx) {
   if (!bookState) return;
   const { pages, inner } = bookState;
   const safeIdx = Math.max(0, Math.min(idx, pages.length - 1));
+  const stack = $('.mb-page-stack', inner);
+  if (!stack) return;
+
+  // 第一次渲染:直接放当前页,无动画
+  if (bookState.current === null || !stack.firstElementChild) {
+    bookState.current = safeIdx;
+    stack.innerHTML = pages[safeIdx] || '';
+    const p = stack.firstElementChild;
+    if (p) p.classList.add('active');
+    syncPager();
+    return;
+  }
+
+  // 后续渲染:由 flipTo 处理动画;此处只直接换内容
   bookState.current = safeIdx;
+  stack.innerHTML = pages[safeIdx] || '';
+  const p = stack.firstElementChild;
+  if (p) p.classList.add('active');
+  syncPager();
+}
+
+function syncPager() {
+  if (!bookState) return;
+  const { pages, inner, current } = bookState;
+  const total = pages.length;
+  const pageNum = current + 1;
+  const $p = (s) => $(s, inner);
+  $p('.mb-pager-page').textContent = toCn(pageNum);
+  $p('.mb-pager-total').textContent = `/ ${toCn(total)}`;
+  $p('.mb-jump-input').value = pageNum;
+  $p('.mb-prev').disabled = current <= 0;
+  $p('.mb-next').disabled = current >= total - 1;
+  $p('.mb-page-flip-left').style.opacity = current <= 0 ? '0.3' : '';
+  $p('.mb-page-flip-right').style.opacity = current >= total - 1 ? '0.3' : '';
+  try { localStorage.setItem('wen_book_page', String(current)); } catch (e) { /* */ }
+  if (history && history.replaceState) history.replaceState(null, '', `#p=${current}`);
+  // 通知目录 / 书签高亮
+  $$('.mb-toc-item', inner).forEach(li => {
+    li.classList.toggle('toc-current', parseInt(li.dataset.jump, 10) === current + 1);
+  });
+  highlightCurrentBookmark();
+}
+
+/* ----------------------------------------------------------------------------
+   11. 翻页函数 — 3D 整页翻转
+   ---------------------------------------------------------------------------- */
+function flipTo(targetIdx) {
+  if (!bookState) return;
+  const { total, inner } = bookState;
+  const target = Math.max(0, Math.min(targetIdx, total - 1));
+  if (target === bookState.current) return;
 
   const stack = $('.mb-page-stack', inner);
   if (!stack) return;
 
-  // 取 1 张或 2 张(这里每页单独占满,不做并排双页)
-  const left = pages[safeIdx] || '';
-  const right = pages[safeIdx + 1] || '';
-  stack.innerHTML = left + (right ? right.replace('mb-page right', 'mb-page left') : '');
-
-  // 同步页码器 / 控件
-  const pageNum = safeIdx + 1;
-  const total = pages.length;
-  $('.mb-pager-page', inner).textContent = toCn(pageNum);
-  $('.mb-pager-total', inner).textContent = `/ ${toCn(total)}`;
-  $('.mb-jump-input', inner).value = pageNum;
-  $('.mb-prev', inner).disabled = safeIdx <= 0;
-  $('.mb-next', inner).disabled = safeIdx >= total - 1;
-
-  // 翻页按钮显隐
-  $('.mb-page-flip-left', inner).style.opacity = safeIdx <= 0 ? '0.3' : '';
-  $('.mb-page-flip-right', inner).style.opacity = safeIdx >= total - 1 ? '0.3' : '';
-
-  // 同步 hash + localStorage
-  try {
-    localStorage.setItem('wen_book_page', String(safeIdx));
-  } catch (e) { /* */ }
-  if (history && history.replaceState) {
-    history.replaceState(null, '', `#p=${safeIdx}`);
-  }
-}
-
-/* ----------------------------------------------------------------------------
-   11. 翻页函数
-   ---------------------------------------------------------------------------- */
-function flipTo(targetIdx) {
-  if (!bookState) return;
-  const { total } = bookState;
-  const target = Math.max(0, Math.min(targetIdx, total - 1));
-  if (target === bookState.current) return;
-
-  const pages = $('.mb-pages', bookState.inner);
-  if (!pages) return;
-
   const dir = target > bookState.current ? 'forward' : 'backward';
+  const oldEl = stack.firstElementChild;
+  if (!oldEl) { renderSpread(target); return; }
 
-  // 检查 reduced-motion
+  // 准备新页(从反面进)
+  stack.insertAdjacentHTML('beforeend', bookState.pages[target]);
+  const newEl = stack.lastElementChild;
+  if (!newEl) { renderSpread(target); return; }
+
+  // 给旧页加「翻出」类、新页加「进入」类
+  if (dir === 'forward') {
+    oldEl.classList.remove('active');
+    oldEl.classList.add('gone-forward');
+    newEl.classList.add('entering-forward');
+  } else {
+    oldEl.classList.remove('active');
+    oldEl.classList.add('gone-backward');
+    newEl.classList.add('entering-backward');
+  }
+
+  // 强制 reflow 触发过渡
+  void newEl.offsetWidth;
+  void oldEl.offsetWidth;
+
+  // 触发:旧页翻走,新页翻到正面(用 setTimeout 让浏览器先 paint 一帧初始状态)
+  setTimeout(() => {
+    newEl.classList.remove('entering-forward', 'entering-backward');
+    newEl.classList.add('active');
+  }, 24);
+
+  // 收尾:更新 state + 清理旧页
+  const done = () => {
+    if (oldEl && oldEl.parentNode) oldEl.parentNode.removeChild(oldEl);
+  };
+
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduced) {
-    renderSpread(target);
+    // 立即跳
+    done();
+    bookState.current = target;
+    syncPager();
     return;
   }
 
-  // 翻页动画:先加 flipping + dir,等动画结束再 renderSpread
-  pages.classList.add('flipping', `flipping-${dir}`);
-  // 在 50% 切内容(避免页对角空白)
   setTimeout(() => {
-    renderSpread(target);
-  }, 400);
-  // 动画完成后清 class
-  setTimeout(() => {
-    pages.classList.remove('flipping', 'flipping-forward', 'flipping-backward');
-  }, 850);
+    done();
+    bookState.current = target;
+    syncPager();
+  }, 820);
 }
 
 function nextPage() { if (bookState) flipTo(bookState.current + 1); }
