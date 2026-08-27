@@ -7,23 +7,24 @@ let _jqArr=null,_jqMaxYear=0;
 function _initJq(){const bin=atob(JQ_STR);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);_jqArr=arr;_jqMaxYear=1900+Math.floor(arr.length/24)-1;}
 function solarTermDate(year,n){
   // n: 0=立春 1=惊蛰 2=清明 3=立夏 4=芒种 5=小暑
-  //    6=立秋 7=白露 8=寒露 9=立冬 10=大雪 11=小寒
-  // Based on the tropical year calculation with leap year corrections
-  // Reference year: 2000
-  const C=[4.393,6.188,5.34,6.12,6.126,7.72,8.35,8.426,8.886,8.196,7.62,6.08];
+  //    6=立秋 7=白露 8=寒露 9=立冬 10=大雪 11=小寒（返回 year 当年 1 月的小寒）
+  // 寿星通式（21 世纪）：day = INT(Y*0.2422 + C) - INT((Y-1)/4)
+  // 注意闰年修正必须用 (diff-1)/4：2000 年本身是闰年，其 2/29 不应计入扣除项，
+  // 否则 diff 为 4 的倍数的年份全部会早算一天。
   const M=[2,3,4,5,6,7,8,9,10,11,12,1];
-  // More precise constants using the formula:
-  // For the n-th solar term, the day in the month is:
-  // day = floor(C[n] + 0.2422*(year-2000) - floor((year-2000)/4))
-  // with small corrections for specific terms and years
   const D=[3.87,5.63,4.81,5.52,5.678,7.105,7.5,7.646,8.318,7.438,7.18,5.4055];
-  const yCalc=(n===11)?year+1:year;
-  const diff=yCalc-2000;
-  const day=Math.floor(D[n]+0.2422*diff-Math.floor(diff/4));
+  const diff=year-2000;
+  const day=Math.floor(D[n]+0.2422*diff-Math.floor((diff-1)/4));
   return[M[n],day];
 }
 function jqDate(y,n){
-  // First try the lookup table for years 1900-1989
+  // 优先使用项目内置的精确节气时刻表（1900–2101，含时分秒）
+  const row=SOLAR_TERM_TIMES[y];
+  if(row&&row[n]){
+    const p=row[n].split(' ')[0].split('-');
+    if(p.length===3)return[Number(p[1]),Number(p[2])];
+  }
+  // 其次使用 base64 查找表
   if(y>=1900){
     if(!_jqArr)_initJq();
     if(y<=_jqMaxYear){
@@ -31,7 +32,7 @@ function jqDate(y,n){
       if(off+1<_jqArr.length)return[_jqArr[off]+1,_jqArr[off+1]+1];
     }
   }
-  // For years beyond the table, use formula
+  // 超出数据范围时回退到公式估算
   return solarTermDate(y,n);
 }
 function jqInstant(year,index){
@@ -42,8 +43,8 @@ function jqInstant(year,index){
   }
   const d=jqDate(year,index);
   if(!d)return null;
-  const termYear=index===11?year+1:year;
-  return new Date(Date.UTC(termYear,d[0]-1,d[1],0,0,0)-8*3600000);
+  // solarTermDate/jqDate 对 index===11 已返回当年 1 月的小寒日期，这里无需再偏移年份
+  return new Date(Date.UTC(year,d[0]-1,d[1],0,0,0)-8*3600000);
 }
 function birthAsChinaStandardInstant(year,month,day,hour=12,minute=0,second=0){
   return new Date(Date.UTC(year,month-1,day,hour,minute,second)-8*3600000);

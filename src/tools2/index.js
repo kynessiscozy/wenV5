@@ -22,11 +22,13 @@ import { style } from './style.js';
 import { horoscope } from './horoscope.js';
 import { tarot } from './tarot.js';
 import { mbti } from './mbti.js';
+import { exportPdfTool } from './export.js';
 
 [
   career, date, style, daily,
   name, oracle, lottery, zodiac, horoscope, tarot, mbti, relation, answerbook, calendar,
   fengshui,
+  exportPdfTool,
 ].forEach(register);
 
 export function bootstrap() {

@@ -24,11 +24,13 @@ function deg(r) { return r * 180 / Math.PI; }
 
 /** 计算儒略日 (Julian Day) */
 export function calcJulianDay(y, m, d, h = 12, min = 0, tzOffset = 8) {
-  let year = Number(y) || 1995;
-  let month = Number(m) || 6;
-  const day = Number(d) || 15;
-  const hour = Number(h) || 12;
-  const minute = Number(min) || 0;
+  // 注意：不能用 `Number(h) || 12`——合法的 0 点（午夜）会被误判为缺省值
+  const num = (v, fb) => { const n = Number(v); return Number.isFinite(n) ? n : fb; };
+  let year = num(y, 1995);
+  let month = num(m, 6);
+  const day = num(d, 15);
+  const hour = num(h, 12);
+  const minute = num(min, 0);
 
   // 转换为 UTC 历法时间
   const utcHour = hour + minute / 60 - tzOffset;
@@ -161,8 +163,9 @@ const HOUSES = [
 
 /* —— 西方本命星盘排盘全量推演 —— */
 export function calcWesternChart(year = 1995, month = 6, day = 15, hour = 12, minute = 0, lon = 116.4, lat = 39.9, tzOffset = 8) {
-  const y = Number(year) || 1995, m = Number(month) || 6, d = Number(day) || 15;
-  const h = Number(hour) || 12, min = Number(minute) || 0;
+  const num = (v, fb) => { const n = Number(v); return Number.isFinite(n) ? n : fb; };
+  const y = num(year, 1995), m = num(month, 6), d = num(day, 15);
+  const h = num(hour, 12), min = num(minute, 0);
 
   const jd = calcJulianDay(y, m, d, h, min, tzOffset);
 

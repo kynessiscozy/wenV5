@@ -1,9 +1,9 @@
 function openFocusTool(){
-  const el=document.getElementById('toolResult');if(!el)return;
+  const el=document.getElementById('toolModalContent');if(!el)return;
   el.innerHTML='<div class="tool-panel"><div class="tool-panel-title">今日三件事</div><div class="focus-checks"><label><input type="checkbox"> 完成最重要的一件推进事项</label><label><input type="checkbox"> 主动沟通或回复一位关键联系人</label><label><input type="checkbox"> 留出 20 分钟整理与复盘</label></div><div class="tool-panel-note">不追求做很多，只完成这三件中的一件，就已经在向前。</div></div>';
 }
 function openBreathTool(){
-  const el=document.getElementById('toolResult');if(!el)return;
+  const el=document.getElementById('toolModalContent');if(!el)return;
   el.innerHTML='<div class="tool-panel breath-panel"><div class="tool-panel-title">一分钟暂停</div><div class="breath-circle" id="breathCircle">准备</div><div class="tool-panel-note" id="breathText">跟随圆环：吸气 4 秒，停留 2 秒，呼气 6 秒。</div><button class="tool-back" onclick="startBreathTool()">开始 1 分钟</button></div>';
 }
 function startBreathTool(){

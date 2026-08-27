@@ -29,8 +29,10 @@ export const modelLabel      = (id) => active().modelLabel(id);
 
 // 连接状态监听同时挂到两个提供方，保证切换后 UI 仍能收到更新
 export function onConnChange(fn) {
-  openrouter.onConnChange(fn);
-  deepseek.onConnChange(fn);
+  const offOpenrouter = openrouter.onConnChange(fn);
+  const offDeepseek = deepseek.onConnChange(fn);
+  // 聚合两个提供方的解绑函数，避免监听器只增不减
+  return () => { offOpenrouter && offOpenrouter(); offDeepseek && offDeepseek(); };
 }
 
 /* —— 提供方常量（供设置页读取）—— */

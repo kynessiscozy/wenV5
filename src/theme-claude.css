@@ -71,6 +71,23 @@
   --c-r-lg: 16px;
   --c-r-xl: 20px;
 
+  /* 液体玻璃变量 */
+  --glass-blur: 16px;
+  --glass-saturate: 135%;
+  --glass-tint: color-mix(in srgb, var(--c-surface-2) 58%, transparent);
+  --glass-border: color-mix(in srgb, var(--c-border) 55%, transparent);
+  --glass-hi: rgba(255, 255, 255, .55);
+  --glass-shadow: 0 8px 30px rgba(20, 20, 19, .10), inset 0 1px 0 var(--glass-hi);
+  --c-title: color-mix(in srgb, var(--c-text-hi) 76%, var(--c-bg));
+
+  /* 中央液态光球 */
+  --orb-a: #f5efe0;
+  --orb-b: #edcfa2;
+  --orb-c: #e07a52;
+  --orb-glow: rgba(217, 119, 87, .42);
+  --orb-core: rgba(255, 255, 255, .62);
+  --orb-rim: rgba(255, 255, 255, .45);
+
   --c-scheme: light;
 }
 
@@ -121,6 +138,23 @@
   --c-shadow-2:  0 2px 10px rgba(0, 0, 0, .28);
   --c-shadow-3:  0 10px 34px rgba(0, 0, 0, .42);
 
+  /* 液体玻璃变量 */
+  --glass-blur: 18px;
+  --glass-saturate: 145%;
+  --glass-tint: color-mix(in srgb, var(--c-surface) 48%, transparent);
+  --glass-border: color-mix(in srgb, var(--c-border) 70%, transparent);
+  --glass-hi: rgba(255, 255, 255, .10);
+  --glass-shadow: 0 10px 34px rgba(0, 0, 0, .42), inset 0 1px 0 var(--glass-hi);
+  --c-title: color-mix(in srgb, var(--c-text-hi) 78%, var(--c-bg));
+
+  /* 中央液态光球 */
+  --orb-a: #3a3328;
+  --orb-b: #c4743f;
+  --orb-c: #e07a52;
+  --orb-glow: rgba(217, 119, 87, .45);
+  --orb-core: rgba(255, 255, 255, .30);
+  --orb-rim: rgba(255, 255, 255, .34);
+
   --c-scheme: dark;
 }
 
@@ -143,6 +177,24 @@
     --c-accent-text: #f2ab90;
     --wx-mu: #7fc45f; --wx-huo: #e87a5f; --wx-tu: #d9a34e;
     --wx-jin: #cfc08a; --wx-shui: #63b6dc;
+
+    /* 液体玻璃变量 */
+    --glass-blur: 18px;
+    --glass-saturate: 145%;
+    --glass-tint: color-mix(in srgb, var(--c-surface) 48%, transparent);
+    --glass-border: color-mix(in srgb, var(--c-border) 70%, transparent);
+    --glass-hi: rgba(255, 255, 255, .10);
+    --glass-shadow: 0 10px 34px rgba(0, 0, 0, .42), inset 0 1px 0 var(--glass-hi);
+    --c-title: color-mix(in srgb, var(--c-text-hi) 78%, var(--c-bg));
+
+    /* 中央液态光球 */
+    --orb-a: #3a3328;
+    --orb-b: #b86a3d;
+    --orb-c: #d97757;
+    --orb-glow: rgba(217, 119, 87, .32);
+    --orb-core: rgba(255, 255, 255, .18);
+    --orb-rim: rgba(255, 255, 255, .22);
+
     --c-scheme: dark;
   }
 }

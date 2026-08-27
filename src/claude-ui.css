@@ -543,7 +543,7 @@ body:not(.home) .theme-toggle-home { display: none; }
   /* 字体：Claude = 正文无衬线 + 标题衬线 */
   --sf: "Styrene B", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
         "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-  --serif: "Tiempos Text", ui-serif, Georgia, "Songti SC", "Noto Serif SC", serif;
+  --serif: "Noto Serif SC", ui-serif, Georgia, "Songti SC", "STSong", serif;
   --display: var(--serif);
 
   --r:  var(--c-r-xl);

@@ -175,6 +175,15 @@ export function goResult(container, toolName, innerHtml, opts = {}) {
   if (page) requestAnimationFrame(() => page.classList.add('tw-page-in'));
 
   result.querySelectorAll('[data-gofrom]').forEach(b => b.addEventListener('click', () => goForm(container)));
+  /* 返回顶部按钮：滚动超过一屏后显示，点击回到顶部 */
+  const backTop = result.querySelector('[data-backtop]');
+  if (backTop) {
+    backTop.addEventListener('click', () => { result.scrollTo({ top: 0, behavior: 'smooth' }); });
+    const onScroll = () => { backTop.style.display = result.scrollTop > 300 ? 'flex' : 'none'; };
+    result.addEventListener('scroll', onScroll, { passive: true });
+    if (_barScrollCleanup) _barScrollCleanup();
+    _barScrollCleanup = () => result.removeEventListener('scroll', onScroll);
+  }
   result.querySelector('[data-close]')?.addEventListener('click', () => closeTool());
 
   /* —— 全面接入 AI：统一放在结果正文底部，不混进吸底操作栏 —— */
@@ -231,7 +240,8 @@ export function goForm(container) {
 
 /* —— 结果页内的滚动提示（合盘等长结果） —— */
 export function backTopBtn() {
-  return '<button type="button" class="tw-back-top" data-gofrom aria-label="返回顶部" style="display:none">↑</button>';
+  /* 注意：不要用 data-gofrom——goResult 会把该属性一律绑定为"返回表单" */
+  return '<button type="button" class="tw-back-top" data-backtop aria-label="返回顶部" style="display:none">↑</button>';
 }
 
 export function esc(s) {

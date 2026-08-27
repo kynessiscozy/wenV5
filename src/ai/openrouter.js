@@ -21,7 +21,8 @@ export const MODEL_LABELS = {
   'openai/gpt-oss-20b:free':        'GPT-OSS 20B',
 };
 export function modelLabel(id) {
-  return MODEL_LABELS[id] || id.split('/').pop().replace(/:free$/, '');
+  if (!id) return id;
+  return MODEL_LABELS[id] || (id.split('/').pop() || '').replace(/:free$/, '') || id;
 }
 
 /* ============================================================
@@ -42,9 +43,10 @@ export async function probeConnection(apiKey) {
       method: 'GET',
       headers: { Authorization: 'Bearer ' + apiKey },
     }, 6000);
-    const ok = resp.ok;
-    _notifyConn(ok ? 'online' : 'offline');
-    return ok ? 'online' : 'offline';
+    if (resp.ok) { _notifyConn('online'); return 'online'; }
+    if (resp.status === 401 || resp.status === 403) { _notifyConn('badkey'); return 'badkey'; }
+    _notifyConn('offline');
+    return 'offline';
   } catch (_) {
     _notifyConn('offline');
     return 'offline';

@@ -1,0 +1,600 @@
+/* ============================================================
+   液体玻璃全局覆盖层 (Liquid Glass)
+   加载顺序：theme-claude.css → styles.css → ... → evolve.css → liquid-glass.css
+   作用：把 Claude 的「纸感扁平」覆盖回「通透空灵液态玻璃」
+   ============================================================ */
+
+/* ---------- 1. 玻璃档位 ---------- */
+body[data-glass="clear"] {
+  --glass-blur: 6px;
+  --glass-saturate: 120%;
+  --glass-tint: color-mix(in srgb, var(--c-surface-2) 48%, transparent);
+}
+body[data-glass="tinted"] {
+  --glass-blur: 24px;
+  --glass-saturate: 160%;
+  --glass-tint: color-mix(in srgb, var(--c-surface-2) 68%, transparent);
+}
+
+/* ---------- 2. 恢复被 Claude 层压制的背景与光标 ---------- */
+html[data-theme] body.home .mesh,
+html[data-theme] body.home .particles,
+html[data-theme] body.report-active .mesh,
+html[data-theme] body.report-active .particles,
+html[data-theme] body .cursor-ring,
+html[data-theme] body .cursor-dot {
+  display: block !important;
+}
+
+/* 背景 mesh：用主题色重新绘制，提升通透感 */
+html[data-theme] body.home .mesh,
+html[data-theme] body.report-active .mesh {
+  opacity: 0.85 !important;
+  background:
+    radial-gradient(ellipse at 28% 18%, color-mix(in srgb, var(--c-accent) 16%, transparent) 0%, transparent 52%),
+    radial-gradient(ellipse at 78% 80%, color-mix(in srgb, var(--c-accent-soft) 55%, transparent) 0%, transparent 56%),
+    radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--c-accent) 10%, transparent) 0%, transparent 62%),
+    linear-gradient(160deg, var(--c-bg), var(--c-bg-2)) !important;
+  background-size: 200% 200% !important;
+  animation: meshM 20s ease-in-out infinite alternate !important;
+}
+html[data-theme] body .particles {
+  opacity: 0.7 !important;
+}
+
+/* ---------- 3. 全局卡片玻璃化（覆盖 claude-ui.css 的 !important） ---------- */
+html[data-theme] body[data-glass] .glass,
+html[data-theme] body[data-glass] .home-card,
+html[data-theme] body[data-glass] .qr-card,
+html[data-theme] body[data-glass] .ai-sum,
+html[data-theme] body[data-glass] .beginner-brief,
+html[data-theme] body[data-glass] .tool-panel,
+html[data-theme] body[data-glass] .tj-result,
+html[data-theme] body[data-glass] .tj-tool-intro,
+html[data-theme] body[data-glass] .modal-sheet,
+html[data-theme] body[data-glass] .mm-sheet,
+html[data-theme] body[data-glass] .tool-sheet,
+html[data-theme] body[data-glass] .ai-settings-panel,
+html[data-theme] body[data-glass] .lg-panel,
+html[data-theme] body[data-glass] .form-modal-sheet,
+html[data-theme] body[data-glass] .home-card {
+  background: var(--glass-tint) !important;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) !important;
+  border-color: var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+/* 嵌套玻璃避免叠加模糊 */
+html[data-theme] body[data-glass] .glass .glass,
+html[data-theme] body[data-glass] .home-card .home-card,
+html[data-theme] body[data-glass] #page2 .glass .glass {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+/* ---------- 4. 液态流光按钮 ---------- */
+@keyframes liquidShimmer {
+  0% { background-position: 200% 50%; }
+  100% { background-position: -200% 50%; }
+}
+
+html[data-theme] body .home-cta,
+html[data-theme] body .home-cta-ghost,
+html[data-theme] body .home-menu-footer button,
+html[data-theme] body .pf-io-btn,
+html[data-theme] body .ai-send,
+html[data-theme] body .save-btn,
+html[data-theme] body .ai-basis-pill,
+html[data-theme] body .mode-top-switch,
+html[data-theme] body .result-style-option,
+html[data-theme] body .tool-cta-btn,
+html[data-theme] body .tool-hub-cta,
+html[data-theme] body .beginner-primary,
+html[data-theme] body .gs-seg .gs-opt,
+html[data-theme] body .theme-toggle-home {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+html[data-theme] body .home-cta::before,
+html[data-theme] body .home-cta-ghost::before,
+html[data-theme] body .home-menu-footer button::before,
+html[data-theme] body .pf-io-btn::before,
+html[data-theme] body .ai-send::before,
+html[data-theme] body .save-btn::before,
+html[data-theme] body .ai-basis-pill::before,
+html[data-theme] body .mode-top-switch::before,
+html[data-theme] body .result-style-option::before,
+html[data-theme] body .tool-cta-btn::before,
+html[data-theme] body .tool-hub-cta::before,
+html[data-theme] body .beginner-primary::before,
+html[data-theme] body .gs-seg .gs-opt::before,
+html[data-theme] body .theme-toggle-home::before {
+  content: "";
+  position: absolute;
+  inset: -60%;
+  z-index: -1;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    color-mix(in srgb, var(--c-accent) 28%, transparent) 46%,
+    color-mix(in srgb, var(--c-accent) 52%, transparent) 54%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  background-position: 200% 50%;
+  opacity: 0.35;
+  transform: rotate(12deg);
+  transition: opacity 0.35s ease, background-position 0.5s ease;
+  animation: liquidShimmer 7s linear infinite;
+  pointer-events: none;
+}
+
+html[data-theme] body .home-cta:hover::before,
+html[data-theme] body .home-cta-ghost:hover::before,
+html[data-theme] body .home-menu-footer button:hover::before,
+html[data-theme] body .pf-io-btn:hover::before,
+html[data-theme] body .ai-send:hover::before,
+html[data-theme] body .save-btn:hover::before,
+html[data-theme] body .ai-basis-pill:hover::before,
+html[data-theme] body .mode-top-switch:hover::before,
+html[data-theme] body .result-style-option:hover::before,
+html[data-theme] body .tool-cta-btn:hover::before,
+html[data-theme] body .tool-hub-cta:hover::before,
+html[data-theme] body .beginner-primary:hover::before,
+html[data-theme] body .gs-seg .gs-opt:hover::before,
+html[data-theme] body .theme-toggle-home:hover::before {
+  opacity: 0.8;
+  animation-duration: 2.2s;
+}
+
+html[data-theme] body .home-cta:active::before,
+html[data-theme] body .home-cta-ghost:active::before,
+html[data-theme] body .home-menu-footer button:active::before,
+html[data-theme] body .pf-io-btn:active::before,
+html[data-theme] body .ai-send:active::before,
+html[data-theme] body .save-btn:active::before,
+html[data-theme] body .ai-basis-pill:active::before,
+html[data-theme] body .mode-top-switch:active::before,
+html[data-theme] body .result-style-option:active::before,
+html[data-theme] body .tool-cta-btn:active::before,
+html[data-theme] body .tool-hub-cta:active::before,
+html[data-theme] body .beginner-primary:active::before,
+html[data-theme] body .gs-seg .gs-opt:active::before,
+html[data-theme] body .theme-toggle-home:active::before {
+  opacity: 1;
+}
+
+/* active/selected 态保持流动 */
+html[data-theme] body .result-style-option.active::before,
+html[data-theme] body .mode-top-switch.active::before,
+html[data-theme] body .gs-seg .gs-opt.active::before {
+  opacity: 0.65;
+  animation-duration: 3s;
+}
+
+/* ghost 按钮用 surface 流光，避免盖过文字 */
+html[data-theme] body .home-cta-ghost::before {
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    color-mix(in srgb, var(--c-surface-3) 55%, transparent) 46%,
+    color-mix(in srgb, var(--c-surface-4) 75%, transparent) 54%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+}
+
+/* ---------- 4.1 首页 CTA 质感增强（玻璃高光 + 立体阴影 + 更强液态流光） ---------- */
+/* 主按钮：实色底叠加玻璃顶部高光与底部内阴影，强化液态光泽与体积感 */
+html[data-theme] body .home-cta::before {
+  background: linear-gradient(
+    115deg,
+    transparent 28%,
+    rgba(255, 255, 255, .42) 46%,
+    rgba(255, 255, 255, .62) 54%,
+    transparent 72%
+  );
+  opacity: 0.5;
+}
+html[data-theme] body .home-cta {
+  box-shadow:
+    0 10px 28px color-mix(in srgb, var(--c-accent) 46%, transparent),
+    inset 0 1.5px 0 rgba(255, 255, 255, .45),
+    inset 0 -3px 9px rgba(0, 0, 0, .16) !important;
+}
+html[data-theme] body .home-cta:hover {
+  box-shadow:
+    0 15px 38px color-mix(in srgb, var(--c-accent) 56%, transparent),
+    inset 0 1.5px 0 rgba(255, 255, 255, .52),
+    inset 0 -3px 9px rgba(0, 0, 0, .16) !important;
+}
+html[data-theme] body .home-cta:active {
+  box-shadow:
+    0 6px 18px color-mix(in srgb, var(--c-accent) 42%, transparent),
+    inset 0 1.5px 0 rgba(255, 255, 255, .32),
+    inset 0 2px 9px rgba(0, 0, 0, .26) !important;
+}
+/* 幽灵按钮（日历模式）：升级为玻璃质感，与整体玻璃语言统一，文字更清晰 */
+html[data-theme] body .home-cta-ghost {
+  background: var(--glass-tint) !important;
+  backdrop-filter: blur(12px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(135%) !important;
+  color: var(--c-text-2) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+html[data-theme] body .home-cta-ghost:hover {
+  background: color-mix(in srgb, var(--c-surface-3) 50%, var(--glass-tint)) !important;
+  border-color: color-mix(in srgb, var(--c-text-4) 75%, transparent) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+html[data-theme] body .home-cta-ghost:active {
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 2px 9px rgba(0, 0, 0, .2) !important;
+}
+
+/* ---------- 5. 首页标题轻盈化 ---------- */
+html[data-theme] body.home .home-hero {
+  position: relative;
+  z-index: 2;
+}
+
+html[data-theme] body.home .home-hero-title {
+  font-weight: 400 !important;
+  font-size: clamp(1.85em, 6vw, 2.75em) !important;
+  letter-spacing: 3px !important;
+  line-height: 1.15 !important;
+  color: var(--c-title) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .35) !important;
+}
+
+html[data-theme] body.home .home-hero-sub {
+  font-weight: 400 !important;
+  letter-spacing: 5px !important;
+  color: var(--c-text-3) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .2) !important;
+}
+
+html[data-theme="dark"] body.home .home-hero-title {
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .35) !important;
+}
+html[data-theme="dark"] body.home .home-hero-sub {
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .2) !important;
+}
+
+/* ---------- 6. 中央液态光球 ---------- */
+.liquid-orb {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+  filter: blur(9px) saturate(125%);
+  will-change: filter; /* 提示浏览器独立合成层，避免 blur 重算时连带重绘整页 */
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+body:not(.home) .liquid-orb,
+body.report-active .liquid-orb {
+  opacity: 0;
+}
+
+/* 静态回退：无 JS 或 reduced-motion 时显示 CSS 渐变球 */
+.liquid-orb-static {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 38vmin;
+  height: 38vmin;
+  transform: translate(-50%, -54%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 32%, var(--orb-core) 0%, transparent 46%),
+    radial-gradient(circle at 62% 68%, color-mix(in srgb, var(--orb-b) 60%, transparent) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, var(--orb-a) 0%, color-mix(in srgb, var(--orb-c) 55%, transparent) 72%, transparent 100%);
+  filter: blur(28px);
+  opacity: 0.42;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-orb { opacity: 0 !important; }
+  .liquid-orb-static { opacity: 0.38 !important; }
+}
+
+/* ---------- 7. 菜单抽屉玻璃化 ---------- */
+html[data-theme] body .home-menu-overlay {
+  backdrop-filter: blur(8px) saturate(110%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(110%) !important;
+  background: color-mix(in srgb, var(--c-overlay) 80%, transparent) !important;
+}
+
+html[data-theme] body .home-menu-drawer {
+  background: var(--glass-tint) !important;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) !important;
+  border-left: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+html[data-theme] body .home-menu-btn,
+html[data-theme] body .home-menu-close {
+  background: var(--glass-tint) !important;
+  backdrop-filter: blur(10px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(120%) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+/* 菜单按钮：hover 微浮 + 高光边，:active 按压回弹，强化玻璃质感 */
+html[data-theme] body .home-menu-btn:hover {
+  transform: translateY(-1px) !important;
+  border-color: color-mix(in srgb, var(--glass-border) 68%, rgba(255, 255, 255, .3)) !important;
+  box-shadow: var(--glass-shadow), 0 6px 18px rgba(0, 0, 0, .14) !important;
+}
+html[data-theme] body .home-menu-btn:active {
+  transform: translateY(0) scale(.94) !important;
+}
+
+html[data-theme] body .home-menu-section {
+  background: color-mix(in srgb, var(--c-surface-2) 40%, transparent) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--c-r-lg);
+}
+html[data-theme] body .home-menu-section button,
+html[data-theme] body .pf-io-btn,
+html[data-theme] body .home-menu-footer button,
+html[data-theme] body .home-menu-section .pf-io-btn {
+  background: var(--glass-tint) !important;
+  border-color: var(--glass-border) !important;
+  backdrop-filter: blur(10px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(120%) !important;
+}
+
+/* ---------- 8. 底部 Dock 玻璃化 ---------- */
+html[data-theme] body .ig-dock.tab-bar {
+  background: var(--glass-tint) !important;
+  backdrop-filter: blur(26px) saturate(145%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(145%) !important;
+  border-top: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+html[data-theme] body .ig-dock .tab-item.active {
+  background: color-mix(in srgb, var(--c-accent) 18%, transparent) !important;
+  box-shadow: inset 0 0 12px color-mix(in srgb, var(--c-accent) 14%, transparent), 0 0 0 1px var(--glass-border) !important;
+}
+
+html[data-theme] body .ig-dock .tab-item.active::before {
+  background: linear-gradient(115deg, transparent 30%, color-mix(in srgb, var(--c-accent) 45%, transparent) 50%, transparent 70%) !important;
+  background-size: 200% 100% !important;
+  animation: liquidShimmer 3s linear infinite !important;
+}
+
+/* ---------- 9. 主题切换按钮玻璃化 ---------- */
+html[data-theme] body .theme-toggle-home {
+  background: var(--glass-tint) !important;
+  backdrop-filter: blur(12px) saturate(130%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(130%) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+/* ---------- 10. 报告页 / 工具页 / 弹窗铺开 ---------- */
+html[data-theme] body #page2 .glass,
+html[data-theme] body #toolHubRoot .tool-hub,
+html[data-theme] body #toolHubRoot .tool-tile,
+html[data-theme] body .form-modal-sheet,
+html[data-theme] body .ai-sheet,
+html[data-theme] body .chat-card,
+html[data-theme] body .wx-card,
+html[data-theme] body .profile-card,
+html[data-theme] body .today-card,
+html[data-theme] body .recent-card,
+html[data-theme] body .about-modal-body,
+html[data-theme] body .disclaimer-modal-body {
+  background: var(--glass-tint) !important;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) !important;
+  border-color: var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+/* 表单输入框半透明 */
+html[data-theme] body input,
+html[data-theme] body select,
+html[data-theme] body textarea,
+html[data-theme] body .form-field {
+  background: color-mix(in srgb, var(--c-surface-2) 55%, transparent) !important;
+  border-color: var(--glass-border) !important;
+}
+
+/* ---------- 11. 填表页：去除白色层级，改为通透玻璃 ---------- */
+html[data-theme] body .form-modal-sheet.form-modal-sheet {
+  background: color-mix(in srgb, var(--c-surface) 28%, transparent) !important;
+  backdrop-filter: blur(24px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(135%) !important;
+}
+html[data-theme] body .form-modal-sheet .home-card {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html[data-theme] body .form-modal-sheet input,
+html[data-theme] body .form-modal-sheet select,
+html[data-theme] body .form-modal-sheet .form-field,
+html[data-theme] body .form-modal-sheet textarea {
+  background: color-mix(in srgb, var(--c-surface-2) 28%, transparent) !important;
+}
+html[data-theme] body .form-modal-sheet .result-style-option {
+  background: color-mix(in srgb, var(--c-surface-3) 30%, transparent) !important;
+}
+html[data-theme] body .form-modal-sheet .result-style-option.active {
+  background: var(--c-accent) !important;
+  color: var(--c-on-accent) !important;
+}
+html[data-theme] body .form-modal-close {
+  background: color-mix(in srgb, var(--c-surface-2) 35%, transparent) !important;
+  backdrop-filter: blur(10px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(120%) !important;
+}
+
+/* ---------- 12. 首页菜单抽屉：去除厚重外框，改用清透玻璃 ---------- */
+html[data-theme] body .home-menu-drawer {
+  background: color-mix(in srgb, var(--c-surface) 34%, transparent) !important;
+  backdrop-filter: blur(28px) saturate(132%) !important;
+  border-right: 1px solid var(--glass-border) !important;
+  box-shadow: 8px 0 34px rgba(0, 0, 0, .10) !important;
+}
+html[data-theme] body .home-menu-header {
+  background: transparent !important;
+  border-bottom: 0 !important;
+  padding: 18px 20px 12px !important;
+}
+html[data-theme] body .home-menu-close {
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--c-text-3) !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+}
+html[data-theme] body .home-menu-close:hover {
+  background: color-mix(in srgb, var(--c-surface-3) 45%, transparent) !important;
+  color: var(--c-text-hi) !important;
+}
+html[data-theme] body .home-menu-section {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  margin-bottom: 28px !important;
+}
+html[data-theme] body .home-menu-section-hd {
+  border-bottom: 0 !important;
+  padding-bottom: 6px !important;
+  margin-bottom: 12px !important;
+  color: var(--c-text-4) !important;
+  font-size: .72em !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+}
+html[data-theme] body .home-menu-drawer .today-card,
+html[data-theme] body .home-menu-drawer .r-card {
+  background: color-mix(in srgb, var(--c-surface-2) 28%, transparent) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(10px) saturate(120%) !important;
+}
+html[data-theme] body .home-menu-drawer .pf-io-btn {
+  background: color-mix(in srgb, var(--c-surface-2) 35%, transparent) !important;
+  border: 0 !important;
+}
+
+/* ---------- 13. 工具页：去掉外层 sheet 边框，让背景模糊自然成框 ---------- */
+html[data-theme] body .tool-modal.open .tool-sheet,
+html[data-theme] body .tool-sheet {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+html[data-theme] body .tool-modal-bg {
+  background: color-mix(in srgb, var(--c-bg) 55%, transparent) !important;
+  backdrop-filter: blur(18px) saturate(124%) !important;
+}
+html[data-theme] body .tool-sheet-close {
+  background: color-mix(in srgb, var(--c-surface-2) 45%, transparent) !important;
+  border: 1px solid var(--glass-border) !important;
+  backdrop-filter: blur(10px) saturate(120%) !important;
+}
+
+/* ---------- 14. 问问大师面板：玻璃质感升级 ---------- */
+html[data-theme] body .ai-sheet {
+  background: color-mix(in srgb, var(--c-surface) 26%, transparent) !important;
+  backdrop-filter: blur(34px) saturate(150%) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .16), inset 0 1px 0 rgba(255, 255, 255, .10) !important;
+}
+html[data-theme] body .ai-sheet::after {
+  display: none !important; /* 移除指向 Dock 的实心三角，避免透明穿帮 */
+}
+html[data-theme] body .ai-sheet .ai-actions {
+  background: color-mix(in srgb, var(--c-surface-2) 36%, transparent) !important;
+  border: 1px solid var(--glass-border) !important;
+  backdrop-filter: blur(12px) saturate(130%) !important;
+}
+html[data-theme] body .ai-sheet .ai-new,
+html[data-theme] body .ai-sheet .ai-settings {
+  background: transparent !important;
+}
+html[data-theme] body .ai-sheet .ai-new:hover,
+html[data-theme] body .ai-sheet .ai-settings:hover {
+  background: color-mix(in srgb, var(--c-surface-3) 45%, transparent) !important;
+}
+html[data-theme] body .ai-sheet .ai-context {
+  background: color-mix(in srgb, var(--c-surface-2) 30%, transparent) !important;
+  border: 1px solid var(--glass-border) !important;
+  backdrop-filter: blur(10px) saturate(120%) !important;
+}
+html[data-theme] body .ai-sheet .ai-input-row {
+  background: color-mix(in srgb, var(--c-surface-2) 32%, transparent) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08) !important;
+  backdrop-filter: blur(14px) saturate(130%) !important;
+}
+html[data-theme] body .ai-sheet .ai-input-row:focus-within {
+  border-color: var(--c-accent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent) 16%, transparent), inset 0 1px 0 rgba(255, 255, 255, .10) !important;
+}
+html[data-theme] body .ai-sheet .ai-send {
+  background: var(--c-accent) !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--c-accent) 34%, transparent) !important;
+}
+html[data-theme] body .ai-user-bubble,
+html[data-theme] body .chat-bubble-user {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c-accent) 22%, transparent), color-mix(in srgb, var(--c-accent) 10%, transparent)) !important;
+  border: 1px solid color-mix(in srgb, var(--c-accent) 38%, transparent) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .08) !important;
+  color: var(--c-text-hi) !important;
+}
+html[data-theme] body .ai-answer-wrap,
+html[data-theme] body .chat-bubble-ai,
+html[data-theme] body .ai-dialogue-text {
+  background: color-mix(in srgb, var(--c-surface-2) 32%, transparent) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-left: 2px solid color-mix(in srgb, var(--c-accent) 55%, transparent) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .06) !important;
+}
+
+/* ---------- 15. 性能与无障碍回退 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme] body .home-cta::before,
+  html[data-theme] body .home-cta-ghost::before,
+  html[data-theme] body .home-menu-footer button::before,
+  html[data-theme] body .pf-io-btn::before,
+  html[data-theme] body .ai-send::before,
+  html[data-theme] body .save-btn::before,
+  html[data-theme] body .ai-basis-pill::before,
+  html[data-theme] body .mode-top-switch::before,
+  html[data-theme] body .result-style-option::before,
+  html[data-theme] body .tool-cta-btn::before,
+  html[data-theme] body .tool-hub-cta::before,
+  html[data-theme] body .beginner-primary::before,
+  html[data-theme] body .gs-seg .gs-opt::before,
+  html[data-theme] body .theme-toggle-home::before,
+  html[data-theme] body .ig-dock .tab-item.active::before {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}

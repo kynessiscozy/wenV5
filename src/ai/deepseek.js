@@ -39,9 +39,10 @@ export async function probeConnection(apiKey) {
       headers: { Authorization: 'Bearer ' + apiKey }
     }, 6000);
     // 200 = 密钥有效；401/403 = 可达但密钥无效；其余网络错误走 catch
-    const ok = resp.status === 200;
-    _notifyConn(ok ? 'online' : 'offline');
-    return ok ? 'online' : 'offline';
+    if (resp.status === 200) { _notifyConn('online'); return 'online'; }
+    if (resp.status === 401 || resp.status === 403) { _notifyConn('badkey'); return 'badkey'; }
+    _notifyConn('offline');
+    return 'offline';
   } catch (_) {
     _notifyConn('offline');
     return 'offline';

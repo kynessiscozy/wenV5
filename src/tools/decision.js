@@ -15,11 +15,11 @@ function getDecisionAdvice(b,wx,dy,ln,scene){
   return{label:'需结合具体时机',window:'近期非关键窗口',risk:'信息不足',advice:'建议先咨询专业顾问'};
 }
 function openDecisionTool(){
-  const el=document.getElementById('toolResult');if(!el)return;
+  const el=document.getElementById('toolModalContent');if(!el)return;
   el.innerHTML='<div class="tool-panel"><div class="tool-panel-title">决策窗口</div><div class="tool-choice"><button onclick="runDecisionTool(\'跳槽\')">跳槽</button><button onclick="runDecisionTool(\'创业\')">创业</button><button onclick="runDecisionTool(\'投资\')">投资</button></div><div class="tool-panel-note">选择事项后，结合当前大运与流年给出行动窗口与风险提醒。</div></div>';
 }
 function runDecisionTool(scene){
-  const d=getCtx(),el=document.getElementById('toolResult');if(!d||!el)return;
+  const d=getCtx(),el=document.getElementById('toolModalContent');if(!d||!el)return;
   const r=getDecisionAdvice(d.b,d.wx,d.dy,d.ln,scene);
   el.innerHTML='<div class="tool-panel"><div class="tool-panel-title">'+scene+' · '+r.label+'</div><div class="tool-answer"><div><span>行动窗口</span><b>'+r.window+'</b></div><div><span>主要风险</span><b>'+r.risk+'</b></div><div class="wide"><span>建议</span><b>'+r.advice+'</b></div></div><button class="tool-back" onclick="openDecisionTool()">← 重新选择</button></div>';
 }

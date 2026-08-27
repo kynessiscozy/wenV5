@@ -491,7 +491,8 @@ export const horoscope = {
 
   open(container) {
     const ctx = getCtx();
-    let userBD = (ctx && ctx._input && ctx._input.bd_raw) || (ctx && ctx._input && ctx._input.bd) || '1995-06-15';
+    const input = (ctx && ctx.input) || (ctx && ctx._input) || {};
+    let userBD = input.bd_raw || input.bd || '1995-06-15';
     let [by, bm, bd] = userBD.split('-').map(Number);
     if (!bm || !bd) { bm = 6; bd = 15; }
 
@@ -647,7 +648,12 @@ export const horoscope = {
           root: el,
           typeLabel: '星座助手 · 合盘分析',
           getSource: () => {
-            return ;
+            return sA.name + ' × ' + sB.name + ' 契合度' + match.score + '%（' + match.tag + '）\n' +
+              '心动契合 ' + match.loveScore + '%，职场协作 ' + match.workScore + '%，沟通共鸣 ' + match.talkScore + '%。\n' +
+              '元素动力：' + sA.elem + '象 (' + sA.name + ') 遇上 ' + sB.elem + '象 (' + sB.name + ')。' + match.dynamicDesc + '\n' +
+              '恋爱与情感：' + match.loveAdvice + '\n' +
+              '事业与合作：' + match.workAdvice + '\n' +
+              '分歧破冰法：' + match.frictionBreak;
           },
           slot: aiSlot,
           extraSystem: '你是一位资深情感咨询与星座合盘大师。请围绕双方星座性格、互动特质及具体困扰，给出兼具心理学深度与现实可行性的沟通建议。'

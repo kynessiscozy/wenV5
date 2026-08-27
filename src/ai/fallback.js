@@ -6,6 +6,15 @@ import { buildRelatedRoutes, compactAIText, renderRouteButtons } from '../render
 export function generateAnswerFallback(q,d,el){
   // —— 直接读 ctx ——
   const age=d.age,cDy=d.cDy,cLn=d.cLn;
+  if(!d.dg||!cDy||!cLn){/* 兜底层自身必须健壮：缺关键数据时给出通用建议而不是抛错 */
+    const text='暂时无法读取完整命盘信息，先给你一条稳妥建议：保持规律作息，重大决定缓一周再做。';
+    const html='<div class="ai-dialogue"><div class="ai-dialogue-line"><div class="ai-dialogue-avatar">✦</div><div class="ai-dialogue-text"><div class="ai-dialogue-label">问问大师</div>'+compactAIText(text,180)+'</div></div></div>';
+    if(el){const loading=el.querySelector('.loading-state');if(loading)loading.remove();
+      const answer=document.createElement('div');answer.className='ai-body-inner';answer.innerHTML=html;el.appendChild(answer);
+      requestAnimationFrame(()=>{el.scrollIntoView({behavior:'smooth',block:'nearest'});});}
+    return;
+  }
+  const shensha=Array.isArray(d.shensha)?d.shensha:[];
   const lnSS=d.lnSS||TJ.ssOf(d.dg,cLn&&cLn.g),dySS=d.dySS||TJ.ssOf(d.dg,cDy&&cDy.g);
   const history=Array.isArray(window._aiConversation)?window._aiConversation:[];
   const priorUser=[...history].reverse().find(turn=>turn.role==='user'&&turn.content)?.content||'';
@@ -19,8 +28,8 @@ export function generateAnswerFallback(q,d,el){
     phase=`${cDy.as}-${cDy.ae}岁为`+(dySS.includes('官')?'事业打拼期':'积累蓄势期')+'，今年'+(lnSS.includes('官')?'有贵人提携':'需自力更生')+'。';
     action='1. 主动向上司争取核心项目\n2. 每天预留1小时深度学习';
   }else if(intents.includes('感情')){
-    conclusion=d.shensha.some(s=>s.n==='桃花')?'今年桃花运旺，注意筛选':'今年感情节奏偏稳，宜经营';
-    reason=`日主${d.dg}，${d.gen==='male'?'财星':'官星'}代表异性缘。当前`+(d.shensha.some(s=>s.n==='桃花')?'命局带桃花，异性缘天生较强':'桃花不显，缘分多来自熟人介绍')+'。';
+    conclusion=shensha.some(s=>s.n==='桃花')?'今年桃花运旺，注意筛选':'今年感情节奏偏稳，宜经营';
+    reason=`日主${d.dg}，${d.gen==='male'?'财星':'官星'}代表异性缘。当前`+(shensha.some(s=>s.n==='桃花')?'命局带桃花，异性缘天生较强':'桃花不显，缘分多来自熟人介绍')+'。';
     phase=`${CURR_YEAR}年${cLn.g}${cLn.z}，流年十神${lnSS}，`+(lnSS.includes(d.gen==='male'?'财':'官')?'配偶星透出，有利婚恋':'感情气场平和，以陪伴为主')+'。';
     action='1. 多参加行业聚会拓展圈子\n2. 避免在冲太岁月份做重大感情决定';
   }else if(intents.includes('财运')){

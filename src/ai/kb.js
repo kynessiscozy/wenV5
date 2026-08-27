@@ -1,4 +1,4 @@
-import { CURR_YEAR, GW, DZ } from '../engines/shared.js';
+import { CURR_YEAR, GW, DZ, ZW } from '../engines/shared.js';
 import { TJ } from '../state/tj.js';
 import { getLayoffAstroRisk } from './risk.js';
 

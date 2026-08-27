@@ -33,6 +33,7 @@ const _STATE_MAP = {
   unknown:  { dot: 'conn-unknown',  text: '未检测',  hint: '' },
   checking: { dot: 'conn-checking', text: '检测中…', hint: '' },
   online:   { dot: 'conn-online',   text: 'AI 已连接', hint: '可以自由提问' },
+  badkey:   { dot: 'conn-offline',  text: '密钥无效', hint: '服务可达但 API Key 校验失败，请在设置中检查密钥' },
   offline:  { dot: 'conn-offline',  text: '离线模式', hint: '仍可查术语与命盘解读，接入 AI 后回答更贴合你的提问' },
 };
 

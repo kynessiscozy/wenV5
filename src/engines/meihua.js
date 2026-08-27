@@ -5,7 +5,7 @@
 const GUA_NAME = ['乾','兑','离','震','巽','坎','艮','坤'];
 const GUA_SYM  = ['☰','☱','☲','☳','☴','☵','☶','☷'];
 const GUA_WX   = ['金','金','火','木','木','水','土','土'];
-const GUA_LINE = [[1,1,1],[1,1,0],[1,0,1],[0,0,1],[1,1,0],[0,1,0],[1,0,0],[0,0,0]];
+const GUA_LINE = [[1,1,1],[1,1,0],[1,0,1],[1,0,0],[0,1,1],[0,1,0],[0,0,1],[0,0,0]];
 
 /* 64 卦名（上卦索引 × 8 + 下卦索引） */
 const HEX_NAME = [
@@ -64,7 +64,7 @@ function _tiYongRelation(tiWx, yongWx) {
 
 function mkMh(b) {
   const yearNum = b.Y.zi + 1;
-  const monthNum = ((b.M.zi - 1) % 12) + 1;
+  const monthNum = ((b.M.zi - 2 + 12) % 12) + 1; // 寅=正月
   const dayNum = (b.dj % 30) + 1;
   const hourNum = b.H.zi + 1;
 

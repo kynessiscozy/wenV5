@@ -40,9 +40,7 @@ import {
   printFullReport
 } from './share/long-report.js';
 import { initTools3DRingCarousel } from './render/tools-ring.js';
-import { initArmillary } from './fx/armillary.js';
-import { initArmillaryAugust } from './fx/armillary-august.js';
-import { initArmillaryWestern } from './fx/armillary-western.js';
+import { initLiquidOrb } from './fx/liquid-orb.js';
 import { burstToArmillary } from './fx/burst.js';
 import { TJX } from './state/tjx.js';
 import { getResultStyle } from './state/result-style.js';
@@ -337,7 +335,7 @@ async function calc(isDemoPreview=false){
     if(ctaBtn){ctaBtn.textContent='输入信息';ctaBtn.classList.remove('home-cta-go');}
     const mb1=document.getElementById('homeMenuBtn');if(mb1)mb1.style.display='';
     const page1=document.getElementById('page1');
-    if(page1)page1.classList.add('tj-fade'); // 过渡期间画面只留星环与粒子
+    if(page1)page1.classList.add('tj-fade'); // 过渡期间画面只留中央光球与粒子
     const hint=document.getElementById('tjCalcHint');
     if(hint)hint.classList.add('show');      // 仅底部一枚极简提示
     const DUR=2400;
@@ -345,7 +343,6 @@ async function calc(isDemoPreview=false){
     if(reduced){
       await new Promise(r=>setTimeout(r,240));
     }else{
-      if(window._tjArm)window._tjArm.surge(DUR);
       burstToArmillary(sheetRect);
       await new Promise(r=>setTimeout(r,DUR));
     }
@@ -527,7 +524,7 @@ function saveCurrentProfile(name){
 async function renderProfiles(){try{const list=await dbGetAll();const zone=document.getElementById('profileZone');const grid=document.getElementById('profileGrid');const empty=document.getElementById('profileEmpty');const recentZone=document.getElementById('recentZone');const recentGrid=document.getElementById('recentGrid');const recentEmpty=document.getElementById('recentEmpty');const profileZoneEmpty=document.getElementById('profileZoneEmpty');
   if(!list.length){if(grid)grid.innerHTML='';if(empty)empty.style.display='none';if(zone)zone.style.display='none';if(recentZone)recentZone.style.display='none';if(recentEmpty)recentEmpty.style.display='block';if(profileZoneEmpty)profileZoneEmpty.style.display='block';return;}
   if(empty)empty.style.display='none';if(zone)zone.style.display='block';if(recentEmpty)recentEmpty.style.display='none';if(profileZoneEmpty)profileZoneEmpty.style.display='none';
-  if(recentZone){recentZone.style.display='block';recentGrid.innerHTML=list.slice(0,3).map(p=>{const city=CD[p.bp]||{n:'未知'};const _bd=(p.bd||'1990-1-1').split('-').map(Number);const _b=mkBazi(_bd[0],_bd[1],_bd[2],0);const dg=_b.D.g;const dy=mkDy(_b,p.gen||'male',_bd[0],_bd[1]||1,_bd[2]||1);const age=TJ.calcAge(_bd[0],_bd[1]||1,_bd[2]||1);const cDy=TJ.findDaYun(dy,age)||dy.ds[0];const cLn=mkLn(CURR_YEAR);let stars='★★★☆☆';try{const wx=mkWx(_b),ss=mkSs(_b);const sc=calcYearScores(_b,wx,ss,SS[dg][cDy.g],SS[dg][cLn.g],null,cDy,cLn);const avgv=(sc.career+sc.wealth+sc.love+sc.health)/4;const n=Math.max(1,Math.min(5,Math.round(avgv/20)));stars='★'.repeat(n)+'☆'.repeat(5-n);}catch(e){}return`<div class="r-card" onclick="loadProfile(${p.id})"><div class="r-ava">${(p.name||'未').charAt(0)}</div><div class="r-info"><div class="r-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div><div class="r-meta">当前大运：${cDy.g}${cDy.z} · ${CURR_YEAR}运势：${stars}<br>最近关注：${p.q||'综合'}</div></div><div class="r-arrow">›</div></div>`;}).join('');}
+  if(recentZone){recentZone.style.display='block';recentGrid.innerHTML=list.slice(0,3).map(p=>{const city=CD[p.bp]||{n:'未知'};const _bd=(p.bd||'1990-1-1').split('-').map(Number);/* 用保存的出生时间推时辰（无则按子时），避免档案星级一律按子时失真 */const _hm=String(p.timeStr||'').split(':');const _hh=Number(_hm[0]);const _hz=(Number.isFinite(_hh))?Math.floor(((_hh+1)%24)/2):0;const _b=mkBazi(_bd[0],_bd[1],_bd[2],_hz,Number.isFinite(_hh)?_hh:12);const dg=_b.D.g;const dy=mkDy(_b,p.gen||'male',_bd[0],_bd[1]||1,_bd[2]||1);const age=TJ.calcAge(_bd[0],_bd[1]||1,_bd[2]||1);const cDy=TJ.findDaYun(dy,age)||dy.ds[0];const cLn=mkLn(CURR_YEAR);let stars='★★★☆☆';try{const wx=mkWx(_b),ss=mkSs(_b);const sc=calcYearScores(_b,wx,ss,SS[dg][cDy.g],SS[dg][cLn.g],null,cDy,cLn);const avgv=(sc.career+sc.wealth+sc.love+sc.health)/4;const n=Math.max(1,Math.min(5,Math.round(avgv/20)));stars='★'.repeat(n)+'☆'.repeat(5-n);}catch(e){}return`<div class="r-card" onclick="loadProfile(${p.id})"><div class="r-ava">${(p.name||'未').charAt(0)}</div><div class="r-info"><div class="r-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div><div class="r-meta">当前大运：${cDy.g}${cDy.z} · ${CURR_YEAR}运势：${stars}<br>最近关注：${p.q||'综合'}</div></div><div class="r-arrow">›</div></div>`;}).join('');}
   if(grid)grid.innerHTML=list.slice(0,8).map(p=>{const city=CD[p.bp]||{n:'未知'};const d=new Date(p.updatedAt);return`<div class="r-card" onclick="loadProfile(${p.id})"><div class="r-ava">${(p.name||'未').charAt(0)}</div><div class="r-info"><div class="r-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div><div class="r-meta">${p.bd||''} · ${city.n} · ${p.gen==='male'?'男':'女'}${p.useTrueSolar?'·真':''}</div></div><div style="position:absolute;top:6px;right:8px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9em;color:var(--c-text-4);cursor:pointer;transition:all .15s;z-index:2" onclick="event.stopPropagation();deleteProfile(${p.id})">×</div></div>`;}).join('');
 }catch(e){console.log('renderProfiles',e);}}
 async function loadProfile(id){try{const list=await dbGetAll();const p=list.find(x=>x.id===id);if(!p)return;document.getElementById('bDate').value=p.bd||'';document.getElementById('bTime').value=p.timeStr||'09:00';document.getElementById('bPlace').value=p.bp||'';document.getElementById('cInp').value=(CD[p.bp]||{n:''}).n;document.getElementById('bGen').value=p.gen||'male';const styleEl=document.getElementById('bResultStyle');if(styleEl){styleEl.value=p.resultStyle||'companion';document.querySelectorAll('.result-style-option').forEach(btn=>{const on=btn.dataset.style===styleEl.value;btn.classList.toggle('active',on);btn.setAttribute('aria-checked',on?'true':'false');});const loadedStyle=getResultStyle(styleEl.value);const loadedHint=document.getElementById('resultStyleHint');if(loadedHint)loadedHint.textContent=loadedStyle.intro;}document.getElementById('bQ').value=p.q||'';const sw=document.getElementById('swTrueSolar');if(sw){if(p.useTrueSolar)sw.classList.add('on');else sw.classList.remove('on');document.getElementById('swText').textContent=(sw.classList.contains('on')?'开启':'关闭')+'真太阳时（按出生地经度精确换算时辰）';}const chips=document.getElementById('qChips');if(chips){chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.q===p.q));}calc();}catch(e){console.log('loadProfile',e);}}
@@ -850,7 +847,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       const arch=document.getElementById('archiveModal');if(arch&&arch.classList.contains('open')){closeArchiveModal();return;}
       const fm=document.getElementById('formModal');if(fm&&fm.classList.contains('open')){window.TJCloseForm&&window.TJCloseForm();return;}
       const rq=document.getElementById('rqModal');if(rq&&rq.classList.contains('open')){closeRq();return;}
-      const p2=document.getElementById('page2');if(p2&&(p2.classList.contains('active')||!p2.classList.contains('hidden'))){goBack();return;}
+      const p2=document.getElementById('page2');if(p2&&(p2.classList.contains('active')||!p2.classList.contains('hidden'))){window.goBack();return;}
     }
     if((e.ctrlKey||e.metaKey)&&e.key==='p'){e.preventDefault();window.print();return;}
     if((e.ctrlKey||e.metaKey)&&e.key==='c'){
@@ -1055,6 +1052,16 @@ function toggleDensity(){
 
     let running=true;
     document.addEventListener('visibilitychange',()=>{running=!document.hidden;if(running)tick();});
+    // 缓存主题强调色，避免每帧 getComputedStyle 触发强制同步样式计算（严重性能反模式）
+    let accentH='38',accentS='55%',lastDraw=0;
+    function readAccent(){
+      const st=getComputedStyle(document.documentElement);
+      accentH=st.getPropertyValue('--accent-h').trim()||'38';
+      accentS=st.getPropertyValue('--accent-s').trim()||'55%';
+    }
+    readAccent();
+    new MutationObserver(readAccent).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+    window.addEventListener('resize',readAccent,{passive:true});
 
     let shoots=[];
     function spawnShoot(){
@@ -1069,20 +1076,22 @@ function toggleDensity(){
       });
     }
 
-    function tick(){
+    function tick(now){
       if(!running)return;
+      requestAnimationFrame(tick);
       // 首页与测试结果页均绘制；报告页以纯星点呈现，减少连线干扰阅读。
       const isHome=document.body.classList.contains('home');
       const isReport=document.body.classList.contains('report-active');
       if(!isHome&&!isReport){
         ctx.clearRect(0,0,W,H);
-        requestAnimationFrame(tick);return;
+        return;
       }
+      // 粒子为缓慢运动，30fps 已足够流畅，降低绘制与重排开销
+      if(typeof now==='number'&&now-lastDraw<33){return;}
+      lastDraw=now||0;
       ctx.clearRect(0,0,W,H);
-      // 取当前主题色
-      const styles=getComputedStyle(document.documentElement);
-      const h=styles.getPropertyValue('--accent-h').trim()||'38';
-      const sat=styles.getPropertyValue('--accent-s').trim()||'55%';
+      // 主题强调色已在外部缓存（主题/尺寸变化时更新），避免每帧 getComputedStyle 触发强制同步样式计算
+      const h=accentH,sat=accentS;
 
       // 首页保留星点连线；测试结果页仅保留星点，视觉更像安静的星空。
       if(isHome)for(let i=0;i<parts.length;i++){
@@ -1151,7 +1160,6 @@ function toggleDensity(){
           ctx.beginPath();ctx.arc(s.x,s.y,1.5,0,Math.PI*2);ctx.fill();
         }
       }
-      requestAnimationFrame(tick);
     }
     resize();
     window.addEventListener('resize',resize);
@@ -1210,132 +1218,20 @@ function toggleDensity(){
 })();
 
 /* ============================================================
-   首页 3D 品牌特效（西方黄道天象仪与浑天星轨庆典版）：
-   只在 body.home 时运行，进报告页停笔并清空。
+   首页中央液态光球
+   3D 星轨动画已移除，仅保留通透液态光球（只在 body.home 时运行）
    ============================================================ */
 (function(){
-  let arm = null;
-  function sync(){
-    if (!arm) return;
-    if (document.body.classList.contains('home')) arm.start(); else arm.stop();
+  function syncOrb(){
+    const orb = window._tjLiquidOrb;
+    if (!orb) return;
+    if (document.body.classList.contains('home')) orb.start(); else orb.stop();
   }
-  function createArm(mode){
-    const cv = document.getElementById('brand3d');
-    if (!cv) return null;
-    if (mode === 'august' || mode === 'eastern') return initArmillaryAugust(cv);
-    if (mode === 'classic') return initArmillary(cv);
-    // 默认与 'western' / 'fusion' 均采用全新西方黄道天象仪 3D 庆典引擎
-    return initArmillaryWestern(cv, mode || 'western');
-  }
-  function showToast(text){
-    const t = document.createElement('div');
-    t.textContent = text;
-    t.style.cssText = 'position:fixed;left:50%;bottom:calc(28vh + 10px);transform:translateX(-50%) translateY(12px);z-index:9999;padding:12px 28px;border-radius:999px;background:rgba(217,119,87,0.92);color:#fff;font-size:.88em;letter-spacing:1.5px;pointer-events:none;opacity:0;transition:opacity .3s ease,transform .3s cubic-bezier(.2,.8,.3,1.2);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(217,119,87,0.35);';
-    document.body.appendChild(t);
-    requestAnimationFrame(function(){ t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
-    setTimeout(function(){
-      t.style.opacity = '0';
-      t.style.transform = 'translateX(-50%) translateY(12px)';
-      setTimeout(function(){ t.remove(); }, 300);
-    }, 2400);
-  }
-
-  function updatePillUI(mode) {
-    const textEl = document.getElementById('homeStarModeText');
-    const tagEl = document.getElementById('homeStarModeTag');
-    if (!textEl || !tagEl) return;
-    if (mode === 'fusion') {
-      textEl.textContent = '双星纪元交融 · 东西方共鸣';
-      tagEl.textContent = '双星交融';
-    } else if (mode === 'eastern' || mode === 'august') {
-      textEl.textContent = '东方太极浑天 · 二十八宿星轨';
-      tagEl.textContent = '东方浑天';
-    } else {
-      textEl.textContent = '庆西方星相上线 · 3D黄道天象仪';
-      tagEl.textContent = '黄道星盘';
-    }
-  }
-
-  function switchStarMode(){
-    const modes = ['western', 'fusion', 'eastern'];
-    const cur = localStorage.getItem('tj_star_mode') || 'western';
-    let curIdx = modes.indexOf(cur);
-    if (curIdx === -1) curIdx = 0;
-    const next = modes[(curIdx + 1) % modes.length];
-    localStorage.setItem('tj_star_mode', next);
-
-    if (arm && arm.setMode) {
-      arm.setMode(next);
-    } else {
-      if (arm) arm.stop();
-      arm = createArm(next);
-      if (arm) {
-        window._tjArm = arm;
-        if (document.body.classList.contains('home')) arm.start();
-      }
-    }
-    if (arm && arm.surge) arm.surge(2000);
-    updatePillUI(next);
-
-    const toastMap = {
-      western: '✦ 西方黄道天象仪已就绪 · 12星座与十大行星',
-      fusion: '✦ 东西双星纪元交融 · 浑天与黄道共鸣',
-      eastern: '✦ 东方浑天星轨已开启 · 二十八宿与太极'
-    };
-    showToast(toastMap[next] || '✦ 3D天象星轨已切换');
-  }
-
-  window.switchStarMode = switchStarMode;
 
   window.addEventListener('load', function(){
-    const mode = localStorage.getItem('tj_star_mode') || 'western';
-    arm = createArm(mode);
-    if (!arm) return;
-    window._tjArm = arm;
-    updatePillUI(mode);
-    new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    sync();
-
-    /* 启动时自动触发一次轻微的星轨庆典流光 */
-    setTimeout(() => {
-      if (arm && arm.surge && document.body.classList.contains('home')) {
-        arm.surge(1800);
-      }
-    }, 600);
-
-    /* 彩蛋：长按「输入信息」3 秒切换星轨模式 */
-    const HOLD = 3000;
-    let timer = null, triggered = false;
-    const btn = document.querySelector('.home-cta:not(.home-cta-ghost)');
-    if (btn) {
-      btn.addEventListener('pointerdown', function(){
-        triggered = false;
-        btn.style.transition = 'box-shadow 3s ease, transform 3s ease';
-        btn.style.boxShadow = '0 0 0 2px rgba(217,119,87,0.4),0 0 40px rgba(217,119,87,0.5)';
-        btn.style.transform = 'scale(0.97)';
-        timer = setTimeout(function(){
-          triggered = true;
-          timer = null;
-          switchStarMode();
-        }, HOLD);
-      });
-      function clearHold(){
-        if (timer) { clearTimeout(timer); timer = null; }
-        btn.style.transition = '';
-        btn.style.boxShadow = '';
-        btn.style.transform = '';
-      }
-      btn.addEventListener('pointerup', clearHold);
-      btn.addEventListener('pointerleave', clearHold);
-      btn.addEventListener('pointercancel', clearHold);
-      btn.addEventListener('click', function(e){
-        if (triggered) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          triggered = false;
-        }
-      }, true);
-    }
+    initLiquidOrb();
+    new MutationObserver(syncOrb).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    syncOrb();
   });
 })();
 

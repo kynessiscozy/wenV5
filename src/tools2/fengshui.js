@@ -13,6 +13,7 @@
 import { masthead, notice, esc, viewShell, goResult } from './runtime.js';
 import { getCtx } from '../state/context.js';
 import { getWxGeo, requestGeo } from '../ui/weather.js';
+import { TG, DZ } from '../engines/shared.js';
 
 /* ============================================================
    1) 定位 + 八宅
@@ -299,7 +300,7 @@ function flyingGridSvg(year, stars, focusStars, ysGoodDirs) {
       '</g>';
   }
   return '<figure class="tw-fs-fig"><svg viewBox="0 0 ' + W + ' ' + H + '" class="tw-fs-svg" role="img" aria-label="' + year + '年九宫飞星图">' + cells + '</svg>' +
-    '<figcaption>面向正南 · 上南下北 · ' + year + '年（丙午）九宫飞星图</figcaption></figure>';
+    '<figcaption>面向正南 · 上南下北 · ' + year + '年（' + TG[((year - 4) % 10 + 10) % 10] + DZ[((year - 4) % 12 + 12) % 12] + '）九宫飞星图</figcaption></figure>';
 }
 
 /* ============================================================
@@ -518,7 +519,7 @@ function buildResult(ctx, S, stars, year, surr) {
   /* 九宫飞星 */
   html += '<div class="tw-kicker">FLYING STARS · ' + year + ' 九宫飞星</div>';
   html += flyingGridSvg(year, stars, focusStars, ysGoodDirs);
-  html += '<div class="tw-para">' + year + '年入中为「一白贪狼」，' + f.note + '</div>';
+  html += '<div class="tw-para">' + year + '年入中为「' + STARS[entryStar(year)].name + '」，' + f.note + '</div>';
   const focusCells = Object.keys(stars).filter(p => focusStars.includes(stars[p]));
   html += '<div class="tw-h3">本期重点 · ' + f.label + '</div>';
   html += focusCells.map(p => {
