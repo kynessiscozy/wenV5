@@ -42,6 +42,13 @@ body .ig-dock .ai-fab{grid-column:3!important;grid-row:1!important;position:rela
 body .ig-dock .ai-fab:hover{filter:brightness(1.12)!important;transform:translateY(-1px) scale(1.04)!important}
 body .ig-dock .ai-fab:active{transform:scale(.87)!important;filter:brightness(.9)!important}
 body .ig-dock .ai-fab-icon{display:grid!important;place-items:center!important;width:24px!important;height:24px!important}.ig-dock .ig-ai-icon{display:block!important;width:24px!important;height:24px!important;fill:#fff!important;stroke:none!important;filter:drop-shadow(0 1px 3px rgba(0,0,0,.23))}.ig-dock .ai-fab-text{display:none!important}.ig-dock .ai-badge,.ig-dock .ai-orbits{display:none!important}
+/* DOCK 问问大师图标 = 暖橙金液态光球 */
+body .ig-dock .ai-fab .ai-orb-icon{fill:none!important}
+body .ig-dock .ai-fab .ai-orb-icon circle[fill="url(#aiOrbHalo)"]{fill:url(#aiOrbHalo)!important}
+body .ig-dock .ai-fab .ai-orb-icon circle[fill="url(#aiOrbGlow)"]{fill:url(#aiOrbGlow)!important}
+body .ig-dock .ai-fab .ai-orb-icon ellipse[fill="url(#aiOrbCore)"]{fill:url(#aiOrbCore)!important}
+body .ig-dock .ai-fab .ai-orb-icon .ai-orb-breath{transform-origin:12px 12px;animation:aiOrbBreath 3.6s ease-in-out infinite!important}
+@keyframes aiOrbBreath{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.92}}
 
 #page2 .p2-scroll{padding-bottom:calc(var(--ig-dock-height) + env(safe-area-inset-bottom,0px) + 36px)!important}
 @keyframes igDockEnter{from{opacity:0;transform:translateX(-50%) translateY(16px) scale(.98)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}

@@ -26,17 +26,64 @@ html[data-theme] body .cursor-dot {
   display: block !important;
 }
 
-/* 背景 mesh：用主题色重新绘制，提升通透感 */
+/* 背景 mesh：用光球主题色绘制环境辉光，与液态光球同色族、提升整体统一感 */
 html[data-theme] body.home .mesh,
 html[data-theme] body.report-active .mesh {
-  opacity: 0.85 !important;
+  opacity: 0.9 !important;
   background:
-    radial-gradient(ellipse at 28% 18%, color-mix(in srgb, var(--c-accent) 16%, transparent) 0%, transparent 52%),
-    radial-gradient(ellipse at 78% 80%, color-mix(in srgb, var(--c-accent-soft) 55%, transparent) 0%, transparent 56%),
-    radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--c-accent) 10%, transparent) 0%, transparent 62%),
+    radial-gradient(ellipse 62% 56% at 50% 44%, var(--orb-amb-1) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 38% at 26% 20%, var(--orb-amb-3) 0%, transparent 52%),
+    radial-gradient(ellipse 44% 42% at 80% 82%, var(--orb-amb-2) 0%, transparent 56%),
     linear-gradient(160deg, var(--c-bg), var(--c-bg-2)) !important;
   background-size: 200% 200% !important;
   animation: meshM 20s ease-in-out infinite alternate !important;
+}
+
+/* 背景渐变流动：在 mesh 上加两枚光球色的漂移光晕层（under orbs），持续流动 */
+html[data-theme] body.home .mesh::before,
+html[data-theme] body.home .mesh::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: -30% !important;
+  pointer-events: none !important;
+  will-change: transform !important;
+}
+html[data-theme] body.home .mesh::before {
+  background:
+    radial-gradient(ellipse 52% 46% at 38% 42%, var(--orb-amb-1) 0%, transparent 62%),
+    radial-gradient(ellipse 34% 30% at 72% 24%, var(--orb-amb-2) 0%, transparent 56%),
+    radial-gradient(ellipse 36% 32% at 16% 78%, var(--orb-amb-3) 0%, transparent 60%),
+    radial-gradient(ellipse 26% 30% at 62% 82%, var(--orb-amb-2) 0%, transparent 58%) !important;
+  animation: meshFlow 18s ease-in-out infinite alternate !important;
+  mix-blend-mode: screen !important;
+  filter: saturate(130%) !important;
+}
+html[data-theme] body.home .mesh::after {
+  background:
+    radial-gradient(ellipse 46% 40% at 68% 60%, var(--orb-amb-2) 0%, transparent 58%),
+    radial-gradient(ellipse 32% 30% at 24% 20%, var(--orb-amb-1) 0%, transparent 54%),
+    radial-gradient(ellipse 36% 40% at 82% 82%, var(--orb-amb-3) 0%, transparent 60%),
+    radial-gradient(ellipse 24% 28% at 30% 88%, var(--orb-amb-1) 0%, transparent 58%) !important;
+  animation: meshFlow 22s ease-in-out 1.5s infinite alternate-reverse !important;
+  mix-blend-mode: screen !important;
+  filter: saturate(130%) !important;
+}
+
+/* 漂移流动关键帧：更大位移 + 旋转 + 缩放，营造更明显的液体流动 */
+@keyframes meshFlow {
+  0%   { transform: translate3d(-4%, -3%, 0) rotate(-3deg) scale(1.05); }
+  25%  { transform: translate3d(3%, -1%, 0) rotate(1deg) scale(1.14); }
+  50%  { transform: translate3d(4%, 3%, 0) rotate(3deg) scale(0.98); }
+  75%  { transform: translate3d(-2%, 4%, 0) rotate(-1.5deg) scale(1.1); }
+  100% { transform: translate3d(2%, -3%, 0) rotate(2.5deg) scale(1.06); }
+}
+/* 中心主辉光脉动：与光球呼吸呼应，强化主题色流动 */
+html[data-theme] body.home .mesh {
+  animation: meshM 20s ease-in-out infinite alternate, meshPulse 9s ease-in-out infinite !important;
+}
+@keyframes meshPulse {
+  0%, 100% { filter: saturate(100%) brightness(1); }
+  50%      { filter: saturate(135%) brightness(1.05); }
 }
 html[data-theme] body .particles {
   opacity: 0.7 !important;
@@ -307,6 +354,14 @@ body.report-active .liquid-orb {
   pointer-events: none;
 }
 
+@media (min-width: 768px) {
+  .liquid-orb-static {
+    width: 22vmin;
+    height: 22vmin;
+    top: 50%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .liquid-orb { opacity: 0 !important; }
   .liquid-orb-static { opacity: 0.38 !important; }
@@ -343,6 +398,128 @@ html[data-theme] body .home-menu-btn:hover {
 }
 html[data-theme] body .home-menu-btn:active {
   transform: translateY(0) scale(.94) !important;
+}
+
+/* ---------- 首页右上角：光球调色盘 ---------- */
+/* 仅首页显示；非首页隐藏（与主题切换按钮行为一致） */
+html[data-theme] body:not(.home) .home-orb-palette-btn,
+html[data-theme] body:not(.home) .home-orb-palette-panel {
+  display: none !important;
+}
+html[data-theme] body .home-orb-palette-btn {
+  position: fixed !important;
+  top: max(14px, env(safe-area-inset-top)) !important;
+  right: 64px !important;
+  z-index: 1100 !important;
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--glass-tint) !important;
+  backdrop-filter: blur(10px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(120%) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+  cursor: pointer !important;
+  transition: transform .2s var(--ig-dock-ease, ease), box-shadow .18s ease !important;
+  -webkit-tap-highlight-color: transparent;
+}
+html[data-theme] body .home-orb-palette-btn:hover {
+  transform: translateY(-1px) !important;
+  border-color: color-mix(in srgb, var(--glass-border) 68%, rgba(255,255,255,.3)) !important;
+  box-shadow: var(--glass-shadow), 0 6px 18px rgba(0,0,0,.14) !important;
+}
+html[data-theme] body .home-orb-palette-btn:active {
+  transform: translateY(0) scale(.94) !important;
+}
+html[data-theme] body .home-orb-palette-btn .home-orb-palette-icon {
+  width: 24px !important;
+  height: 24px !important;
+  display: block !important;
+  fill: none !important;
+  animation: aiOrbBreath 3.6s ease-in-out infinite !important;
+}
+html[data-theme] body .home-orb-palette-btn .home-orb-palette-core {
+  transform-origin: 12px 12px;
+}
+
+/* 调色面板：玻璃卡片，位于右上角按钮下方 */
+html[data-theme] body .home-orb-palette-panel {
+  position: fixed !important;
+  top: calc(max(14px, env(safe-area-inset-top)) + 54px) !important;
+  right: 64px !important;
+  z-index: 1150 !important;
+  width: 240px !important;
+  padding: 14px !important;
+  border-radius: 18px !important;
+  background: color-mix(in srgb, var(--c-surface) 46%, transparent) !important;
+  backdrop-filter: blur(26px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(140%) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.10) !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateY(-8px) !important;
+  transition: opacity .22s ease, transform .22s ease, visibility .22s !important;
+  pointer-events: none !important;
+}
+html[data-theme] body .home-orb-palette-panel.open {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+}
+html[data-theme] body .home-orb-palette-head {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--c-text-2) !important;
+  margin-bottom: 12px !important;
+  letter-spacing: .04em !important;
+}
+html[data-theme] body .home-orb-palette-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 10px !important;
+}
+html[data-theme] body .home-orb-palette-swatch {
+  width: 100% !important;
+  aspect-ratio: 1 !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.25), 0 3px 8px rgba(0,0,0,.14) !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: transform .16s ease, box-shadow .16s ease !important;
+}
+html[data-theme] body .home-orb-palette-swatch:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.25), 0 6px 14px rgba(0,0,0,.2) !important;
+}
+html[data-theme] body .home-orb-palette-swatch:active {
+  transform: scale(.92) !important;
+}
+html[data-theme] body .home-orb-palette-swatch.active::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: -4px !important;
+  border-radius: 15px !important;
+  border: 2px solid var(--c-text-hi) !important;
+  opacity: .7 !important;
+  pointer-events: none !important;
+}
+html[data-theme] body .home-orb-palette-swatch .home-orb-palette-name {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -16px !important;
+  transform: translateX(-50%) !important;
+  font-size: 10px !important;
+  color: var(--c-text-4) !important;
+  white-space: nowrap !important;
 }
 
 html[data-theme] body .home-menu-section {
@@ -596,5 +773,14 @@ html[data-theme] body .ai-dialogue-text {
   html[data-theme] body .ig-dock .tab-item.active::before {
     animation: none !important;
     opacity: 0 !important;
+  }
+  /* 背景渐变流动：减弱动效偏好下静止 */
+  html[data-theme] body.home .mesh::before,
+  html[data-theme] body.home .mesh::after {
+    animation: none !important;
+  }
+  /* 调色盘按钮图标呼吸：减弱动效偏好下静止 */
+  html[data-theme] body .home-orb-palette-btn .home-orb-palette-icon {
+    animation: none !important;
   }
 }

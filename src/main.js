@@ -717,6 +717,89 @@ function toggleHomeMenu(force){
 }
 window.toggleHomeMenu=toggleHomeMenu;
 
+/* ---------- 首页右上角：光球调色盘 ---------- */
+let _orbPaletteBound=false;
+function orbPaletteApply(key){
+  const orb=window._tjLiquidOrb;
+  if(orb&&orb.setColor)orb.setColor(key);
+  const presets=orb&&orb.getPresets?orb.getPresets():[];
+  const cur=orb&&orb.getColorKey?orb.getColorKey():key;
+  const sw=presets.find((p)=>p.key===key);
+  // 同步按钮图标渐变色
+  const btn=document.getElementById('homeOrbPaletteBtn');
+  if(btn&&sw){
+    const stops=btn.querySelectorAll('[id="homeOrbBtnBody"] stop');
+    if(stops.length>=3){
+      stops[0].setAttribute('stop-color',lighten(sw.swatch,46));
+      stops[1].setAttribute('stop-color',lighten(sw.swatch,22));
+      stops[2].setAttribute('stop-color',sw.swatch);
+    }
+  }
+  // 高亮选中
+  const grid=document.getElementById('homeOrbPaletteGrid');
+  if(grid){
+    grid.querySelectorAll('.home-orb-palette-swatch').forEach((el)=>{
+      el.classList.toggle('active', el.dataset.key===cur);
+    });
+  }
+  // 同步 P2 菜单里的主题色板高亮
+  const p2grid=document.getElementById('p2OrbPaletteGrid');
+  if(p2grid){
+    p2grid.querySelectorAll('.p2-orb-palette-swatch').forEach((el)=>{
+      el.classList.toggle('active', el.dataset.key===cur);
+    });
+  }
+  if(typeof _syncP2Orb==='function')_syncP2Orb();
+}
+function hexToRgb(hex){
+  hex=hex.replace('#','');
+  if(hex.length===3)hex=hex.split('').map((c)=>c+c).join('');
+  return { r:parseInt(hex.slice(0,2),16), g:parseInt(hex.slice(2,4),16), b:parseInt(hex.slice(4,6),16) };
+}
+function mixHex(hex, target, t){
+  const a=hexToRgb(hex), b=hexToRgb(target);
+  const m=(x,y)=>Math.round(x+(y-x)*t);
+  return 'rgb('+m(a.r,b.r)+','+m(a.g,b.g)+','+m(a.b,b.b)+')';
+}
+function lighten(hex,pct){
+  return mixHex(hex,'#ffffff',pct/100);
+}
+function buildOrbPalette(){
+  const grid=document.getElementById('homeOrbPaletteGrid');
+  if(!grid)return;
+  const orb=window._tjLiquidOrb;
+  const presets=orb&&orb.getPresets?orb.getPresets():[];
+  const cur=orb&&orb.getColorKey?orb.getColorKey():'brand';
+  grid.innerHTML='';
+  presets.forEach((p)=>{
+    const el=document.createElement('button');
+    el.type='button';
+    el.className='home-orb-palette-swatch'+(p.key===cur?' active':'');
+    el.dataset.key=p.key;
+    el.style.background='radial-gradient(circle at 32% 30%, '+lighten(p.swatch,42)+', '+p.swatch+' 70%)';
+    el.setAttribute('aria-label',p.name);
+    el.title=p.name;
+    el.onclick=function(e){ e.stopPropagation(); orbPaletteApply(p.key); };
+    grid.appendChild(el);
+  });
+  // 按钮点击切换面板
+  const btn=document.getElementById('homeOrbPaletteBtn');
+  const panel=document.getElementById('homeOrbPalettePanel');
+  if(btn&&panel&&!_orbPaletteBound){
+    _orbPaletteBound=true;
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      panel.classList.toggle('open');
+    });
+    document.addEventListener('click',function(){
+      if(panel.classList.contains('open'))panel.classList.remove('open');
+    });
+  }
+  orbPaletteApply(cur);
+}
+window.orbPaletteApply=orbPaletteApply;
+
+
 /* 推演结果页汉堡菜单 */
 function toggleP2Menu(force){
   const btn=document.getElementById('p2MenuBtn');
@@ -731,8 +814,8 @@ function toggleP2Menu(force){
   ov.classList.toggle('open',open);
   dw.classList.toggle('open',open);
   document.body.style.overflow=open?'hidden':'';
-  /* 打开时同步主题选择器和信息密度状态 */
-  if(open){_syncP2ThemeSeg();_syncP2Density();}
+  /* 打开时同步主题选择器和光球主题色 */
+  if(open){_syncP2ThemeSeg();_syncP2Orb();}
 }
 window.toggleP2Menu=toggleP2Menu;
 
@@ -754,20 +837,54 @@ function _syncP2ThemeSeg(){
   }
 }
 
-/* P2 菜单内联信息密度切换 */
-function _syncP2Density(){
-  const btn=document.getElementById('p2DensityBtn');
-  if(!btn)return;
-  btn.classList.toggle('active',document.body.classList.contains('density-compact'));
+/* P2 菜单内联光球主题色切换 */
+let _p2OrbBound=false;
+function _syncP2Orb(){
+  const grid=document.getElementById('p2OrbPaletteGrid');
+  const btn=document.getElementById('p2OrbBtn');
+  if(!grid)return;
+  const orb=window._tjLiquidOrb;
+  const cur=orb&&orb.getColorKey?orb.getColorKey():'brand';
+  grid.querySelectorAll('.p2-orb-palette-swatch').forEach((el)=>{
+    el.classList.toggle('active',el.dataset.key===cur);
+  });
+  if(btn){
+    btn.style.setProperty('--p2-orb-accent','var(--c-accent)');
+  }
 }
-function toggleP2Density(){
-  document.body.classList.toggle('density-compact');
-  const on=document.body.classList.contains('density-compact');
-  const btn=document.getElementById('p2DensityBtn');
-  if(btn)btn.classList.toggle('active',on);
-  try{localStorage.setItem('tj_density',on?'1':'0');}catch(e){}
+function buildP2OrbPalette(){
+  const grid=document.getElementById('p2OrbPaletteGrid');
+  if(!grid)return;
+  const orb=window._tjLiquidOrb;
+  const presets=orb&&orb.getPresets?orb.getPresets():[];
+  if(presets.length)grid.innerHTML='';
+  presets.forEach((p)=>{
+    const el=document.createElement('button');
+    el.type='button';
+    el.className='p2-orb-palette-swatch';
+    el.dataset.key=p.key;
+    el.style.background='radial-gradient(circle at 32% 30%, '+lighten(p.swatch,42)+', '+p.swatch+' 70%)';
+    el.setAttribute('aria-label',p.name);
+    el.title=p.name;
+    el.onclick=function(e){ e.stopPropagation(); orbPaletteApply(p.key); };
+    grid.appendChild(el);
+  });
+  const btn=document.getElementById('p2OrbBtn');
+  const palette=document.getElementById('p2OrbPalette');
+  if(btn&&palette&&!_p2OrbBound){
+    _p2OrbBound=true;
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      palette.classList.toggle('open');
+    });
+    document.addEventListener('click',function(){
+      if(palette.classList.contains('open'))palette.classList.remove('open');
+    });
+  }
+  _syncP2Orb();
 }
-window.toggleP2Density=toggleP2Density;
+window.buildP2OrbPalette=buildP2OrbPalette;
+window._syncP2Orb=_syncP2Orb;
 
 /* 离开报告页时自动关闭 p2 菜单 */
 (function(){
@@ -1230,6 +1347,8 @@ function toggleDensity(){
 
   window.addEventListener('load', function(){
     initLiquidOrb();
+    if (typeof buildOrbPalette === 'function') buildOrbPalette();
+    if (typeof buildP2OrbPalette === 'function') buildP2OrbPalette();
     new MutationObserver(syncOrb).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     syncOrb();
   });
