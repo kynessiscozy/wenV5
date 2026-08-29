@@ -537,7 +537,8 @@ function buildNum(THREE, container, data) {
     x.textAlign = 'center';
     x.textBaseline = 'middle';
     x.fillText(str, cw / 2, ch / 2 + 8);
-    const img = x.getImageData(0, 0, cw, ch).data, step = 3, pts = [];
+    const img = x.getImageData(0, 0, cw, ch).data, step = 3;
+    let pts = [];
     for (let py = 0; py < ch; py += step) for (let px = 0; px < cw; px += step)
       if (img[(py * cw + px) * 4 + 3] > 128) pts.push([px, py]);
     if (pts.length > 4200) { const nth = Math.ceil(pts.length / 4200), f = []; for (let i = 0; i < pts.length; i += nth) f.push(pts[i]); pts = f; }
