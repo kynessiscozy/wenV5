@@ -202,7 +202,6 @@ export function renderToolsHubHtml() {
 
   return `<div class="glass card-1 tool-hub view-mode-ring" data-card="toolHub" id="toolHubRoot">
     <div class="card-hd">
-      <div class="card-ic">⌘</div>
       <div style="flex:1">
         <div class="card-tt">决策与命理工具中心</div>
         <div class="card-st">3D 弧面轮播 ｜ 磨砂玻璃通透质感 · 支持一键平铺模式</div>

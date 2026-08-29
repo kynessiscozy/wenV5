@@ -193,7 +193,7 @@ export function renderZiWeiCard(zw){
       +(p.s&&p.s.length?'<div style="margin-top:4px">'+p.s.map(x=>_mysticPill(x,'sha')).join('')+'</div>':'')
       +'</div>';
   }).join('');
-  return '<div class="glass card-2" data-card="ziwei"><div class="card-hd"><div class="card-ic">紫</div><div><div class="card-tt">紫微斗数</div><div class="card-st">命宫、身宫、十二宫与主辅煞星</div></div></div>'
+  return '<div class="glass card-2" data-card="ziwei"><div class="card-hd"><div><div class="card-tt">紫微斗数</div><div class="card-st">命宫、身宫、十二宫与主辅煞星</div></div></div>'
     +'<div class="ig" style="margin-bottom:12px">'+[
       ['命宫', (DZ[zw.mingGongZhi]||'')+' · '+mainStars],['身宫',(DZ[zw.bodyGongZhi]||'')+' · '+bodyStars],['事业宫',(career.m&&career.m.length?career.m.join('、'):'平稳')],['财帛宫',(wealth.m&&wealth.m.length?wealth.m.join('、'):'看流年')],['夫妻宫',(love.m&&love.m.length?love.m.join('、'):'重经营')],['盘面提示','主星看性格，辅煞看助力与阻力']
     ].map(x=>'<div class="ii"><div class="il">'+x[0]+'</div><div class="iv">'+x[1]+'</div></div>').join('')+'</div>'
@@ -205,7 +205,7 @@ export function renderQiMenCard(qm){
   const ps=qm.ps||[],dun=qm.yangDun?'阳遁':'阴遁',open=ps.find(x=>x.d==='开门')||{},sheng=ps.find(x=>x.d==='生门')||{},rest=ps.find(x=>x.d==='休门')||{},fu=ps.find(x=>x.g==='值符')||ps[0]||{};
   const doorTone={开门:'开局、沟通、发布',生门:'增长、求财、修复',休门:'休整、谈和、恢复',景门:'曝光、表达、文书',杜门:'保密、学习、闭关',伤门:'冲突、突破、损耗',死门:'停滞、收尾、保守',惊门:'消息、口舌、突发'};
   const grid=ps.map(x=>'<div style="min-height:96px;padding:10px;border-radius:14px;background:'+(x.cc?'color-mix(in srgb,var(--c-yellow) 10%,transparent)':'var(--c-surface-2)')+';border:1px solid '+(x.g==='值符'?'var(--ac4)':'var(--c-border)')+'"><div style="display:flex;justify-content:space-between;gap:6px;margin-bottom:7px"><b style="font-size:.78em;color:var(--c-text-hi)">'+x.p+'</b><span style="font-size:.62em;color:var(--c-text-3)">'+(x.cc?'中宫':'')+'</span></div><div>'+_mysticPill(x.d,'main')+_mysticPill(x.s,'aux')+_mysticPill(x.g,x.g==='白虎'||x.g==='玄武'?'sha':'muted')+'</div><div style="margin-top:7px;font-size:.66em;line-height:1.55;color:var(--c-text-2)">'+(doorTone[x.d]||'顺势观察')+'</div></div>').join('');
-  return '<div class="glass card-2" data-card="qimen"><div class="card-hd"><div class="card-ic">奇</div><div><div class="card-tt">奇门遁甲</div><div class="card-st">'+dun+' '+qm.ju+'局 · 九宫、八门、九星、八神</div></div></div>'
+  return '<div class="glass card-2" data-card="qimen"><div class="card-hd"><div><div class="card-tt">奇门遁甲</div><div class="card-st">'+dun+' '+qm.ju+'局 · 九宫、八门、九星、八神</div></div></div>'
     +'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px">'
     +_mysticNote('值符落宫',(fu.p||'—')+' · '+(fu.s||'—')+' · '+(fu.d||'—'))
     +_mysticNote('开门位置',(open.p||'—')+'：适合沟通、发布、谈判与外部连接')
@@ -219,7 +219,7 @@ export function renderMeiHuaCard(mh){
   const moveArea=mh.cl<=3?'内卦（基础、自己、近处）':'外卦（环境、他人、远处）';
   const tyColor=mh.tyRel?.score==='good'?'var(--c-green)':mh.tyRel?.score==='bad'?'var(--c-red)':mh.tyRel?.score==='caution'?'var(--c-orange)':'var(--c-text-2)';
 
-  return '<div class="glass card-2" data-card="meihua"><div class="card-hd"><div class="card-ic">卦</div><div><div class="card-tt">梅花易数</div><div class="card-st">本卦 · 互卦 · 变卦 · 体用生克</div></div></div>'
+  return '<div class="glass card-2" data-card="meihua"><div class="card-hd"><div><div class="card-tt">梅花易数</div><div class="card-st">本卦 · 互卦 · 变卦 · 体用生克</div></div></div>'
 
     +'<div style="text-align:center;padding:12px 0 8px"><div style="font-family:var(--serif);font-size:1.5em;color:var(--c-text-hi);font-weight:700;letter-spacing:2px">'+(mh.benName||'')+'</div>'
     +(mh.benHint?'<div style="font-size:.72em;color:var(--c-text-3);margin-top:4px">'+mh.benHint+'</div>':'')
@@ -246,7 +246,7 @@ function _threeStyleInner(html){
 }
 export function renderThreeStylesCard(zw,qm,mh){
   const panes=[['ziwei','紫微斗数',renderZiWeiCard(zw)],['qimen','奇门遁甲',renderQiMenCard(qm)],['meihua','梅花易数',renderMeiHuaCard(mh)]];
-  return '<div class=\"glass card-2 three-styles-card structure-card\" data-card=\"three-styles\"><div class=\"card-hd\"><div class=\"card-ic\">三</div><div><div class=\"card-tt\">三式合参</div><div class=\"card-st\">紫微斗数 · 奇门遁甲 · 梅花易数</div></div></div><div class=\"three-styles-intro\">以紫微看人生结构，以奇门看局势入口，以梅花看事情变化；三式用于交叉观察，不以单一术式下确定结论。</div><div class=\"structure-tabs three-styles-tabs\" role=\"tablist\" aria-label=\"三式合参结构\">'+panes.map(([key,label],i)=>'<button class=\"structure-tab'+(i===0?' active':'')+'\" type=\"button\" data-structure=\"'+key+'\" onclick=\"switchStructureTab(this)\">'+label+'</button>').join('')+'</div><div class=\"structure-panes three-styles-panes\">'+panes.map(([key,,html],i)=>'<div class=\"structure-pane'+(i===0?' active':'')+'\" data-structure=\"'+key+'\" data-card=\"'+key+'\">'+_threeStyleInner(html)+'</div>').join('')+'</div><div class=\"three-styles-note\">合参提示：三式分别回答“底色、时势、变化”。若结果出现差异，优先核对出生信息、具体问题、起局时间与现实证据。</div></div>';
+  return '<div class=\"glass card-2 three-styles-card structure-card\" data-card=\"three-styles\"><div class=\"three-styles-intro\">以紫微看人生结构，以奇门看局势入口，以梅花看事情变化；三式用于交叉观察，不以单一术式下确定结论。</div><div class=\"structure-tabs three-styles-tabs\" role=\"tablist\" aria-label=\"三式合参结构\">'+panes.map(([key,label],i)=>'<button class=\"structure-tab'+(i===0?' active':'')+'\" type=\"button\" data-structure=\"'+key+'\" onclick=\"switchStructureTab(this)\">'+label+'</button>').join('')+'</div><div class=\"structure-panes three-styles-panes\">'+panes.map(([key,,html],i)=>'<div class=\"structure-pane'+(i===0?' active':'')+'\" data-structure=\"'+key+'\" data-card=\"'+key+'\">'+_threeStyleInner(html)+'</div>').join('')+'</div><div class=\"three-styles-note\">合参提示：三式分别回答“底色、时势、变化”。若结果出现差异，优先核对出生信息、具体问题、起局时间与现实证据。</div></div>';
 }
 
 export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue){
@@ -272,18 +272,18 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   H+=renderQuickRead('ming',ctx);
   H+=renderBeginnerBrief('ming',ctx);
 
-  H+=`<div class="glass card-2" data-card="bazi"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div><div><div class="card-tt">四柱八字</div><div class="card-st">${gl} · ${city.n} · ${b.sx}年 · ${b.ny}${b._meta&&b._meta.useTrueSolar?' · 真太阳时':''}</div></div></div>`;
+  H+=`<div class="glass card-2" data-card="bazi"><div class="card-hd"><div><div class="card-tt">四柱八字</div><div class="card-st">${gl} · ${city.n} · ${b.sx}年 · ${b.ny}${b._meta&&b._meta.useTrueSolar?' · 真太阳时':''}</div></div></div>`;
   H+=`<div class="pls">${[{l:'年柱',p:b.Y,s:ss.yg},{l:'月柱',p:b.M,s:ss.mg},{l:'日柱',p:b.D,s:'日元',dm:1},{l:'时柱',p:b.H,s:ss.hg}].map(x=>`<div class="pl ${x.dm?'dm':''}" onclick="this.classList.toggle('open')"><div class="pl-l">${x.l}</div><div class="pl-g">${x.p.g}</div><div class="pl-z" style="color:${WC[ZW[x.p.z]]}">${x.p.z}</div><div class="pl-i"><span class="wdot" style="background:${WC[GW[x.p.g]]}"></span>${GW[x.p.g]} · ${x.s}</div><div class="pl-xd"><div style="padding-top:6px;font-size:.62em;color:var(--c-text-2);line-height:1.7;border-top:1px solid var(--c-border);margin-top:4px">${ZC[x.p.z].map((g,idx)=>`<div style="display:flex;align-items:center;gap:4px"><span class="wdot" style="background:${WC[GW[g]]}"></span><span style="color:var(--c-text-2)">${g}</span><span style="color:var(--ac-dim)">${SS[b.D.g][g]}</span><span style="font-size:.85em;color:var(--c-text-3)">${['主气','中气','余气'][idx]}</span></div>`).join('')}</div></div></div>`).join('')}</div>`;
   H+=`<div class="ig">${[['日主',`${dg}${dw}·${wx.st?'身旺':'身弱'}`],['命格',pa.join('、')],['用神',`<span style="color:${WC[wx.ys]}">${wx.ys}</span>`],['喜神',`<span style="color:${WX.includes(wx.xs)?WC[wx.xs]:'#fff'}">${wx.xs}</span>`],['纳音',b.ny],['四时',`${si.s}令·${siS}`]].map(x=>`<div class="ii"><div class="il">${x[0]}</div><div class="iv">${x[1]}</div></div>`).join('')}</div>`;
   H+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">${getShenShaLabels(b).map(l=>`<span class="sstag" style="background:${l.bg};color:${l.co};border:1px solid ${l.bd}">${l.t}</span>`).join('')}</div>`;
   H+=`</div>`;
 
-  H+=`<div class="glass card-2" data-card="wuxing"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18"/></svg></div><div><div class="card-tt">五行能量模型</div></div></div>`;
+  H+=`<div class="glass card-2" data-card="wuxing"><div class="card-hd"><div><div class="card-tt">五行能量模型</div></div></div>`;
   H+=`${WX.map(w=>{const pc=Math.round(wx.c[w]/wx.t*100);const label=pc>=70?'极强':pc>=55?'偏强':pc>=40?'一般':pc>=25?'偏弱':'不足';return`<div class="wxr"><div class="wxl" style="color:${WC[w]}">${w}</div><div class="wxt"><div class="wxf" style="width:0%;background:${WC[w]}" data-w="${pc}%">${pc}%</div></div><div class="wxv">${pc}% ${label}</div></div>`}).join('')}`;
   H+=`<div class="at" style="margin-top:6px"><p>你属于典型的「<span class="hl">${wx.s}旺型人格</span>」${wx.s==='木'?'，行动力强，但容易精神内耗':wx.s==='火'?'，热情有感染力，但容易急躁':wx.s==='土'?'，稳重可靠，但容易固执':wx.s==='金'?'，果断锐利，但容易冷漠':''}。需要增强<span class="tg">${wx.w}</span>属性以平衡。</p></div></div>`;
 
   const persona=getPersona(dg,wx,wx.st,ss);
-  H+=`<div class="glass card-2" data-card="persona"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><div class="card-tt">人格画像</div><div class="card-st">基于日主、十神分布、入命神煞与五行旺衰推导</div></div></div>`;
+  H+=`<div class="glass card-2" data-card="persona"><div class="card-hd"><div><div class="card-st">基于日主、十神分布、入命神煞与五行旺衰推导</div></div></div>`;
   H+=`<div class="portrait-grid">${Object.entries(persona).map(([k,v])=>`<div class="port-item"><div class="port-label">${k}</div><div class="port-val">${v}</div></div>`).join('')}</div>`;
   // —— 人格标签：十神分布（透干+藏干计数）——
   const _ssc={};
@@ -333,7 +333,7 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   const pathD=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
   const areaD=pathD+` L${pts[pts.length-1][0].toFixed(1)} ${cvH-padB} L${pts[0][0].toFixed(1)} ${cvH-padB} Z`;
   const startYear=by+dy.sa;
-  yYear+=`<div class="glass card-2" data-card="timeline"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div><div><div class="card-tt">人生时间线 · 大运十程</div><div class="card-st">${dy.sa}岁起运 · ${startYear}年入大运 · ${(b.Y.gi%2===0)===(gen==='male')?'顺':'逆'}排</div></div></div>`;
+  yYear+=`<div class="glass card-2" data-card="timeline"><div class="card-hd"><div><div class="card-tt">人生时间线 · 大运十程</div><div class="card-st">${dy.sa}岁起运 · ${startYear}年入大运 · ${(b.Y.gi%2===0)===(gen==='male')?'顺':'逆'}排</div></div></div>`;
   yYear+=`<div class="tl-curve-wrap"><svg viewBox="0 0 ${cvW} ${cvH}" preserveAspectRatio="none" class="tl-curve"><defs><linearGradient id="tlGrad" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--ac)" stop-opacity=".45"/><stop offset="1" stop-color="var(--ac)" stop-opacity="0"/></linearGradient></defs><path d="${areaD}" fill="url(#tlGrad)"/><path d="${pathD}" fill="none" stroke="var(--ac5)" stroke-width="1.5" stroke-linejoin="round"/>${pts.map((p,i)=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${tlData[i].active?3.5:2.2}" fill="${tlData[i].active?'var(--ac)':tlData[i].past?'var(--c-text-4)':'var(--ac5)'}"/>`).join('')}</svg><div class="tl-curve-axis">${tlData.map(t=>`<span class="${t.active?'on':''}">${t.as}</span>`).join('')}</div></div>`;
   yYear+=`<div class="tl-legend"><span><i style="background:var(--ac)"></i>当前大运</span><span><i style="background:var(--c-text-4)"></i>已过</span><span><i style="background:var(--ac5)"></i>未来</span></div>`;
   yYear+=`<div class="tl-list">${tlData.map(t=>{
@@ -384,18 +384,16 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   H+=`<div class="yun-panes">`;
 
   // ===== 年档：当年核心趋势 + 人生时间线（合并掉原"大运时间轴"，十年只呈现一次）=====
-  yYear=`<div class="glass card-1" data-card="trend"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 20h18M6 16V9M10 16V5M14 16V8M18 16V3"/></svg></div><div><div class="card-tt">${CURR_YEAR}年核心趋势</div><div class="card-st">${cLn.g}${cLn.z} ${cLn.sx}年 · ${lnSS}</div></div><button class="card-share" type="button" onclick="TJShareReport()" title="分享命盘摘要卡片" aria-label="分享命盘摘要卡片"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M8 7l4-4 4 4"/></svg></button></div>
+  yYear=`<div class="glass card-1" data-card="trend"><div class="card-hd"><div><div class="card-tt">${CURR_YEAR}年核心趋势</div><div class="card-st">${cLn.g}${cLn.z} ${cLn.sx}年 · ${lnSS}</div></div><button class="card-share" type="button" onclick="TJShareReport()" title="分享命盘摘要卡片" aria-label="分享命盘摘要卡片"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M8 7l4-4 4 4"/></svg></button></div>
 <div class="y-hero">${[{l:'事业',v:cs,c:'var(--c-yellow)'},{l:'财运',v:ws,c:'var(--c-orange)'},{l:'感情',v:ls,c:'var(--c-red)'},{l:'健康',v:hs,c:'var(--c-green)'}].map(x=>`<div class="y-hero-item"><div class="y-hero-label">${x.l}</div><div class="y-hero-stars">${'★★★★★'.split('').map((s,i)=>`<span style="color:${i<Math.round(x.v/20)?x.c:'var(--c-border-2)'}">${s}</span>`).join('')}</div><div class="y-hero-score">${x.v}分</div></div>`).join('')}</div>
 <div class="at"><p>今年<span class="hl">${cLn.g}${cLn.z}</span>年，流年十神为「<span class="tg">${lnSS}</span>」。${cs>72?'整体势能向上，适合主动进取。':'整体以稳为主，厚积薄发。'}当前<span class="hl">${cDy.g}${cDy.z}</span>大运，${dySS.includes('官')?'事业压力与机遇并存':dySS.includes('财')?'财运通道打开':dySS.includes('印')?'适合学习沉淀':''}。</p></div></div>`+yYear;
 
   // ===== 月档：流月 =====
-  const ma=getMonthlyAlert(b,wx);
   const risks=getRiskWarning(b,wx,lnSS,dySS);
   const _av_yun={g:wx.ys==='木'?'翡翠、木质饰品':wx.ys==='火'?'红玛瑙、紫水晶':wx.ys==='土'?'黄水晶、陶瓷':wx.ys==='金'?'白水晶、金属':'黑曜石、海蓝宝',f:wx.ys==='木'?'绿色蔬菜、酸味食物':wx.ys==='火'?'红色食物、苦味茶':wx.ys==='土'?'谷物、根茎类':wx.ys==='金'?'白色食品、百合':'黑色食品、海鲜'};
-  // 严重度评估：决定默认显示哪个子 tab（任一子区如果"高风险"则定位过去）
+  // 严重度评估：高风险时在风险分区标题上点亮红点
   const hasHardRisk=risks.some(r=>!r.safe);
-  const defaultFocus=hasHardRisk?'risk':(ma.risks&&ma.risks.length?'monthly':'risk');
-  yMonth+=`<div class="glass card-2" data-card="liuyue"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 20h18M6 16V9M10 16V5M14 16V8M18 16V3"/></svg></div><div><div class="card-tt">${CURR_YEAR}年流月</div><div class="card-st">点击月份查看详解</div></div></div><div class="lym-grid">${liuyue.map((lm,idx)=>{const now=new Date();const curMonth=now.getMonth();const isCur=(idx===curMonth);const lmSS=SS[dg][lm.gz.charAt(0)];return`<div class="lym-item ${isCur?'current':''}" onclick="openMonthModal(${idx},'${lm.name}','${lm.gz}','${lm.jq}','${lmSS}')"><div class="lym-name">${lm.name}</div><div class="lym-gz">${lm.gz}</div><div class="lym-jq">${lm.jq}</div><div class="lym-ss">${lmSS}</div></div>`}).join('')}</div></div>`;
+  yMonth+=`<div class="glass card-2" data-card="liuyue"><div class="card-hd"><div><div class="card-tt">${CURR_YEAR}年流月</div><div class="card-st">点击月份查看详解</div></div></div><div class="lym-grid">${liuyue.map((lm,idx)=>{const now=new Date();const curMonth=now.getMonth();const isCur=(idx===curMonth);const lmSS=SS[dg][lm.gz.charAt(0)];return`<div class="lym-item ${isCur?'current':''}" onclick="openMonthModal(${idx},'${lm.name}','${lm.gz}','${lm.jq}','${lmSS}')"><div class="lym-name">${lm.name}</div><div class="lym-gz">${lm.gz}</div><div class="lym-jq">${lm.jq}</div><div class="lym-ss">${lmSS}</div></div>`}).join('')}</div></div>`;
 
   // ===== 周档：本周运势（流日引擎逐日推演汇总）=====
   try{
@@ -406,35 +404,48 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
     const bestCopy=week.best.tone==='rest'||week.best.tone==='friction'
       ?'这一天节奏相对友好，把最需要推进的事放在这里。'
       :'这一天与命盘相合度最高，适合安排重要沟通、决策或启动事项。';
-    yWeek+=`<div class="glass card-1" data-card="weekFortune"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 9h18"/></svg></div><div><div class="card-tt">本周运势</div><div class="card-st">${fmt(week.start)} – ${fmt(week.end)} · 逐日干支 × 你的命盘</div></div><button class="card-share" type="button" onclick="TJShareWeek()" title="分享本周运势卡片" aria-label="分享本周运势卡片"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M8 7l4-4 4 4"/></svg></button></div>`;
+    yWeek+=`<div class="glass card-1" data-card="weekFortune"><div class="card-hd"><div><div class="card-tt">本周运势</div><div class="card-st">${fmt(week.start)} – ${fmt(week.end)} · 逐日干支 × 你的命盘</div></div><button class="card-share" type="button" onclick="TJShareWeek()" title="分享本周运势卡片" aria-label="分享本周运势卡片"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M8 7l4-4 4 4"/></svg></button></div>`;
     yWeek+=`<div class="wk-grid">${week.days.map(x=>`<div class="wk-day ${x.isToday?'is-today':''} ${toneCls[x.tone]||''}"><div class="wk-day-label">${x.isToday?'今天':x.label}</div><div class="wk-day-date">${x.short}</div><div class="wk-day-gz">${x.day.gz}</div><div class="wk-day-tone">${TONE_COPY[x.tone]?TONE_COPY[x.tone].label:x.tone}</div><div class="wk-day-energy">${x.energy}</div></div>`).join('')}</div>`;
     yWeek+=`<div class="wk-highlights"><div class="wk-hl wk-hl-good"><span class="wk-hl-k">相对顺利</span><span class="wk-hl-v">${week.best.label}（${week.best.short} · ${week.best.day.gz}）</span></div><div class="wk-hl wk-hl-warn"><span class="wk-hl-k">多留余量</span><span class="wk-hl-v">${week.worst.label}（${week.worst.short} · ${week.worst.day.gz}）</span></div></div>`;
     yWeek+=`<div class="at"><p>${week.summary}${bestCopy}</p></div>`;
     yWeek+=`<div class="wk-foot">周运由七天流日逐日推演后汇总，与每日日签口径一致；用于安排节奏，不预测具体事件。</div></div>`;
   }catch(e){ console.warn('weekFortune',e); }
 
-  // ===== 日档：今日建议（含当下关注 + 宜忌 + 查看日签）=====
-  yDay+=`<div class="glass card-1 focus-card" data-card="todayAdv"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div><div><div class="card-tt">今日建议</div><div class="card-st">${todayJ}${_advDomain?' · '+_advDomain:''}</div></div><button class="card-share" type="button" onclick="TJShareRiQian()" title="分享今日卡片" aria-label="分享今日卡片"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M8 7l4-4 4 4"/></svg></button></div>`;
-  yDay+=`<div class="adv-grid">`;
-  yDay+=`<div class="adv-card"><div class="adv-hd">宜</div><div class="adv-body">${_advYiJi.yi.map(x=>`<span class="adv-tag yi">${x}</span>`).join('')}</div></div>`;
-  yDay+=`<div class="adv-card"><div class="adv-hd">忌</div><div class="adv-body">${_advYiJi.ji.map(x=>`<span class="adv-tag ji">${x}</span>`).join('')}</div></div>`;
-  yDay+=`<div class="adv-card"><div class="adv-hd">职业建议</div><div class="adv-body">适合靠近<span class="hl">${wx.ys}</span>属性领域：<br>${wx.ys==='木'?'内容表达、品牌、教育、园艺':wx.ys==='火'?'能源、传媒、餐饮、互联网':wx.ys==='土'?'地产、金融、建筑、农业':wx.ys==='金'?'法律、机械、珠宝、精密制造':'贸易、物流、科技、旅游'}</div></div>`;
-  yDay+=`</div>`;
-  yDay+=`<div class="focus-tabs">
-    <button class="focus-tab ${defaultFocus==='monthly'?'active':''}" data-sub="monthly" onclick="focusSwitchTab(this)"><span class="focus-tab-ic"></span> 本月${ma.risks&&ma.risks.length?'<span class="focus-dot"></span>':''}</button>
-    <button class="focus-tab ${defaultFocus==='risk'?'active':''}" data-sub="risk" onclick="focusSwitchTab(this)"><span class="focus-tab-ic">势</span> 风险${hasHardRisk?'<span class="focus-dot red"></span>':''}</button>
-    <button class="focus-tab ${defaultFocus==='health'?'active':''}" data-sub="health" onclick="focusSwitchTab(this)"><span class="focus-tab-ic"></span> 健康</button>
+  // ===== 日档：今日建议（时段 · 宜忌 · 职业 · 风险 · 健康 · 日签入口）=====
+  // 当前时段信息由模板直接生成（原 organize 阶段注入的 .flow-now 已并入此处）
+  const _nowHour=new Date().getHours(),_nowIdx=Math.floor(((_nowHour+1)%24)/2);
+  const _nowZhi=DZ[_nowIdx];
+  const _nowFit=(_nowHour>=9&&_nowHour<18)?'沟通、推进、处理要事':'复盘、整理、放松恢复';
+  const _favHour=wx.ys==='木'?'3–7 点':wx.ys==='火'?'9–13 点':wx.ys==='土'?'7–9 点或 13–15 点':wx.ys==='金'?'15–19 点':'21–1 点';
+  yDay+=`<div class="glass card-1 focus-card" data-card="todayAdv"><div class="card-hd"><div><div class="card-tt">今日建议 · 当下关注</div><div class="card-st">${todayJ}${_advDomain?' · '+_advDomain:''}</div></div><button class="card-share" type="button" onclick="TJShareRiQian()" title="分享今日卡片" aria-label="分享今日卡片"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M8 7l4-4 4 4"/></svg></button></div>`;
+  // 当前时段横幅
+  yDay+=`<div class="td-now">
+    <div class="td-now-item"><span class="td-k">当前时段</span><b>${_nowZhi}时</b></div>
+    <div class="td-now-item"><span class="td-k">适合</span><b>${_nowFit}</b></div>
+    <div class="td-now-item"><span class="td-k">有利时段</span><b>${_favHour}</b></div>
   </div>`;
-  yDay+=`<div class="focus-pane ${defaultFocus==='monthly'?'active':''}" data-sub="monthly">
-    <div class="at"><p>${ma.msg}</p></div>
-    ${ma.risks&&ma.risks.length?`<div class="risk-row" style="margin-top:6px">${ma.risks.map(r=>`<span class="risk-pill">${r}</span>`).join('')}</div>`:'<div class="focus-empty">本月暂无突出提醒</div>'}
+  // 宜 / 忌 双列
+  yDay+=`<div class="td-yiji">
+    <div class="td-yiji-col"><div class="td-yiji-hd yi">宜</div><div class="td-yiji-body">${_advYiJi.yi.map(x=>`<span class="adv-tag yi">${x}</span>`).join('')}</div></div>
+    <div class="td-yiji-col"><div class="td-yiji-hd ji">忌</div><div class="td-yiji-body">${_advYiJi.ji.map(x=>`<span class="adv-tag ji">${x}</span>`).join('')}</div></div>
   </div>`;
-  yDay+=`<div class="focus-pane ${defaultFocus==='risk'?'active':''}" data-sub="risk">
+  // 职业建议
+  yDay+=`<div class="td-career"><span class="td-k">职业建议</span><span class="td-career-v">适合靠近<span class="hl">${wx.ys}</span>属性领域：${wx.ys==='木'?'内容表达、品牌、教育、园艺':wx.ys==='火'?'能源、传媒、餐饮、互联网':wx.ys==='土'?'地产、金融、建筑、农业':wx.ys==='金'?'法律、机械、珠宝、精密制造':'贸易、物流、科技、旅游'}</span></div>`;
+  // 风险提醒
+  yDay+=`<div class="td-sec"><div class="td-sec-hd">风险提醒${hasHardRisk?'<span class="focus-dot red"></span>':''}</div>
     <div class="risk-row">${risks.map(r=>`<span class="risk-pill ${r.safe?'safe':''}">${r.t}</span>`).join('')}</div>
-    <div class="at" style="font-size:.8em;margin-top:6px"><p>${risks.map(r=>`· ${r.t}：${r.d}`).join('<br>')}</p></div>
+    <div class="td-sec-list">${risks.map(r=>`<div>· <b>${r.t}</b>：${r.d}</div>`).join('')}</div>
   </div>`;
-  yDay+=`<div class="focus-pane ${defaultFocus==='health'?'active':''}" data-sub="health">
-    <div class="at"><p>最弱五行<span class="hl">${wx.w}</span>，重点关注<span class="tc">${HM[wx.w].o}</span>。${HM[wx.w].a}。</p><p>幸运色：<span class="hl">${av.c}</span>　·　有利方位：<span class="hl">${av.d}</span>　·　吉时：<span class="hl">${av.t}</span></p><p>用神饰品推荐：<span class="hl">${_av_yun.g}</span>　·　日常多食<span class="hl">${_av_yun.f}</span>。</p></div>
+  // 健康关注
+  yDay+=`<div class="td-sec"><div class="td-sec-hd">健康关注</div>
+    <div class="td-sec-lead">最弱五行<span class="hl">${wx.w}</span>，重点关注<span class="tc">${HM[wx.w].o}</span>。${HM[wx.w].a}。</div>
+    <div class="td-kv">
+      <div><span>幸运色</span><b>${av.c}</b></div>
+      <div><span>有利方位</span><b>${av.d}</b></div>
+      <div><span>吉时</span><b>${av.t}</b></div>
+      <div><span>用神饰品</span><b>${_av_yun.g}</b></div>
+      <div><span>日常多食</span><b>${_av_yun.f}</b></div>
+    </div>
   </div>`;
   yDay+=`<div style="text-align:center;padding:8px 0 4px"><button type="button" onclick="showRiQian()" style="padding:8px 20px;border-radius:999px;border:1px solid var(--c-border);background:var(--c-surface-2);color:var(--ac-text);font-size:.78em;cursor:pointer;transition:background .2s" onmouseover="this.style.background='var(--ac3)'" onmouseout="this.style.background='var(--c-surface-2)'">查看今日日签 · 宜忌 / 干支 / 吉凶</button></div></div>`;
 
@@ -457,17 +468,17 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   H+=`<div class="sys-block sys-eastern">`;
   H+=renderQuickRead('rel',ctx);
   H+=renderBeginnerBrief('rel',ctx);
-  H+=`<div class="glass card-1" data-card="loveMode"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><div><div class="card-tt">感情模式</div></div></div>`;
+  H+=`<div class="glass card-1" data-card="loveMode"><div class="card-hd"><div><div class="card-tt">感情模式</div></div></div>`;
   H+=`<div class="rel-mode"><div class="rel-mode-item hl">${rmode}</div></div>`;
   H+=`<div class="at"><p>你的感情底色带有「<span class="hl">${rmode}</span>」的特质。${P[dg].love}。在亲密关系中，${wx.st?'你习惯主导节奏，需注意给对方留出表达空间':'你习惯配合与迁就，需建立清晰的自我边界'}。</p></div></div>`;
 
-  H+=`<div class="glass card-2" data-card="loveMatch"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg></div><div><div class="card-tt">适合对象</div></div></div>`;
+  H+=`<div class="glass card-2" data-card="loveMatch"><div class="card-hd"><div><div class="card-tt">适合对象</div></div></div>`;
   H+=`<div class="at"><p>从五行互补与十神配合来看，你更适合：<span class="hl">${stype}</span>。</p><p>对方的日主属性以<span class="tg">${wx.ys==='木'?'土金':wx.ys==='火'?'金水':wx.ys==='土'?'木水':wx.ys==='金'?'火木':'火土'}</span>为佳，能够补足你的用神能量。</p></div></div>`;
 
-  H+=`<div class="glass card-2" data-card="loveRisk"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div><div><div class="card-tt">关系风险</div></div></div>`;
+  H+=`<div class="glass card-2" data-card="loveRisk"><div class="card-hd"><div><div class="card-tt">关系风险</div></div></div>`;
   H+=`<div class="risk-row">${rrisks.map(r=>`<span class="risk-pill">${r}</span>`).join('')}</div></div>`;
 
-  H+=`<div class="glass card-1 layoff-card" data-card="layoffRisk"><div class="card-hd"><div class="card-ic" style="color:var(--c-yellow);background:color-mix(in srgb,var(--c-yellow) 12%,transparent);border-color:color-mix(in srgb,var(--c-yellow) 24%,transparent)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M3 12h18M10 12v2h4v-2"/></svg></div><div><div class="card-tt">裁员风险检测</div><div class="card-st">现实职场信号 × 当前大运流年 · 评估未来3—6个月</div></div></div>`;
+  H+=`<div class="glass card-1 layoff-card" data-card="layoffRisk"><div class="card-hd"><div><div class="card-tt">裁员风险检测</div><div class="card-st">现实职场信号 × 当前大运流年 · 评估未来3—6个月</div></div></div>`;
   H+=`<div class="layoff-method"><div class="layoff-method-title">检测逻辑：现实证据优先，命理只作趋势参考</div><div class="layoff-method-weight">现实信号 82% · 命理趋势 18%</div></div>`;
   H+=`<div class="layoff-trend"><div class="layoff-trend-score">${layoffTrend.score}</div><div class="layoff-trend-copy"><div class="layoff-trend-title">命理职场趋势：${layoffTrend.label}</div><div class="layoff-trend-text">${layoffTrend.reasons.length?layoffTrend.reasons.slice(0,2).join('；'):'当前周期未见明显职场冲击'} · 仅占综合评估18%</div></div></div>`;
   H+=`<div class="layoff-form">
@@ -484,7 +495,7 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   </div>`;
   H+=`<div class="cta-row" style="margin-top:8px"><button class="cta" style="padding:12px 28px;font-size:.92em;letter-spacing:1px" onclick="calcLayoffRisk()">开始检测</button></div><div id="layoffResult" aria-live="polite"></div><div class="layoff-disclaimer">本工具用于风险筛查与行动规划，不构成法律、职业或投资建议；若已收到正式通知，请以劳动合同和当地法律为准。</div></div>`;
 
-  H+=`<div class="glass card-1" data-card="relAi"><div class="card-hd"><div class="card-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div><div class="card-tt">八字合盘</div><div class="card-st">为对方真实排盘，逐柱比对日主、五行与干支关系</div></div></div>`;
+  H+=`<div class="glass card-1" data-card="relAi"><div class="card-hd"><div><div class="card-tt">八字合盘</div><div class="card-st">为对方真实排盘，逐柱比对日主、五行与干支关系</div></div></div>`;
   H+=`<div class="hh-form" id="relForm"><div><div class="fd" style="margin-bottom:10px"><label>对方出生日期</label><input type="date" id="rDate" value="1992-08-20"></div><div class="fd" style="margin-bottom:10px"><label>对方出生时辰（可不填）</label><select id="rHour"><option value="">时辰不详 · 用三柱比对</option><option value="0">子 23:00–00:59</option><option value="1">丑 01:00–02:59</option><option value="2">寅 03:00–04:59</option><option value="3">卯 05:00–06:59</option><option value="4">辰 07:00–08:59</option><option value="5">巳 09:00–10:59</option><option value="6">午 11:00–12:59</option><option value="7">未 13:00–14:59</option><option value="8">申 15:00–16:59</option><option value="9">酉 17:00–18:59</option><option value="10">戌 19:00–20:59</option><option value="11">亥 21:00–22:59</option></select></div></div></div>`;
   H+=`<div class="cta-row" style="margin-top:10px"><button class="cta" style="padding:12px 28px;font-size:.95em;letter-spacing:1px" onclick="calcRelation()">开始合盘</button></div>`;
   H+=`<div id="relResult" style="margin-top:10px"></div></div>`;
@@ -621,7 +632,7 @@ export function organizeMasterReportLayout(ctx){
   if(bazi&&wuxing&&persona&&!ming.querySelector('.master-structure')){
     const structure=document.createElement('section');
     structure.className='glass card-1 master-structure';structure.dataset.card='structure';
-    structure.innerHTML='<div class="card-hd"><div class="card-ic">⌘</div><div><div class="card-tt">命盘结构</div><div class="card-st">四柱、五行、细盘与十神关系</div></div></div><div class="structure-tabs" role="tablist"><button class="structure-tab active" type="button" data-structure="pillars" onclick="switchStructureTab(this)">四柱</button><button class="structure-tab" type="button" data-structure="elements" onclick="switchStructureTab(this)">五行</button><button class="structure-tab" type="button" data-structure="detail" onclick="switchStructureTab(this)">细盘</button><button class="structure-tab" type="button" data-structure="gods" onclick="switchStructureTab(this)">十神</button></div><div class="structure-panes"></div>';
+    structure.innerHTML='<div class="structure-tabs" role="tablist"><button class="structure-tab active" type="button" data-structure="pillars" onclick="switchStructureTab(this)">四柱</button><button class="structure-tab" type="button" data-structure="elements" onclick="switchStructureTab(this)">五行</button><button class="structure-tab" type="button" data-structure="detail" onclick="switchStructureTab(this)">细盘</button><button class="structure-tab" type="button" data-structure="gods" onclick="switchStructureTab(this)">十神</button></div><div class="structure-panes"></div>';
     const grid=structure.querySelector('.structure-panes');
     const makePane=(key,node,active=false)=>{const pane=document.createElement('div');pane.className='structure-pane'+(active?' active':'');pane.dataset.structure=key;node.classList.add('structure-subcard');node.setAttribute('data-no-collapse','1');pane.appendChild(node);grid.appendChild(pane);};
     makePane('pillars',bazi,true);makePane('elements',wuxing);
@@ -682,7 +693,7 @@ export function organizeMasterReportLayout(ctx){
     const interactionText=interactionBits.length?interactionBits.join('；'):'本命四柱未见显著合冲刑害记录';
     const yongReasons=(yong.reasons||[]).slice(0,3).join('；')||'以命局平衡与实际表现综合判断';
     const chain=document.createElement('section');chain.className='glass card-2 reasoning-card';chain.dataset.card='reasoning';
-    chain.innerHTML='<div class="card-hd"><div class="card-ic">⌘</div><div><div class="card-tt">命局判读依据</div><div class="card-st">按日主、月令、旺衰、十神与干支互动逐项复核</div></div></div>'
+    chain.innerHTML='<div class="card-hd"><div><div class="card-st">按日主、月令、旺衰、十神与干支互动逐项复核</div></div></div>'
       +'<div class="reason-chain professional-chain"><span>日主定位</span><i>→</i><span>月令与旺衰</span><i>→</i><span>扶抑／调候</span><i>→</i><span>十神与互动</span><i>→</i><span>用神取向</span></div>'
       +'<div class="reason-evidence"><span>日主：<b>'+ctx.dg+ctx.dw+'</b></span><span>月令：<b>'+ctx.b.M.z+'月 · '+ctx.si.s+'令</b></span><span>格局：<b>'+((pattern.main)||((ctx.pa&&ctx.pa.join('、'))||'待综合'))+'</b></span><span>主用：<b style="color:'+WC[(yong.primary||ctx.wx.ys)]+'">'+(yong.primary||ctx.wx.ys)+'</b></span></div>'
       +'<div class="reason-list professional-reason-list">'
@@ -700,17 +711,6 @@ export function organizeMasterReportLayout(ctx){
   const trend=yun.querySelector('[data-card="trend"]'),timeline=yun.querySelector('[data-card="timeline"]'),focus=yun.querySelector('[data-card="todayAdv"]'),months=yun.querySelector('[data-card="liuyue"]');
   if(trend){const title=trend.querySelector('.card-tt');if(title)title.textContent='当年运势';}
   if(timeline){const tt=timeline.querySelector('.card-tt');if(tt)tt.textContent='人生时间线';}
-  if(focus){
-    const title=focus.querySelector('.card-tt');if(title)title.textContent='今日建议 · 当下关注';
-    const st=focus.querySelector('.card-st');if(st)st.textContent='宜忌 · 近期提醒 · 健康关注';
-    if(!focus.querySelector('.flow-now')){
-      const hour=new Date().getHours(),hourIndex=Math.floor(((hour+1)%24)/2);
-      const hourZhi=DZ[hourIndex],fav=ctx.wx.ys==='木'?'3–7 点':ctx.wx.ys==='火'?'9–13 点':ctx.wx.ys==='土'?'7–9 点或 13–15 点':ctx.wx.ys==='金'?'15–19 点':'21–1 点';
-      const flow=document.createElement('div');flow.className='flow-now';
-      flow.innerHTML='<div><span>当前时段</span><b>'+hourZhi+'时</b></div><div><span>适合安排</span><b>'+((hour>=9&&hour<18)?'沟通、推进、处理要事':'复盘、整理、放松恢复')+'</b></div><div><span>有利时段</span><b>'+fav+'</b></div>';
-      focus.querySelector('.focus-tabs').insertAdjacentElement('beforebegin',flow);
-    }
-  }
   [trend,timeline,focus,months].filter(c=>c&&!c.closest('.yun-pane')).forEach(card=>yun.appendChild(card));
 
   // 关系页：以关系速读为入口，补齐亲密、朋友、亲人三类关系画像。
@@ -728,11 +728,11 @@ export function organizeMasterReportLayout(ctx){
     const labels=(ctx.shensha||[]).map(x=>x.n||x.t||x).join('、');
     const peach=/(桃花|红艳|天喜|咸池)/.test(labels)?'有桃花类辅助信息':'未见明显桃花类辅助信息';
     const profile=document.createElement('section');profile.className='glass card-1 relation-profile';profile.dataset.card='intimacy';
-    profile.innerHTML='<div class="card-hd"><div class="card-ic">亲</div><div><div class="card-tt">亲密关系画像</div><div class="card-st">你的表达方式、关系需求与相处建议</div></div></div><div class="relation-block"><div><span>关系模式</span><b>'+style+'</b></div><p>'+((p.love)||'重视真实回应与长期陪伴，希望在关系中获得理解与安全感。')+'</p></div><div class="relation-grid"><div><span>你的倾向</span><p>'+strong+'。</p></div><div><span>更适合的关系</span><p>尊重节奏、愿意沟通，也能把承诺落实到行动。</p></div></div><div class="relation-data"><span>命盘依据</span><b>'+partnerLabel+'：'+partnerPos+'</b><b>关系辅助：'+peach+'</b><b>当前感情评分：'+ctx.ls+' / 100</b></div><div class="relation-tip">相处建议：先表达感受与需求，再讨论解决方案；不要用猜测代替沟通。</div>';
+    profile.innerHTML='<div class="card-hd"><div><div class="card-tt">亲密关系画像</div><div class="card-st">你的表达方式、关系需求与相处建议</div></div></div><div class="relation-block"><div><span>关系模式</span><b>'+style+'</b></div><p>'+((p.love)||'重视真实回应与长期陪伴，希望在关系中获得理解与安全感。')+'</p></div><div class="relation-grid"><div><span>你的倾向</span><p>'+strong+'。</p></div><div><span>更适合的关系</span><p>尊重节奏、愿意沟通，也能把承诺落实到行动。</p></div></div><div class="relation-data"><span>命盘依据</span><b>'+partnerLabel+'：'+partnerPos+'</b><b>关系辅助：'+peach+'</b><b>当前感情评分：'+ctx.ls+' / 100</b></div><div class="relation-tip">相处建议：先表达感受与需求，再讨论解决方案；不要用猜测代替沟通。</div>';
     const friends=document.createElement('section');friends.className='glass card-1 relation-profile';friends.dataset.card='friends';
-    friends.innerHTML='<div class="card-hd"><div class="card-ic">友</div><div><div class="card-tt">朋友关系</div><div class="card-st">社交风格、合作边界与值得经营的人际连接</div></div></div><div class="relation-block"><div><span>社交底色</span><b>'+((p.social)||'重视可靠和长期互信，倾向在熟悉的人群中建立深度连接。')+'</b></div></div><div class="relation-grid"><div><span>你的优势</span><p>'+((ctx.wx.st)?'愿意出面承担、在团队中有推动力。':'善于倾听和协调，能照顾不同人的感受。')+'</p></div><div><span>需要留意</span><p>'+((ctx.wx.st)?'别把所有事都扛下来，合作前先明确分工。':'别因不想拒绝而透支自己，边界清晰反而更长久。')+'</p></div></div><div class="relation-data"><span>命盘依据</span><b>比劫（同辈 / 合作）：'+friendPos+'</b><b>五行状态：'+(ctx.wx.st?'自身能量偏强，合作中易主导':'自身能量偏弱，更适合借力协作')+'</b><b>当前事业评分：'+ctx.cs+' / 100</b></div><div class="relation-tip">经营建议：优先维系能互相支持、价值观接近的朋友；金钱与合作事项提前说清规则。</div>';
+    friends.innerHTML='<div class="card-hd"><div><div class="card-tt">朋友关系</div><div class="card-st">社交风格、合作边界与值得经营的人际连接</div></div></div><div class="relation-block"><div><span>社交底色</span><b>'+((p.social)||'重视可靠和长期互信，倾向在熟悉的人群中建立深度连接。')+'</b></div></div><div class="relation-grid"><div><span>你的优势</span><p>'+((ctx.wx.st)?'愿意出面承担、在团队中有推动力。':'善于倾听和协调，能照顾不同人的感受。')+'</p></div><div><span>需要留意</span><p>'+((ctx.wx.st)?'别把所有事都扛下来，合作前先明确分工。':'别因不想拒绝而透支自己，边界清晰反而更长久。')+'</p></div></div><div class="relation-data"><span>命盘依据</span><b>比劫（同辈 / 合作）：'+friendPos+'</b><b>五行状态：'+(ctx.wx.st?'自身能量偏强，合作中易主导':'自身能量偏弱，更适合借力协作')+'</b><b>当前事业评分：'+ctx.cs+' / 100</b></div><div class="relation-tip">经营建议：优先维系能互相支持、价值观接近的朋友；金钱与合作事项提前说清规则。</div>';
     const family=document.createElement('section');family.className='glass card-1 relation-profile';family.dataset.card='family';
-    family.innerHTML='<div class="card-hd"><div class="card-ic">家</div><div><div class="card-tt">亲人关系</div><div class="card-st">家庭互动、责任感与更舒服的沟通方式</div></div></div><div class="relation-block"><div><span>家庭互动</span><b>'+((ctx.wx.st)?'你容易承担家庭中的责任与期待，也会希望自己的决定被理解。':'你很在意家庭氛围与亲人的感受，习惯先照顾整体和谐。')+'</b></div></div><div class="relation-grid"><div><span>相处优势</span><p>重视情义和长期陪伴，遇到重要事情愿意为家人投入时间。</p></div><div><span>成长课题</span><p>'+((ctx.wx.st)?'练习在承担之前先沟通边界，不必独自解决所有问题。':'练习直接表达自己的想法，不必为了和气一直压下需求。')+'</p></div></div><div class="relation-data"><span>命盘依据</span><b>印星（长辈 / 支持）：'+familyPos+'</b><b>月令状态：'+ctx.si.s+'令 · '+ctx.si.st+'</b><b>当前健康评分：'+ctx.hs+' / 100</b></div><div class="relation-tip">沟通建议：谈重要议题时先确认彼此关心的目标，再讨论具体做法，减少“谁对谁错”的拉扯。</div>';
+    family.innerHTML='<div class="card-hd"><div><div class="card-tt">亲人关系</div><div class="card-st">家庭互动、责任感与更舒服的沟通方式</div></div></div><div class="relation-block"><div><span>家庭互动</span><b>'+((ctx.wx.st)?'你容易承担家庭中的责任与期待，也会希望自己的决定被理解。':'你很在意家庭氛围与亲人的感受，习惯先照顾整体和谐。')+'</b></div></div><div class="relation-grid"><div><span>相处优势</span><p>重视情义和长期陪伴，遇到重要事情愿意为家人投入时间。</p></div><div><span>成长课题</span><p>'+((ctx.wx.st)?'练习在承担之前先沟通边界，不必独自解决所有问题。':'练习直接表达自己的想法，不必为了和气一直压下需求。')+'</p></div></div><div class="relation-data"><span>命盘依据</span><b>印星（长辈 / 支持）：'+familyPos+'</b><b>月令状态：'+ctx.si.s+'令 · '+ctx.si.st+'</b><b>当前健康评分：'+ctx.hs+' / 100</b></div><div class="relation-tip">沟通建议：谈重要议题时先确认彼此关心的目标，再讨论具体做法，减少“谁对谁错”的拉扯。</div>';
     // 旧关系工具不纳入新的四段式主阅读流，保留数据但不干扰本页结构。
     // 旧关系工具不纳入四段式主阅读流；但「八字合盘」是真实排盘功能，保留并置于画像之后。
     rel.querySelectorAll('[data-card="loveMode"],[data-card="loveMatch"],[data-card="loveRisk"],[data-card="layoffRisk"]').forEach(el=>el.remove());
@@ -742,6 +742,47 @@ export function organizeMasterReportLayout(ctx){
     profile.insertAdjacentElement('afterend',friends);friends.insertAdjacentElement('afterend',family);
     if(relAiCard)family.insertAdjacentElement('afterend',relAiCard);
   }
+  // —— 三分区统一为「运势页」的卡片排列形式：常驻速读 + 横向标签栏 + 一次一张卡 ——
+  // 命盘：结构 / 人格 / 三式 / 判读依据；关系：亲密 / 朋友 / 亲人 / 八字合盘
+  groupSectionCards(ming,'ming',[['structure','命盘结构'],['persona','人格画像'],['three-styles','三式参合'],['reasoning','判读依据']]);
+  groupSectionCards(rel,'rel',[['intimacy','亲密关系'],['friends','朋友'],['family','亲人'],['relAi','八字合盘']]);
+}
+/* 把分区里既有的散排卡片收进与 .yun-tabs 同构的标签组：
+   标签栏吸顶，每个面板只放一张原有卡片（节点原样搬入，事件与子结构不动）。
+   卡片缺失时按实际数量分组，少于 2 张则维持散排。 */
+function groupSectionCards(sec,prefix,entries){
+  if(!sec||sec.querySelector('.'+prefix+'-tabs'))return;
+  const labelOf=Object.fromEntries(entries);
+  const cards=entries.map(([k])=>sec.querySelector('[data-card="'+k+'"]')).filter(Boolean);
+  if(cards.length<2)return;
+  const bar=document.createElement('div');
+  bar.className=prefix+'-tabs';
+  bar.setAttribute('role','tablist');
+  bar.setAttribute('aria-label',prefix==='ming'?'命盘内容分区':'关系内容分区');
+  const panes=document.createElement('div');
+  panes.className=prefix+'-panes';
+  const attr='data-'+prefix;
+  const activate='TJActivate'+(prefix==='ming'?'Ming':'Rel')+'Tab';
+  cards.forEach((card,i)=>{
+    const key=card.dataset.card;
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className=prefix+'-tab'+(i===0?' active':'');
+    btn.setAttribute('role','tab');
+    btn.setAttribute('aria-selected',i===0?'true':'false');
+    btn.setAttribute(attr,key);
+    btn.textContent=labelOf[key]||key;
+    btn.addEventListener('click',()=>{if(typeof window[activate]==='function')window[activate](key);});
+    bar.appendChild(btn);
+    const pane=document.createElement('div');
+    pane.className=prefix+'-pane'+(i===0?' active':'');
+    pane.setAttribute(attr,key);
+    pane.appendChild(card);
+    panes.appendChild(pane);
+  });
+  const anchor=sec.querySelector('.beginner-brief')||sec.querySelector('.qr-card');
+  if(anchor){anchor.insertAdjacentElement('afterend',bar);bar.insertAdjacentElement('afterend',panes);}
+  else{sec.appendChild(bar);sec.appendChild(panes);}
 }
 export function switchStructureTab(btn){
   const card=btn.closest('.master-structure,.three-styles-card');if(!card)return;
@@ -837,7 +878,7 @@ export function calcRelation(){
   const pb=r.partnerChart;
   const partnerGZ=r.partnerPillars.map(k=>pb[k].g+pb[k].z).join(' ');
 
-  let H=`<div class="glass card-2"><div class="card-hd"><div class="card-ic">合</div><div><div class="card-tt">八字合盘结果</div><div class="card-st">日主 · 五行互补 · 干支刑冲合害</div></div></div>`;
+  let H=`<div class="glass card-2"><div class="card-hd"><div><div class="card-tt">八字合盘结果</div><div class="card-st">日主 · 五行互补 · 干支刑冲合害</div></div></div>`;
   H+=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px"><div style="flex:1"><div style="font-size:1.8em;font-weight:600;color:${gColor}">${r.score}<span style="font-size:.5em">分</span></div><div style="font-size:.78em;color:var(--c-text-3)">${label}</div></div><div style="flex:2"><div class="hh-bar"><div class="hh-fill" style="width:0%;background:${gColor}" data-w="${r.score}%"></div></div><div style="font-size:.72em;color:var(--c-text-3);margin-top:6px">${r.counts.he} 处相合 · ${r.counts.chong} 处相冲${r.counts.other?' · '+r.counts.other+' 处刑害':''}</div></div></div>`;
 
   H+=`<div class="ig" style="margin-bottom:10px">`+

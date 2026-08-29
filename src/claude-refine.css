@@ -874,12 +874,6 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
 
 /* ---- 18.5 连接状态：只显示「离线」不解释含义，用户不知还能不能用 ---- */
 .ai-conn-bar { flex-wrap: wrap; row-gap: 2px; }
-.ai-conn-hint {
-  flex: 1 1 100%;
-  font-size: var(--fs-micro);
-  line-height: 1.5;
-  color: var(--c-text-3);
-}
 
 /* ============================================================
    19. 问问大师聊天面板
@@ -1204,3 +1198,9 @@ body .ig-dock.tab-bar { z-index: 210 !important; }
    新手模式要把卡片原样还回 .sec（见 section-tabs.js 的层级契约说明），
    删除掉的标头无法还原，因此改为加 class 隐藏，teardown 时撤销。 */
 .card-hd.sec-head-hidden { display: none !important; }
+
+/* ---- 23 报告分区卡片：彻底移除标题内嵌图标 ----
+   标签页/标题文字本身已标明卡片身份，左侧彩色小方块图标是冗余装饰。
+   用 .sec 作用域：只影响报告三分区内的卡片；
+   新手引导弹窗与分享卡导出里的同名图标不受影响。 */
+.sec .card-hd .card-ic { display: none !important; }

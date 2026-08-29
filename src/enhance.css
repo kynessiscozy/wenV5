@@ -646,7 +646,8 @@ body.home .brand3d{display:block}
 /* ---- 出生信息表单：悬浮面板，浮于按钮上方，不模糊底部 ---- */
 .form-modal{
   position:fixed;left:50%;bottom:170px;z-index:550;
-  transform:translateX(-50%);
+  /* 下移 5% 视口高度：整体位置向下微调，底部锚位语义不变 */
+  transform:translateX(-50%) translateY(5vh);
   width:min(560px,92vw);
   display:none;pointer-events:none;
 }
@@ -818,6 +819,46 @@ body.beginner-mode .yun-tabs{display:none}
 body.beginner-mode .yun-panes{display:none!important}
 /* 速读卡中的跳转链接指向大师版卡片，新手版隐藏 */
 body.beginner-mode .qr-acts{display:none!important}
+
+/* ============================================================
+   命盘 / 关系分区标签：与 .yun-tabs 完全同构
+   （常驻速读 + 吸顶标签栏 + 一次一张卡，卡片同运势页去外框）
+   ============================================================ */
+.ming-panes,.rel-panes{position:relative}
+.ming-pane,.rel-pane{display:none}
+.ming-pane.active,.rel-pane.active{display:block;animation:tjResultPageIn .3s cubic-bezier(.2,.8,.2,1)}
+.ming-pane .glass+.glass,.rel-pane .glass+.glass{margin-top:12px}
+.ming-tabs,.rel-tabs{
+  position:sticky;top:0;z-index:20;
+  display:flex;justify-content:center;gap:0;
+  padding:2px 0 0;margin:2px 0 14px;
+  background:var(--c-bg)!important;
+  border-radius:0;border:0;border-bottom:1px solid var(--c-border);
+}
+.ming-tab,.rel-tab{
+  position:relative;flex:0 0 auto;
+  min-height:40px;padding:0 14px;
+  border:0;border-radius:0;background:transparent!important;
+  color:var(--c-text-3);font:500 .84em var(--sf);letter-spacing:2px;cursor:pointer;
+  transition:color .2s ease;box-shadow:none;
+}
+.ming-tab::after,.rel-tab::after{
+  content:'';position:absolute;left:12px;right:12px;bottom:-1px;
+  height:2px;border-radius:2px 2px 0 0;background:transparent;transition:background .2s ease;
+}
+.ming-tab:hover,.rel-tab:hover{color:var(--c-text-2)}
+.ming-tab.active,.rel-tab.active{color:var(--c-accent-text);font-weight:600}
+.ming-tab.active::after,.rel-tab.active::after{background:var(--c-accent)}
+/* 分区面板内的卡片与运势页一致：去外框 */
+#s-ming .glass,#s-rel .glass{
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+#s-ming .glass::before,#s-ming .glass::after,
+#s-rel .glass::before,#s-rel .glass::after{display:none!important}
+/* 新手版：隐藏分区标签 + 面板（与运势页同规则） */
+body.beginner-mode .ming-tabs,body.beginner-mode .rel-tabs{display:none}
+body.beginner-mode .ming-panes,body.beginner-mode .rel-panes{display:none!important}
 
 /* ============================================================
    改动9：工具页隐藏「最近使用」记录
@@ -2129,10 +2170,6 @@ button:active{transform:scale(.97)}
   margin-bottom: 6px !important;
   font-size: .65em !important;
 }
-.ai-sheet .ai-free-prompt {
-  font-size: .7em !important;
-  line-height: 1.5 !important;
-}
 
 /* ============================================================
    字体大小选项（AI 设置弹窗内）
@@ -2232,3 +2269,67 @@ button:active{transform:scale(.97)}
 @keyframes idFillIn{
   to{fill-opacity:1}
 }
+
+/* ============================================================
+   今日建议卡 · 内容重排版
+   时段横幅 → 宜忌双列 → 职业建议 → 风险提醒 → 健康关注
+   （取消「风险/健康」子标签交互，全部内容平铺直读）
+   ============================================================ */
+/* 当前时段横幅 */
+.td-now{display:flex;flex-wrap:wrap;gap:8px 22px;padding:11px 14px;margin:2px 0 14px;border-radius:12px;background:var(--c-surface-2)}
+.td-now-item{display:flex;align-items:baseline;gap:7px;min-width:0}
+.td-k{font-size:.6em;color:var(--c-text-3);letter-spacing:.5px;flex-shrink:0}
+.td-now-item b{font-size:.82em;color:var(--c-text-hi);font-weight:600;line-height:1.5}
+/* 宜 / 忌 双列 */
+.td-yiji{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.td-yiji-col{padding:12px;border-radius:12px;background:var(--c-surface-2)}
+.td-yiji-hd{font-size:.72em;font-weight:700;letter-spacing:3px;margin-bottom:9px}
+.td-yiji-hd.yi{color:var(--green)}
+.td-yiji-hd.ji{color:var(--red)}
+.td-yiji-body{display:flex;flex-wrap:wrap;gap:6px}
+/* 职业建议 */
+.td-career{display:flex;align-items:baseline;gap:10px;padding:11px 2px;margin-bottom:12px;border-top:1px solid var(--c-border);border-bottom:1px solid var(--c-border)}
+.td-career-v{font-size:.8em;color:var(--c-text);line-height:1.7}
+/* 分区（风险 / 健康） */
+.td-sec{margin-bottom:14px}
+.td-sec-hd{display:flex;align-items:center;gap:6px;font-size:.72em;font-weight:700;letter-spacing:2px;color:var(--c-text-3);margin-bottom:9px}
+.td-sec-lead{font-size:.8em;color:var(--c-text);line-height:1.8;margin-bottom:9px}
+.td-sec .risk-row{margin-bottom:8px}
+.td-sec-list{font-size:.78em;color:var(--c-text-2);line-height:1.9}
+.td-sec-list b{color:var(--c-text);font-weight:600}
+/* 健康键值表 */
+.td-kv{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;padding:10px 12px;border-radius:12px;background:var(--c-surface-2)}
+.td-kv>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.td-kv span{font-size:.6em;color:var(--c-text-3);letter-spacing:.5px}
+.td-kv b{font-size:.78em;color:var(--c-text-hi);font-weight:600;line-height:1.5}
+
+/* ============================================================
+   Dock 问问大师入口：纯光球
+   去掉实心圆片、内圈底色等所有外框，光球图形即按钮本体
+   （本文件在 claude-ui.css 之后加载，同特异性下可覆盖其圆片底色）
+   ============================================================ */
+html[data-theme] body .ig-dock .ai-fab{ background:transparent!important; border:0!important; box-shadow:none!important; }
+html[data-theme] body .ig-dock .ai-fab:hover{ background:transparent!important; filter:brightness(1.1) drop-shadow(0 0 12px color-mix(in srgb,var(--c-accent) 40%,transparent))!important; transform:translateY(-1px) scale(1.05)!important; }
+html[data-theme] body .ig-dock .ai-fab:active{ background:transparent!important; transform:scale(.9)!important; }
+html[data-theme] body .ig-dock .ai-fab .ai-fab-icon{ width:46px!important; height:46px!important; background:transparent!important; border:0!important; box-shadow:none!important; animation:none!important; }
+html[data-theme] body .ig-dock .ai-fab .ai-fab-icon svg{ width:46px!important; height:46px!important; filter:drop-shadow(0 0 10px color-mix(in srgb,var(--c-accent) 40%,transparent)); }
+
+/* ============================================================
+   Dock 光球：渐变跟随主题色（--c-accent，随光球调色盘变化）
+   ============================================================ */
+html[data-theme] .ai-orb-icon #aiOrbGlow stop:nth-child(1){ stop-color:#ffffff; }
+html[data-theme] .ai-orb-icon #aiOrbGlow stop:nth-child(2){ stop-color:color-mix(in srgb, var(--c-accent) 55%, #ffffff); }
+html[data-theme] .ai-orb-icon #aiOrbGlow stop:nth-child(3){ stop-color:var(--c-accent); }
+html[data-theme] .ai-orb-icon #aiOrbGlow stop:nth-child(4){ stop-color:color-mix(in srgb, var(--c-accent) 72%, #1d0d05); }
+html[data-theme] .ai-orb-icon #aiOrbHalo stop:nth-child(1){ stop-color:var(--c-accent); stop-opacity:.55; }
+html[data-theme] .ai-orb-icon #aiOrbHalo stop:nth-child(2){ stop-color:var(--c-accent); stop-opacity:0; }
+html[data-theme] .ig-dock .ai-fab .ai-orb-breath[stroke]{ stroke:color-mix(in srgb, var(--c-accent) 45%, #ffffff); }
+
+/* —— 中心粒子：绕光球中心公转 + 明暗闪烁 —— */
+html[data-theme] .ig-dock .ai-fab .ai-orb-particle{
+  transform-box: view-box;
+  transform-origin: 12px 12.2px;
+  animation: aiParticleOrbit 7s linear infinite, aiParticleTwinkle 2.6s ease-in-out infinite;
+}
+@keyframes aiParticleOrbit{ from{ transform:rotate(0deg) } to{ transform:rotate(360deg) } }
+@keyframes aiParticleTwinkle{ 0%,100%{ opacity:.95 } 50%{ opacity:.4 } }

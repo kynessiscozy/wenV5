@@ -231,6 +231,29 @@ initEvolveUI();
     }
   };
 
+  // 5.6 命盘/关系页：与运势页同构的分区标签切换（命盘：结构/人格/三式/判读；关系：亲密/朋友/亲人/合盘）
+  function activateSecGroup(secId,cls,attr,key){
+    const sec=document.getElementById(secId);if(!sec)return;
+    let found=false;
+    sec.querySelectorAll('.'+cls+'-tab').forEach(t=>{
+      const on=t.getAttribute(attr)===key;
+      t.classList.toggle('active',on);
+      t.setAttribute('aria-selected',on?'true':'false');
+      if(on)found=true;
+    });
+    sec.querySelectorAll('.'+cls+'-pane').forEach(p=>p.classList.toggle('active',p.getAttribute(attr)===key));
+    if(!found)return;
+    // 切换后滚动回标签栏顶部
+    const sc=document.getElementById('p2Scroll');
+    const tabsEl=sec.querySelector('.'+cls+'-tabs');
+    if(sc&&tabsEl){
+      const top=tabsEl.getBoundingClientRect().top-(sc.getBoundingClientRect()?.top||0);
+      if(top<0)sc.scrollBy({top,behavior:'smooth'});
+    }
+  }
+  window.TJActivateMingTab=function(key){activateSecGroup('s-ming','ming','data-ming',key);};
+  window.TJActivateRelTab=function(key){activateSecGroup('s-rel','rel','data-rel',key);};
+
   // 6. 档案菜单切换（使用 IndexedDB）
   window.TJToggleProfileMenu=async function(){
     const menu=document.getElementById('p2ProfileMenu');
@@ -979,57 +1002,19 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 });
 
-/* ====== 卡片折叠功能 ====== */
+/* ====== 卡片常开 ======
+   分区标签一次只显示一张卡片，折叠按钮与折叠态已无意义。
+   不再注入折叠按钮；进入报告时清理历史会话可能残留的
+   折叠按钮/折叠态标记，保证卡片始终完整展开。 */
 (function(){
-  // —— 默认折叠：本地存储记录"用户已展开的卡片" ——
-  const LS_KEY='tj_expanded_cards';
-  function loadExpanded(){
-    try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]');}catch(e){return [];}
-  }
-  function saveExpanded(arr){
-    try{localStorage.setItem(LS_KEY,JSON.stringify(arr));}catch(e){}
-  }
-  // 给所有 .glass.card-2 自动注入折叠按钮（card-1 默认不折叠 = 主信息）
   function injectToggles(){
-    const expanded=loadExpanded();
-    document.querySelectorAll('#page2 .glass.card-2[data-card]:not([data-collapsible]):not([data-no-collapse])').forEach(el=>{
+    document.querySelectorAll('#page2 .glass[data-card]').forEach(el=>{
+      el.classList.remove('collapsed');
+      el.removeAttribute('data-collapsible');
       const hd=el.querySelector('.card-hd');
-      if(!hd)return;
-      const btn=document.createElement('button');
-      btn.className='card-toggle';
-      btn.type='button';
-      btn.title='折叠/展开';
-      btn.setAttribute('aria-label','折叠或展开这张卡片');
-      btn.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>';
-      hd.appendChild(btn);
-      el.setAttribute('data-collapsible','1');
-      const onToggle=function(e){
-        if(e.target.closest('button:not(.card-toggle),a,input,select,svg.no-toggle'))return;
-        toggleCard(el);
-      };
-      btn.addEventListener('click',e=>{e.stopPropagation();toggleCard(el);});
-      hd.style.cursor='pointer';
-      hd.addEventListener('click',onToggle);
-      // —— 默认折叠：只有用户曾展开过的卡片才保持展开 ——
-      const key=el.getAttribute('data-card');
-      if(!expanded.includes(key))el.classList.add('collapsed');
-      // 折叠状态需要暴露给辅助技术，否则读屏用户不知道内容是收起的
-      btn.setAttribute('aria-expanded', el.classList.contains('collapsed')?'false':'true');
+      const btn=el.querySelector('.card-toggle');
+      if(btn){btn.remove();if(hd){hd.style.cursor='';const clone=hd.cloneNode(true);hd.replaceWith(clone);}}
     });
-  }
-  function toggleCard(el){
-    const key=el.getAttribute('data-card');
-    el.classList.toggle('collapsed');
-    const tg=el.querySelector('.card-toggle');
-    if(tg)tg.setAttribute('aria-expanded', el.classList.contains('collapsed')?'false':'true');
-    if(!key)return;
-    let list=loadExpanded();
-    if(el.classList.contains('collapsed')){
-      list=list.filter(k=>k!==key);
-    }else{
-      if(!list.includes(key))list.push(key);
-    }
-    saveExpanded(list);
   }
   window._injectCardToggles=injectToggles;
 })();

@@ -492,7 +492,7 @@ export function renderWesternAstrologySection(ctx) {
   // 视觉化本命星盘圆盘大卡 (Visual Natal Wheel)
   H += '<div class="glass card-2 western-card" data-card="astro-core" data-system="western">' +
     '<div class="card-hd">' +
-      '<div class="card-ic">' + getWesternSvgIcon('sun', 20) + '</div>' +
+      '' +
       '<div>' +
         '<div class="card-tt">本命星盘罗盘 · 视觉全景</div>' +
         '<div class="card-st">十大星曜落座落宫 ｜ 几何相位织网一览</div>' +
@@ -527,7 +527,7 @@ export function renderWesternAstrologySection(ctx) {
   // 四象三态能量流向 + 六维天赋雷达
   H += '<div class="glass card-2 western-card" data-card="astro-elements" data-system="western">' +
     '<div class="card-hd">' +
-      '<div class="card-ic">' + getElementSvg('fire', 20) + '</div>' +
+      '' +
       '<div>' +
         '<div class="card-tt">四象能量与六维潜能雷达</div>' +
         '<div class="card-st">元素配比 ｜ 潜能六维雷达评估</div>' +
@@ -558,7 +558,7 @@ export function renderWesternAstrologySection(ctx) {
   // 十大行星落座与宫位详解卡
   H += '<div class="glass card-2 western-card" data-card="astro-planets" data-system="western">' +
     '<div class="card-hd">' +
-      '<div class="card-ic">' + getPlanetSvg('Jupiter', 20) + '</div>' +
+      '' +
       '<div>' +
         '<div class="card-tt">十大星体全景落座表</div>' +
         '<div class="card-st">星体落入星座 · 宫位与生活领域投射</div>' +
@@ -579,7 +579,7 @@ export function renderWesternAstrologySection(ctx) {
   // 深度心理画像与 AI 挂载
   H += '<div class="glass card-2 western-card" data-card="astro-portrait" data-system="western">' +
     '<div class="card-hd">' +
-      '<div class="card-ic">' + getWesternSvgIcon('sparkle', 20) + '</div>' +
+      '' +
       '<div>' +
         '<div class="card-tt">深度性格与生活指南</div>' +
         '<div class="card-st">' + sun.name + ' · ' + sun.tag + '</div>' +
@@ -616,7 +616,7 @@ export function renderWesternHoroscopeSection(ctx) {
   // 今日运势总览大卡
   H += '<div class="glass card-1 western-card" data-card="horoscope-today" data-system="western">' +
     '<div class="card-hd">' +
-      '<div class="card-ic">' + getWesternSvgIcon('astrolabe', 20) + '</div>' +
+      '' +
       '<div>' +
         '<div class="card-tt">' + sun.name + ' · 时空运势罗盘</div>' +
         '<div class="card-st">' + fToday.sub + '</div>' +
@@ -666,7 +666,7 @@ export function renderWesternHoroscopeSection(ctx) {
   // 12 星座黄道能量全览网格
   H += '<div class="glass card-2 western-card" data-card="horoscope-all" data-system="western">' +
     '<div class="card-hd">' +
-      '<div class="card-ic">' + getZodiacSvg('aries', 20) + '</div>' +
+      '' +
       '<div>' +
         '<div class="card-tt">12 星座黄道能量天象全览</div>' +
         '<div class="card-st">各星座今日综合分 ｜ 实时能量气场</div>' +
@@ -689,7 +689,7 @@ export function renderWesternHoroscopeSection(ctx) {
   // 中长期星象展望
   H += '<div class="glass card-2 western-card" data-card="horoscope-macro" data-system="western">' +
     '<div class="card-hd">' +
-      '<div class="card-ic">' + getWesternSvgIcon('telescope', 20) + '</div>' +
+      '' +
       '<div>' +
         '<div class="card-tt">中长期星象展望 · ' + sun.name + '</div>' +
         '<div class="card-st">周报 ｜ 月度 ｜ 年度跃迁</div>' +
@@ -721,7 +721,7 @@ export function renderWesternNumerologySection(ctx) {
   // 顶部生命密码大卡
   H += '<div class="glass card-1 western-card" data-card="num-core" data-system="western">' +
     '<div class="card-hd">' +
-      '<div class="card-ic">' + getWesternSvgIcon('number', 20) + '</div>' +
+      '' +
       '<div>' +
         '<div class="card-tt">生命灵数密码 · 核心原型</div>' +
         '<div class="card-st">毕达哥拉斯生命密码 ｜ ' + y + '.' + m + '.' + d + '</div>' +
@@ -753,7 +753,7 @@ export function renderWesternNumerologySection(ctx) {
   // 3x3 九宫生命灵数图阵与激活连线
   H += '<div class="glass card-2 western-card" data-card="num-grid" data-system="western">' +
     '<div class="card-hd">' +
-      '<div class="card-ic">' + getWesternSvgIcon('geometry', 20) + '</div>' +
+      '' +
       '<div>' +
         '<div class="card-tt">九宫灵数能量图阵 · 天赋连线</div>' +
         '<div class="card-st">1~9 数字频次分布 ｜ 优势连线诊断</div>' +
@@ -787,7 +787,7 @@ export function renderWesternNumerologySection(ctx) {
   // 9 年生命周期流年密码
   H += '<div class="glass card-2 western-card" data-card="num-year" data-system="western">' +
     '<div class="card-hd">' +
-      '<div class="card-ic">' + getWesternSvgIcon('hourglass', 20) + '</div>' +
+      '' +
       '<div>' +
         '<div class="card-tt">9 年生命周期 · 流年密码</div>' +
         '<div class="card-st">今年处于 9 年周期的第 ' + num.personalYear + ' 年 ｜ ' + num.personalYearGuide.theme + '</div>' +

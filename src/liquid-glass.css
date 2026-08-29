@@ -182,6 +182,14 @@ html[data-theme] body .theme-toggle-home::before {
   pointer-events: none;
 }
 
+/* 小型工具按钮（抽屉页脚三项 / 导入导出）：通栏低矮的药丸上，
+   流光带的斜向边缘会在按钮内部生硬截断，看起来像内嵌了残缺图形。
+   这类按钮移除流光层，保留玻璃底色、描边与悬停态。
+   两个抽屉作用域选择器用于压过基础规则的
+   `.home-menu-footer button::before` 特异性。 */
+html[data-theme] body .home-menu-drawer .pf-io-btn::before,
+html[data-theme] body .p2-menu-drawer .pf-io-btn::before { content: none; }
+
 html[data-theme] body .home-cta:hover::before,
 html[data-theme] body .home-cta-ghost:hover::before,
 html[data-theme] body .home-menu-footer button:hover::before,
@@ -621,6 +629,18 @@ html[data-theme] body .form-modal-sheet .result-style-option.active {
   background: var(--c-accent) !important;
   color: var(--c-on-accent) !important;
 }
+
+/* ---------- 11.5 工具中心外框：去掉卡片背景框（背景/阴影/玻璃装饰），
+   内容直接浮于页面上；内部工具卡片的自身样式不受影响 ---------- */
+html[data-theme] body #toolHubRoot.tool-hub {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-theme] body #toolHubRoot.tool-hub::before,
+html[data-theme] body #toolHubRoot.tool-hub::after { display: none !important; }
 html[data-theme] body .form-modal-close {
   background: color-mix(in srgb, var(--c-surface-2) 35%, transparent) !important;
   backdrop-filter: blur(10px) saturate(120%) !important;
@@ -679,15 +699,17 @@ html[data-theme] body .home-menu-drawer .pf-io-btn {
 }
 
 /* ---------- 13. 工具页：去掉外层 sheet 边框，让背景模糊自然成框 ---------- */
+/* 结果页光球背景移除后，磨砂自然成框不再成立：sheet 恢复近实色表面 */
 html[data-theme] body .tool-modal.open .tool-sheet,
 html[data-theme] body .tool-sheet {
-  background: transparent !important;
+  background: color-mix(in srgb, var(--c-surface) 92%, transparent) !important;
   border: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
+  box-shadow: var(--glass-shadow) !important;
+  backdrop-filter: blur(18px) saturate(124%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(124%) !important;
 }
 html[data-theme] body .tool-modal-bg {
-  background: color-mix(in srgb, var(--c-bg) 55%, transparent) !important;
+  background: color-mix(in srgb, var(--c-bg) 75%, transparent) !important;
   backdrop-filter: blur(18px) saturate(124%) !important;
 }
 html[data-theme] body .tool-sheet-close {
@@ -783,4 +805,16 @@ html[data-theme] body .ai-dialogue-text {
   html[data-theme] body .home-orb-palette-btn .home-orb-palette-icon {
     animation: none !important;
   }
+}
+
+/* ---------- 12. 结果页背景与卡片可读性 ----------
+   结果页背景不出现光球环境辉光（光球仅首页保留）；
+   黑色模式下结果页卡片不透明度 +10%（48% → 58%），方便阅读。 */
+html[data-theme] body.report-active .mesh { opacity: 0 !important; animation: none !important; }
+html[data-theme] body.report-active .liquid-orb,
+html[data-theme] body.report-active .liquid-orb-static { opacity: 0 !important; visibility: hidden !important; }
+html[data-theme] body.report-active .mesh::before,
+html[data-theme] body.report-active .mesh::after { content: none !important; }
+html[data-theme="dark"] body.report-active #page2 .glass:not(.tool-hub) {
+  background: color-mix(in srgb, var(--c-surface) 58%, transparent) !important;
 }

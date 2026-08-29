@@ -28,13 +28,12 @@ function _ts() {
 /* ============================================================
    连接状态 UI
    ============================================================ */
-// 光写「离线」用户不知道意味着什么、还能不能用；补一句说明与 title。
 const _STATE_MAP = {
-  unknown:  { dot: 'conn-unknown',  text: '未检测',  hint: '' },
-  checking: { dot: 'conn-checking', text: '检测中…', hint: '' },
-  online:   { dot: 'conn-online',   text: 'AI 已连接', hint: '可以自由提问' },
-  badkey:   { dot: 'conn-offline',  text: '密钥无效', hint: '服务可达但 API Key 校验失败，请在设置中检查密钥' },
-  offline:  { dot: 'conn-offline',  text: '离线模式', hint: '仍可查术语与命盘解读，接入 AI 后回答更贴合你的提问' },
+  unknown:  { dot: 'conn-unknown',  text: '未检测' },
+  checking: { dot: 'conn-checking', text: '检测中…' },
+  online:   { dot: 'conn-online',   text: 'AI 已连接' },
+  badkey:   { dot: 'conn-offline',  text: '密钥无效' },
+  offline:  { dot: 'conn-offline',  text: '离线模式' },
 };
 
 function _updateConnUI(state) {
@@ -43,19 +42,7 @@ function _updateConnUI(state) {
   const cfg = _STATE_MAP[state] || _STATE_MAP.unknown;
   bar.className = 'ai-conn-bar ' + cfg.dot;
   bar.querySelector('.ai-conn-text').textContent = cfg.text;
-  let hintEl = bar.querySelector('.ai-conn-hint');
-  if (cfg.hint) {
-    if (!hintEl) {
-      hintEl = document.createElement('span');
-      hintEl.className = 'ai-conn-hint';
-      bar.appendChild(hintEl);
-    }
-    hintEl.textContent = cfg.hint;
-    bar.title = cfg.text + '：' + cfg.hint;
-  } else {
-    hintEl?.remove();
-    bar.removeAttribute('title');
-  }
+  bar.querySelector('.ai-conn-hint')?.remove();
 }
 
 function _ensureConnBar() {
@@ -346,7 +333,6 @@ window.setAiBasis = setAiBasis;
 
 function _syncAiContext() {
   const context = document.getElementById('aiContext');
-  const freePrompt = document.getElementById('aiFreePrompt');
   const d = window._ctx;
   const basis = getAiBasis();
   const isWestern = basis === 'western';
@@ -371,12 +357,6 @@ function _syncAiContext() {
     } else {
       context.innerHTML = `<span>✦ 东方命理依据</span><b>${d.dg}${d.dw} · ${d.wx.st ? '身旺' : '身弱'} ｜ 大运 ${d.cDy.g}${d.cDy.z} ｜ 用神 ${d.wx.ys}</b>`;
     }
-  }
-
-  if (freePrompt) {
-    freePrompt.textContent = isWestern
-      ? '以本命星盘、行星相位、四象能量与生命灵数为分析依据。'
-      : '以四柱八字、五行生克、十神大运与格局流年为分析依据。';
   }
 }
 

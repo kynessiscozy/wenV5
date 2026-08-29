@@ -29,6 +29,15 @@ export function jumpTo(secId,cardKey){
     // 档位面板（年/月/周/日）里的卡片：先唤醒所在档位再滚动
     const yunPane=el.closest&&el.closest('.yun-pane');
     if(yunPane&&typeof window.TJActivateYunTab==='function')window.TJActivateYunTab(yunPane.dataset.yun);
+    // 命盘/关系分区标签里的卡片：先唤醒所在面板，避免滚动到隐藏内容
+    const secPane=el.closest&&el.closest('.ming-pane,.rel-pane');
+    if(secPane){
+      const paneKey=secPane.dataset.ming||secPane.dataset.rel;
+      if(paneKey&&typeof window.TJActivateMingTab==='function'){
+        if(secPane.dataset.ming)window.TJActivateMingTab(paneKey);
+        else window.TJActivateRelTab(paneKey);
+      }
+    }
     // “命盘结构”将四柱、五行等收进分栏；跳转前先唤醒所在分栏，避免滚动到隐藏内容。
     const structurePane=el.closest&&el.closest('.structure-pane');
     if(structurePane){

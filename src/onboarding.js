@@ -65,9 +65,6 @@ export function openNoviceGuide(initialTab = 'tour') {
           <button class="ng-act-btn primary" type="button" onclick="closeNoviceGuide(); window.TJOpenForm && window.TJOpenForm();">
             ${getWesternSvgIcon('star', 15)} 立即填写出生信息排盘
           </button>
-          <button class="ng-act-btn secondary" type="button" onclick="closeNoviceGuide(); window.openAsk && window.openAsk();">
-            ${getWesternSvgIcon('sparkle', 15)} 打开问问大师 AI
-          </button>
           <button class="ng-act-btn ghost" type="button" onclick="closeNoviceGuide();">
             我已知晓
           </button>
