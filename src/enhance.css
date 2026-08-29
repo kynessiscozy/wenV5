@@ -2333,3 +2333,73 @@ html[data-theme] .ig-dock .ai-fab .ai-orb-particle{
 }
 @keyframes aiParticleOrbit{ from{ transform:rotate(0deg) } to{ transform:rotate(360deg) } }
 @keyframes aiParticleTwinkle{ 0%,100%{ opacity:.95 } 50%{ opacity:.4 } }
+
+/* ============================================================
+   西方星象 · Three.js 场景容器
+   ============================================================ */
+.w3d-hero{
+  position:relative;height:300px;margin:14px 0 16px;
+  border-radius:18px;overflow:hidden;
+  background:radial-gradient(ellipse 90% 70% at 50% 30%,color-mix(in srgb,var(--c-accent) 10%,transparent),transparent 70%),var(--c-surface-2);
+  border:1px solid var(--c-border);
+}
+.w3d-hero canvas{display:block;width:100%;height:100%}
+@media(max-width:360px){.w3d-hero{height:260px}}
+
+/* —— 命盘 3D 罗盘：去外框,通栏沉浸式(场景自带夜空背景) —— */
+.w3d-hero-night{
+  border:0;border-radius:0;background:#0a0e1c;
+  width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);
+  height:380px;
+}
+
+/* ============================================================
+   西方场景统一:夜空通栏沉浸式 + 场景叠加字幕
+   ============================================================ */
+.w3d-hero{border:0;border-radius:0;background:#0a0e1c;position:relative;height:330px;width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw)}
+.w3d-hero-night{height:400px}
+.w3d-hero canvas{position:absolute;inset:0;width:100%;height:100%}
+.w3d-ov{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:30px 20px 14px;background:linear-gradient(180deg,transparent,rgba(6,9,20,.92) 62%)}
+.w3d-ov-kicker{font-size:.6em;letter-spacing:2.5px;color:#9aa4c8;margin-bottom:8px}
+.w3d-ov-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.w3d-ov-chips span{font-size:.72em;color:#f0d9a8;border:1px solid rgba(217,179,106,.45);background:rgba(10,14,28,.55);padding:4px 11px;border-radius:999px;letter-spacing:.5px}
+.w3d-ov-take{font-size:.74em;color:#cfd3e8;line-height:1.75}
+.w3d-ov-take b{color:#e6c37e;font-weight:700;margin-right:6px}
+
+/* —— 3D 场景拖拽手感 —— */
+.w3d-hero{touch-action:pan-y;cursor:grab}
+.w3d-hero.grabbing{cursor:grabbing}
+.w3d-hero.grabbing canvas{pointer-events:none}
+
+/* —— 3D 场景拖拽手感 —— */
+.w3d-hero{touch-action:pan-y;cursor:grab}
+.w3d-hero.grabbing{cursor:grabbing}
+
+/* —— 西方三分区标签组:与 ming-tabs 同款吸顶切换 —— */
+.wastro-tabs,.whoro-tabs,.wnum-tabs{
+  position:sticky;top:0;z-index:20;
+  display:flex;justify-content:center;gap:0;
+  padding:2px 0 0;margin:2px 0 14px;
+  background:var(--c-bg)!important;
+  border-radius:0;border:0;border-bottom:1px solid var(--c-border);
+}
+.wastro-tab,.rel-tab,.whoro-tab,.wnum-tab{
+  position:relative;flex:0 0 auto;
+  min-height:40px;padding:0 14px;
+  border:0;border-radius:0;background:transparent!important;
+  color:var(--c-text-3);font:500 .84em var(--sf);letter-spacing:2px;cursor:pointer;
+  transition:color .2s ease;box-shadow:none;
+}
+.wastro-tab::after,.whoro-tab::after,.wnum-tab::after{
+  content:'';position:absolute;left:12px;right:12px;bottom:-1px;
+  height:2px;border-radius:2px 2px 0 0;background:transparent;transition:background .2s ease;
+}
+.wastro-tab:hover,.whoro-tab:hover,.wnum-tab:hover{color:var(--c-text-2)}
+.wastro-tab.active,.whoro-tab.active,.wnum-tab.active{color:var(--c-accent-text);font-weight:600}
+.wastro-tab.active::after,.whoro-tab.active::after,.wnum-tab.active::after{background:var(--c-accent)}
+.wastro-panes,.whoro-panes,.wnum-panes{position:relative}
+.wastro-pane,.whoro-pane,.wnum-pane{display:none}
+.wastro-pane.active,.whoro-pane.active,.wnum-pane.active{display:block;animation:tjResultPageIn .3s cubic-bezier(.2,.8,.2,1)}
+
+/* —— 十二星座真实星图配图 —— */
+.w-sign-tile .sym.sym-art{width:64px;height:64px;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 38%,#1c2745 0%,#0d1428 75%);border:1px solid rgba(217,179,106,.25)}

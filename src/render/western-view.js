@@ -19,6 +19,11 @@
    ============================================================ */
 
 import { calcWesternChart, calcNumerology } from '../engines/western.js';
+import { initWestern3D, syncWestern3D } from '../fx/western3d.js';
+import { zodiacArtSVG } from './zodiac-art.js';
+
+let _w3dReady = false;
+function ensureW3D() { if (!_w3dReady) { _w3dReady = true; try { initWestern3D(); } catch (e) { console.warn('[western3d]', e); } } }
 import { SIGNS, getSunSignByDate, getHoroscopeForecast } from '../tools2/horoscope.js';
 import { attachToolAI } from '../tools2/runtime.js';
 
@@ -473,19 +478,18 @@ export function renderWesternAstrologySection(ctx) {
 
   let H = '';
 
-  // 顶部直观速览 Banner
-  H += '<div class="w-visual-banner" data-system="western">' +
-    '<div class="wb-top">' +
-      '<div class="wb-sign-badge" style="background:' + sun.color + '22;border-color:' + sun.color + '66;color:' + sun.color + '">' +
-        '<span class="sym">' + getZodiacSvg(sun.id, 22, sun.color) + '</span><b>' + sun.name + '</b>' +
+  // 沉浸式 3D 罗盘:核心信息直接叠在场景上(不再单独设横幅卡)
+  ensureW3D(); syncWestern3D();
+  window.__w3dData = window.__w3dData || {};
+  window.__w3dData.astro = { planets: chart.planets, aspects: chart.aspects || [], sun: chart.sun, moon: chart.moon, asc: chart.asc };
+  H += '<div class="w3d-hero w3d-hero-night" id="w3d-astro" data-system="western">' +
+    '<div class="w3d-ov">' +
+      '<div class="w3d-ov-chips">' +
+        '<span>☉ 太阳 ' + sun.name + '</span>' +
+        '<span>☽ 月亮 ' + moon.name + '</span>' +
+        '<span>ASC 上升 ' + asc.name + '</span>' +
       '</div>' +
-      '<div class="wb-meta">' +
-        '<div class="wb-title">西方本命星盘 · 占星全息图</div>' +
-        '<div class="wb-sub">太阳 ' + sun.name + ' ｜ 月亮 ' + moon.name + ' ｜ 上升 ' + asc.name + '</div>' +
-      '</div>' +
-    '</div>' +
-    '<div class="wb-takeaway">' +
-      '<b>' + getWesternSvgIcon('sparkle', 14) + ' 核心气质：</b>' + sun.tag + '。主导能量为' + (chart.dominantElem.name) + '，在' + (sun.career.slice(0, 24)) + '等领域展现天赋优势。' +
+      '<div class="w3d-ov-take"><b>核心气质</b>' + sun.tag + '。主导能量为' + chart.dominantElem.name + '，在' + sun.career.slice(0, 24) + '等领域展现天赋优势。</div>' +
     '</div>' +
   '</div>';
 
@@ -494,11 +498,10 @@ export function renderWesternAstrologySection(ctx) {
     '<div class="card-hd">' +
       '' +
       '<div>' +
-        '<div class="card-tt">本命星盘罗盘 · 视觉全景</div>' +
-        '<div class="card-st">十大星曜落座落宫 ｜ 几何相位织网一览</div>' +
+        '' +
+        '<div class="card-st">太阳 / 月亮 / 上升 · 驱动与情感与第一名片</div>' +
       '</div>' +
     '</div>' +
-    renderAstroWheelSvg(chart) +
     '<div class="w-trio-grid" style="margin-top:14px">' +
       '<div class="w-trio-card sun">' +
         '<div class="kicker">' + getWesternSvgIcon('sun', 14) + ' 太阳星座 · 本我驱动</div>' +
@@ -529,7 +532,7 @@ export function renderWesternAstrologySection(ctx) {
     '<div class="card-hd">' +
       '' +
       '<div>' +
-        '<div class="card-tt">四象能量与六维潜能雷达</div>' +
+        '' +
         '<div class="card-st">元素配比 ｜ 潜能六维雷达评估</div>' +
       '</div>' +
     '</div>' +
@@ -560,7 +563,7 @@ export function renderWesternAstrologySection(ctx) {
     '<div class="card-hd">' +
       '' +
       '<div>' +
-        '<div class="card-tt">十大星体全景落座表</div>' +
+        '' +
         '<div class="card-st">星体落入星座 · 宫位与生活领域投射</div>' +
       '</div>' +
     '</div>' +
@@ -613,12 +616,20 @@ export function renderWesternHoroscopeSection(ctx) {
 
   let H = '';
 
+  // Three.js 黄道天球场景
+  ensureW3D(); syncWestern3D();
+  window.__w3dData = window.__w3dData || {};
+  window.__w3dData.horo = { sunName: sun.name };
+  H += '<div class="w3d-hero w3d-hero-night" id="w3d-horo" data-system="western">' +
+    '<div class="w3d-ov"><div class="w3d-ov-kicker">黄道天球 · 实时星象</div><div class="w3d-ov-chips"><span>☉ ' + sun.name + '</span><span>' + fToday.sub + '</span></div></div>' +
+  '</div>';
+
   // 今日运势总览大卡
   H += '<div class="glass card-1 western-card" data-card="horoscope-today" data-system="western">' +
     '<div class="card-hd">' +
       '' +
       '<div>' +
-        '<div class="card-tt">' + sun.name + ' · 时空运势罗盘</div>' +
+        '' +
         '<div class="card-st">' + fToday.sub + '</div>' +
       '</div>' +
     '</div>' +
@@ -668,7 +679,7 @@ export function renderWesternHoroscopeSection(ctx) {
     '<div class="card-hd">' +
       '' +
       '<div>' +
-        '<div class="card-tt">12 星座黄道能量天象全览</div>' +
+        '' +
         '<div class="card-st">各星座今日综合分 ｜ 实时能量气场</div>' +
       '</div>' +
     '</div>' +
@@ -677,7 +688,7 @@ export function renderWesternHoroscopeSection(ctx) {
         const fc = getHoroscopeForecast(s, 'today');
         const isMe = s.id === sun.id;
         return '<div class="w-sign-tile' + (isMe ? ' is-me' : '') + '">' +
-          '<div class="sym">' + getZodiacSvg(s.id, 28, s.color) + '</div>' +
+          '<div class="sym sym-art">' + zodiacArtSVG(s.id, { size: 120, star: '#ffffff', line: 'rgba(230,195,126,0.85)', bg: 'radial-gradient(circle at 50% 38%, #1c2745 0%, #0d1428 75%)' }) + '</div>' +
           '<div class="name">' + s.name + (isMe ? '<span class="me-tag">本命</span>' : '') + '</div>' +
           '<div class="score">' + fc.baseScore + '分</div>' +
           '<div class="mood">' + fc.mood.split(' · ')[0] + '</div>' +
@@ -716,14 +727,22 @@ export function renderWesternNumerologySection(ctx) {
   const num = calcNumerology(y, m, d);
   const arch = num.archetype;
 
+  // Three.js 生命矩阵场景
+  ensureW3D(); syncWestern3D();
+  window.__w3dData = window.__w3dData || {};
+  window.__w3dData.num = { lifePath: num.lifePath };
+
   let H = '';
 
   // 顶部生命密码大卡
-  H += '<div class="glass card-1 western-card" data-card="num-core" data-system="western">' +
+  H += '<div class="w3d-hero w3d-hero-night" id="w3d-num" data-system="western">' +
+    '<div class="w3d-ov"><div class="w3d-ov-kicker">生命灵数矩阵</div><div class="w3d-ov-chips"><span>灵数 ' + num.lifePath + '</span><span>' + arch.name + '</span></div></div>' +
+  '</div>' +
+  '<div class="glass card-1 western-card" data-card="num-core" data-system="western">' +
     '<div class="card-hd">' +
       '' +
       '<div>' +
-        '<div class="card-tt">生命灵数密码 · 核心原型</div>' +
+        '' +
         '<div class="card-st">毕达哥拉斯生命密码 ｜ ' + y + '.' + m + '.' + d + '</div>' +
       '</div>' +
     '</div>' +
@@ -755,7 +774,7 @@ export function renderWesternNumerologySection(ctx) {
     '<div class="card-hd">' +
       '' +
       '<div>' +
-        '<div class="card-tt">九宫灵数能量图阵 · 天赋连线</div>' +
+        '' +
         '<div class="card-st">1~9 数字频次分布 ｜ 优势连线诊断</div>' +
       '</div>' +
     '</div>' +
@@ -789,7 +808,7 @@ export function renderWesternNumerologySection(ctx) {
     '<div class="card-hd">' +
       '' +
       '<div>' +
-        '<div class="card-tt">9 年生命周期 · 流年密码</div>' +
+        '' +
         '<div class="card-st">今年处于 9 年周期的第 ' + num.personalYear + ' 年 ｜ ' + num.personalYearGuide.theme + '</div>' +
       '</div>' +
     '</div>' +

@@ -253,6 +253,10 @@ initEvolveUI();
   }
   window.TJActivateMingTab=function(key){activateSecGroup('s-ming','ming','data-ming',key);};
   window.TJActivateRelTab=function(key){activateSecGroup('s-rel','rel','data-rel',key);};
+  // 西方三分区标签组(与东方同款切换)
+  window.TJActivateWastroTab=function(key){activateSecGroup('s-ming','wastro','data-wastro',key);};
+  window.TJActivateWhoroTab=function(key){activateSecGroup('s-yun','whoro','data-whoro',key);};
+  window.TJActivateWnumTab=function(key){activateSecGroup('s-rel','wnum','data-wnum',key);};
 
   // 6. 档案菜单切换（使用 IndexedDB）
   window.TJToggleProfileMenu=async function(){

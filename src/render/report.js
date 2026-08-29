@@ -744,16 +744,25 @@ export function organizeMasterReportLayout(ctx){
   }
   // —— 三分区统一为「运势页」的卡片排列形式：常驻速读 + 横向标签栏 + 一次一张卡 ——
   // 命盘：结构 / 人格 / 三式 / 判读依据；关系：亲密 / 朋友 / 亲人 / 八字合盘
-  groupSectionCards(ming,'ming',[['structure','命盘结构'],['persona','人格画像'],['three-styles','三式参合'],['reasoning','判读依据']]);
-  groupSectionCards(rel,'rel',[['intimacy','亲密关系'],['friends','朋友'],['family','亲人'],['relAi','八字合盘']]);
+  groupSectionCards(ming,'ming',[['structure','命盘结构'],['persona','人格画像'],['three-styles','三式参合'],['reasoning','判读依据']],ming,'TJActivateMingTab');
+  groupSectionCards(rel,'rel',[['intimacy','亲密关系'],['friends','朋友'],['family','亲人'],['relAi','八字合盘']],rel,'TJActivateRelTab');
+
+  // —— 西方三分区:3D 场景下方的卡片同样收进标签组(与东方一致的切换方式) ——
+  const wAstro=ming.querySelector('.sys-block.sys-western');
+  groupSectionCards(ming,'wastro',[['astro-core','三核星体'],['astro-elements','四象能量'],['astro-planets','十大星曜'],['astro-portrait','性格画像']],wAstro,'TJActivateWastroTab');
+  const wHoro=yun&&yun.querySelector('.sys-block.sys-western');
+  groupSectionCards(yun,'whoro',[['horoscope-today','今日运势'],['horoscope-all','黄道全览'],['horoscope-macro','宏观星象']],wHoro,'TJActivateWhoroTab');
+  const wNum=rel&&rel.querySelector('.sys-block.sys-western');
+  groupSectionCards(rel,'wnum',[['num-core','生命密码'],['num-grid','九宫图阵'],['num-year','流年灵数']],wNum,'TJActivateWnumTab');
 }
 /* 把分区里既有的散排卡片收进与 .yun-tabs 同构的标签组：
    标签栏吸顶，每个面板只放一张原有卡片（节点原样搬入，事件与子结构不动）。
    卡片缺失时按实际数量分组，少于 2 张则维持散排。 */
-function groupSectionCards(sec,prefix,entries){
-  if(!sec||sec.querySelector('.'+prefix+'-tabs'))return;
+function groupSectionCards(sec,prefix,entries,container,activate){
+  container=container||sec;
+  if(!sec||!container||container.querySelector('.'+prefix+'-tabs'))return;
   const labelOf=Object.fromEntries(entries);
-  const cards=entries.map(([k])=>sec.querySelector('[data-card="'+k+'"]')).filter(Boolean);
+  const cards=entries.map(([k])=>container.querySelector('[data-card="'+k+'"]')).filter(Boolean);
   if(cards.length<2)return;
   const bar=document.createElement('div');
   bar.className=prefix+'-tabs';
@@ -762,7 +771,6 @@ function groupSectionCards(sec,prefix,entries){
   const panes=document.createElement('div');
   panes.className=prefix+'-panes';
   const attr='data-'+prefix;
-  const activate='TJActivate'+(prefix==='ming'?'Ming':'Rel')+'Tab';
   cards.forEach((card,i)=>{
     const key=card.dataset.card;
     const btn=document.createElement('button');
@@ -772,7 +780,7 @@ function groupSectionCards(sec,prefix,entries){
     btn.setAttribute('aria-selected',i===0?'true':'false');
     btn.setAttribute(attr,key);
     btn.textContent=labelOf[key]||key;
-    btn.addEventListener('click',()=>{if(typeof window[activate]==='function')window[activate](key);});
+    btn.addEventListener('click',()=>{const fn=typeof activate==='string'?window[activate]:activate;if(typeof fn==='function')fn(key);});
     bar.appendChild(btn);
     const pane=document.createElement('div');
     pane.className=prefix+'-pane'+(i===0?' active':'');
@@ -780,9 +788,9 @@ function groupSectionCards(sec,prefix,entries){
     pane.appendChild(card);
     panes.appendChild(pane);
   });
-  const anchor=sec.querySelector('.beginner-brief')||sec.querySelector('.qr-card');
+  const anchor=container.querySelector('.beginner-brief')||container.querySelector('.qr-card')||container.querySelector('.w3d-hero');
   if(anchor){anchor.insertAdjacentElement('afterend',bar);bar.insertAdjacentElement('afterend',panes);}
-  else{sec.appendChild(bar);sec.appendChild(panes);}
+  else{container.appendChild(bar);container.appendChild(panes);}
 }
 export function switchStructureTab(btn){
   const card=btn.closest('.master-structure,.three-styles-card');if(!card)return;
