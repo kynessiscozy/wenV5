@@ -33,7 +33,7 @@ export function openNoviceGuide(initialTab = 'tour') {
         <div class="ng-header">
           <div class="ng-header-title-wrap">
             <h2 class="ng-header-title">✦ 问问大师 · 新手指引</h2>
-            <p class="ng-header-sub">东方命理 ｜ 西方星相 ｜ AI智能解盘 ｜ 12大决策工具</p>
+            <p class="ng-header-sub">V5.0 BETA · 双体系命理 ｜ 3D 星象剧场 ｜ AI 智能解盘</p>
           </div>
           <button class="ng-close-btn" onclick="closeNoviceGuide()" type="button" aria-label="关闭指引">×</button>
         </div>
@@ -128,7 +128,7 @@ function renderNoviceGuideTabContent(tabKey) {
               <span class="ng-card-icon">${getWesternSvgIcon('sun', 20)}</span>
               <b>2. 西方星相与灵数</b>
             </div>
-            <p>基于天体力学精密算法绘制 500px 高清本命星盘，解析太阳/月亮/上升三核本我、十大星曜十二宫位、神圣几何相位织网及毕达哥拉斯生命灵数九宫图。</p>
+            <p>以 Three.js 3D 星象剧场呈现：可拖拽旋转的金色罗盘、黄道天球与灵数粒子云，解析太阳/月亮/上升三核本我、十大星曜十二宫位、几何相位织网与毕达哥拉斯生命灵数，配图采用真实星座星表。</p>
           </div>
 
           <div class="ng-card">
@@ -142,10 +142,24 @@ function renderNoviceGuideTabContent(tabKey) {
           <div class="ng-card">
             <div class="ng-card-hd">
               <span class="ng-card-icon">${getWesternSvgIcon('geometry', 20)}</span>
-              <b>4. 12 大大师与决策工具</b>
+              <b>4. 13 大大师与决策工具</b>
             </div>
             <p>涵盖塔罗大师（5大实战牌阵3D翻牌）、人格大师（MBTI 16型与成熟度）、事业大师、择日助手、合盘助手、生肖助手、今日日签与答案之书。</p>
           </div>
+
+          <div class="ng-card">
+            <div class="ng-card-hd">
+              <span class="ng-card-icon">${getWesternSvgIcon('sparkle', 20)}</span>
+              <b>5. 命盘档案与隐私</b>
+            </div>
+            <p>命盘档案本地保存、JSON 导出导入；所有数据只存在这台设备上，不上传任何服务器。自进化记忆可随时关闭、导出或清空。</p>
+          </div>
+        </div>
+
+        <div class="ng-section-hero">
+          <div class="ng-kicker">${getWesternSvgIcon('sparkle', 14)} V5.0 BETA 1 新特性</div>
+          <h3 class="ng-title">3D 星象剧场 · 全新西方体系</h3>
+          <p class="ng-desc">切换到「西方星相」体系即可进入 3D 星象剧场：命盘页是可拖拽旋转、滚轮缩放的金色罗盘；运势页是实时黄道天球；关系页的灵数粒子云会把你的生命灵数从星尘中汇聚成形。十二星座配图采用真实星座星表绘制。</p>
         </div>
       `;
       break;
@@ -239,6 +253,14 @@ function renderNoviceGuideTabContent(tabKey) {
             <div class="step-content">
               <h4>毕达哥拉斯生命灵数与 9 年周期</h4>
               <p>通过出生日期非零数字累加化简得出<b>核心主命数 (Life Path 1~9 及卓越数 11/22/33)</b>，并在 3x3 九宫矩阵中诊断优势天赋连线，结合当前 9 年个人流年周期找到年度发力焦点。</p>
+            </div>
+          </div>
+
+          <div class="ng-step-card">
+            <div class="step-num">05</div>
+            <div class="step-content">
+              <h4>在 3D 星象剧场里读懂星盘</h4>
+              <p>命盘页的金色罗盘把十大星曜按真实落座角度排上黄道环，连线即几何相位；<b>按住拖拽旋转视角、滚轮缩放距离</b>。运势页的天球展示行星实时轨道，关系页的灵数粒子云会把你的生命灵数从星尘中汇聚成形。</p>
             </div>
           </div>
         </div>

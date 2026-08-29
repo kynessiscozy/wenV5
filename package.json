@@ -1,6 +1,6 @@
 {
   "name": "wendi",
-  "version": "4.3.0",
+  "version": "5.0.0-beta.1",
   "private": true,
   "type": "module",
   "scripts": {
