@@ -483,6 +483,8 @@ export function renderWesternAstrologySection(ctx) {
   window.__w3dData = window.__w3dData || {};
   window.__w3dData.astro = { planets: chart.planets, aspects: chart.aspects || [], sun: chart.sun, moon: chart.moon, asc: chart.asc };
   H += '<div class="w3d-hero w3d-hero-night" id="w3d-astro" data-system="western">' +
+    '<button class="w3d-reset" type="button" aria-label="复位视角" title="复位视角" onpointerdown="event.stopPropagation()" onclick="window._w3dReset && window._w3dReset(\'astro\')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 2.6-6.4"/><path d="M3 4v5h5"/></svg></button>' +
+    '<div class="w3d-loading"><span class="w3d-load-ring"></span><span>星空正在编译中...</span></div>' +
     '<div class="w3d-ov">' +
       '<div class="w3d-ov-chips">' +
         '<span>☉ 太阳 ' + sun.name + '</span>' +
@@ -621,6 +623,8 @@ export function renderWesternHoroscopeSection(ctx) {
   window.__w3dData = window.__w3dData || {};
   window.__w3dData.horo = { sunName: sun.name };
   H += '<div class="w3d-hero w3d-hero-night" id="w3d-horo" data-system="western">' +
+    '<button class="w3d-reset" type="button" aria-label="复位视角" title="复位视角" onpointerdown="event.stopPropagation()" onclick="window._w3dReset && window._w3dReset(\'horo\')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 2.6-6.4"/><path d="M3 4v5h5"/></svg></button>' +
+    '<div class="w3d-loading"><span class="w3d-load-ring"></span><span>星空正在编译中...</span></div>' +
     '<div class="w3d-ov"><div class="w3d-ov-kicker">黄道天球 · 实时星象</div><div class="w3d-ov-chips"><span>☉ ' + sun.name + '</span><span>' + fToday.sub + '</span></div></div>' +
   '</div>';
 
@@ -736,6 +740,8 @@ export function renderWesternNumerologySection(ctx) {
 
   // 顶部生命密码大卡
   H += '<div class="w3d-hero w3d-hero-night" id="w3d-num" data-system="western">' +
+    '<button class="w3d-reset" type="button" aria-label="复位视角" title="复位视角" onpointerdown="event.stopPropagation()" onclick="window._w3dReset && window._w3dReset(\'num\')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 2.6-6.4"/><path d="M3 4v5h5"/></svg></button>' +
+    '<div class="w3d-loading"><span class="w3d-load-ring"></span><span>星空正在编译中...</span></div>' +
     '<div class="w3d-ov"><div class="w3d-ov-kicker">生命灵数矩阵</div><div class="w3d-ov-chips"><span>灵数 ' + num.lifePath + '</span><span>' + arch.name + '</span></div></div>' +
   '</div>' +
   '<div class="glass card-1 western-card" data-card="num-core" data-system="western">' +

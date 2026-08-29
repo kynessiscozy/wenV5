@@ -672,6 +672,7 @@ async function ensure(key) {
   s.container = container;
   s.orbitInit = ORBIT_DEFAULTS[key];
   attachOrbit(s, container);
+  container.querySelector('.w3d-loading')?.remove();
   built[key] = Object.assign(s, { container, raf: 0 });
   return built[key];
 }
@@ -761,9 +762,32 @@ export function syncWestern3D() {
     try {
       const s = await ensure(key);
       if (s) start(key);
-    } catch (e) { console.warn('[western3d]', e); }
+    } catch (e) {
+      console.warn('[western3d]', e);
+      const ld = document.querySelector('#' + CONTAINER_IDS[key] + ' .w3d-loading');
+      if (ld) ld.innerHTML = '<span>当前设备暂不支持 3D 渲染</span>';
+    }
   }, 120);
 }
+
+/* 复位指定场景的视角(恢复默认轨道参数) */
+function resetSceneView(key) {
+  const s = built[key];
+  const def = ORBIT_DEFAULTS[key];
+  if (!s || !s.orbit || !def) return;
+  Object.assign(s.orbit, {
+    theta: def.theta, phi: def.phi, radius: def.radius,
+    target: { x: def.target.x || 0, y: def.target.y || 0, z: def.target.z || 0 },
+    vTheta: 0, vPhi: 0
+  });
+  s.orbit.target = new THREE.Vector3(s.orbit.target.x, s.orbit.target.y, s.orbit.target.z);
+  if (s._applyOrbit) s._applyOrbit();
+  else {
+    s.camera.position.setFromSphericalCoords(s.orbit.radius, s.orbit.phi, s.orbit.theta).add(s.orbit.target);
+    s.camera.lookAt(s.orbit.target.x, s.orbit.target.y, s.orbit.target.z);
+  }
+}
+window._w3dReset = resetSceneView;
 
 export function disposeWestern3D() {
   STATE.disposed = true;
