@@ -2356,7 +2356,7 @@ html[data-theme] .ig-dock .ai-fab .ai-orb-particle{
 /* ============================================================
    西方场景统一:夜空通栏沉浸式 + 场景叠加字幕
    ============================================================ */
-.w3d-hero{border:0;border-radius:0;background:#0a0e1c;position:relative;height:330px;width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw)}
+.w3d-hero{border:0;border-radius:0;background:#0a0e1c;position:relative;height:330px;width:calc(100% + 32px);margin:14px -16px 16px}
 .w3d-hero-night{height:400px}
 .w3d-hero canvas{position:absolute;inset:0;width:100%;height:100%}
 .w3d-ov{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:30px 20px 14px;background:linear-gradient(180deg,transparent,rgba(6,9,20,.92) 62%)}

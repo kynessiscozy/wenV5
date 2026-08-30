@@ -673,6 +673,20 @@ async function ensure(key) {
   s.orbitInit = ORBIT_DEFAULTS[key];
   attachOrbit(s, container);
   container.querySelector('.w3d-loading')?.remove();
+  /* 容器尺寸变化(窗口缩放)时重适配画布与相机 */
+  if (typeof ResizeObserver !== 'undefined') {
+    let lastW = container.clientWidth, lastH = container.clientHeight;
+    s._ro = new ResizeObserver(() => {
+      const w = container.clientWidth, h = container.clientHeight;
+      if (!w || !h || (Math.abs(w - lastW) < 2 && Math.abs(h - lastH) < 2)) return;
+      lastW = w; lastH = h;
+      s.renderer.setSize(w, h);
+      s.camera.aspect = w / h;
+      s.camera.updateProjectionMatrix();
+      if (s.composer) s.composer.setSize(w, h);
+    });
+    s._ro.observe(container);
+  }
   built[key] = Object.assign(s, { container, raf: 0 });
   return built[key];
 }
