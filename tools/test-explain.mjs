@@ -1,53 +1,63 @@
+import assert from 'node:assert';
 import puppeteer from 'puppeteer';
-const BASE=process.env.BASE_URL||'http://localhost:5173/';
-const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});
-const p=await b.newPage();await p.setViewport({width:430,height:932,deviceScaleFactor:2});
-const errs=[];p.on('pageerror',e=>errs.push(e.message));
-p.on('console',m=>{if(m.type()==='error'&&!/404/.test(m.text()))errs.push(m.text())});
-await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
-await p.evaluate(()=>window.calc(true));
-await new Promise(r=>setTimeout(r,4500));
 
-console.log('=== 1. 新手模式：解释入口数量 ===');
-console.log(await p.evaluate(()=>{
-  const b=[...document.querySelectorAll('.explain-btn')].filter(e=>e.offsetParent);
-  return b.length+' 个';
-}));
+const baseUrl = process.env.BASE_URL || 'http://localhost:5173/';
+const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
+const page = await browser.newPage();
+const errors = [];
 
-console.log('\n=== 2. 点击后自动生成的问题 ===');
-await p.evaluate(()=>[...document.querySelectorAll('.explain-btn')].filter(e=>e.offsetParent)[0].click());
-await new Promise(r=>setTimeout(r,2600));
-console.log(await p.evaluate(()=>{
-  const t=document.getElementById('askResult').innerText;
-  return t.slice(0,520);
-}));
-await p.screenshot({path:'/tmp/explain-ask.png'});
+await page.setViewport({ width: 430, height: 932, deviceScaleFactor: 2 });
+page.on('pageerror', error => errors.push(error.message));
+page.on('console', message => {
+  if (message.type() === 'error' && !/404/.test(message.text())) errors.push(message.text());
+});
 
-console.log('\n=== 3. 大师模式：各卡片入口 ===');
-await p.evaluate(()=>window.closeAsk());
-await new Promise(r=>setTimeout(r,400));
-await p.evaluate(()=>window.setUserMode('master'));
-await new Promise(r=>setTimeout(r,1600));
-console.log(await p.evaluate(()=>{
-  return [...document.querySelectorAll('#s-ming [data-card]')].filter(c=>c.offsetParent).map(c=>{
-    const t=(c.querySelector('.card-tt')||c.querySelector('.qr-title'))?.textContent.trim()||c.dataset.card;
-    return t+': '+(c.querySelector(':scope > .explain-btn')?'有':'无');
-  }).join('\n');
-}));
-await p.screenshot({path:'/tmp/explain-master.png'});
+try {
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+  await page.evaluate(() => window.calc(true));
+  await new Promise(resolve => setTimeout(resolve, 4_300));
 
-console.log('\n=== 4. 术语提问不再答非所问 ===');
-for(const q of ['食神格是什么意思？','用神是什么','身旺怎么理解']){
-  await p.evaluate(()=>window.newAskChat&&window.newAskChat());
-  await new Promise(r=>setTimeout(r,300));
-  await p.evaluate(x=>window.doAsk(x),q);
-  await new Promise(r=>setTimeout(r,1800));
-  const a=await p.evaluate(()=>{
-    const t=document.getElementById('askResult').innerText;
-    const i=t.lastIndexOf('释义');
-    return i>-1?t.slice(i,i+70).replace(/\n/g,' '):'❗未走术语分支: '+t.slice(-90).replace(/\n/g,' ');
+  console.log('=== 1. 选择术语后可转入问问大师 ===');
+  await page.evaluate(() => {
+    const target = document.createElement('p');
+    target.id = 'explainTestTarget';
+    target.textContent = '五行';
+    document.getElementById('p2Inner').appendChild(target);
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
   });
-  console.log(`  「${q}」→ ${a}`);
+  await new Promise(resolve => setTimeout(resolve, 420));
+  await page.evaluate(() => document.getElementById('glossChip').click());
+  await page.waitForSelector('#glossPopAi', { timeout: 3_000 });
+  await page.evaluate(() => document.getElementById('glossPopAi').click());
+  await page.waitForFunction(
+    () => document.getElementById('aiSheet').classList.contains('open')
+      && document.getElementById('askResult').innerText.includes('五行')
+      && document.getElementById('askResult').innerText.includes('是什么意思'),
+    { timeout: 4_000 }
+  );
+
+  console.log('=== 2. 术语问题走本地释义分支 ===');
+  await page.evaluate(() => window.newAskChat());
+  await page.evaluate(() => window.doAsk('食神格是什么意思？'));
+  await page.waitForFunction(
+    () => {
+      const text = document.getElementById('askResult').innerText;
+      return text.includes('食神格') && text.includes('释义') && text.includes('想法变成具体作品');
+    },
+    { timeout: 4_000 }
+  );
+
+  const response = await page.$eval('#askResult', element => element.innerText);
+  assert.match(response, /食神格/);
+  assert.match(response, /释义/);
+  assert.match(response, /想法变成具体作品/);
+  assert.deepStrictEqual(errors, [], `页面不应出现错误：\n${errors.join('\n')}`);
+  console.log(response.slice(-360));
+  console.log('术语问答验证通过。');
+} finally {
+  await browser.close();
 }
-console.log('\n错误:', errs.length?[...new Set(errs)].join(' | '):'无');
-await b.close();

@@ -1,68 +1,70 @@
+import assert from 'node:assert';
 import puppeteer from 'puppeteer';
-const BASE=process.env.BASE_URL||'http://localhost:5173/';
-const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});
-const p=await b.newPage();await p.setViewport({width:430,height:932,deviceScaleFactor:2});
-const errs=[];p.on('pageerror',e=>errs.push(e.message));
-p.on('console',m=>{if(m.type()==='error'&&!/404/.test(m.text()))errs.push(m.text())});
-// 授予剪贴板权限，便于测试分享降级路径
-await b.defaultBrowserContext().overridePermissions(new URL(BASE).origin,['clipboard-read','clipboard-write']);
-await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
-await p.evaluate(()=>window.calc(true));
-await new Promise(r=>setTimeout(r,3600));
 
-const openForm=async()=>{
-  await p.evaluate(()=>window.openToolPage('relation'));
-  await p.waitForSelector('#v3_bdate',{timeout:5000});
-  await new Promise(r=>setTimeout(r,700));
-};
+const baseUrl = process.env.BASE_URL || 'http://localhost:5173/';
+const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
+const page = await browser.newPage();
+const errors = [];
 
-console.log('=== 1. 首次：无最近对象 ===');
-await openForm();
-console.log('picker 存在 =', await p.evaluate(()=>!!document.querySelector('.tj-partner-picker')));
+await page.setViewport({ width: 430, height: 932, deviceScaleFactor: 2 });
+page.on('pageerror', error => errors.push(error.message));
+page.on('console', message => {
+  if (message.type() === 'error' && !/404/.test(message.text())) errors.push(message.text());
+});
 
-console.log('\n=== 2. 合盘 → 保存对象 ===');
-await p.evaluate(()=>{document.getElementById('v3_pname').value='阿雯';document.getElementById('v3_bdate').value='1988-03-11';});
-await p.evaluate(()=>window.TJToolRun('relation'));
-await new Promise(r=>setTimeout(r,900));
-console.log('结果含操作条 =', await p.evaluate(()=>!!document.querySelector('.tj-sign-actions')));
-await p.evaluate(()=>window.TJSynSave());
-await new Promise(r=>setTimeout(r,600));
-console.log('toast =', await p.evaluate(()=>document.querySelector('.tj-toast')?.innerText||'(无)'));
-console.log('localStorage =', await p.evaluate(()=>{const a=JSON.parse(localStorage.getItem('tj_partners_v1')||'[]');return a.map(x=>x.name+'/'+x.y+'/'+x.lastScore).join(', ')}));
+async function openForm() {
+  await page.evaluate(() => window.openToolPage('relation'));
+  await page.waitForSelector('#twRDate', { timeout: 5_000 });
+}
 
-console.log('\n=== 3. 分享（降级到剪贴板）===');
-await p.evaluate(()=>{navigator.share=undefined;});
-await p.evaluate(()=>window.TJSynShare());
-await new Promise(r=>setTimeout(r,700));
-console.log('toast =', await p.evaluate(()=>document.querySelector('.tj-toast')?.innerText||'(无)'));
-const clip=await p.evaluate(()=>navigator.clipboard.readText().catch(()=>'(读取失败)'));
-console.log('剪贴板内容:\n'+clip);
+try {
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+  await page.evaluate(() => localStorage.removeItem('tj_partners_v1'));
+  await page.evaluate(() => window.calc(true));
+  await new Promise(resolve => setTimeout(resolve, 4_200));
 
-console.log('\n=== 4. 重开表单：应出现最近对象 ===');
-await openForm();
-const picker=await p.evaluate(()=>({
-  exists:!!document.querySelector('.tj-partner-picker'),
-  chips:[...document.querySelectorAll('.tj-partner-chip')].map(c=>c.innerText.replace(/\n/g,' ')),
-}));
-console.log(JSON.stringify(picker));
-await p.screenshot({path:'/tmp/partner-picker.png'});
+  console.log('=== 1. 首次打开没有最近对象 ===');
+  await openForm();
+  assert.strictEqual(await page.$('.tj-partner-picker'), null);
 
-console.log('\n=== 5. 点击回填 ===');
-await p.evaluate(()=>document.querySelector('.tj-partner-chip [data-partner], .tj-partner-chip')?.click());
-await new Promise(r=>setTimeout(r,600));
-console.log(await p.evaluate(()=>'pname='+document.getElementById('v3_pname').value+' bdate='+document.getElementById('v3_bdate').value));
+  console.log('=== 2. 合盘并保存对象 ===');
+  await page.click('#twRName');
+  await page.type('#twRName', '阿雯');
+  await page.evaluate(() => {
+    const input = document.getElementById('twRDate');
+    input.value = '1988-03-11';
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.evaluate(() => document.getElementById('twRRun').click());
+  await page.waitForSelector('#twRSave', { timeout: 5_000 });
 
-console.log('\n=== 6. 刷新后仍在 ===');
-await p.reload({waitUntil:'domcontentloaded',timeout:15000});
-await p.evaluate(()=>window.calc(true));
-await new Promise(r=>setTimeout(r,3600));
-await openForm();
-console.log('刷新后 chips =', await p.evaluate(()=>document.querySelectorAll('.tj-partner-chip').length));
+  const result = await page.$eval('.tw-result-page', element => element.innerText);
+  assert.match(result, /契合度/);
+  assert.ok(await page.$('#twRShare'), '结果页应提供合盘卡分享');
+  assert.ok(await page.$('#twRText'), '结果页应提供文本分享');
+  await page.evaluate(() => document.getElementById('twRSave').click());
+  await page.waitForSelector('.tj-partner-chip', { timeout: 5_000 });
 
-console.log('\n=== 7. 删除 ===');
-await p.evaluate(()=>document.querySelector('.tj-partner-del')?.click());
-await new Promise(r=>setTimeout(r,600));
-console.log('删除后 chips =', await p.evaluate(()=>document.querySelectorAll('.tj-partner-chip').length));
+  const partners = await page.evaluate(() => JSON.parse(localStorage.getItem('tj_partners_v1') || '[]'));
+  assert.strictEqual(partners.length, 1);
+  assert.deepStrictEqual(
+    { name: partners[0].name, y: partners[0].y, m: partners[0].m, d: partners[0].d },
+    { name: '阿雯', y: 1988, m: 3, d: 11 }
+  );
 
-console.log('\n错误:', errs.length?[...new Set(errs)].join(' | '):'无');
-await b.close();
+  console.log('=== 3. 最近对象可回填并可删除 ===');
+  await page.evaluate(() => document.querySelector('.tj-partner-chip').click());
+  const restored = await page.evaluate(() => ({
+    name: document.getElementById('twRName').value,
+    date: document.getElementById('twRDate').value
+  }));
+  assert.deepStrictEqual(restored, { name: '阿雯', date: '1988-03-11' });
+
+  await page.evaluate(() => document.querySelector('.tj-partner-del').click());
+  await new Promise(resolve => setTimeout(resolve, 150));
+  assert.strictEqual(await page.$('.tj-partner-chip'), null);
+  assert.deepStrictEqual(errors, [], `页面不应出现错误：\n${errors.join('\n')}`);
+  console.log('合盘对象保存、回填与删除验证通过。');
+} finally {
+  await browser.close();
+}
