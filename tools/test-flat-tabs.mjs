@@ -5,7 +5,7 @@
    （ming/yun/rel 各自的 -tabs/-pane 结构），西方模式卡片组不受影响。 */
 import puppeteer from 'puppeteer';
 
-const BASE = process.env.BASE_URL || 'http://localhost:4173/';
+const BASE = process.env.BASE_URL || 'http://localhost:5173/';
 let pass = 0, fail = 0;
 const ok = (c, m, extra = '') => { c ? (pass++, console.log('  ✓ ' + m)) : (fail++, console.log('  ✗ ' + m + (extra ? '  ' + extra : ''))); };
 
