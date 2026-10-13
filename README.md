@@ -1,6 +1,12 @@
 # 问问大师 V5.0 BETA
 
+[![CI / Deploy](https://github.com/kynessiscozy/wenV5/actions/workflows/deploy.yml/badge.svg)](https://github.com/kynessiscozy/wenV5/actions/workflows/deploy.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+![Version](https://img.shields.io/badge/version-5.0.0--beta.1-blue)
+
 > 融汇东方命理与西方星象的智能推演 Web 应用 —— 四柱八字、紫微斗数、奇门遁甲、梅花易数 × 西方占星、生命灵数，配以 Three.js 3D 星象剧场与 AI 智能问答。
+
+**🔮 在线演示**：<https://kynessiscozy.github.io/wenV5/>（GitHub Pages，随 `main` 分支自动部署）
 
 V5.0 是一次彻底的体系化升级：在东方命理之外引入完整的**西方星象与生命灵数体系**，并以 **Three.js 3D 星象剧场** 重构西方模式的视觉表达。当前为 Beta 版本。
 
@@ -136,4 +142,8 @@ node tools/verify-western-v1.mjs  # 西方星历 59 项验证
 
 ## License
 
-Private
+本项目基于 **MIT License** 开源，详见 [LICENSE](./LICENSE)。
+
+Copyright (c) 2026 kynessiscozy
+
+> 命理推演结果仅供文化研究与娱乐参考，不构成任何医疗、投资或人生决策建议。
