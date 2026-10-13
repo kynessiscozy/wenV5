@@ -40,6 +40,7 @@ globalThis.document = globalThis.document || {
 const { resolveBirthDateTime } = await import('../src/engines/calendar.js');
 const { mkBazi, mkWx, mkSs, mkShenSha, mkDy, mkLn, getLiuYue } = await import('../src/engines/bazi.js');
 const { mkZw } = await import('../src/engines/ziwei.js');
+const { solarToLunar } = await import('../src/engines/lunar.js');
 const { mkQm } = await import('../src/engines/qimen.js');
 const { mkMh } = await import('../src/engines/meihua.js');
 const { mkSi } = await import('../src/engines/sizhi.js');
@@ -64,7 +65,7 @@ for (const tc of testCases) {
 
   const resolved = resolveBirthDateTime(y, m, d, hh, mm, false, city.o, city.tz);
   const b = mkBazi(resolved.year, resolved.month, resolved.day, resolved.hourZhi, resolved.hour, resolved.minute, resolved.instant);
-  const wx = mkWx(b), ss = mkSs(b), dy = mkDy(b, tc.gen, y, m, d), ln = mkLn(CURR_YEAR), zw = mkZw(b), qm = mkQm(b), mh = mkMh(b), si = mkSi(b);
+  const wx = mkWx(b), ss = mkSs(b), dy = mkDy(b, tc.gen, y, m, d), ln = mkLn(CURR_YEAR), zw = mkZw(b, solarToLunar(resolved.year, resolved.month, resolved.day)), qm = mkQm(b), mh = mkMh(b), si = mkSi(b);
   const shensha = mkShenSha(b);
   const liuyue = getLiuYue(CURR_YEAR);
   b._meta = { hourZhi: resolved.hourZhi, useTrueSolar: false, by: y, bm: m, bd: d };

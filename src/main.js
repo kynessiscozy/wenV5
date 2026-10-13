@@ -4,6 +4,7 @@ import { CD, CG } from './engines/cities.js';
 import { _initJq, solarTermDate, jqDate, getMonthPillar, trueSolarTime, resolveBirthDateTime, getDayPillarIndex } from './engines/calendar.js';
 import { mkBazi, mkWx, mkSs, mkShenSha, mkDy, mkLn, getLiuYue, getShenShaLabels, getTodayGZ } from './engines/bazi.js';
 import { mkZw } from './engines/ziwei.js';
+import { solarToLunar } from './engines/lunar.js';
 import { mkQm } from './engines/qimen.js';
 import { mkMh } from './engines/meihua.js';
 import { mkSi } from './engines/sizhi.js';
@@ -314,7 +315,7 @@ async function calc(isDemoPreview=false){
   function doCompute(){
     const resolved=resolveBirthDateTime(y,m,d,hh,mm,useTrueSolar,city.o,city.tz);
     const b=mkBazi(resolved.year,resolved.month,resolved.day,resolved.hourZhi,resolved.hour,resolved.minute,resolved.instant);
-    const wx=mkWx(b),ss=mkSs(b),dy=mkDy(b,gen,y,m,d),ln=mkLn(CURR_YEAR),zw=mkZw(b),qm=mkQm(b),mh=mkMh(b),si=mkSi(b);
+    const wx=mkWx(b),ss=mkSs(b),dy=mkDy(b,gen,y,m,d),ln=mkLn(CURR_YEAR),zw=mkZw(b,solarToLunar(resolved.year,resolved.month,resolved.day)),qm=mkQm(b),mh=mkMh(b),si=mkSi(b);
     const shensha=mkShenSha(b);const liuyue=getLiuYue(CURR_YEAR);
     b._meta={hourZhi:resolved.hourZhi,useTrueSolar:resolved.note?true:false,by:y,bm:m,bd:d};
     const _input={by:y,bm:m,bd:d,bd_raw:bd,timeStr,bp,gen,q,useTrueSolar,resultStyle:resultStyleId,resultStyleLabel:resultStyle.label};
