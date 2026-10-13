@@ -16,6 +16,7 @@ import { masthead, notice, esc, attachToolAI } from './runtime.js';
 import { getCtx } from '../state/context.js';
 import { showToast } from '../ui/toast.js';
 import { getZodiacSvg } from '../render/western-view.js';
+import { calcJulianDay, calcMoonLongitude } from '../engines/western.js';
 
 /* —— 12 星座基础元数据与深度知识库 —— */
 export const SIGNS = [
@@ -234,12 +235,12 @@ export function getAscendantSign(sunSignId, hour = 12, minute = 0) {
 /* —— 月亮星座周期估算 —— */
 export function getMoonSign(year = 2000, month = 1, day = 1) {
   const y = Number(year) || 2000, m = Number(month) || 1, d = Number(day) || 1;
-  // 基准日月亮位置推算（月球公转约 27.32 天过 12 星座，每天约 13.18 度）
-  const base = new Date(2000, 0, 1).getTime();
-  const target = new Date(y, m - 1, d).getTime();
-  const diffDays = (target - base) / (1000 * 60 * 60 * 24);
-  const deg = (((diffDays * 13.17639) % 360) + 360 + 245) % 360; // 2000-01-01 月在天蝎约 245 度
-  const moonIdx = Math.floor(deg / 30) % 12;
+  // 与本命盘引擎同源(calcMoonLongitude,含六项摄动,精度 ~0.5°):
+  // 取当日中国标准时间正午的月亮真黄经定星座。
+  // 旧版为 2000-01-01 基准的匀速线性估算,偏差可达 ±6°(约 1/5 星座),
+  // 且与西方星盘显示的月座互相矛盾(2026-10 算法验证修复)。
+  const jd = calcJulianDay(y, m, d, 12, 0, 8);
+  const moonIdx = Math.floor(calcMoonLongitude(jd) / 30) % 12;
   return SIGNS[moonIdx];
 }
 

@@ -19,7 +19,9 @@ globalThis.document = globalThis.document || {
 const {
   calcWesternChart,
   calcNumerology,
-  calcNumerologySynastry
+  calcNumerologySynastry,
+  calcJulianDay,
+  calcMoonLongitude
 } = await import('../src/engines/western.js');
 const {
   SIGNS,
@@ -167,10 +169,28 @@ test('月亮黄经日行约 13.18°，约每 2.25~2.5 天更换一个星座', ()
   assert.notStrictEqual(m1.id, m3.id, '3天后月亮星座应发生移动');
 });
 
-test('月球公转约 27.3 天回归原星座（恒星月循环）', () => {
-  const mStart = getMoonSign(2024, 1, 1);
-  const mCycle = getMoonSign(2024, 1, 28); // 约27天后
-  assert.strictEqual(mStart.id, mCycle.id, '27.3天后月亮应回到相同星座');
+test('月亮换座周期统计:平均约 2.28 天换一座(恒星月 27.32/12),与引擎同源一致', () => {
+  // 旧断言「27 天后回到同星座」依赖具体日期巧合(27 天=355.8°);而「恒星月后
+  // 真黄经闭环」在天文上也不成立(近点月 27.55 天≠恒星月,中心差不闭合)。
+  // 改为统计性质:2026 全年逐日正午采样,换座次数≈160(365×13.18°/30°),
+  // 平均间隔≈2.28 天,最大间隔≤4 天。
+  const marks = [];
+  let prev = null;
+  for (let i = 0; i < 365; i++) {
+    const dt = new Date(Date.UTC(2026, 0, 1 + i));
+    const sig = getMoonSign(dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
+    if (prev && sig.id !== prev.id) marks.push(i);
+    prev = sig;
+  }
+  const gaps = marks.map((v, j) => v - (j ? marks[j - 1] : 0));
+  const avg = gaps.reduce((a2, b2) => a2 + b2, 0) / gaps.length;
+  assert.ok(marks.length >= 150 && marks.length <= 175, `全年换座应约 160 次,实际 ${marks.length}`);
+  assert.ok(avg > 1.9 && avg < 2.7, `平均间隔应≈2.28 天,实际 ${avg.toFixed(2)}`);
+  assert.ok(Math.max(...gaps) <= 4, `最大间隔应≤4 天,实际 ${Math.max(...gaps)}`);
+  // 月座工具与天文引擎同源一致性(同日必同星座)
+  const ms = getMoonSign(2026, 10, 13);
+  const eng = SIGNS[Math.floor(calcMoonLongitude(calcJulianDay(2026, 10, 13, 12, 0, 8)) / 30) % 12];
+  assert.strictEqual(ms.id, eng.id, 'getMoonSign 应与 calcMoonLongitude 同源一致');
 });
 
 // ─────────────────────────────────────────────────────────────
