@@ -63,6 +63,7 @@ const { SOLAR_TERM_TIMES } = await import('../src/engines/solar-terms.js');
 const { resolveBirthDateTime, getDayPillarIndex } = await import('../src/engines/calendar.js');
 const { mkBazi, mkWx, mkSs, mkShenSha, mkDy, mkLn, getLiuYue, getShenShaLabels, getTodayGZ } = await import('../src/engines/bazi.js');
 const { mkZw } = await import('../src/engines/ziwei.js');
+const { solarToLunar } = await import('../src/engines/lunar.js');
 const { mkQm } = await import('../src/engines/qimen.js');
 const { mkMh } = await import('../src/engines/meihua.js');
 const { mkSi } = await import('../src/engines/sizhi.js');
@@ -173,7 +174,7 @@ for (let year = 1930; year <= 2026; year += 2) {
 
     const resolved = resolveBirthDateTime(year, month, day, hour, 0, false, city.o, city.tz);
     const b = mkBazi(resolved.year, resolved.month, resolved.day, resolved.hourZhi, resolved.hour, resolved.minute, resolved.instant);
-    const wx = mkWx(b), ss = mkSs(b), dy = mkDy(b, gen, year, month, day), ln = mkLn(CURR_YEAR), zw = mkZw(b), qm = mkQm(b), mh = mkMh(b), si = mkSi(b);
+    const wx = mkWx(b), ss = mkSs(b), dy = mkDy(b, gen, year, month, day), ln = mkLn(CURR_YEAR), zw = mkZw(b, solarToLunar(resolved.year, resolved.month, resolved.day)), qm = mkQm(b), mh = mkMh(b), si = mkSi(b);
     const shensha = mkShenSha(b);
     const liuyue = getLiuYue(CURR_YEAR);
     b._meta = { hourZhi: resolved.hourZhi, useTrueSolar: false, by: year, bm: month, bd: day };
@@ -275,7 +276,7 @@ audit('buildBaziContext (东方依据) 结构化输出真实有效', () => {
     ss: mkSs(mkBazi(1995, 6, 15, 4)),
     dy: mkDy(mkBazi(1995, 6, 15, 4), 'male', 1995, 6, 15),
     ln: mkLn(CURR_YEAR),
-    zw: mkZw(mkBazi(1995, 6, 15, 4)),
+    zw: mkZw(mkBazi(1995, 6, 15, 4), solarToLunar(1995, 6, 15)),
     qm: mkQm(mkBazi(1995, 6, 15, 4)),
     mh: mkMh(mkBazi(1995, 6, 15, 4)),
     si: mkSi(mkBazi(1995, 6, 15, 4)),

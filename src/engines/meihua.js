@@ -7,7 +7,7 @@ const GUA_SYM  = ['☰','☱','☲','☳','☴','☵','☶','☷'];
 const GUA_WX   = ['金','金','火','木','木','水','土','土'];
 const GUA_LINE = [[1,1,1],[1,1,0],[1,0,1],[1,0,0],[0,1,1],[0,1,0],[0,0,1],[0,0,0]];
 
-/* 64 卦名（上卦索引 × 8 + 下卦索引） */
+/* 64 卦名（下卦索引 × 8 + 上卦索引;行=下卦 乾兑离震巽坎艮坤,位=上卦） */
 const HEX_NAME = [
   '乾为天','泽天夬','火天大有','雷天大壮','风天小畜','水天需','山天大畜','地天泰',
   '天泽履','兑为泽','火泽睽','雷泽归妹','风泽中孚','水泽节','山泽损','地泽临',
@@ -46,7 +46,9 @@ function _findGua(lines) {
 }
 
 function _hexName(upperIdx, lowerIdx) {
-  return HEX_NAME[upperIdx * 8 + lowerIdx] || (GUA_NAME[upperIdx] + GUA_NAME[lowerIdx]);
+  // HEX_NAME 按下卦主序排列(行=下卦、位=上卦),查表须用 下×8+上;
+  // 旧版误用 上×8+下,除八个纯卦外全部返回上下颠倒的镜像卦名(2026-10 算法验证修复)
+  return HEX_NAME[lowerIdx * 8 + upperIdx] || (GUA_NAME[upperIdx] + GUA_NAME[lowerIdx]);
 }
 
 /* 五行生克 */

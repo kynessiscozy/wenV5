@@ -77,14 +77,17 @@ export function calcMoonLongitude(jd) {
 
 /** 行星地心视黄经精算 (Geocentric Planetary Longitude) */
 const PLANET_KEPLER_ELEMENTS = {
-  Mercury: { L0: 252.2509, rate: 4.0923344, a: 0.387098, e: 0.20563 },
-  Venus:   { L0: 181.9798, rate: 1.6021303, a: 0.723332, e: 0.00677 },
-  Mars:    { L0: 355.4330, rate: 0.5240330, a: 1.523688, e: 0.09340 },
-  Jupiter: { L0: 34.3515,  rate: 0.0830853, a: 5.202603, e: 0.04849 },
-  Saturn:  { L0: 50.0774,  rate: 0.0334441, a: 9.554909, e: 0.05551 },
-  Uranus:  { L0: 314.0550, rate: 0.0117283, a: 19.21845, e: 0.04630 },
-  Neptune: { L0: 304.3487, rate: 0.0059810, a: 30.11039, e: 0.00946 },
-  Pluto:   { L0: 238.9290, rate: 0.0039640, a: 39.48212, e: 0.24881 }
+  // L0=J2000 平黄经(°), rate=平黄经日速(°/d), a=半长轴(AU), e=偏心率,
+  // p=J2000 近日点黄经 ϖ(°, JPL 近似值)。共面近似:不含轨道倾角/升交点
+  // (对黄经影响:主要行星 <0.5°,冥王星因 i≈17° 残差可达 2–3°)。
+  Mercury: { L0: 252.2509, rate: 4.0923344, a: 0.387098, e: 0.20563, p: 77.4561 },
+  Venus:   { L0: 181.9798, rate: 1.6021303, a: 0.723332, e: 0.00677, p: 131.5637 },
+  Mars:    { L0: 355.4330, rate: 0.5240330, a: 1.523688, e: 0.09340, p: 336.0602 },
+  Jupiter: { L0: 34.3515,  rate: 0.0830853, a: 5.202603, e: 0.04849, p: 14.7284 },
+  Saturn:  { L0: 50.0774,  rate: 0.0334441, a: 9.554909, e: 0.05551, p: 92.5988 },
+  Uranus:  { L0: 314.0550, rate: 0.0117283, a: 19.21845, e: 0.04630, p: 170.9542 },
+  Neptune: { L0: 304.3487, rate: 0.0059810, a: 30.11039, e: 0.00946, p: 44.9647 },
+  Pluto:   { L0: 238.9290, rate: 0.0039640, a: 39.48212, e: 0.24881, p: 224.0689 }
 };
 
 export function calcPlanetLongitude(jd, planetKey, sunLong) {
@@ -96,13 +99,19 @@ export function calcPlanetLongitude(jd, planetKey, sunLong) {
   const el = PLANET_KEPLER_ELEMENTS[planetKey];
   if (!el) return 0;
 
-  const M = norm360(el.L0 + el.rate * n);
-  const v = M + deg(2 * el.e * Math.sin(rad(M)));
-  const r = el.a * (1 - el.e * el.e) / (1 + el.e * Math.cos(rad(v - M)));
+  // 平近点角 M = 平黄经 − 近日点黄经;v = 真近点角(中心差截断式)
+  // 旧版把平黄经直接当平近点角用(缺 ϖ),水星/火星/土星/天王星黄经偏差可达
+  // 10–20°、冥王星达 57°(2026-10 算法验证修复,vs astronomy-engine 全量复核)
+  const M = norm360(el.L0 + el.rate * n - el.p);
+  // 中心差三阶截断 ν−M =(2e−e³/4)sinM + 1.25e²sin2M + (13/12)e³sin3M
+  // (对 e 大的水星/冥王星,二阶项即达 2.3°/4.4°,不可截到一阶)
+  const Mr = rad(M), e = el.e;
+  const v = M + deg((2 * e - e * e * e / 4) * Math.sin(Mr) + 1.25 * e * e * Math.sin(2 * Mr) + (13 / 12) * e * e * e * Math.sin(3 * Mr));
+  const r = el.a * (1 - el.e * el.e) / (1 + el.e * Math.cos(rad(v)));
 
-  const vRad = rad(v);
-  const xHeliocentric = r * Math.cos(vRad);
-  const yHeliocentric = r * Math.sin(vRad);
+  const lonHelio = rad(v + el.p); // 日心黄经 = 真近点角 + 近日点黄经
+  const xHeliocentric = r * Math.cos(lonHelio);
+  const yHeliocentric = r * Math.sin(lonHelio);
 
   const xGeo = xHeliocentric - xEarth;
   const yGeo = yHeliocentric - yEarth;

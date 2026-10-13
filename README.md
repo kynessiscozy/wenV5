@@ -1,6 +1,12 @@
 # 问问大师 V5.0 BETA
 
+[![CI / Deploy](https://github.com/kynessiscozy/wenV5/actions/workflows/deploy.yml/badge.svg)](https://github.com/kynessiscozy/wenV5/actions/workflows/deploy.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+![Version](https://img.shields.io/badge/version-5.0.0--beta.1-blue)
+
 > 融汇东方命理与西方星象的智能推演 Web 应用 —— 四柱八字、紫微斗数、奇门遁甲、梅花易数 × 西方占星、生命灵数，配以 Three.js 3D 星象剧场与 AI 智能问答。
+
+**🔮 在线演示**：<https://kynessiscozy.github.io/wenV5/>（GitHub Pages，随 `main` 分支自动部署）
 
 V5.0 是一次彻底的体系化升级：在东方命理之外引入完整的**西方星象与生命灵数体系**，并以 **Three.js 3D 星象剧场** 重构西方模式的视觉表达。当前为 Beta 版本。
 
@@ -14,9 +20,15 @@ V5.0 是一次彻底的体系化升级：在东方命理之外引入完整的**�
 |------|------|------|
 | 东方 | `src/engines/bazi.js` | 四柱八字、五行旺衰、十神格局、神煞、大运流年 |
 | 东方 | `src/engines/calendar.js` / `solar-terms.js` | 精确节气时刻（1900–2101）、真太阳时校正 |
-| 东方 | `src/engines/ziwei.js` / `qimen.js` / `meihua.js` | 紫微斗数 · 奇门遁甲 · 梅花易数三式参判 |
+| 东方 | `src/engines/lunar.js` | 真实朔望历（1900–2100，含闰月与农历年干支）¹ |
+| 东方 | `src/engines/ziwei.js` | 紫微斗数**标准安星**（与 iztro 全量交叉验证一致）¹ |
+| 东方 | `src/engines/qimen.js` / `meihua.js` | 奇门遁甲（简化排盘 ²）· 梅花易数 |
 | 东方 | `src/engines/synastry.js` / `liuri.js` | 双人合盘 · 流日流周推演 |
 | 西方 | `src/engines/western.js` | 天体力学星历计算、本命星盘、十二宫位、几何相位、毕达哥拉斯生命灵数 |
+
+> ¹ **农历与紫微**:农历引擎经 `lunar-javascript`（MIT）**1901–2099 逐日全量比对一致**（72,691 项，`npm run verify:lunar`）；紫微斗数为标准安星——真实朔望历定农历月日、商数-借数法定紫微、天府寅申轴对称、禄存天马、羊陀禄位法、火铃年支双起点、生年四化含昌曲辅弼、闰月「上半月归前月、下半月归后月」——经 `iztro`（MIT）**10,378 盘 × 16 字段 = 166,048 项逐盘比对零失败**（`npm run verify:ziwei`）。暂未含：杂曜（天刑/天姚/红鸾/天喜等）、博士十二神、飞星四化、大限小限流年斗君、星曜亮度。
+>
+> ² **奇门遁甲**当前为简化排盘（月支定阴阳遁、日柱折局、线性布宫），定位「九宫速览展示」；时家奇门完整转盘（三元定局、值符值使、天地盘三奇六仪）在路线图中。
 
 西方与东方模式一键切换；西方报告含三核本我（太阳/月亮/上升）、四象能量、十大星曜落座落宫、性格画像、黄道全览与灵数九宫。
 
@@ -107,11 +119,16 @@ npm run preview      # 本地预览构建产物（默认 4173 端口）
 ### 测试
 
 ```bash
-npm run test:unit    # 引擎单测（流日/合盘/塔罗/MBTI/西方星历等）
+npm run test:unit    # 引擎单测(流日/合盘/塔罗/MBTI/西方星历/农历全量等)
 npm run test:e2e     # Puppeteer E2E 套件
 npm run test:a11y    # WCAG AA 对比度审计
 node tools/verify-bazi-v3.mjs     # 八字核心算法 123 项权威交叉验证
 node tools/verify-western-v1.mjs  # 西方星历 59 项验证
+npm run verify:lunar # 农历引擎 vs lunar-javascript:1901–2099 逐日全量(72,691 项)
+npm run verify:ziwei # 紫微标准安星 vs iztro:10,378 盘 × 16 字段(166,048 项,约 5 分钟)
+npm run gen:lunar    # 重新生成农历数据表(数据源:lunar-javascript,MIT)
+npm run audit:deep   # 全局数据深度审计(85 项:节气/农历/干支/四柱 vs oracle、城市、西方星历、星表、工具数据、静态引用、代码卫生)
+npm run verify:algo  # 全局算法验证(61 项:真太阳时/神煞/大运 vs oracle/梅花卦象正典/十天体黄经 vs astronomy-engine/灵数 KAT;加 :quick 抽样,报告见 docs/algo-verification-2026-10-13.md)
 ```
 
 ---
@@ -130,10 +147,16 @@ node tools/verify-western-v1.mjs  # 西方星历 59 项验证
 
 ## 版本
 
+完整变更历史见 [CHANGELOG.md](./CHANGELOG.md)。
+
 - **V5.0 BETA 1** — 西方星象体系 + Three.js 3D 星象剧场 + 十二星座真实星图配图 + 西方标签组交互
 - V4.3 — 工具中心 V2、西方星盘与灵数、CSS 样式体系
 - V2.x–V4.x — 东方命理核心、AI 问答、自进化、PWA
 
 ## License
 
-Private
+本项目基于 **MIT License** 开源，详见 [LICENSE](./LICENSE)。
+
+Copyright (c) 2026 kynessiscozy
+
+> 命理推演结果仅供文化研究与娱乐参考，不构成任何医疗、投资或人生决策建议。

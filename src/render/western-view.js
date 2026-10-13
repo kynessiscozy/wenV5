@@ -692,7 +692,7 @@ export function renderWesternHoroscopeSection(ctx) {
         const fc = getHoroscopeForecast(s, 'today');
         const isMe = s.id === sun.id;
         return '<div class="w-sign-tile' + (isMe ? ' is-me' : '') + '">' +
-          '<div class="sym sym-art">' + zodiacArtSVG(s.id, { size: 120, star: '#ffffff', line: 'rgba(230,195,126,0.85)', bg: 'radial-gradient(circle at 50% 38%, #1c2745 0%, #0d1428 75%)' }) + '</div>' +
+          '<div class="sym sym-art" style="background:radial-gradient(circle at 50% 38%, #1c2745 0%, #0d1428 75%);border-radius:50%">' + zodiacArtSVG(s.id, { size: 120, star: '#ffffff', line: 'rgba(230,195,126,0.85)' }) + '</div>' +
           '<div class="name">' + s.name + (isMe ? '<span class="me-tag">本命</span>' : '') + '</div>' +
           '<div class="score">' + fc.baseScore + '分</div>' +
           '<div class="mood">' + fc.mood.split(' · ')[0] + '</div>' +
