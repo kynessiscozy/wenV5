@@ -1,0 +1,69 @@
+name: 🐛 Bug 报告
+description: 报告功能异常、排盘错误或界面问题
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈!提交前请先搜索已有 Issue,并在本地 `npm run test:unit` 确认是否为已知问题。
+        排盘/算法类问题请提供可复现的出生数据(可脱敏:如整体平移日期,但请注明平移方式)。
+  - type: dropdown
+    id: module
+    attributes:
+      label: 问题所属模块
+      options:
+        - 东方命理(八字/紫微/奇门/梅花/合盘/流日)
+        - 西方星象(星盘/相位/灵数/星座运势)
+        - 3D 星象剧场
+        - AI 智能问答 / 自进化
+        - 工具中心(塔罗/MBTI/择日等)
+        - 界面 / 主题 / 响应式
+        - PWA / 离线 / 分享导出
+        - 构建 / CI / 部署
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 打开报告页
+        2. 输入出生数据 1990-06-15 08:30(男,北京,真太阳时:开)
+        3. 查看「大运」区块
+        4. 出现 …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果 vs 实际结果
+      placeholder: |
+        期望:起运岁数为 3 岁(距芒种 8 天 ÷ 3)
+        实际:显示 8 岁
+    validations:
+      required: true
+  - type: textarea
+    id: authority
+    attributes:
+      label: 权威依据(命理/算法类问题强烈建议填写)
+      description: 引用万年历、经典文献或其他可靠排盘结果,便于交叉验证
+      placeholder: |
+        《寿星天文历》/ 某万年历:1990-06-15 08:30 北京时间 → 庚午年 壬午月 辛亥日 壬辰时
+      required: false
+  - type: input
+    id: environment
+    attributes:
+      label: 浏览器与设备
+      placeholder: 例:iOS 17 Safari / Windows 11 Chrome 126 / 桌面端 Firefox
+    validations:
+      required: true
+  - type: checkboxes
+    id: context
+    attributes:
+      label: 环境上下文
+      options:
+        - label: 已开启「真太阳时」校正
+        - label: 正在使用 AI API Key(DeepSeek / OpenRouter)
+        - label: 以 PWA 安装/离线模式运行
+        - label: 问题在线上演示站(GitHub Pages)与本地 dev 均复现

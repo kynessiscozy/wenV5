@@ -1,0 +1,51 @@
+name: ✨ 功能请求
+description: 提出新功能、新工具或算法深度改进建议
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢建议!本项目为个人主导,路线图优先级参考 README 与 CHANGELOG 的「未发布」小节。
+        命理算法深度类请求(如完整时家奇门、飞星紫微)欢迎附上权威算法依据或文献,会显著提高采纳与实现速度。
+  - type: dropdown
+    id: module
+    attributes:
+      label: 相关模块
+      options:
+        - 东方命理引擎(八字/紫微/奇门/梅花/合盘/流日)
+        - 西方星象引擎(星盘/相位/灵数)
+        - 3D 星象剧场 / 视觉
+        - AI 智能问答 / 自进化
+        - 工具中心
+        - 界面 / 交互 / 无障碍
+        - PWA / 数据导入导出
+        - 工程化(测试/CI/文档)
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 想解决的问题 / 期望的体验
+      placeholder: 例:紫微排盘的农历日是近似值,跨月边界时主星落宫与权威排盘不一致
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议的实现方案
+      description: 越具体越好;算法类请附口诀/文献/权威对照数据
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 考虑过的替代方案
+      required: false
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: 参与意愿
+      options:
+        - label: 我愿意提交 PR 实现(维护者会提供测试安全网支持)
+        - label: 我可以提供权威算法资料/对照数据
+        - label: 仅提建议
