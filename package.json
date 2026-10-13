@@ -22,6 +22,7 @@
     "test:a11y": "node tools/contrast.mjs"
   },
   "devDependencies": {
+    "astronomy-engine": "^2.1.19",
     "iztro": "^2.6.2",
     "lunar-javascript": "^1.7.7",
     "puppeteer": "^24.43.1",
