@@ -15,6 +15,7 @@
 - `CHANGELOG.md` 与 GitHub Issue 模板(Bug 报告 / 功能请求)
 - devDependencies:lunar-javascript、iztro(仅作验证 oracle 与数据生成源,不入产物包)
 - **全局数据深度审计工具** `tools/audit-deep-v1.mjs`(`npm run audit:deep`,85 项检查):节气表三重交叉(仓库内互源/lunar-javascript 时刻 oracle/寿星公式)、农历表不变量+冬至锚定、干支/藏干/纳音/十神正典重推导、四柱 vs oracle(日柱穷举 72,684 天+年月时柱抽样)、城市时区合理性、西方星历天文锚点(J2000/二分二至/月亮日速)、亮星星表定点、塔罗/MBTI/占星/KB 结构、静态资源引用完整性、代码卫生(乱码/顶层 DOM/存储键盘点/AST 重复键);审计报告 `docs/audit-deep-2026-10-13.md`
+- **全局算法验证工具** `tools/verify-algo-v1.mjs`(`npm run verify:algo`,61 项检查):真太阳时/EOT 历书锚点、神煞+刑冲合害破标签 vs 独立重实现、五行强弱/十神性质、大运/起运 vs lunar-javascript oracle(204 盘)、梅花卦象 64 全组合 vs 《周易》正典卦序+两组全链 KAT+全字段 fuzz、奇门结构不变量、十天体黄经 vs astronomy-engine(1940–2060)+ASC 双公式/MC 几何、相位/宫位/元素独立重算、生命灵数 KAT(含大师数)、MBTI 成熟度、占星工具与引擎一致性(月座 365 天)、合盘/流日 vs oracle(400 天);验证报告 `docs/algo-verification-2026-10-13.md` + 修复前基线 `docs/algo-baseline-2026-10-13.md`
 
 ### 变更
 
@@ -39,6 +40,13 @@
 - **西方星相十二宫格星图空白**(`zodiac-art.js` + `western-view.js`):星表键为缩写(`ari`)而调用方传 `SIGNS` 全名 id(`aries`),查表失败致 12 张星图 SVG 全部为空串——新增 SIGN_ALIAS 双约定兼容 + 审计 G4 回归;星图渐变背景由 SVG 非法 `fill`(CSS gradient 字符串)移至外层容器 style;`opts.star/line` 颜色别名生效
 - **Node 环境导入崩溃**(`western3d.js`):模块顶层 `window._w3d` / `window._w3dReset` 未守护,任何经 import 链触及该文件的 Node 工具(如塔罗数据测试)直接 ReferenceError——已加 `typeof window` 守护
 - 同步更新 `verify-bazi-v2/v3` 纳音期望值(v3 为 unicode 转义存储)
+
+### 修复(2026-10-13 全局算法验证发现)
+
+- **梅花易数卦名系统性错误**:`_hexName` 查表索引上下卦次序颠倒(HEX_NAME 表按下卦主序排列,旧代码按上卦主序查询),除八个纯卦外全部 56 卦返回镜像卦名(如「天地否」查成「地天泰」)。已按《周易》通行本卦序正典 64/64 全组合验证修复
+- **西方星历行星黄经大偏差**:`calcPlanetLongitude` 把平黄经直接当平近点角使用(缺 J2000 近日点黄经 ϖ),且中心差仅一阶截断。实测(vs astronomy-engine,1940–2060 48 样本):冥王星平均偏差 36.4°、星座一致率仅 8.3%,水星 6.3°/89.6%,天王星 7.1°/72.9%,土星 5.6°/79.2%,火星 5.1°/83.3%。已增补 ϖ 并将中心差升级为三阶截断,修复后十天体星座一致率 95.8–100%(冥王星残余 1–2° 为共面近似固有,已文档化)
+- **月运工具月亮星座与星盘矛盾**:`getMoonSign` 为 2000-01-01 基准的匀速线性估算(偏差 ±6°),2026 全年 345/365 天与本命盘引擎月座不一致。已委托 `calcMoonLongitude` 同源计算,365/365 一致
+- **加固** `tools/verify-western-v1.mjs` 月亮周期测试:旧断言「27 天后回到同星座」依赖具体日期巧合(27 天=355.8° 非整周期),改为全年换座间隔统计断言(≈160 次/年、平均 2.28 天、最大 ≤4 天)+ 引擎同源一致性断言
 
 ## [5.0.0-beta.1] - 2026-08-30
 

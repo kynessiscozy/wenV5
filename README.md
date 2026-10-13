@@ -128,6 +128,7 @@ npm run verify:lunar # 农历引擎 vs lunar-javascript:1901–2099 逐日全量
 npm run verify:ziwei # 紫微标准安星 vs iztro:10,378 盘 × 16 字段(166,048 项,约 5 分钟)
 npm run gen:lunar    # 重新生成农历数据表(数据源:lunar-javascript,MIT)
 npm run audit:deep   # 全局数据深度审计(85 项:节气/农历/干支/四柱 vs oracle、城市、西方星历、星表、工具数据、静态引用、代码卫生)
+npm run verify:algo  # 全局算法验证(61 项:真太阳时/神煞/大运 vs oracle/梅花卦象正典/十天体黄经 vs astronomy-engine/灵数 KAT;加 :quick 抽样,报告见 docs/algo-verification-2026-10-13.md)
 ```
 
 ---
