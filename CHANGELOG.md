@@ -14,6 +14,7 @@
 - **紫微斗数交叉验证** `tools/verify-ziwei-v1.mjs`:与 iztro(MIT)逐盘比对,1902–2098 广域 + 闰月专测 + 2026 逐日,**10,378 盘 × 16 字段 = 166,048 项零失败**
 - `CHANGELOG.md` 与 GitHub Issue 模板(Bug 报告 / 功能请求)
 - devDependencies:lunar-javascript、iztro(仅作验证 oracle 与数据生成源,不入产物包)
+- **全局数据深度审计工具** `tools/audit-deep-v1.mjs`(`npm run audit:deep`,85 项检查):节气表三重交叉(仓库内互源/lunar-javascript 时刻 oracle/寿星公式)、农历表不变量+冬至锚定、干支/藏干/纳音/十神正典重推导、四柱 vs oracle(日柱穷举 72,684 天+年月时柱抽样)、城市时区合理性、西方星历天文锚点(J2000/二分二至/月亮日速)、亮星星表定点、塔罗/MBTI/占星/KB 结构、静态资源引用完整性、代码卫生(乱码/顶层 DOM/存储键盘点/AST 重复键);审计报告 `docs/audit-deep-2026-10-13.md`
 
 ### 变更
 
@@ -30,6 +31,14 @@
   - `ziwei.js` / `qimen.js` — 具名常量表 + 口诀出处注释(后随标准安星升级);12,824 项模糊对比零差异
   - `solar-terms.js` — 55KB 单行数据表重排为一年一行(228 行),新增数据格式/约定/维护文档;2,424 个时刻字符串逐字节一致
   - `sizhi.js` — 四时旺衰表驱动化;12 月支 × 10 日干全组合 120 项零差异
+
+### 修复(2026-10-13 深度审计发现)
+
+- **节气 base64 回退表时区错位**(`calendar.js` JQ_STR):旧表按 UTC 日期生成,凡时刻在中国标准时间 0–8 点的节气,日精度回退值整体偏早一天(1,224 项中 640 项错位)。已由 `solar-terms.js` 时刻表的 CST 日期程序化重生成(覆盖范围与字节数不变);因精确时刻表优先级更高,线上行为此前未受影响,属回退链隐患
+- **纳音正名**(`shared.js` NY):甲午/乙未「砂石金」→「沙中金」(《三命通会》正典,与 lunar-javascript oracle 一致;仓库内 `long-report.js` 自带字典本就用正典名,两表自此统一,审计新增 C5f 双表一致性回归)
+- **西方星相十二宫格星图空白**(`zodiac-art.js` + `western-view.js`):星表键为缩写(`ari`)而调用方传 `SIGNS` 全名 id(`aries`),查表失败致 12 张星图 SVG 全部为空串——新增 SIGN_ALIAS 双约定兼容 + 审计 G4 回归;星图渐变背景由 SVG 非法 `fill`(CSS gradient 字符串)移至外层容器 style;`opts.star/line` 颜色别名生效
+- **Node 环境导入崩溃**(`western3d.js`):模块顶层 `window._w3d` / `window._w3dReset` 未守护,任何经 import 链触及该文件的 Node 工具(如塔罗数据测试)直接 ReferenceError——已加 `typeof window` 守护
+- 同步更新 `verify-bazi-v2/v3` 纳音期望值(v3 为 unicode 转义存储)
 
 ## [5.0.0-beta.1] - 2026-08-30
 

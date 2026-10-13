@@ -127,6 +127,7 @@ node tools/verify-western-v1.mjs  # 西方星历 59 项验证
 npm run verify:lunar # 农历引擎 vs lunar-javascript:1901–2099 逐日全量(72,691 项)
 npm run verify:ziwei # 紫微标准安星 vs iztro:10,378 盘 × 16 字段(166,048 项,约 5 分钟)
 npm run gen:lunar    # 重新生成农历数据表(数据源:lunar-javascript,MIT)
+npm run audit:deep   # 全局数据深度审计(85 项:节气/农历/干支/四柱 vs oracle、城市、西方星历、星表、工具数据、静态引用、代码卫生)
 ```
 
 ---
