@@ -639,7 +639,7 @@ function attachOrbit(s, container) {
   };
   s._applyOrbit();
 }
-window._w3d = { built, STATE };   // 调试出口
+if (typeof window !== 'undefined') window._w3d = { built, STATE };   // 调试出口(守护:Node/构建期无 window)
 const CONTAINER_IDS = { astro: 'w3d-astro', horo: 'w3d-horo', num: 'w3d-num' };
 const ORBIT_DEFAULTS = {
   astro: { theta: 0, phi: 0.61, radius: 5.4, target: { x: 0, y: 0, z: -0.05 }, minPhi: 0.18, maxPhi: 1.15, autoSpeed: 0 },
@@ -801,7 +801,7 @@ function resetSceneView(key) {
     s.camera.lookAt(s.orbit.target.x, s.orbit.target.y, s.orbit.target.z);
   }
 }
-window._w3dReset = resetSceneView;
+if (typeof window !== 'undefined') window._w3dReset = resetSceneView;
 
 export function disposeWestern3D() {
   STATE.disposed = true;
