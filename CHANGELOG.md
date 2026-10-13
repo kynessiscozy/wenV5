@@ -4,7 +4,7 @@
 
 格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/),版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [未发布]
+## [5.1.0-beta.1] - 2026-10-13
 
 ### 新增
 
@@ -83,5 +83,5 @@
 - 工具中心 V1/V2(塔罗、MBTI、择日、合盘、起名、摇签、答案之书等 13 款)
 - Claude 风格 UI(纸质/暗夜双主题、WCAG AA)、PWA(manifest + Service Worker)
 
-[未发布]: https://github.com/kynessiscozy/wenV5/compare/v5.0.0-beta.1...main
+[5.1.0-beta.1]: https://github.com/kynessiscozy/wenV5/compare/v5.0.0-beta.1...v5.1.0-beta.1
 [5.0.0-beta.1]: https://github.com/kynessiscozy/wenV5/releases/tag/v5.0.0-beta.1
