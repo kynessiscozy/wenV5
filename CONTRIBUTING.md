@@ -14,9 +14,10 @@ npm run dev          # 开发服务器 http://localhost:5173
 
 ```bash
 npm run build                      # 生产构建无错误
-npm run test:unit                  # 引擎单测矩阵(全绿是合并前提)
+npm run test:unit                  # 引擎单测矩阵(全绿是合并前提,含农历逐日全量验证)
 node tools/verify-bazi-v3.mjs      # 八字核心算法 123 项交叉验证
 node tools/verify-western-v1.mjs   # 西方星历 59 项验证
+npm run verify:ziwei               # 紫微标准安星 vs iztro 交叉验证(约 5 分钟,改动紫微/农历引擎必跑)
 ```
 
 CI(GitHub Actions)会在每次 push 到 `main` 时自动执行构建 + 单测,失败则阻断 Pages 部署。**请不要向 CI 红灯的 main 分支合并代码。**
