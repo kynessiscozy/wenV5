@@ -55,7 +55,10 @@ export function initTheme() {
   const mount = () => {
     // 首页右上角浮动按钮
     if (!document.querySelector('.theme-toggle-home')) {
-      document.body.appendChild(makeToggle('theme-toggle-home'));
+      const toggle = makeToggle('theme-toggle-home');
+      const header = document.querySelector('.character-header-actions');
+      if (header) header.prepend(toggle);
+      else document.body.appendChild(toggle);
     }
     applyThemePref(getThemePref());
   };

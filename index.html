@@ -6,7 +6,7 @@
 <title>问问大师</title>
 
 <meta name="theme-color" content="#faf9f5">
-<meta name="description" content="问问大师">
+<meta name="description" content="和 2.5D 星光向导问问一起，从命盘与星象出发，探索更了解自己的方式。">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="./icon.svg?v=35">
 <link rel="apple-touch-icon" href="./icon-192.png">
@@ -33,6 +33,7 @@
 <link rel="stylesheet" href="/src/enhance.css">
 <link rel="stylesheet" href="/src/evolve.css">
 <link rel="stylesheet" href="/src/liquid-glass.css">
+<link rel="stylesheet" href="/src/character-theme.css">
 <style>
 .result-style-heading{display:flex;align-items:baseline;gap:8px;margin-bottom:7px;min-width:0}
 .result-style-label{font-size:.72em;font-weight:500;color:var(--c-text-2);white-space:nowrap}
@@ -63,42 +64,9 @@
 <!-- 推演过渡：页面淡出后，仅在底部显示极简提示 -->
 <div class="tj-calc-hint" id="tjCalcHint" aria-live="polite">推演中</div>
 
-<!-- 首页汉堡菜单按钮 -->
-<button class="home-menu-btn" id="homeMenuBtn" type="button" onclick="toggleHomeMenu()" aria-label="菜单" title="菜单">
-  <span class="home-menu-bars"></span>
-  <span class="home-menu-bars"></span>
-  <span class="home-menu-bars"></span>
-</button>
-
-<!-- 首页右侧顶部：光球调色盘按钮 + 弹出面板 -->
-<button class="home-orb-palette-btn" id="homeOrbPaletteBtn" type="button" aria-label="光球调色盘" title="光球调色盘">
-  <svg class="home-orb-palette-icon" id="homeOrbPaletteIcon" viewBox="0 0 24 24" aria-hidden="true" style="fill:none">
-    <defs>
-      <radialGradient id="homeOrbBtnGlow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#d97757" stop-opacity=".6"/>
-        <stop offset="100%" stop-color="#d97757" stop-opacity="0"/>
-      </radialGradient>
-      <radialGradient id="homeOrbBtnBody" cx="50%" cy="45%" r="60%">
-        <stop offset="0%" stop-color="#fbe3da"/>
-        <stop offset="38%" stop-color="#e89b80"/>
-        <stop offset="72%" stop-color="#d97757"/>
-        <stop offset="100%" stop-color="#b85a3c"/>
-      </radialGradient>
-    </defs>
-    <circle cx="12" cy="12" r="11" fill="url(#homeOrbBtnGlow)"/>
-    <circle class="home-orb-palette-core" cx="12" cy="12.2" r="7.4" fill="url(#homeOrbBtnBody)"/>
-    <circle class="home-orb-palette-core" cx="12" cy="12.2" r="7.4" fill="none" stroke="#ffe9c2" stroke-opacity=".9" stroke-width=".9"/>
-    <ellipse cx="10.2" cy="10" rx="2.1" ry="1.6" fill="#ffffff" fill-opacity=".7" transform="rotate(-24 10.2 10)"/>
-  </svg>
-</button>
-<div class="home-orb-palette-panel" id="homeOrbPalettePanel" role="dialog" aria-label="光球调色盘">
-  <div class="home-orb-palette-head">光球颜色</div>
-  <div class="home-orb-palette-grid" id="homeOrbPaletteGrid"></div>
-</div>
-
 <!-- 首页汉堡菜单抽屉 -->
 <div class="home-menu-overlay" id="homeMenuOverlay" onclick="toggleHomeMenu(false)"></div>
-<aside class="home-menu-drawer" id="homeMenuDrawer" aria-label="菜单面板">
+<aside class="home-menu-drawer" id="homeMenuDrawer" aria-label="菜单面板" aria-hidden="true" inert>
   <div class="home-menu-header">
     <div style="display:flex;align-items:center;gap:12px">
       <img src="./icon.svg?v=35" alt="" class="home-menu-icon" style="width:40px;height:40px;flex-shrink:0;border-radius:10px">
@@ -210,38 +178,74 @@
 
 <div class="page" id="page1">
   <div class="p1-scroll">
+    <div class="character-backdrop" aria-hidden="true"><img src="./art/celestial-stage.webp" alt="" width="1536" height="1024" decoding="async"></div>
     <div class="p1-inner">
-      <!-- 首页主视觉：欢迎语在上，双胶囊按钮下沉，不遮盖中央液态光球 -->
-      <div class="home-hero anim-in d1">
-        <div class="home-hero-copy">
-          <h1 class="home-hero-title" style="font-weight:800;text-align:center">问问大师</h1>
-          <p class="home-hero-sub">从命盘看倾向，把选择落到行动</p>
+      <header class="character-header">
+        <div class="character-brand" aria-label="问问大师">
+          <span class="character-brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M16 4.5c1.1 6.1 3.4 8.5 9.5 9.6-6.1 1.1-8.4 3.5-9.5 9.6-1.1-6.1-3.4-8.5-9.5-9.6 6.1-1.1 8.4-3.5 9.5-9.6Z" fill="currentColor"/><path d="M24.3 21.2c.4 2.2 1.3 3.1 3.5 3.5-2.2.4-3.1 1.3-3.5 3.5-.4-2.2-1.3-3.1-3.5-3.5 2.2-.4 3.1-1.3 3.5-3.5Z" fill="currentColor"/></svg>
+          </span>
+          <div class="character-brand-copy"><h1>问问大师</h1></div>
         </div>
-        <div class="home-hero-actions">
-          <button class="home-cta" id="homeCtaMain" type="button" onclick="TJOpenForm()">输入信息</button>
-          <button class="home-cta home-cta-ghost home-cta-cal" id="homeCtaCal" type="button" onclick="openCalendarMode()" aria-label="日历模式" title="日历模式">日历模式</button>
+        <div class="character-header-right">
+          <div class="character-header-actions">
+            <button class="home-menu-btn" id="homeMenuBtn" type="button" onclick="toggleHomeMenu()" aria-label="打开菜单" aria-controls="homeMenuDrawer" aria-expanded="false" title="菜单">
+              <span class="home-menu-bars"></span><span class="home-menu-bars"></span><span class="home-menu-bars"></span>
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
+      <main class="character-home">
+        <section class="character-hero" aria-label="角色互动">
+          <figure class="character-scene" id="characterScene">
+            <button class="character-portrait has-character-light" id="characterPortraitButton" type="button" aria-label="和问问聊聊" aria-controls="characterCompanion">
+              <span class="character-puppet">
+                <img src="./art/wenwen-complete.webp" data-character-asset="portrait" alt="星光向导问问坐在云朵上，手捧发光的星星罗盘" width="992" height="1299" fetchpriority="high">
+              </span>
+            </button>
+            <button class="character-message" id="characterInvitation" type="button" aria-controls="characterCompanion"><span class="character-message-star" aria-hidden="true">✦</span><b>和我聊聊</b></button>
+            <span class="character-spark character-spark-one" aria-hidden="true">✦</span>
+            <span class="character-spark character-spark-two" aria-hidden="true">✳</span>
+          </figure>
+
+          <div class="character-copy">
+            <section class="character-companion" id="characterCompanion" aria-label="和问问聊聊"></section>
+            <div class="character-actions">
+              <button class="character-btn character-btn-primary" id="homeCtaMain" type="button">开启探索</button>
+              <button class="character-btn character-btn-secondary" id="homeCtaCal" type="button" onclick="openCalendarMode()">日历</button>
+            </div>
+            <button class="character-guide-link" type="button" onclick="openNoviceGuide()">使用指南 ↗</button>
+          </div>
+        </section>
+
+        <footer class="character-footer">命理与星象内容仅供文化体验与自我反思。</footer>
+      </main>
     </div>
   </div>
 </div>
 
-<!-- 出生信息表单弹窗：浮于按钮上方，覆盖星轨动画区域 -->
-<div class="form-modal" id="formModal" role="dialog" aria-label="输入出生信息">
+<!-- 出生信息表单：自包含对话框，也可从日历中打开 -->
+<div class="form-modal" id="formModal" role="dialog" aria-modal="true" aria-labelledby="formModalTitle" aria-describedby="formPrivacy">
+  <div class="form-modal-backdrop" onclick="TJCloseForm()"></div>
   <div class="form-modal-sheet">
     <button class="form-modal-close" type="button" onclick="TJCloseForm()" aria-label="关闭表单">×</button>
     <div class="home-card" id="formCard">
-      <div class="form-modal-tt">填写信息</div>
+      <div class="form-modal-kicker">A LITTLE ABOUT YOU &nbsp; ✦</div>
+      <h2 class="form-modal-tt" id="formModalTitle" tabindex="-1">让我们从认识你开始</h2>
+      <p class="form-modal-intro">填写出生信息，问问会为你准备一份专属命盘。</p>
+      <div class="character-form-focus" id="characterFormContext" hidden></div>
       <div class="form-grid">
-        <div class="fd"><label>出生日期</label><input type="date" id="bDate" value="1990-06-15"></div>
-        <div class="fd"><label>出生时间</label><input type="time" id="bTime" value="09:00" style="font-family:var(--sf)"></div>
-        <div class="fd"><label>出生地点</label><div class="cw"><input type="text" id="cInp" placeholder="搜索城市…" autocomplete="off" value="上海"><input type="hidden" id="bPlace" value="shanghai"><div class="cdd" id="cDD"></div></div></div>
-        <div class="fd"><label>性别</label><select id="bGen"><option value="male">男（乾造）</option><option value="female">女（坤造）</option></select></div>
+        <div class="fd"><label for="bDate">出生日期</label><input type="date" id="bDate" value="1990-06-15"></div>
+        <div class="fd"><label for="bTime">出生时间</label><input type="time" id="bTime" value="09:00" style="font-family:var(--sf)"></div>
+        <div class="fd"><label for="cInp">出生地点</label><div class="cw"><input type="text" id="cInp" placeholder="搜索城市…" autocomplete="off" value="上海"><input type="hidden" id="bPlace" value="shanghai"><div class="cdd" id="cDD"></div></div></div>
+        <div class="fd"><label for="bGen">性别</label><select id="bGen"><option value="male">男（乾造）</option><option value="female">女（坤造）</option></select></div>
         <div class="fd full result-style-field"><div class="result-style-heading"><div class="result-style-label">选择你希望的风格</div><small class="result-style-hint" id="resultStyleHint">先接住当下感受，再一起把问题拆小。</small></div><input type="hidden" id="bResultStyle" value="companion"><div class="result-style-options" id="resultStyleOptions" role="radiogroup" aria-label="结果风格"><button type="button" class="result-style-option active" data-style="companion" role="radio" aria-checked="true" onclick="selectResultStyle('companion')">陪伴型</button><button type="button" class="result-style-option" data-style="rigorous" role="radio" aria-checked="false" onclick="selectResultStyle('rigorous')">严谨型</button><button type="button" class="result-style-option" data-style="traditional" role="radio" aria-checked="false" onclick="selectResultStyle('traditional')">传统型</button><button type="button" class="result-style-option" data-style="advisory" role="radio" aria-checked="false" onclick="selectResultStyle('advisory')">建议型</button></div></div>
       </div>
       <input type="hidden" id="bQ" value="">
-      <div class="switch-row" style="margin-top:6px"><div class="switch" id="swTrueSolar" onclick="this.classList.toggle('on');document.getElementById('swText').textContent=(this.classList.contains('on')?'开启':'关闭')+'真太阳时（按出生地经度精确换算时辰）'"></div><span id="swText">关闭真太阳时（按出生地经度精确换算时辰）</span></div>
+      <div class="switch-row" style="margin-top:6px"><button type="button" class="switch" id="swTrueSolar" role="switch" aria-checked="false" aria-labelledby="swText" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'));document.getElementById('swText').textContent=(this.classList.contains('on')?'开启':'关闭')+'真太阳时（按出生地经度精确换算时辰）'"></button><span id="swText">关闭真太阳时（按出生地经度精确换算时辰）</span></div>
+      <button class="character-form-submit" type="button" onclick="calc()">开始推演 <span aria-hidden="true">↗</span></button>
+      <p class="character-form-privacy" id="formPrivacy">✧ &nbsp; 保存的档案存放在本机，可随时管理</p>
     </div>
   </div>
 </div>
@@ -278,29 +282,7 @@
       <span class="ig-nav-label" id="tabLabelYun">运势</span>
     </div>
     <button class="ai-fab" id="aiFab" type="button" onclick="openAsk()" aria-label="打开问问大师" title="问问大师">
-      <span class="ai-fab-icon"><svg class="ig-ai-icon ai-orb-icon" viewBox="0 0 24 24" aria-hidden="true" style="fill:none">
-        <defs>
-          <radialGradient id="aiOrbGlow" cx="50%" cy="45%" r="60%">
-            <stop offset="0%" stop-color="#fbe3da"/>
-            <stop offset="38%" stop-color="#e89b80"/>
-            <stop offset="72%" stop-color="#d97757"/>
-            <stop offset="100%" stop-color="#b85a3c"/>
-          </radialGradient>
-          <radialGradient id="aiOrbCore" cx="38%" cy="34%" r="50%">
-            <stop offset="0%" stop-color="#ffffff"/>
-            <stop offset="55%" stop-color="#ffffff" stop-opacity=".0"/>
-          </radialGradient>
-          <radialGradient id="aiOrbHalo" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#d97757" stop-opacity=".55"/>
-            <stop offset="100%" stop-color="#d97757" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-        <circle cx="12" cy="12" r="11" fill="url(#aiOrbHalo)"/>
-        <circle class="ai-orb-breath" cx="12" cy="12.2" r="7.4" fill="url(#aiOrbGlow)"/>
-        <circle class="ai-orb-breath" cx="12" cy="12.2" r="7.4" fill="none" stroke="#f0c9bb" stroke-opacity=".9" stroke-width=".9"/>
-        <ellipse cx="10.2" cy="10" rx="2.1" ry="1.6" fill="url(#aiOrbCore)" transform="rotate(-24 10.2 10)"/>
-        <circle class="ai-orb-particle" cx="14.6" cy="13.6" r="1.1" fill="#ffffff" fill-opacity=".75"/>
-      </svg></span><span class="ai-fab-text">问问大师</span>
+      <span class="ai-fab-icon"><img class="character-dock-avatar" src="./art/wenwen-avatar.webp" data-character-asset="avatar" alt="" width="192" height="192"></span><span class="ai-fab-text">问问大师</span>
     </button>
     <div class="tab-item" data-sec="s-rel" onclick="switchTab(this)" aria-label="关系 / 生命灵术">
       <svg class="ig-nav-icon ig-heart ig-nav-icon-eastern" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 8.4c0 4.7-8.2 9.9-8.2 9.9S3.8 13.1 3.8 8.4A4.3 4.3 0 0 1 12 6.2a4.3 4.3 0 0 1 8.2 2.2Z"/></svg>

@@ -1,10 +1,10 @@
 /* 问问大师 PWA：离线可用 + 秒开的缓存策略。
    静态资源带 hash，可长期缓存；HTML 走 network-first 保证更新及时。 */
-const CACHE = 'wenda-cache-v2';
+const CACHE = 'wenda-cache-v8';
+const BASE = './';
 
 self.addEventListener('install', (e) => {
-  const BASE = './';
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll([BASE, BASE + 'manifest.webmanifest', BASE + 'icon.svg', BASE + 'icon-192.png', BASE + 'icon-512.png'])).catch(() => {}));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll([BASE, BASE + 'manifest.webmanifest', BASE + 'icon.svg', BASE + 'icon-192.png', BASE + 'icon-512.png', BASE + 'art/wenwen-complete.webp', BASE + 'art/wenwen-complete-avatar.webp', BASE + 'art/celestial-stage.webp'])).catch(() => {}));
   self.skipWaiting();
 });
 

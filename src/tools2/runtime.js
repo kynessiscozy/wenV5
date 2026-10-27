@@ -11,6 +11,7 @@ export { attachToolAI };
 const TOOLS = new Map();
 let _current = null;        // 当前打开的 tool id
 let _cleanup = null;        // 当前工具的卸载回调
+let _focusTimer = null;      // 延迟聚焦不可抢走后续交互的焦点
 
 /* —— 注册 / 查询 —— */
 export function register(tool) {
@@ -43,6 +44,8 @@ export function openTool(id) {
   const modal = document.getElementById('toolModal');
   const content = document.getElementById('toolModalContent');
   if (!modal || !content) return;
+  const previousFocus = document.activeElement;
+  if (_focusTimer) { clearTimeout(_focusTimer); _focusTimer = null; }
 
   if (_cleanup) { try { _cleanup(); } catch (e) {} _cleanup = null; }
 
@@ -65,7 +68,11 @@ export function openTool(id) {
   }
 
   saveHistory(id);
-  setTimeout(() => {
+  _focusTimer = setTimeout(() => {
+    _focusTimer = null;
+    if (_current !== id || !modal.classList.contains('open') || document.getElementById('formModal')?.classList.contains('open')) return;
+    // Respect a user who already moved focus (including returning from the calendar form).
+    if (document.activeElement !== previousFocus && document.activeElement !== document.body) return;
     const first = content.querySelector('input, select, textarea, button');
     if (first && first.focus && !first.disabled) first.focus({ preventScroll: true });
   }, 140);
@@ -73,6 +80,7 @@ export function openTool(id) {
 
 /* —— 关闭工具 —— */
 export function closeTool() {
+  if (_focusTimer) { clearTimeout(_focusTimer); _focusTimer = null; }
   const modal = document.getElementById('toolModal');
   const content = document.getElementById('toolModalContent');
   if (content) content.className = '';
