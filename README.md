@@ -14,6 +14,12 @@ V5.0 是一次彻底的体系化升级：在东方命理之外引入完整的**�
 
 ## 核心特性
 
+### 2.5D 人物向导
+
+首页以 2.5D 星光向导「问问」陪伴探索，完整的云上人物与全屏星空舞台自然融合；选择话题时人物会轻微回应，光色与回应布局柔和过渡，并引导填写信息。完成命盘后，可带着同一话题进入已有问答。问题只会作为可编辑草稿，不会自动发送；未完成的话题仅保留在当前页面内。日历、指引与原有命理引擎继续保留，并支持移动端、深浅主题和减少动态效果。
+
+角色名称、素材及话题集中在 `src/character/wenwen.js`，`src/character/companion.js` 提供可挂载的对话与头像提示组件；首页、表单、报告和问答复用同一角色定义。首页使用透明完整人物 `public/art/wenwen-complete.webp` 与独立舞台背景 `public/art/celestial-stage.webp`，头像由同一形象制作；人物比例和罗盘光点位置均由角色定义提供，原始素材仍保留在 `public/art/`。对话组件可通过 `showGreeting` 控制初始问候，首页默认不显示。
+
 ### 双体系命理引擎
 
 | 体系 | 引擎 | 说明 |
@@ -120,6 +126,7 @@ npm run preview      # 本地预览构建产物（默认 4173 端口）
 
 ```bash
 npm run test:unit    # 引擎单测(流日/合盘/塔罗/MBTI/西方星历/农历全量等)
+npm run test:character # 人物首页、对话框、报告与响应式交互
 npm run test:e2e     # Puppeteer E2E 套件
 npm run test:a11y    # WCAG AA 对比度审计
 node tools/verify-bazi-v3.mjs     # 八字核心算法 123 项权威交叉验证
@@ -130,6 +137,8 @@ npm run gen:lunar    # 重新生成农历数据表(数据源:lunar-javascript,MI
 npm run audit:deep   # 全局数据深度审计(85 项:节气/农历/干支/四柱 vs oracle、城市、西方星历、星表、工具数据、静态引用、代码卫生)
 npm run verify:algo  # 全局算法验证(61 项:真太阳时/神煞/大运 vs oracle/梅花卦象正典/十天体黄经 vs astronomy-engine/灵数 KAT;加 :quick 抽样,报告见 docs/algo-verification-2026-10-13.md)
 ```
+
+浏览器测试需要先启动开发服务器；如使用其他地址，可通过 `BASE_URL` 指定。
 
 ---
 

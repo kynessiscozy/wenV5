@@ -13,6 +13,7 @@ import {
 } from '../evolve/index.js';
 import { showToast } from './toast.js';
 import { filterAiResponse } from '../ai/filter.js';
+import { characterAvatarMarkup } from '../character/wenwen.js';
 
 /* ============================================================
    问问大师 · 重构版 — ChatGPT 气泡式对话
@@ -115,6 +116,10 @@ function _restoreHistory(el) {
   const arr = _histLoad();
   if (!arr.length) return false;
   el.innerHTML = arr.map(x => x.h).join('');
+  // Older saved conversations may still contain the former star avatar.
+  el.querySelectorAll('.chat-msg-ai .chat-avatar').forEach(avatar => {
+    avatar.innerHTML = characterAvatarMarkup();
+  });
   // 工具跳转按钮的事件随 HTML 序列化丢失，按 data-tool 重新绑定
   el.querySelectorAll('.chat-tool-btn[data-tool]').forEach(b => {
     b.onclick = () => {
@@ -141,7 +146,7 @@ function _renderWelcome(el) {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'chat-msg chat-msg-ai chat-welcome';
   msgDiv.innerHTML =
-    '<div class="chat-avatar">✦</div>' +
+    '<div class="chat-avatar">' + characterAvatarMarkup() + '</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai">' +
         '<div class="chat-welcome-greeting">' + greeting + '！我是问问大师 ✦</div>' +
@@ -178,7 +183,7 @@ function _showTyping(el, hint) {
   indicator = document.createElement('div');
   indicator.className = 'chat-msg chat-msg-ai chat-typing';
   indicator.innerHTML =
-    '<div class="chat-avatar">✦</div>' +
+    '<div class="chat-avatar">' + characterAvatarMarkup() + '</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai">' +
         '<div class="typing-dots"><span></span><span></span><span></span></div>' +
@@ -218,7 +223,7 @@ function _createAiBubble(el, q) {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'chat-msg chat-msg-ai chat-msg-appear';
   msgDiv.innerHTML =
-    '<div class="chat-avatar">✦</div>' +
+    '<div class="chat-avatar">' + characterAvatarMarkup() + '</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai"><div class="chat-ai-text"></div></div>' +
       _chatActionsHtml(true) +
@@ -239,7 +244,7 @@ function _renderKbBubble(el, kbRes, q) {
   msgDiv.className = 'chat-msg chat-msg-ai chat-msg-appear';
   const kbHtml = renderSmartAnswer(kbRes, q);
   msgDiv.innerHTML =
-    '<div class="chat-avatar">✦</div>' +
+    '<div class="chat-avatar">' + characterAvatarMarkup() + '</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai chat-bubble-kb">' + kbHtml + '</div>' +
       _chatActionsHtml(false) +
@@ -257,7 +262,7 @@ function _renderToolCallBubble(el, short, toolId) {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'chat-msg chat-msg-ai chat-msg-appear';
   msgDiv.innerHTML =
-    '<div class="chat-avatar">✦</div>' +
+    '<div class="chat-avatar">' + characterAvatarMarkup() + '</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai">' +
         '可以，直接开始这个小工具，填完后我再帮你看结果。' +
@@ -281,7 +286,7 @@ function _renderNeedChart(el) {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'chat-msg chat-msg-ai chat-msg-appear';
   msgDiv.innerHTML =
-    '<div class="chat-avatar">✦</div>' +
+    '<div class="chat-avatar">' + characterAvatarMarkup() + '</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai">' +
         '请先完成命盘排盘，我才能给出有针对性的建议。' +
@@ -500,7 +505,16 @@ export function aiRefreshChips(cat) {
   wrap.innerHTML = list.map(f => `<div class="ai-chip" onclick="doAsk('${f.q.replace(/'/g, "\\'")}')">${f.q}</div>`).join('');
   if (cat === '玄学') { wrap.innerHTML += '<div class="ai-divider">术语速查</div>'; wrap.innerHTML += KB.terms.slice(0, 12).map(t => `<div class="ai-chip term" onclick="doAsk('${t.t}')">${t.t}</div>`).join(''); }
 }
-export function aiOnInputSuggest() { const sug = document.getElementById('aiSuggest'); if (sug) { sug.innerHTML = ''; sug.classList.remove('show'); } }
+export function aiOnInputSuggest() {
+  const sug = document.getElementById('aiSuggest');
+  if (sug) { sug.innerHTML = ''; sug.classList.remove('show'); }
+  const input = document.getElementById('askInput');
+  if (input) {
+    input.style.height = 'auto';
+    const max = parseFloat(getComputedStyle(input).maxHeight) || 132;
+    input.style.height = Math.min(input.scrollHeight + 2, max) + 'px';
+  }
+}
 
 /* ============================================================
    核心：generateAnswer — 三层触发机制

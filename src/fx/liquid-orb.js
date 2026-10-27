@@ -379,7 +379,7 @@ function onTouchEnd(e) {
   if (t) t.down = false;
 }
 
-export function initLiquidOrb() {
+export function initLiquidOrb({ animate = true } = {}) {
   if (initialized) return;
   initialized = true;
   canvas = document.getElementById('liquidOrb');
@@ -388,6 +388,16 @@ export function initLiquidOrb() {
   initOrbs();
   loadOrbColor();
   themeDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  // The character home keeps report color settings without animating a hidden canvas.
+  window._tjLiquidOrb = {
+    start,
+    stop,
+    setColor: setOrbColor,
+    getColorKey: () => orbColorKey,
+    getPresets: () => Object.keys(ORB_PRESETS).map((k) => ({ key: k, name: ORB_PRESETS[k].name, swatch: ORB_PRESETS[k].swatch })),
+  };
+  if (!animate) return;
 
   window.addEventListener('resize', onResize, { passive: true });
   document.addEventListener('visibilitychange', onVisibility);
@@ -422,13 +432,6 @@ export function initLiquidOrb() {
     stop();
   }
 
-  window._tjLiquidOrb = {
-    start,
-    stop,
-    setColor: setOrbColor,
-    getColorKey: () => orbColorKey,
-    getPresets: () => Object.keys(ORB_PRESETS).map((k) => ({ key: k, name: ORB_PRESETS[k].name, swatch: ORB_PRESETS[k].swatch })),
-  };
 }
 
 export function destroyLiquidOrb() {
