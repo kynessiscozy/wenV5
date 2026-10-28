@@ -25,7 +25,10 @@ html[data-theme] body.home { cursor: auto; }
   --backdrop-opacity: .88;
   --backdrop-top: rgba(30, 17, 29, .32);
   --backdrop-middle: rgba(30, 17, 29, .1);
+  --backdrop-lower-middle: rgba(30, 17, 29, .14);
   --backdrop-bottom: rgba(30, 17, 29, .65);
+  --home-focus: #ffe4bd;
+  --camera-shade: 27, 17, 29;
   background: var(--home-bg);
 }
 html[data-theme="dark"] #page1 {
@@ -48,6 +51,59 @@ html[data-theme="dark"] #page1 {
   --backdrop-middle: rgba(29, 19, 30, .17);
   --backdrop-bottom: rgba(24, 17, 30, .72);
 }
+/* Moonlit fox study is a separate home scene, not the app's light/dark mode. */
+html[data-home-theme="moonfox"] #page1 {
+  --home-bg: #091a30;
+  --home-text: #f1f8ff;
+  --home-muted: #d0e8f8;
+  --home-card: #173755;
+  --home-card-hover: #254e70;
+  --home-accent: #b8ddf5;
+  --home-accent-dark: #d8f1ff;
+  --home-purple: #c5def6;
+  --home-icon-bg: #244664;
+  --home-button: #c4e5f7;
+  --home-button-text: #123750;
+  --home-control-border: rgba(190, 225, 249, .36);
+  --home-control-sheen: linear-gradient(145deg, rgba(224, 245, 255, .15), rgba(165, 212, 245, .025) 70%);
+  --home-control-shadow: inset 0 1px rgba(224, 244, 255, .16), 0 5px 18px rgba(1, 12, 29, .26);
+  --home-focus: #d5f1ff;
+  --camera-shade: 5, 17, 33;
+  --backdrop-opacity: .94;
+  --backdrop-top: rgba(4, 16, 34, .25);
+  --backdrop-middle: rgba(6, 20, 41, .04);
+  --backdrop-lower-middle: rgba(5, 18, 36, .1);
+  --backdrop-bottom: rgba(4, 15, 31, .64);
+}
+/* The earthfire hall is a third home scene, separate from the app's light/dark mode. */
+html[data-home-theme="diyan"] #page1 {
+  --home-bg: #100a0c;
+  --home-text: #fff1e5;
+  --home-muted: #f3c9b7;
+  --home-card: #421c1b;
+  --home-card-hover: #5c2823;
+  --home-accent: #ffbf93;
+  --home-accent-dark: #ffe0b8;
+  --home-purple: #e8b0a6;
+  --home-icon-bg: #552421;
+  --home-button: #efad80;
+  --home-button-text: #38130f;
+  --home-control-border: rgba(255, 188, 143, .38);
+  --home-control-sheen: linear-gradient(145deg, rgba(255, 210, 168, .13), rgba(166, 58, 39, .02) 70%);
+  --home-control-shadow: inset 0 1px rgba(255, 212, 184, .15), 0 5px 18px rgba(0, 0, 0, .3);
+  --home-focus: #ffd0a3;
+  --camera-shade: 21, 5, 7;
+  --backdrop-opacity: .98;
+  --backdrop-top: rgba(15, 4, 7, .18);
+  --backdrop-middle: rgba(15, 4, 7, .02);
+  --backdrop-lower-middle: rgba(15, 4, 7, .04);
+  --backdrop-bottom: rgba(10, 3, 5, .72);
+}
+/* Remembered scenes wait for their artwork rather than flashing the default portrait. */
+html[data-home-theme="moonfox"]:not([data-home-ready]) .character-backdrop,
+html[data-home-theme="moonfox"]:not([data-home-ready]) .character-scene,
+html[data-home-theme="diyan"]:not([data-home-ready]) .character-backdrop,
+html[data-home-theme="diyan"]:not([data-home-ready]) .character-scene { visibility: hidden; }
 #page1 .p1-scroll {
   position: relative;
   display: block;
@@ -72,14 +128,14 @@ html[data-theme="dark"] #page1 {
   opacity: var(--backdrop-opacity);
   /* The room drifts more slowly than the character in front of it. */
   filter: saturate(.88) blur(.4px);
-  transform: translate3d(var(--backdrop-drift-x, 0px), var(--backdrop-drift-y, 0px), 0) scale(1.04);
+  transform: translate3d(var(--backdrop-drift-x, 0px), var(--backdrop-drift-y, 0px), 0) scale(var(--camera-room-scale, 1.04));
   transition: transform 1.2s cubic-bezier(.2, .7, .2, 1);
 }
 .character-backdrop::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, var(--backdrop-top), var(--backdrop-middle) 32%, rgba(30, 17, 29, .14) 62%, var(--backdrop-bottom) 100%);
+  background: linear-gradient(180deg, var(--backdrop-top), var(--backdrop-middle) 32%, var(--backdrop-lower-middle) 62%, var(--backdrop-bottom) 100%);
 }
 #page1 .p1-inner {
   position: relative;
@@ -90,14 +146,55 @@ html[data-theme="dark"] #page1 {
   margin: 0 auto !important;
 }
 .character-header {
+  position: relative;
+  z-index: 3;
   min-height: 80px;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 .character-visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .character-header-actions { display: flex; align-items: center; justify-content: flex-end; }
+/* A quiet but discoverable theme switch, without putting a frame around the scene. */
+.character-theme-switcher {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid rgba(255, 226, 207, .24);
+  border-radius: 999px;
+  background: rgba(33, 22, 36, .88);
+  box-shadow: 0 4px 18px rgba(14, 8, 19, .18);
+}
+.character-theme-switcher button {
+  appearance: none;
+  min-width: 64px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #f5e5de;
+  font: 650 12px/1 var(--sf);
+  letter-spacing: .05em;
+  cursor: pointer;
+  transition: none !important;
+}
+.character-theme-switcher button[aria-pressed="true"] {
+  background: #f3dfcf;
+  color: #49303e;
+  box-shadow: 0 2px 8px rgba(9, 7, 14, .2);
+}
+.character-theme-switcher button:not([aria-pressed="true"]):hover { background: rgba(255, 255, 255, .1); }
+.character-theme-switcher button:focus-visible { outline: 2px solid var(--home-focus); outline-offset: 2px; }
+html[data-home-theme="moonfox"] .character-theme-switcher { border-color: rgba(183, 224, 251, .28); background: rgba(8, 27, 48, .9); }
+html[data-home-theme="moonfox"] .character-theme-switcher button { color: #dbedf9; }
+html[data-home-theme="moonfox"] .character-theme-switcher button[aria-pressed="true"] { background: #d7effb; color: #153a55; }
+html[data-home-theme="diyan"] .character-theme-switcher { border-color: rgba(250, 159, 123, .3); background: rgba(35, 10, 12, .92); }
+html[data-home-theme="diyan"] .character-theme-switcher button { color: #ffe1d1; }
+html[data-home-theme="diyan"] .character-theme-switcher button[aria-pressed="true"] { background: #f4c4a2; color: #481813; }
 /* These controls originally floated over the orb. They now live in the header. */
 html[data-theme] body .character-header .home-menu-btn,
 html[data-theme] body .character-header .theme-toggle-home {
@@ -132,6 +229,9 @@ html[data-theme] body .home-menu-drawer .home-menu-empty { color: var(--c-text-2
   gap: 8px;
   padding: 14px 0 0;
 }
+html[data-home-theme="diyan"] .character-header { min-height: 64px; }
+html[data-home-theme="diyan"] .character-hero { gap: 4px; padding-top: 4px; }
+html[data-home-theme="diyan"] .character-actions { margin-top: 4px; }
 .character-copy { position: relative; z-index: 1; width: 100%; max-width: 440px; text-align: center; }
 /* The character's cloud trail lends its texture to both actions. */
 .character-cloud-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
@@ -187,6 +287,22 @@ html[data-theme] body .home-menu-drawer .home-menu-empty { color: var(--c-text-2
 .character-btn-secondary .character-btn-edge { stroke: rgba(245, 212, 200, .7); }
 .character-btn-flourish { fill: none; stroke: rgba(146, 94, 76, .48); stroke-width: 1.25; stroke-linecap: round; }
 .character-btn-secondary .character-btn-flourish { stroke: rgba(255, 226, 206, .65); }
+html[data-home-theme="moonfox"] .character-btn-primary .character-btn-fill { fill: url(#homeCloudMoonPrimary); }
+html[data-home-theme="moonfox"] .character-btn-secondary .character-btn-fill { fill: url(#homeCloudMoonSecondary); }
+html[data-home-theme="moonfox"] .character-btn-edge { stroke: rgba(232, 249, 255, .86); }
+html[data-home-theme="moonfox"] .character-btn-secondary .character-btn-edge { stroke: rgba(195, 229, 251, .75); }
+html[data-home-theme="moonfox"] .character-btn-flourish { stroke: rgba(56, 119, 163, .55); }
+html[data-home-theme="moonfox"] .character-btn-secondary .character-btn-flourish { stroke: rgba(213, 240, 255, .76); }
+html[data-home-theme="moonfox"] .character-btn-primary .character-btn-art { filter: drop-shadow(0 5px 14px rgba(92, 181, 237, .3)); }
+html[data-home-theme="moonfox"] .character-btn-primary:hover .character-btn-art { filter: drop-shadow(0 7px 18px rgba(110, 199, 255, .48)); }
+html[data-home-theme="diyan"] .character-btn-primary .character-btn-fill { fill: url(#homeCloudFirePrimary); }
+html[data-home-theme="diyan"] .character-btn-secondary .character-btn-fill { fill: url(#homeCloudFireSecondary); }
+html[data-home-theme="diyan"] .character-btn-edge { stroke: rgba(255, 223, 191, .82); }
+html[data-home-theme="diyan"] .character-btn-secondary .character-btn-edge { stroke: rgba(255, 177, 144, .72); }
+html[data-home-theme="diyan"] .character-btn-flourish { stroke: rgba(143, 52, 35, .55); }
+html[data-home-theme="diyan"] .character-btn-secondary .character-btn-flourish { stroke: rgba(255, 201, 169, .72); }
+html[data-home-theme="diyan"] .character-btn-primary .character-btn-art { filter: drop-shadow(0 5px 14px rgba(212, 72, 39, .3)); }
+html[data-home-theme="diyan"] .character-btn-primary:hover .character-btn-art { filter: drop-shadow(0 7px 18px rgba(246, 100, 53, .45)); }
 .character-btn-icon, .character-btn > span { position: relative; z-index: 1; }
 .character-btn-icon {
   width: 17px;
@@ -211,12 +327,161 @@ html[data-theme] body .home-menu-drawer .home-menu-empty { color: var(--c-text-2
   align-items: center;
   justify-content: center;
   margin: 0;
+  touch-action: pan-y pinch-zoom;
 }
+/* Give the sovereign more of the screen while leaving the main actions in reach. */
+html[data-home-theme="diyan"] .character-scene {
+  height: min(clamp(280px, calc(100vh - 202px), 780px), calc(var(--character-mobile-vw, 188.8vw) - var(--character-mobile-inset-compact, 30.208px)));
+}
+/* The camera crops softly into the surrounding room, never into a visible frame. */
+.character-camera-viewport {
+  position: absolute;
+  inset: -140px 0 -64px;
+  overflow: hidden;
+  overflow: clip;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 28px, #000 calc(100% - 84px), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 28px, #000 calc(100% - 84px), transparent);
+}
+.character-camera {
+  position: absolute;
+  inset: 140px 0 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Move the scenery and visible subject together while leaving the focus target stable. */
+.character-camera-subject, .character-scenery {
+  transform-origin: 50% 20%;
+  transform: translate3d(var(--camera-shift-x, 0px), var(--camera-shift-y, 0%), 0) scale(var(--camera-scale, 1));
+  transition: transform .78s cubic-bezier(.2, .75, .2, 1);
+  will-change: transform;
+}
+.character-camera-subject { position: absolute; inset: 0; display: block; pointer-events: none; }
+.character-scene[data-camera-dragging="true"] .character-camera-subject,
+.character-scene[data-camera-dragging="true"] .character-scenery,
+body.camera-dragging .character-backdrop img { transition: none; }
+.character-scene[data-camera-dragging="true"] { cursor: grabbing; user-select: none; }
+.character-scene[data-camera-dragging="true"] .character-portrait { cursor: grabbing; }
+/* In close-up the portrait's outer outline may be off-screen; keep keyboard focus visible without framing the artwork. */
+.character-scene:focus-within::after {
+  content: '↵ 开启探索';
+  position: absolute;
+  z-index: 3;
+  left: 12px;
+  top: 10px;
+  padding: 7px 10px;
+  border: 2px solid var(--home-focus);
+  border-radius: 999px;
+  background: var(--home-bg);
+  color: var(--home-text);
+  font: 600 12px/1 var(--sf);
+  pointer-events: none;
+}
+@supports selector(:has(:focus-visible)) {
+  .character-scene:focus-within:not(:has(.character-portrait:focus-visible))::after { content: none; }
+}
+.character-camera-picker {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  gap: 2px;
+  isolation: isolate;
+  color: var(--home-text);
+}
+/* A local feathered shadow protects small labels over a moving illustrated background. */
+.character-camera-picker::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  width: min(100vw, 390px);
+  height: 96px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: radial-gradient(ellipse 50% 50% at center, rgba(var(--camera-shade), .88) 0 45%, rgba(var(--camera-shade), .74) 65%, transparent 100%);
+}
+.camera-gesture-hint {
+  margin-right: 7px;
+  color: var(--home-text);
+  font-size: 11px;
+  letter-spacing: .02em;
+  text-shadow: 0 1px 5px #190f17, 0 1px 10px #190f17;
+}
+.character-camera-picker button {
+  position: relative;
+  min-width: 48px;
+  min-height: 44px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: var(--home-text);
+  font: 600 11px/1 var(--sf);
+  letter-spacing: .05em;
+  text-shadow: 0 1px 5px #190f17, 0 1px 10px #190f17;
+  cursor: pointer;
+  transition: none !important;
+}
+.character-camera-picker button::after {
+  content: '';
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  bottom: 7px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0;
+}
+.character-camera-picker button[aria-pressed="true"]::after { opacity: .95; }
+.character-camera-picker button:focus-visible { outline: 2px solid var(--home-focus); outline-offset: -2px; border-radius: 8px; }
 .character-scenery { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+/* Flames may bleed naturally to the screen edge, but must not create horizontal scrolling. */
+html[data-home-theme="diyan"] .character-scenery { overflow: hidden; overflow: clip; }
 .character-prop { position: absolute; }
 .character-prop[hidden] { display: none; }
 .character-prop img { display: block; width: 100%; height: auto; }
 .character-prop img[hidden] { display: none; }
+/* A softly flickering, translucent fire throne stays wholly behind the figure. */
+.character-flame-anchor {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: var(--character-ratio, 625 / 1180);
+  transform: translateX(-50%);
+}
+.character-prop--fire { top: 20%; left: 50%; width: 140%; transform: translateX(-50%); }
+.character-prop--fire .character-fire-base {
+  filter: drop-shadow(0 0 17px rgba(255, 72, 28, .22));
+  transform-origin: 50% 70%;
+  animation: fire-seat-flicker 4.2s ease-in-out infinite;
+}
+.character-prop--fire .character-fire-glow {
+  position: absolute;
+  inset: 0;
+  opacity: .2;
+  transform-origin: 50% 72%;
+  mix-blend-mode: screen;
+  -webkit-mask-image: linear-gradient(#000 10%, transparent 76%);
+  mask-image: linear-gradient(#000 10%, transparent 76%);
+  animation: fire-seat-lift 3.6s ease-in-out infinite;
+}
+@keyframes fire-seat-flicker {
+  0%, 100% { opacity: .9; transform: scale(1); }
+  38% { opacity: 1; transform: scale(1.008, 1.018); }
+  72% { opacity: .93; transform: scale(.995, 1.004); }
+}
+@keyframes fire-seat-lift {
+  0%, 100% { opacity: .1; transform: translateY(0) scale(1); }
+  50% { opacity: .28; transform: translateY(-3px) scale(1.015, 1.04); }
+}
 /* The lantern shares the portrait's dimensions, so its placement follows the character. */
 .character-lantern-anchor {
   position: absolute;
@@ -257,6 +522,8 @@ html[data-theme] body .home-menu-drawer .home-menu-empty { color: var(--c-text-2
   transform: translate3d(var(--cloud-x, 0px), var(--cloud-y, 0px), 0);
   transition: transform .85s cubic-bezier(.2, .7, .2, 1);
 }
+/* His own finished cloud already extends into the room; avoid a second floating prop. */
+html[data-home-theme="moonfox"] .character-prop--cloud { display: none; }
 .character-prop--cloud img {
   filter: saturate(.82) brightness(.87) blur(.5px);
   -webkit-mask-image: linear-gradient(90deg, #000 30%, rgba(0, 0, 0, .85) 64%, transparent 100%);
@@ -265,6 +532,23 @@ html[data-theme] body .home-menu-drawer .home-menu-empty { color: var(--c-text-2
 .scene-sparkles { position: absolute; width: 14%; max-width: 160px; fill: #f6d3b6; opacity: .46; }
 .scene-sparkles--left { left: 8%; bottom: 16%; }
 .scene-sparkles--right { right: 10%; top: 10%; }
+/* Restrained embers echo the hall's rune-lit fire without adding a floating object. */
+html[data-home-theme="diyan"] .scene-sparkles { display: none; }
+html[data-home-theme="diyan"] .character-scenery::before,
+html[data-home-theme="diyan"] .character-scenery::after {
+  content: '';
+  position: absolute;
+  inset: 8% 12%;
+  pointer-events: none;
+  opacity: .5;
+  background: radial-gradient(circle 2px at 18% 59%, #ff9d69, transparent),
+    radial-gradient(circle 1.5px at 29% 27%, #f66a42, transparent),
+    radial-gradient(circle 2px at 82% 36%, #ffa26b, transparent),
+    radial-gradient(circle 1.5px at 76% 72%, #f56d48, transparent);
+  animation: embers-rise 7s ease-in-out infinite alternate;
+}
+html[data-home-theme="diyan"] .character-scenery::after { opacity: .28; transform: scale(.82); animation-delay: -3s; }
+@keyframes embers-rise { from { translate: 0 8px; opacity: .28; } to { translate: 0 -9px; opacity: .65; } }
 /* A small heart-shaped glimmer stays visible in the portrait crop of the room. */
 .scene-heartlight {
   display: none;
@@ -281,6 +565,15 @@ html[data-theme] body .home-menu-drawer .home-menu-empty { color: var(--c-text-2
 .heartlight-trail { fill: none; stroke: #ffcf9f; stroke-width: .8; stroke-linecap: round; opacity: .65; }
 .heartlight-heart { fill: none; stroke: #ffe1b5; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .heartlight-star { fill: #ffe2ba; }
+html[data-home-theme="moonfox"] .scene-sparkles { fill: #c9edff; }
+html[data-home-theme="moonfox"] .scene-heartlight { filter: drop-shadow(0 0 6px rgba(119, 204, 255, .65)); }
+html[data-home-theme="moonfox"] #heartlightGlow stop:first-child { stop-color: #c4ecff; }
+html[data-home-theme="moonfox"] #heartlightGlow stop:last-child { stop-color: #65bfff; }
+html[data-home-theme="moonfox"] .heartlight-trail { stroke: #b4e4ff; }
+html[data-home-theme="moonfox"] .heartlight-heart { stroke: #e2f6ff; }
+html[data-home-theme="moonfox"] .heartlight-star,
+html[data-home-theme="moonfox"] .scene-heartlight circle[fill="#ffe1bc"] { fill: #d5f3ff; }
+html[data-home-theme="diyan"] .scene-heartlight { display: none; }
 @keyframes heartlight-breathe { 0%, 100% { opacity: .66; transform: translateY(0); } 50% { opacity: .92; transform: translateY(-2px); } }
 @media (max-aspect-ratio: 4/5) { .scene-heartlight { display: block; } }
 /* Expressions remain optional and are aligned to the portrait, not the scenery. */
@@ -294,6 +587,7 @@ html[data-theme] body .home-menu-drawer .home-menu-empty { color: var(--c-text-2
   overflow: visible;
   padding: 0;
   cursor: pointer;
+  pointer-events: auto;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -306,6 +600,12 @@ html[data-theme] body .home-menu-drawer .home-menu-empty { color: var(--c-text-2
   pointer-events: none;
   background: radial-gradient(ellipse at 50% 42%, rgba(255, 214, 161, .28), rgba(255, 187, 136, .09) 37%, transparent 70%);
 }
+html[data-home-theme="moonfox"] .character-aura {
+  background: radial-gradient(ellipse at 50% 42%, rgba(158, 217, 255, .2), rgba(90, 158, 222, .07) 37%, transparent 70%);
+}
+html[data-home-theme="diyan"] .character-aura {
+  background: radial-gradient(ellipse at 50% 43%, rgba(221, 69, 35, .2), rgba(139, 27, 19, .08) 38%, transparent 72%);
+}
 .character-puppet {
   position: relative;
   z-index: 1;
@@ -315,6 +615,22 @@ html[data-theme] body .home-menu-drawer .home-menu-empty { color: var(--c-text-2
   transform: translate3d(var(--character-x, 0px), var(--character-y, 0px), 0);
   transition: transform .5s cubic-bezier(.2, .7, .2, 1);
 }
+/* The blue foxfire is tied to the hand in this portrait, not a floating UI badge. */
+html[data-home-theme="moonfox"] .character-puppet::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  left: 14%;
+  top: 9%;
+  width: 23%;
+  aspect-ratio: 1;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(114, 219, 255, .3), rgba(59, 147, 255, .12) 35%, transparent 70%);
+  mix-blend-mode: screen;
+  animation: foxfire-breathe 4.8s ease-in-out infinite;
+}
+@keyframes foxfire-breathe { 0%, 100% { opacity: .55; transform: scale(.95); } 50% { opacity: 1; transform: scale(1.09); } }
 .character-portrait img {
   display: block;
   width: 100%;
@@ -337,7 +653,17 @@ html[data-theme="dark"] .character-portrait img[data-character-asset="portrait"]
 }
 .character-portrait .character-expression[hidden] { display: none; }
 .character-blink { animation: character-blink 6.4s infinite; }
+.character-scene.camera-react .character-blink { animation: camera-greeting-blink .72s ease-in-out both; }
+.character-scene.camera-react .character-aura { animation: camera-greeting-glow .85s ease-out both; }
 .character-scene[data-speaking="true"] .character-speak { animation: character-speaking .55s steps(1, end) infinite; }
+@keyframes camera-greeting-blink {
+  0%, 20%, 70%, 100% { opacity: 0; }
+  36%, 51% { opacity: 1; }
+}
+@keyframes camera-greeting-glow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  45% { opacity: .85; transform: scale(1.08); }
+}
 @keyframes character-blink {
   0%, 94%, 98%, 100% { opacity: 0; }
   95%, 97% { opacity: 1; }
@@ -446,14 +772,22 @@ html[data-theme="dark"] .character-portrait img[data-character-asset="portrait"]
   pointer-events: none;
   background: radial-gradient(ellipse closest-side at center, rgba(27, 14, 26, .84), rgba(27, 14, 26, .65) 55%, transparent 100%);
 }
+html[data-home-theme="moonfox"] .character-guide-link::before {
+  background: radial-gradient(ellipse closest-side at center, rgba(4, 16, 32, .86), rgba(4, 16, 32, .66) 55%, transparent 100%);
+}
+html[data-home-theme="moonfox"] .character-footer { color: #eff9ff; }
+html[data-home-theme="moonfox"] .character-footer::before {
+  background: radial-gradient(ellipse 150px 28px at 130px 50%, rgba(4, 16, 32, .75), rgba(4, 16, 32, .57) 55%, transparent 100%);
+}
 .character-guide-link:hover, .character-companion-next:hover { text-decoration: underline; }
 .character-companion-option:focus-visible, .character-companion-next:focus-visible,
 .character-guide-link:focus-visible, .character-portrait:focus-visible,
 .character-btn:focus-visible, .character-header .home-menu-btn:focus-visible,
-.character-header .theme-toggle-home:focus-visible { outline: 2px solid #ffe4bd; outline-offset: 3px; }
+.character-header .theme-toggle-home:focus-visible { outline: 2px solid var(--home-focus); outline-offset: 3px; }
 .character-companion-option:focus-visible, .character-companion-next:focus-visible,
 .character-guide-link:focus-visible, .character-btn:focus-visible { border-radius: 999px; }
-.character-portrait:focus-visible { border-radius: 0; }
+/* The scene's focused-action badge supplies the focus indicator without a portrait frame. */
+.character-scene .character-portrait:focus-visible { border-radius: 0; outline: none; }
 .character-prompt button:focus-visible { outline: 2px solid var(--c-accent-text); outline-offset: 3px; }
 /* Reusable avatar and prompt in the form and report. */
 .character-prompt { display: flex; align-items: center; gap: 11px; min-width: 0; }
@@ -544,7 +878,13 @@ html[data-theme] body[data-glass] #formModal .form-modal-sheet {
     height: min(clamp(270px, 54vh, 450px), calc(var(--character-mobile-vw, 130.9476vw) - var(--character-mobile-inset, 52.379px)));
     max-width: 420px;
   }
+  html[data-home-theme="moonfox"] .character-scene {
+    height: min(clamp(290px, 59vh, 500px), calc(var(--character-mobile-vw, 126.3636vw) - var(--character-mobile-inset-compact, 20.2182px)));
+  }
   .character-portrait, .character-lantern-anchor { max-width: calc(100% - 40px); }
+  html[data-home-theme="moonfox"] .character-portrait,
+  html[data-home-theme="diyan"] .character-portrait,
+  html[data-home-theme="diyan"] .character-flame-anchor { max-width: calc(100% - 16px); }
   .character-prop--lantern { top: -24px; width: clamp(56px, 18vw, 74px); }
   .character-prop--cloud { width: 76%; right: 0; bottom: 17%; opacity: .22; }
   .scene-sparkles--left { width: 20%; left: 0; bottom: 15%; }
@@ -558,16 +898,31 @@ html[data-theme] body[data-glass] #formModal .form-modal-sheet {
     width: calc(100% + 32px);
     height: min(clamp(255px, 52vh, 310px), calc(var(--character-mobile-vw, 130.9476vw) - var(--character-mobile-inset, 52.379px)));
   }
+  html[data-home-theme="moonfox"] .character-scene {
+    height: min(clamp(265px, 59vh, 370px), calc(var(--character-mobile-vw, 126.3636vw) - var(--character-mobile-inset-compact, 20.2182px)));
+  }
+  .character-theme-switcher button { min-width: 52px; padding-inline: 7px; }
 }
 @media (forced-colors: active) {
   .character-btn { color: ButtonText; background: ButtonFace; border: 1px solid ButtonText; }
   .character-btn-art { display: none; }
   .character-btn:focus-visible { outline: 2px solid Highlight; outline-offset: 3px; }
+  html[data-home-theme] .character-theme-switcher { border-color: ButtonText; background: ButtonFace; }
+  html[data-home-theme] .character-theme-switcher button { color: ButtonText; }
+  html[data-home-theme] .character-theme-switcher button[aria-pressed="true"] { color: HighlightText; background: Highlight; }
+  html[data-home-theme] .character-theme-switcher button:focus-visible { outline-color: Highlight; }
+  .character-scene:focus-within::after { color: CanvasText; background: Canvas; border-color: Highlight; }
+  .character-camera-picker button { color: ButtonText; background: ButtonFace; border: 1px solid ButtonText; text-shadow: none; }
+  .character-camera-picker button[aria-pressed="true"] { color: HighlightText; background: Highlight; }
+  .character-camera-picker button:focus-visible { outline-color: Highlight; }
+  .camera-gesture-hint { color: CanvasText; text-shadow: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .character-expression { animation: none !important; opacity: 0 !important; }
-  .scene-heartlight { animation: none !important; }
-  .character-puppet, .character-prop, .character-backdrop img, .character-btn, .character-btn-art, .character-companion-option, .character-companion-response, .character-hero { transition: none !important; }
+  .scene-heartlight, html[data-home-theme="moonfox"] .character-puppet::after,
+  .character-aura, .character-prop--fire img, html[data-home-theme="diyan"] .character-scenery::before,
+  html[data-home-theme="diyan"] .character-scenery::after { animation: none !important; }
+  .character-camera-subject, .character-scenery, .character-puppet, .character-prop, .character-backdrop img, .character-btn, .character-btn-art, .character-companion-option, .character-companion-response, .character-hero { transition: none !important; }
   .character-portrait:hover .character-puppet, .character-portrait:focus-visible .character-puppet,
   .character-btn:hover, .character-companion-option:hover:not([aria-pressed="true"]) { transform: none; }
   html[data-theme] body .character-header .home-menu-btn:hover,

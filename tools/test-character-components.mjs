@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { WENWEN, characterAvatarMarkup, applyCharacterAssets } from '../src/character/wenwen.js';
+import { MOON_FOX } from '../src/character/moon-fox.js';
+import { EARTHFIRE_SOVEREIGN } from '../src/character/earthfire-sovereign.js';
 import { mountCharacterCompanion, mountCharacterPrompt } from '../src/character/companion.js';
 import { initCharacterCompanion } from '../src/ui/character-companion.js';
+import { cameraValues } from '../src/ui/character-camera.js';
 import { formatStandardAnswer } from '../src/render/ai.js';
 
 // Exercise the reusable UI contract without a browser or the application's global functions.
@@ -52,6 +55,13 @@ const unsafeReply = formatStandardAnswer('【结论】：<img src=x onerror=aler
 assert.doesNotMatch(unsafeReply, /<img/);
 assert.match(unsafeReply, /&lt;img/);
 assert.match(unsafeReply, /&amp;/, '结构化 AI 回复也必须转义 HTML');
+
+assert.deepEqual(cameraValues(-2), { scale: .82, shiftY: 12, roomScale: 1.015 });
+assert.deepEqual(cameraValues(1), { scale: 1, shiftY: 0, roomScale: 1.04 });
+assert.deepEqual(cameraValues(3), { scale: 1.7, shiftY: 12, roomScale: 1.105 });
+assert.ok(Math.abs(cameraValues(1.5).scale - 1.35) < .00001, '拖动时景别必须连续插值');
+assert.ok(Math.abs(cameraValues(1.5, 1.55).scale - 1.275) < .00001, '每个角色可指定适合自身的近景比例');
+assert.equal(cameraValues(NaN).scale, 1, '非法进度安全回退中景');
 
 assert.equal(new Set(WENWEN.topics.map(topic => topic.id)).size, WENWEN.topics.length, '话题 ID 必须唯一');
 assert.ok(WENWEN.topics.every(topic => topic.response && topic.prompt), '每个话题都应有回应与可编辑问题');
@@ -156,6 +166,18 @@ assert.equal(lanternHolder.style.getPropertyValue('--prop-cord-x'), '49.67%', '�
 const alternateLantern = { ...WENWEN, assets: { ...WENWEN.assets, lantern: { src: './new-lantern.webp', alt: '', width: 100, height: 200 } } };
 applyCharacterAssets({ querySelectorAll: () => [lantern] }, alternateLantern);
 assert.equal(lanternHolder.style.getPropertyValue('--prop-cord-x'), '', '替换素材后不应沿用旧灯绳锚点');
+const fire = new Element('img');
+const fireHolder = new Element('div');
+fire.dataset.characterAsset = 'fireThrone';
+fire.dataset.characterSceneOptional = '';
+fire.closest = () => fireHolder;
+applyCharacterAssets({ querySelectorAll: () => [fire] }, EARTHFIRE_SOVEREIGN);
+assert.equal(fire.hidden, false);
+assert.equal(fireHolder.hidden, false);
+assert.equal(fire.src, EARTHFIRE_SOVEREIGN.assets.fireThrone.src, '火焰王座应作为独立的可替换配景');
+applyCharacterAssets({ querySelectorAll: () => [fire] }, MOON_FOX);
+assert.equal(fire.hidden, true);
+assert.equal(fireHolder.hidden, true, '其他角色不能继承火焰王座');
 
 // The cloud buttons reuse the character's optional scenery without leaking the old asset.
 const buttonTexture = new Element('image');
@@ -193,6 +215,7 @@ assert.equal(nodes.get('characterPortraitButton').style.getPropertyValue('--char
 assert.equal(nodes.get('characterScene').style.getPropertyValue('--character-ratio'), '400 / 800', '天灯位置应跟随替换后的角色比例');
 assert.equal(nodes.get('characterScene').style.getPropertyValue('--character-mobile-vw'), '200.0000vw');
 assert.equal(nodes.get('characterScene').style.getPropertyValue('--character-mobile-inset'), '80.0000px');
+assert.equal(nodes.get('characterScene').style.getPropertyValue('--character-mobile-inset-compact'), '32.0000px');
 nodes.get('characterPortraitButton').click();
 nodes.get('homeCtaMain').click();
 assert.equal(chatOpened, 0, '首页人物不能打开聊天');
@@ -201,6 +224,49 @@ windowEvents.get('tj:ai-stream')({ detail: { active: true } });
 assert.equal(nodes.get('characterScene').dataset.speaking, 'true');
 windowEvents.get('tj:ai-stream')({ detail: { active: false } });
 assert.equal(nodes.get('characterScene').dataset.speaking, 'false');
+
+const homePortrait = new Element('img');
+homePortrait.dataset.characterAsset = 'portrait';
+const homeBlink = new Element('img');
+homeBlink.dataset.characterAsset = 'blink';
+homeBlink.dataset.characterOptional = '';
+const homeName = new Element('span');
+const homeRoot = {
+  querySelectorAll(selector) {
+    if (selector === '[data-character-asset]') return [homePortrait, homeBlink];
+    if (selector === '[data-character-name]') return [homeName];
+    return [];
+  },
+};
+nodes.set('page1', homeRoot);
+adapter.setHomeCharacter(MOON_FOX);
+assert.equal(homePortrait.src, MOON_FOX.assets.portrait.src);
+assert.equal(homeBlink.src, MOON_FOX.assets.blink.src);
+assert.equal(homeBlink.hidden, false, '新角色只能使用自己对齐的表情');
+assert.equal(MOON_FOX.assets.blink.forPortrait, MOON_FOX.assets.portrait.src);
+assert.equal(MOON_FOX.assets.speaking.forPortrait, MOON_FOX.assets.portrait.src);
+assert.equal(homeName.textContent, '月白');
+assert.equal(nodes.get('characterPortraitButton').getAttribute('aria-label'), '点击月白，开启探索');
+assert.equal(nodes.get('characterPortraitButton').style.getPropertyValue('--character-ratio'), '770 / 973');
+assert.equal(nodes.get('characterScene').dataset.cameraSafeX, '0.18');
+assert.equal(nodes.get('characterScene').dataset.cameraSafeInset, '0.05');
+adapter.setHomeCharacter(EARTHFIRE_SOVEREIGN);
+assert.equal(homePortrait.src, EARTHFIRE_SOVEREIGN.assets.portrait.src);
+assert.equal(homeBlink.src, EARTHFIRE_SOVEREIGN.assets.blink.src);
+assert.equal(EARTHFIRE_SOVEREIGN.assets.blink.forPortrait, EARTHFIRE_SOVEREIGN.assets.portrait.src);
+assert.equal(EARTHFIRE_SOVEREIGN.assets.speaking.forPortrait, EARTHFIRE_SOVEREIGN.assets.portrait.src);
+assert.equal(homeName.textContent, '地炎君');
+assert.equal(nodes.get('characterPortraitButton').getAttribute('aria-label'), '点击地炎君，开启探索');
+assert.equal(nodes.get('characterPortraitButton').style.getPropertyValue('--character-ratio'), '625 / 1180');
+assert.equal(nodes.get('characterScene').dataset.cameraCloseScale, '1.55');
+assert.equal(nodes.get('characterScene').dataset.cameraSafeX, '0.885');
+adapter.setHomeCharacter(WENWEN);
+assert.equal(nodes.get('characterScene').dataset.cameraCloseScale, undefined, '切换角色后不能沿用旧的构图参数');
+assert.equal(nodes.get('characterScene').dataset.cameraSafeX, undefined);
+assert.ok(names.every(el => el.textContent === '小星'), '切换首页角色不应更改报告角色');
+nodes.get('characterPortraitButton').click();
+assert.equal(formOpened, 3, '切换角色后人物仍只绑定一次真实表单');
+
 adapter.onReportReady({ isDemo: true });
 assert.equal(nodes.get('s-ming').children.length, 0, '示例报告不能假称个人命盘');
 adapter.onReportReady();
