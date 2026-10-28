@@ -20,7 +20,7 @@ export function initCharacterScene() {
   };
 
   scene.addEventListener('pointermove', event => {
-    if (reducedMotion.matches) return;
+    if (reducedMotion.matches || scene.dataset.cameraDragging === 'true') return;
     const rect = scene.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width - 0.5;
     const y = (event.clientY - rect.top) / rect.height - 0.5;
@@ -38,5 +38,6 @@ export function initCharacterScene() {
     });
   }, { passive: true });
   scene.addEventListener('pointerleave', reset);
+  scene.addEventListener('character-camera-dragstart', reset);
   reducedMotion.addEventListener?.('change', reset);
 }

@@ -7,26 +7,45 @@ export function initCharacterCompanion({
   openForm = () => {},
   openAsk = () => {},
 } = {}) {
-  applyCharacterAssets(document, character);
   const scene = document.getElementById('characterScene');
   const portrait = document.getElementById('characterPortraitButton');
-  const artwork = character.assets?.portrait;
-  if (portrait && artwork) {
-    const width = Number(artwork.width), height = Number(artwork.height);
-    if (width > 0 && height > 0 && Number.isFinite(width) && Number.isFinite(height)) {
-      const ratio = `${width} / ${height}`;
-      portrait.style.setProperty('--character-ratio', ratio);
-      scene?.style.setProperty('--character-ratio', ratio);
-      const heightPerWidth = height / width;
-      if (scene && Number.isFinite(heightPerWidth)) {
-        // Bound the mobile scene to the image's available width without letterboxing.
-        scene.style.setProperty('--character-mobile-vw', `${(heightPerWidth * 100).toFixed(4)}vw`);
-        scene.style.setProperty('--character-mobile-inset', `${(heightPerWidth * 40).toFixed(4)}px`);
+
+  function applyToScene(nextCharacter, root) {
+    applyCharacterAssets(root, nextCharacter);
+    const artwork = nextCharacter.assets?.portrait;
+    if (portrait && artwork) {
+      const width = Number(artwork.width), height = Number(artwork.height);
+      if (width > 0 && height > 0 && Number.isFinite(width) && Number.isFinite(height)) {
+        const ratio = `${width} / ${height}`;
+        portrait.style.setProperty('--character-ratio', ratio);
+        scene?.style.setProperty('--character-ratio', ratio);
+        const heightPerWidth = height / width;
+        if (scene && Number.isFinite(heightPerWidth)) {
+          // Bound the mobile scene to the image's available width without letterboxing.
+          scene.style.setProperty('--character-mobile-vw', `${(heightPerWidth * 100).toFixed(4)}vw`);
+          scene.style.setProperty('--character-mobile-inset', `${(heightPerWidth * 40).toFixed(4)}px`);
+          scene.style.setProperty('--character-mobile-inset-compact', `${(heightPerWidth * 16).toFixed(4)}px`);
+        }
+      }
+      if (scene) {
+        // Camera composition belongs to the character, not to a particular view.
+        for (const [key, value, min, max] of [
+          ['cameraCloseScale', nextCharacter.camera?.closeScale, 1.1, 2.2],
+          ['cameraSafeX', nextCharacter.camera?.safeX, 0, 1],
+          ['cameraSafeInset', nextCharacter.camera?.safeInset, 0, .25],
+        ]) {
+          if (Number.isFinite(value) && value >= min && value <= max) scene.dataset[key] = String(value);
+          else delete scene.dataset[key];
+        }
+        scene.dispatchEvent?.(new CustomEvent('character-assets-changed'));
       }
     }
+    root.querySelectorAll('[data-character-name]').forEach(el => { el.textContent = nextCharacter.name; });
+    portrait?.setAttribute('aria-label', `点击${nextCharacter.name}，开启探索`);
   }
-  document.querySelectorAll('[data-character-name]').forEach(el => { el.textContent = character.name; });
-  portrait?.setAttribute('aria-label', `点击${character.name}，开启探索`);
+
+  // Initial assets elsewhere (e.g. the report assistant) keep their own identity.
+  applyToScene(character, document);
 
   // The portrait and the primary action lead to the same real exploration flow.
   portrait?.addEventListener('click', openForm);
@@ -38,6 +57,11 @@ export function initCharacterCompanion({
   });
 
   return {
+    setHomeCharacter(nextCharacter) {
+      // Do not change the report/chat identity when only the home theme changes.
+      const home = document.getElementById('page1');
+      if (home && nextCharacter?.assets?.portrait) applyToScene(nextCharacter, home);
+    },
     onReportReady({ isDemo = false } = {}) {
       // A sample chart must not be presented as the user's personal report.
       if (isDemo) return;

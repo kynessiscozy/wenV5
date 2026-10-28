@@ -43,7 +43,9 @@ import {
 import { initTools3DRingCarousel } from './render/tools-ring.js';
 import { initLiquidOrb } from './fx/liquid-orb.js';
 import { initCharacterScene } from './ui/character-scene.js';
+import { initCharacterCamera } from './ui/character-camera.js';
 import { initCharacterCompanion } from './ui/character-companion.js';
+import { initHomeTheme } from './ui/home-theme.js';
 import { burstToArmillary } from './fx/burst.js';
 import { TJX } from './state/tjx.js';
 import { getResultStyle } from './state/result-style.js';
@@ -113,6 +115,7 @@ initAISettings();
 initFontSize();
 initEvolveUI();
 initCharacterScene();
+initCharacterCamera();
 
 const characterCompanion = initCharacterCompanion({
   openForm: () => window.TJOpenForm?.(),
@@ -121,6 +124,7 @@ const characterCompanion = initCharacterCompanion({
     if (!document.getElementById('aiSheet')?.classList.contains('open')) openAsk();
   },
 });
+initHomeTheme({ setHomeCharacter: characterCompanion.setHomeCharacter });
 
 /* ============================================================
    全局函数暴露：index.html 和动态生成的 onclick 需要全局访问
