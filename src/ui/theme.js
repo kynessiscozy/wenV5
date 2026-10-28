@@ -53,7 +53,7 @@ export function initTheme() {
   mq.addEventListener ? mq.addEventListener('change', onSystem) : mq.addListener(onSystem);
 
   const mount = () => {
-    // 首页右上角浮动按钮
+    // 首页右侧主题按钮；没有人物页头时仍回退到独立入口。
     if (!document.querySelector('.theme-toggle-home')) {
       const toggle = makeToggle('theme-toggle-home');
       const header = document.querySelector('.character-header-actions');

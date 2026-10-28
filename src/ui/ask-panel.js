@@ -6,14 +6,14 @@ import { generateAnswerFallback } from '../ai/fallback.js';
 import { streamAskAnswer, probeConnection, getConnState, onConnChange, modelLabel } from '../ai/index.js';
 import { getApiKey } from './ai-settings.js';
 import { getResultStyle } from '../state/result-style.js';
-import { renderSmartAnswer, renderRouteButtons, buildRelatedRoutes, formatStandardAnswer } from '../render/ai.js';
+import { renderSmartAnswer, renderRouteButtons, buildRelatedRoutes, formatStandardAnswer, formatAIText } from '../render/ai.js';
 import {
   getEvolvePrompt, recordExperience, rateExperience, flagExperience,
   lastExperienceId, flagLastFollowUp, chartKeyOf, getGenome
 } from '../evolve/index.js';
 import { showToast } from './toast.js';
 import { filterAiResponse } from '../ai/filter.js';
-import { characterAvatarMarkup } from '../character/wenwen.js';
+import { WENWEN, characterAvatarMarkup } from '../character/wenwen.js';
 
 /* ============================================================
    问问大师 · 重构版 — ChatGPT 气泡式对话
@@ -40,7 +40,7 @@ const _STATE_MAP = {
 function _updateConnUI(state) {
   const bar = document.getElementById('aiConnBar');
   if (!bar) return;
-  const cfg = _STATE_MAP[state] || _STATE_MAP.unknown;
+  const cfg = !getApiKey() ? { dot: 'conn-offline', text: '未配置 AI' } : (_STATE_MAP[state] || _STATE_MAP.unknown);
   bar.className = 'ai-conn-bar ' + cfg.dot;
   bar.querySelector('.ai-conn-text').textContent = cfg.text;
   bar.querySelector('.ai-conn-hint')?.remove();
@@ -87,6 +87,105 @@ function _setModelLabel(modelId) {
    ------------------------------------------------------------ */
 const HIST_KEY = 'tj_ai_history_v2';
 let _histCache = null;
+let _homeChat = false;
+let _homePending = false;
+let _returnFocus = null;
+let _pageWasInert = false;
+let _focusTimer = 0;
+
+function _setCharacterSpeaking(active) {
+  window.dispatchEvent(new CustomEvent('tj:ai-stream', { detail: { active } }));
+}
+function _personalChart() {
+  const chart = getCtx();
+  return chart && !chart.isDemoPreview ? chart : null;
+}
+function _goFillChart() {
+  closeAsk();
+  if (document.body.classList.contains('report-active')) window.goBack?.();
+  window.TJOpenForm?.();
+}
+
+/** Neutral status, not a simulated response: the user can chat without a chart. */
+function _updateHomeIntro() {
+  if (!_homeChat) return;
+  const body = document.getElementById('askResult');
+  if (!body) return;
+  const hasChart = !!_personalChart();
+  const hasKey = !!getApiKey();
+  document.body.classList.toggle('character-chat-has-chart', hasChart);
+  let intro = document.getElementById('homeChatIntro');
+  if (!intro) {
+    intro = document.createElement('div');
+    intro.id = 'homeChatIntro';
+    intro.className = 'chat-home-intro';
+    intro.setAttribute('role', 'status');
+    body.prepend(intro);
+  }
+  const message = document.createElement('p');
+  message.textContent = !hasKey
+    ? (hasChart ? '配置 AI 后可以开始对话。' : '配置 AI 后可以开始对话；如需命盘解读，也可以先填写出生信息。')
+    : (hasChart ? '已载入你的命盘，可以直接提问。' : '还未提供命盘，可以先聊聊；填写出生信息后可获得命盘解读。');
+  const actions = document.createElement('div');
+  actions.className = 'chat-home-actions';
+  if (!hasKey) {
+    const settings = document.createElement('button');
+    settings.type = 'button';
+    settings.textContent = '配置 AI';
+    settings.addEventListener('click', () => window.openAISettingsModal?.());
+    actions.appendChild(settings);
+  }
+  if (!hasChart) {
+    const fill = document.createElement('button');
+    fill.type = 'button';
+    fill.textContent = '填写出生信息';
+    fill.addEventListener('click', _goFillChart);
+    actions.appendChild(fill);
+  }
+  intro.replaceChildren(message, actions);
+}
+
+function _showHomeError(question, missingKey = false) {
+  const body = document.getElementById('askResult');
+  if (!body) return;
+  body.querySelector('.chat-home-error')?.remove();
+  const notice = document.createElement('div');
+  notice.className = 'chat-home-error';
+  notice.setAttribute('role', 'status');
+  const message = document.createElement('p');
+  message.textContent = missingKey
+    ? '请先配置 AI，你的问题已保留。'
+    : '暂时无法连接 AI，你的问题已保留。请检查网络或设置后重试。';
+  const actions = document.createElement('div');
+  actions.className = 'chat-home-actions';
+  const settings = document.createElement('button');
+  settings.type = 'button';
+  settings.textContent = 'AI 设置';
+  settings.addEventListener('click', () => window.openAISettingsModal?.());
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.textContent = '重试这条问题';
+  retry.addEventListener('click', () => _sendHomeQuestion(question, false));
+  actions.appendChild(settings);
+  if (!missingKey) actions.appendChild(retry);
+  notice.append(message, actions);
+  body.appendChild(notice);
+  _scrollToBottom(body);
+}
+
+function _recoverHomeQuestion(question) {
+  const input = document.getElementById('askInput');
+  // Do not overwrite a different message typed while the request was in flight.
+  if (input && !input.value.trim()) {
+    input.value = question;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  _showHomeError(question);
+}
+
+window.addEventListener('tj:ai-settings-changed', () => {
+  if (_homeChat && document.getElementById('aiSheet')?.classList.contains('open')) _updateHomeIntro();
+});
 function _histLoad() {
   if (_histCache) return _histCache;
   try {
@@ -128,6 +227,7 @@ function _restoreHistory(el) {
       setTimeout(() => { if (window.openToolPage) window.openToolPage(b.dataset.tool); }, 180);
     };
   });
+  el.querySelectorAll('.chat-chart-btn').forEach(button => { button.onclick = _goFillChart; });
   _scrollToBottom(el);
   return true;
 }
@@ -138,7 +238,7 @@ function _renderWelcome(el) {
   const hour = new Date().getHours();
   const greeting = hour < 6 ? '夜深了' : hour < 12 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好';
   let contextLine = '可以问事业、关系、财务与近期选择；我会先讲依据，再陪你把问题落到下一步。';
-  if (ctx) {
+  if (ctx && !ctx.isDemoPreview) {
     contextLine = '我已连接你的命盘（' + ctx.dg + ctx.dw + '），随时可以聊。';
   }
   const gen = (getGenome() && getGenome().generation) || 0;
@@ -290,10 +390,11 @@ function _renderNeedChart(el) {
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai">' +
         '请先完成命盘排盘，我才能给出有针对性的建议。' +
-        '<button class="chat-tool-btn" type="button" onclick="closeAsk();goBack();">前往填写出生信息 →</button>' +
+        '<button class="chat-tool-btn chat-chart-btn" type="button">前往填写出生信息 →</button>' +
       '</div>' +
       '<div class="chat-meta">' + _ts() + '</div>' +
     '</div>';
+  msgDiv.querySelector('.chat-chart-btn').addEventListener('click', _goFillChart);
   el.appendChild(msgDiv);
   _persistMsg(msgDiv);
   _scrollToBottom(el);
@@ -338,7 +439,7 @@ window.setAiBasis = setAiBasis;
 
 function _syncAiContext() {
   const context = document.getElementById('aiContext');
-  const d = window._ctx;
+  const d = _homeChat ? _personalChart() : window._ctx;
   const basis = getAiBasis();
   const isWestern = basis === 'western';
 
@@ -347,11 +448,13 @@ function _syncAiContext() {
   if (btnE && btnW) {
     btnE.classList.toggle('active', !isWestern);
     btnW.classList.toggle('active', isWestern);
+    btnE.setAttribute('aria-checked', String(!isWestern));
+    btnW.setAttribute('aria-checked', String(isWestern));
   }
 
   if (context) {
     if (!d) {
-      context.innerHTML = `<span>✦ ${isWestern ? '西方星相依据' : '东方命理依据'}</span><b>输入你的问题，获取结合分析的专属建议</b>`;
+      context.innerHTML = '<span>✦ 命盘</span><b>尚未提供出生信息</b>';
     } else if (isWestern) {
       const input = d.input || d._input || {};
       const y = input.by || 1995, m = input.bm || 6, dDate = input.bd || 15;
@@ -370,45 +473,104 @@ function _syncAiContext() {
    ============================================================ */
 
 export function openAsk() {
-  if (document.getElementById('aiSheet')?.classList.contains('open')) { closeAsk(); return; }
+  const sheet = document.getElementById('aiSheet');
+  if (sheet?.classList.contains('open')) { closeAsk(); return; }
+  if (!sheet) return;
 
-  const fab = document.getElementById('aiFab');
-  if (fab) { fab.classList.remove('fab-pop'); void fab.offsetWidth; fab.classList.add('fab-pop'); fab.addEventListener('animationend', () => fab.classList.remove('fab-pop'), { once: true }); }
-
+  const page = document.getElementById('page1');
+  _homeChat = !!page && !page.classList.contains('hidden');
+  _returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  if (_homeChat) {
+    _pageWasInert = page.inert;
+    page.inert = true;
+    document.body.classList.add('character-chat-open');
+    sheet.setAttribute('aria-modal', 'true');
+  } else {
+    sheet.removeAttribute('aria-modal');
+    const fab = document.getElementById('aiFab');
+    if (fab) { fab.classList.remove('fab-pop'); void fab.offsetWidth; fab.classList.add('fab-pop'); fab.addEventListener('animationend', () => fab.classList.remove('fab-pop'), { once: true }); }
+  }
+  document.getElementById('aiTitleText').textContent = _homeChat ? `和${WENWEN.name}聊聊` : '问问大师';
+  sheet.inert = false;
+  sheet.setAttribute('aria-hidden', 'false');
   document.getElementById('aiOverlay').classList.add('open');
-  document.getElementById('aiSheet').classList.add('open');
+  sheet.classList.add('open');
 
-  // 同步依据状态与上下文
   _syncAiContext();
-
-  // 连接状态栏
   _ensureConnBar();
-
-  // 首次打开：恢复上次的对话（刷新不再失忆），没有历史才欢迎
   const body = document.getElementById('askResult');
-  if (body && !body.querySelector('.chat-msg')) {
-    if (!_restoreHistory(body)) _renderWelcome(body);
-    // 启动连接探测
+  if (body && !body.querySelector('.chat-msg') && !body.querySelector('.chat-home-intro')) {
+    if (!_restoreHistory(body) && !_homeChat) _renderWelcome(body);
     probeConnection(getApiKey());
   }
-
-  setTimeout(() => document.getElementById('askInput')?.focus(), 300);
+  if (_homeChat) _updateHomeIntro();
+  else {
+    body?.querySelector('.chat-home-intro')?.remove();
+    if (body && !body.querySelector('.chat-msg')) _renderWelcome(body);
+  }
+  const input = document.getElementById('askInput');
+  if (input && !input.value) {
+    try { input.value = sessionStorage.getItem('tj_ai_draft') || ''; } catch (e) {}
+  }
+  clearTimeout(_focusTimer);
+  _focusTimer = setTimeout(() => {
+    if (!sheet.classList.contains('open') || sheet.inert) return;
+    // Do not summon the mobile keyboard until the user taps the composer.
+    const target = _homeChat && window.matchMedia('(max-width: 650px)').matches
+      ? document.getElementById('aiTitleText') : input;
+    target?.focus({ preventScroll: true });
+  }, 80);
 }
 
 export function closeAsk() {
+  const sheet = document.getElementById('aiSheet');
+  if (!sheet?.classList.contains('open')) return;
+  clearTimeout(_focusTimer);
+  _setCharacterSpeaking(false);
   document.getElementById('aiOverlay').classList.remove('open');
-  document.getElementById('aiSheet').classList.remove('open');
+  sheet.classList.remove('open');
+  sheet.setAttribute('aria-hidden', 'true');
+  sheet.removeAttribute('aria-modal');
+  sheet.inert = true;
   document.getElementById('aiSuggest')?.classList.remove('show');
+  if (_homeChat) document.getElementById('page1').inert = _pageWasInert;
+  document.body.classList.remove('character-chat-open', 'character-chat-has-chart');
+  _homeChat = false;
+  const target = _returnFocus;
+  _returnFocus = null;
+  if (target?.isConnected && target.getClientRects().length) target.focus({ preventScroll: true });
 }
 
+// Keep keyboard navigation inside the home dialog; report chat remains dock-anchored.
+document.getElementById('aiSheet')?.addEventListener?.('keydown', event => {
+  if (!_homeChat || event.key !== 'Tab') return;
+  const controls = [...event.currentTarget.querySelectorAll('button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+    .filter(el => el.getClientRects().length && !el.closest('[inert]'));
+  if (!controls.length) return;
+  const first = controls[0], last = controls[controls.length - 1];
+  if (event.shiftKey && (document.activeElement === first || !controls.includes(document.activeElement))) {
+    event.preventDefault(); last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault(); first.focus();
+  }
+});
+
 export function newAskChat() {
+  if (_homePending) return;
   window._aiConversation = [];
   _histClear();
   const result = document.getElementById('askResult');
   const input = document.getElementById('askInput');
   const sug = document.getElementById('aiSuggest');
-  if (result) { result.innerHTML = ''; _renderWelcome(result); }
+  if (result) {
+    result.innerHTML = '';
+    if (_homeChat) _updateHomeIntro();
+    else _renderWelcome(result);
+  }
   if (input) { input.value = ''; input.style.height = 'auto'; input.focus(); }
+  const status = document.getElementById('aiLiveStatus');
+  if (status) status.textContent = '';
+  try { sessionStorage.removeItem('tj_ai_draft'); } catch (e) {}
   if (sug) { sug.innerHTML = ''; sug.classList.remove('show'); }
   _setModelLabel('');
 }
@@ -460,8 +622,53 @@ function _handleCasualChat(q, el) {
   return true;
 }
 
+async function _sendHomeQuestion(q, showUserBubble = true) {
+  const question = String(q || '').trim();
+  if (!question || _homePending) return;
+  const input = document.getElementById('askInput');
+  if (!getApiKey()) {
+    if (input && !input.value.trim()) {
+      input.value = question;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    _updateHomeIntro();
+    _showHomeError(question, true);
+    return;
+  }
+
+  _homePending = true;
+  const send = document.querySelector('#aiSheet .ai-send');
+  const fresh = document.querySelector('#aiSheet .ai-new');
+  if (send) send.disabled = true;
+  if (fresh) fresh.disabled = true;
+  document.querySelector('#askResult .chat-home-error')?.remove();
+  if (input?.value.trim() === question) {
+    input.value = '';
+    input.style.height = 'auto';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  const body = document.getElementById('askResult');
+  body?.setAttribute('aria-busy', 'true');
+  const liveStatus = document.getElementById('aiLiveStatus');
+  if (liveStatus) liveStatus.textContent = '';
+  if (showUserBubble) _renderUserBubble(body, question);
+  try {
+    await generateAnswer(question, { homeSession: true });
+  } catch (error) {
+    _hideTyping(body);
+    _setCharacterSpeaking(false);
+    _recoverHomeQuestion(question);
+  } finally {
+    _homePending = false;
+    body?.removeAttribute('aria-busy');
+    if (send) send.disabled = false;
+    if (fresh) fresh.disabled = false;
+  }
+}
+
 export function doAsk(q) {
   if (!document.getElementById('aiSheet').classList.contains('open')) openAsk();
+  if (_homeChat) { _sendHomeQuestion(q); return; }
   const input = document.getElementById('askInput');
   if (input) { input.value = ''; input.style.height = 'auto'; }
   const countEl = document.getElementById('aiCount');
@@ -480,6 +687,7 @@ export function doAskCustom() {
   const input = document.getElementById('askInput');
   const q = input?.value.trim();
   if (!q) return;
+  if (_homeChat) { _sendHomeQuestion(q); return; }
   input.value = '';
   input.style.height = 'auto';
   const countEl = document.getElementById('aiCount');
@@ -510,6 +718,7 @@ export function aiOnInputSuggest() {
   if (sug) { sug.innerHTML = ''; sug.classList.remove('show'); }
   const input = document.getElementById('askInput');
   if (input) {
+    try { sessionStorage.setItem('tj_ai_draft', input.value); } catch (e) {}
     input.style.height = 'auto';
     const max = parseFloat(getComputedStyle(input).maxHeight) || 132;
     input.style.height = Math.min(input.scrollHeight + 2, max) + 'px';
@@ -519,8 +728,9 @@ export function aiOnInputSuggest() {
 /* ============================================================
    核心：generateAnswer — 三层触发机制
    ============================================================ */
-export async function generateAnswer(q) {
-  const d = getCtx();
+export async function generateAnswer(q, { homeSession = _homeChat } = {}) {
+  // Demo data is never sent as a personal chart from the landing page.
+  const d = homeSession ? _personalChart() : getCtx();
   const el = document.getElementById('askResult');
   const conversation = window._aiConversation || (window._aiConversation = []);
   const aiPrefs = window.getAISettings ? window.getAISettings() : { natural: true, context: true, length: 'short' };
@@ -540,15 +750,15 @@ export async function generateAnswer(q) {
   };
 
   // ———— 无命盘 ————
-  if (!d) {
+  if (!d && !homeSession) {
     _showTyping(el);
     await _delay(600);
     _renderNeedChart(el);
     return;
   }
 
-  // ———— 第 1 层：KB 信息库匹配（本地，零延迟）————
-  const kbRes = contextualFollowUp ? null : smartAnswer(q, d);
+  // 首页人物对话只使用真实 AI 回复，不用固定话术或本地模拟回答。
+  const kbRes = homeSession || contextualFollowUp ? null : smartAnswer(q, d);
   if (kbRes) {
     _showTyping(el, '信息库匹配中…');
     await _delay(400 + Math.random() * 300);
@@ -573,13 +783,16 @@ export async function generateAnswer(q) {
 
   const basis = getAiBasis();
   const isWestern = basis === 'western';
-  const resultStyle = getResultStyle(d.input?.resultStyle);
+  const resultStyle = getResultStyle(d?.input?.resultStyle);
   const evolveBlock = getEvolvePrompt();
 
   let ctx = '';
   let systemPrompt = '';
 
-  if (isWestern) {
+  if (!d) {
+    ctx = '用户尚未提供命盘或出生信息。';
+    systemPrompt = `你是「问问」，一位温暖、清醒、有分寸的对话伙伴。用户目前没有提供命盘或出生信息，请自然、简洁地回应眼前的问题；绝不能假称已经看到命盘，也不能虚构生辰八字、星盘、运势或其他个人资料。若问题确实需要命盘，说明信息不足，并可建议用户填写出生信息。涉及健康、法律或财务等重大决定时，提醒结合事实与专业意见。`;
+  } else if (isWestern) {
     ctx = buildWesternContext(d);
     systemPrompt = `你是「问问」，一位精通西方现代占星学、本命星盘相位、十二宫位能量、黄道运势与毕达哥拉斯生命灵数的资深西方星相大师。
 当前解读风格：${resultStyle.label}。${resultStyle.prompt}${evolveBlock ? '\n' + evolveBlock + '\n' : ''}
@@ -611,8 +824,9 @@ export async function generateAnswer(q) {
     _showTyping(el, '模型响应较慢，正在尝试…');
   }, 7000);
 
+  let textEl = null;
+  let speaking = false;
   try {
-    let textEl = null;
     const _mkBubble = () => {
       if (textEl) return textEl;
       textEl = _createAiBubble(el, q);
@@ -632,12 +846,17 @@ export async function generateAnswer(q) {
         _showTyping(el, '正在调用 ' + modelLabel(m) + '…');
       },
       onDelta: (partial) => {
-        _mkBubble().innerHTML = formatStandardAnswer(partial);
+        if (homeSession && partial.trim() && _homeChat && document.getElementById('aiSheet')?.classList.contains('open') && document.getElementById('characterScene')?.dataset.speaking !== 'true') {
+          speaking = true;
+          _setCharacterSpeaking(true);
+        }
+        _mkBubble().innerHTML = homeSession ? formatAIText(partial) : formatStandardAnswer(partial);
         _scrollToBottom(el);
       }
     });
 
     clearTimeout(slowTimer);
+    if (speaking) { _setCharacterSpeaking(false); speaking = false; }
     _hideTyping(el);
 
     // AI 输出兜底过滤：扫描最终文本中的黑名单词
@@ -651,12 +870,17 @@ export async function generateAnswer(q) {
     }
 
     _setModelLabel(result.model);
+    if (homeSession && _homeChat && document.getElementById('aiSheet')?.classList.contains('open')) {
+      const status = document.getElementById('aiLiveStatus');
+      if (status && textEl) status.textContent = `${WENWEN.name}回复：${textEl.textContent}`;
+    }
 
     conversation.push({ role: 'user', content: q });
     conversation.push({ role: 'assistant', content: result.text.slice(0, 500) });
 
     const intents = extractIntents(q);
-    const links = buildRelatedRoutes(intents);
+    // Report routes are dock-bound and cannot navigate from the home dialog.
+    const links = homeSession ? [] : buildRelatedRoutes(intents);
     if (links.length && textEl) {
       const routeHtml = renderRouteButtons(links, '前往相关页面查看');
       textEl.closest('.chat-bubble').insertAdjacentHTML('beforeend', routeHtml);
@@ -672,9 +896,17 @@ export async function generateAnswer(q) {
 
   } catch (e) {
     clearTimeout(slowTimer);
-
-    // ———— 第 3 层：离线兜底 ————
+    if (speaking) _setCharacterSpeaking(false);
     _hideTyping(el);
+    if (homeSession) {
+      // Do not turn a network failure (including a partial stream) into a fabricated reply.
+      textEl?._msg?.remove();
+      _setModelLabel('');
+      _recoverHomeQuestion(q);
+      return;
+    }
+
+    // ———— 第 3 层：报告页保留原有离线兜底 ————
     _setModelLabel('');
     const fbMsg = _generateAnswerFallbackChat(q, d, el);
     const fbText = _plainFrom(fbMsg && fbMsg.querySelector('.chat-ai-text'));
@@ -720,7 +952,8 @@ document.addEventListener('click', async e => {
   }
   if (act === 'retry') {
     if (eid != null) flagExperience(eid, 'retry', true).catch(() => {});
-    if (q) generateAnswer(q);
+    if (q && _homeChat) _sendHomeQuestion(q, false);
+    else if (q) generateAnswer(q);
     return;
   }
   if (act === 'up' || act === 'down') {

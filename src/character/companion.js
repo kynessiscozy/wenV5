@@ -13,6 +13,7 @@ export function mountCharacterCompanion(host, {
 } = {}) {
   if (!host) return null;
   let selected = null;
+  let hint = '';
   const response = document.createElement('p');
   response.className = 'character-companion-response';
   response.setAttribute('role', 'status');
@@ -32,6 +33,7 @@ export function mountCharacterCompanion(host, {
     button.setAttribute('aria-pressed', 'false');
     button.addEventListener('click', () => {
       selected = topic;
+      hint = '';
       render();
       onSelectionChange(topic);
     });
@@ -52,7 +54,7 @@ export function mountCharacterCompanion(host, {
   if (!actionButton) host.appendChild(next);
 
   function render() {
-    response.textContent = selected ? selected.response : (showGreeting ? character.greeting : '');
+    response.textContent = selected ? selected.response : (hint || (showGreeting ? character.greeting : ''));
     buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.topic === selected?.id)));
     if (!actionButton) next.hidden = !selected;
     next.textContent = !selected ? '开启探索' : hasReport() ? '继续聊聊' : '填写信息';
@@ -62,9 +64,15 @@ export function mountCharacterCompanion(host, {
   return {
     refresh: render,
     getTopic: () => selected,
+    showHint(message) {
+      if (selected) return;
+      hint = typeof message === 'string' ? message : '';
+      render();
+    },
     clearSelection() {
       if (!selected) return;
       selected = null;
+      hint = '';
       render();
       onSelectionChange(null);
     },
@@ -76,7 +84,7 @@ export function mountCharacterCompanion(host, {
       const target = buttons.find(button => button.dataset.topic === selected?.id) || buttons[0];
       if (!target) return;
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center', inline: 'nearest' });
+      target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest', inline: 'nearest' });
       target.focus({ preventScroll: true });
     },
   };
