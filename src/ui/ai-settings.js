@@ -42,6 +42,9 @@ export function toggleAISettings() {
   }
 }
 
+let settingsReturnFocus = null;
+let sheetWasInert = false;
+
 export function openAISettingsModal() {
   const modal = document.getElementById('aiSettingsModal');
   if (!modal) return;
@@ -49,31 +52,56 @@ export function openAISettingsModal() {
   if (panel && !panel.children.length) {
     _buildPanel(panel);
   }
+  settingsReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const sheet = document.getElementById('aiSheet');
+  sheetWasInert = !!sheet?.inert;
+  if (sheet) sheet.inert = true;
+  modal.inert = false;
+  modal.setAttribute('aria-hidden', 'false');
   modal.classList.add('open');
   const dock = document.querySelector('.ig-dock.tab-bar');
   if (dock) dock.style.display = 'none';
   document.querySelector('.ai-settings')?.setAttribute('aria-expanded', 'true');
+  modal.querySelector('.modal-close')?.focus({ preventScroll: true });
 }
 
 export function closeAISettingsModal() {
   const modal = document.getElementById('aiSettingsModal');
   if (!modal) return;
   modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  modal.inert = true;
+  const sheet = document.getElementById('aiSheet');
+  if (sheet) sheet.inert = sheet.classList.contains('open') ? sheetWasInert : true;
   const dock = document.querySelector('.ig-dock.tab-bar');
   if (dock) dock.style.display = '';
   document.querySelector('.ai-settings')?.setAttribute('aria-expanded', 'false');
+  window.dispatchEvent(new CustomEvent('tj:ai-settings-changed'));
+  const target = settingsReturnFocus;
+  settingsReturnFocus = null;
+  if (target?.isConnected && target.getClientRects().length) target.focus({ preventScroll: true });
+  else if (sheet?.classList.contains('open')) sheet.querySelector('.ai-settings')?.focus({ preventScroll: true });
 }
 
 if (typeof window !== 'undefined') {
   window.closeAISettingsModal = closeAISettingsModal;
+  document.getElementById('aiSettingsModal')?.addEventListener?.('keydown', event => {
+    if (event.key !== 'Tab') return;
+    const controls = [...event.currentTarget.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), a[href]')]
+      .filter(el => el.getClientRects().length);
+    if (!controls.length) return;
+    const first = controls[0], last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
 }
 
 /* 提供方对应密钥说明 */
 function _providerInfo(p) {
   if (p === 'deepseek') {
-    return 'Key 保存在本地浏览器，不会上传。<br>获取地址：<a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com/api_keys</a>';
+    return 'Key 保存在本地浏览器，请求时会发送给所选服务商。<br>获取地址：<a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com/api_keys</a>';
   }
-  return 'Key 保存在本地浏览器，不会上传。<br>获取地址：<a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>';
+  return 'Key 保存在本地浏览器，请求时会发送给所选服务商。<br>获取地址：<a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>';
 }
 
 /* ============================================================
@@ -96,7 +124,7 @@ function _buildPanel(container) {
   container.innerHTML = `
     <div class="ai-setting-section">
       <div class="ai-setting-section-title">服务提供商</div>
-      <select id="aiProviderSelect" class="ai-provider-select">
+      <select id="aiProviderSelect" class="ai-provider-select" aria-label="服务提供商">
         <option value="deepseek"${p === 'deepseek' ? ' selected' : ''}>DeepSeek（默认）</option>
         <option value="openrouter"${p === 'openrouter' ? ' selected' : ''}>OpenRouter</option>
       </select>
@@ -114,7 +142,7 @@ function _buildPanel(container) {
         }
       </div>
       <div class="ai-key-input-row" id="aiKeyInputRow" style="display:none">
-        <input type="password" id="aiKeyInput" class="ai-key-input"
+        <input type="password" id="aiKeyInput" class="ai-key-input" aria-label="API Key"
                placeholder="sk-..." autocomplete="off" spellcheck="false" />
         <button type="button" id="aiKeySave" class="ai-key-save">保存</button>
       </div>
@@ -204,7 +232,7 @@ function _buildPanel(container) {
     inputRow.style.display = inputRow.style.display === 'none' ? 'flex' : 'none';
     if (inputRow.style.display !== 'none') {
       input.value = '';
-      input.type = 'text';
+      input.type = 'password';
       setTimeout(() => input.focus(), 80);
     }
   });

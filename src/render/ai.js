@@ -53,5 +53,6 @@ export function formatStandardAnswer(text){
     if(m)sections.push({title:t,content:m[1].trim()});
   });
   if(!sections.length)return formatAIText(text);
-  return sections.map((s,i)=>`<div class="ai-step"><div class="ai-step-icon">${i+1}</div><div class="ai-step-body"><div class="ai-step-title">${s.title}</div><div class="ai-step-text">${compactAIText(s.content,i===3?96:68)}</div></div></div>`).join('');
+  const escapeHtml = value => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return sections.map((s,i)=>`<div class="ai-step"><div class="ai-step-icon">${i+1}</div><div class="ai-step-body"><div class="ai-step-title">${s.title}</div><div class="ai-step-text">${escapeHtml(compactAIText(s.content,i===3?96:68))}</div></div></div>`).join('');
 }

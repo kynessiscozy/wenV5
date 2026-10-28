@@ -115,25 +115,10 @@ initEvolveUI();
 initCharacterScene();
 
 const characterCompanion = initCharacterCompanion({
-  hasReport: () => !!window._ctx && !window._ctx.isDemoPreview,
   openForm: () => window.TJOpenForm?.(),
-  openReport: () => {
-    if (!document.getElementById('page2')?.classList.contains('active')) {
-      showPage2();
-      document.querySelector('.tab-item[data-sec="s-ming"]')?.click();
-    }
-  },
-  openAsk: (prompt) => {
-    const input = document.getElementById('askInput');
+  // A report prompt should never toggle an already open assistant shut.
+  openAsk: () => {
     if (!document.getElementById('aiSheet')?.classList.contains('open')) openAsk();
-    // Never replace an unfinished question, or send anything without the user's action.
-    // Open the sheet before sizing the editable draft so its scroll height is measurable.
-    if (prompt && input && !input.value.trim()) {
-      input.value = prompt;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    } else if (prompt && input && input.value.trim() !== prompt) {
-      showToast('已保留你正在编辑的问题');
-    }
   },
 });
 
@@ -376,7 +361,6 @@ async function calc(isDemoPreview=false){
       document.body.classList.remove('form-open');
       const mb1=document.getElementById('homeMenuBtn');if(mb1)mb1.style.display='';
       window.dispatchEvent(new CustomEvent('tj:profile-ready'));
-      characterCompanion.onCalendarProfileReady();
       // Calendar re-renders after receiving the profile, replacing its button.
       if(!formReturnFocus?.isConnected)formReturnFocus=calModal.querySelector('[data-fill]');
       restoreFormFocus();
@@ -478,7 +462,6 @@ window.TJCloseForm=function(){
   const m=document.getElementById('formModal');
   if(m)m.classList.remove('open');
   document.body.classList.remove('form-open');
-  characterCompanion.cancelForm();
   restoreFormFocus();
 };
 // Keep keyboard focus inside the modal until it is closed.
@@ -1018,6 +1001,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){
+      const aiSettings=document.getElementById('aiSettingsModal');if(aiSettings&&aiSettings.classList.contains('open')){window.closeAISettingsModal();return;}
       const ask=document.getElementById('aiSheet');if(ask&&ask.classList.contains('open')){closeAsk();return;}
       const save=document.getElementById('saveModal');if(save&&save.classList.contains('open')){closeSaveModal();return;}
       const arch=document.getElementById('archiveModal');if(arch&&arch.classList.contains('open')){closeArchiveModal();return;}
