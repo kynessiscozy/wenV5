@@ -780,7 +780,7 @@ export const mbti = {
             quote: t.summary,
             foot: 'MBTI 用于自我觉察与启发，不构成能力定论。'
           });
-          exportShareCard(card, '问问大师_MBTI_' + t.code);
+          exportShareCard(card, '问问大师_MBTI_' + t.code, btn);
         } catch (err) {
           console.error(err);
         }

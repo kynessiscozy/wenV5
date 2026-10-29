@@ -295,6 +295,10 @@ for (const character of [QINGLAN, XINGLING, LUYE, SUYAN]) {
   assert.equal(character.assets.speaking.forPortrait, character.assets.portrait.src);
   assert.equal(nodes.get('characterPortraitButton').getAttribute('aria-label'), `点击${character.name}，开启探索`);
 }
+adapter.setHomeCharacter(QINGLAN, '洒脱');
+assert.equal(homeName.textContent, '洒脱', '特质界面不展示内部角色名');
+assert.equal(nodes.get('characterPortraitButton').getAttribute('aria-label'), '点击洒脱形象，开启探索', '读屏也只使用特质');
+assert.ok(homePortrait.alt.includes('洒脱特质') && !homePortrait.alt.includes('青岚'), '图片备用文案也仅显示特质');
 adapter.setHomeCharacter(WENWEN);
 assert.equal(nodes.get('characterScene').dataset.cameraCloseScale, '1.45', '新角色应采用自己的近景比例');
 assert.equal(nodes.get('characterScene').dataset.cameraSafeX, undefined);

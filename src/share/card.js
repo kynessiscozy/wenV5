@@ -5,7 +5,7 @@
    一键长图。我们此前只有文字复制，分享链是断的。
    这里不引第三方库，用原生 canvas 画卡片：
      · 主题跟随明暗模式（读 CSS 变量，不写死）
-     · 输出后优先走 navigator.share，其次剪贴板，最后下载
+     · 输出前先预览，再按设备能力分享、复制或保存
    卡片内容一律来自真实推演结果，不放写死的吉祥话。
    ============================================================ */
 
@@ -17,7 +17,7 @@ const PAD = 64;
 /** 读取当前主题的配色（跟随明暗模式） */
 function palette() {
   const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-  return dark ? {
+  const theme = dark ? {
     bg: '#191613', bgCard: '#221e1a', text: '#ece5d8', text2: '#a8a094',
     text3: '#7d766b', accent: '#e08a55', accentSoft: 'rgba(224,138,85,.14)',
     line: 'rgba(236,229,216,.12)', serif: '"Songti SC","Noto Serif SC",serif',
@@ -28,6 +28,19 @@ function palette() {
     line: 'rgba(42,36,28,.10)', serif: '"Songti SC","Noto Serif SC",serif',
     sans: '"PingFang SC","Noto Sans SC",sans-serif'
   };
+  if (typeof getComputedStyle === 'function') {
+    const styles = getComputedStyle(document.documentElement);
+    const read = (name, fallback) => styles.getPropertyValue(name).trim() || fallback;
+    theme.bg = read('--c-bg', theme.bg);
+    theme.bgCard = read('--c-surface', theme.bgCard);
+    theme.text = read('--c-text-hi', theme.text);
+    theme.text2 = read('--c-text-2', theme.text2);
+    theme.text3 = read('--c-text-3', theme.text3);
+    theme.accent = read('--c-accent-text', theme.accent);
+    theme.accentSoft = read('--c-accent-soft', theme.accentSoft);
+    theme.line = read('--c-border', theme.line);
+  }
+  return theme;
 }
 
 function rr(ctx, x, y, w, h, r) {
@@ -118,7 +131,7 @@ export function renderShareCard(opts) {
   ctx.fillText('✦ 问问大师', PAD, y);
   ctx.fillStyle = P.text3;
   ctx.font = '400 22px ' + P.sans;
-  const brandTail = '东方人生决策系统';
+  const brandTail = '命理与星象 · 自我探索';
   ctx.fillText(brandTail, W - PAD - ctx.measureText(brandTail).width, y + 2);
   y += 30 + 18;
 
@@ -225,47 +238,24 @@ export function renderShareCard(opts) {
   y += 24;
   ctx.fillStyle = P.text3;
   ctx.font = '400 22px ' + P.sans;
-  ctx.fillText('仅供自我整理与行动参考，不构成投资、医疗、法律或职业决策依据', PAD, y);
+  ctx.fillText('仅供自我探索与生活参考', PAD, y);
 
   return cv;
 }
 
 /* ============================================================
-   导出链路：share API → 剪贴板 → 下载
+   导出链路：预览 → 系统分享 / 保存 / 复制
    ============================================================ */
-export async function exportShareCard(canvas, filename) {
-  let blob = null;
-  try { blob = await new Promise(r => canvas.toBlob(r, 'image/png')); } catch (e) {}
-  if (!blob) { showToast('生成图片失败，请重试'); return; }
-
-  // 1) 系统分享（移动端微信/相册直达）
+export async function exportShareCard(canvas, filename, opener = document.activeElement) {
   try {
-    const file = new File([blob], filename + '.png', { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: '问问大师' });
-      return;
-    }
-  } catch (e) {
-    if (e && e.name === 'AbortError') return; // 用户取消，不算失败
+    // The report preloads this shared studio, so first-time tool sharing also
+    // works offline without fetching the dynamic-import wrapper.
+    const open = window.TJOpenSharePreview || (await import('./studio.js')).openCanvasShare;
+    open(canvas, filename, opener);
+  } catch (error) {
+    console.error('[share]', error);
+    showToast('分享预览暂时不可用，请重试');
   }
-
-  // 2) 剪贴板图片
-  try {
-    if (navigator.clipboard && window.ClipboardItem) {
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      showToast('卡片已复制为图片，可直接粘贴发送');
-      return;
-    }
-  } catch (e) {}
-
-  // 3) 下载兜底
-  const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png');
-  a.download = filename + '.png';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  showToast('图片已下载');
 }
 
 /** 把 canvas 转成 dataURL，供旧版「文字分享」之外直接使用 */

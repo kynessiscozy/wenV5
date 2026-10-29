@@ -1,5 +1,7 @@
 /* Claude 风格主题：浅色 / 深色 / 跟随系统 */
 
+import { syncBrowserThemeColor } from './theme-color.js';
+
 const KEY = 'tj_theme';           // 'light' | 'dark' | 'system'
 const mq = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -16,8 +18,7 @@ export function applyThemePref(pref) {
   const mode = resolve(pref);
   document.documentElement.setAttribute('data-theme', mode);
   document.documentElement.style.colorScheme = mode;
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', mode === 'dark' ? '#262624' : '#faf9f5');
+  syncBrowserThemeColor();
   try { localStorage.setItem(KEY, pref); } catch (e) {}
   document.querySelectorAll('.theme-toggle').forEach(btn => {
     btn.setAttribute('aria-label', mode === 'dark' ? '切换到浅色主题' : '切换到深色主题');

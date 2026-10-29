@@ -235,7 +235,7 @@ export const relation = {
             quote: r.dm.desc,
             foot: '合盘用于理解差异、找到沟通方式，不预测关系结局。',
           });
-          exportShareCard(card, '问问大师_八字合盘');
+          exportShareCard(card, '问问大师_八字合盘', btn);
         } catch (e) { showToast('分享卡生成失败'); }
         btn.disabled = false; btn.textContent = '生成合盘卡';
       });

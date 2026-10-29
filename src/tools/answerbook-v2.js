@@ -315,7 +315,7 @@ function showResult(root,question,mode,answer,theme){
   root.querySelector('#answerBookSave').addEventListener('click',e=>{
     if(saveAnswer(question,mode,answer,theme)){e.currentTarget.textContent='已收藏';e.currentTarget.disabled=true;}
   });
-  root.querySelector('#answerBookShare').addEventListener('click',()=>{
+  root.querySelector('#answerBookShare').addEventListener('click',event=>{
     const now=new Date();
     const cv=renderShareCard({
       kicker:'答案之书 · '+themeLabel(theme)+' · '+MODES[mode],
@@ -328,7 +328,7 @@ function showResult(root,question,mode,answer,theme){
       quote:'把这句话当作一个新的视角，再结合事实、感受与现实条件作决定。',
       foot:'答案之书不是预测，也不替代你的判断。',
     });
-    exportShareCard(cv,'问问大师_答案之书');
+    exportShareCard(cv,'问问大师_答案之书',event.currentTarget);
   });
 }
 export function openAnswerBook(){

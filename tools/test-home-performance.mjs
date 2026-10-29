@@ -132,7 +132,8 @@ try {
       shot: document.getElementById('characterScene').dataset.cameraShot,
     }));
     assert.equal(loaded.src, theme.character.assets.portrait.src);
-    assert.equal(loaded.alt, theme.character.assets.portrait.alt);
+    assert.equal(loaded.alt, theme.character.assets.portrait.alt.replace(theme.character.name, `${theme.trait.label}特质同行`));
+    assert.ok(!loaded.alt.includes(theme.character.name), '图片加载失败时的备用文案也不应显示角色名');
     assert.equal(loaded.width, theme.character.assets.portrait.width);
     assert.equal(loaded.height, theme.character.assets.portrait.height);
     assert.equal(loaded.shot, 'close');

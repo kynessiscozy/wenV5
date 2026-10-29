@@ -63,6 +63,43 @@ async function offlineCalculation(page, id, assetName = '') {
       speaking?.complete && speaking.naturalWidth > 0;
   }, { timeout: 10000 });
   if (id === 'wenwen') {
+    // The first-ever share in this page is a tool result, entirely offline.
+    // The preview must already be available without fetching a new chunk.
+    await page.evaluate(() => window.openToolPage('daily'));
+    await page.waitForSelector('#twYShare', { timeout: 15000 });
+    await page.click('#twYShare');
+    await page.waitForSelector('#shareStudio .share-studio-image', { timeout: 15000 });
+    assert.equal(await page.$eval('#shareStudioTitle', el => el.textContent), '分享结果');
+    assert.equal(await page.$eval('#shareStudio .share-studio-save', el => el.disabled), false);
+    await page.click('#shareStudio .share-studio-close');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'twYShare', '离线关闭分享返回原工具按钮');
+    await page.evaluate(() => window.closeToolPage());
+    // The character poster and selected assets must also be available offline.
+    await page.click('#p2ShareBtn');
+    await page.waitForSelector('#shareStudio .share-studio-image', { timeout: 15000 });
+    assert.equal(await page.$eval('#shareStudio .share-studio-image', el => el.naturalWidth), 1080);
+    assert.equal(await page.$eval('#shareStudio .share-studio-save', el => el.disabled), false);
+    await page.click('#shareStudio .share-studio-close');
+    // The Three.js chunks may not have been downloaded yet. In that case the
+    // offline fallback still exposes real western values and portrait controls.
+    await page.click('.result-character-hint-button');
+    await page.click('#modeWestern');
+    await page.waitForFunction(() => document.documentElement.dataset.systemMode === 'western');
+    await page.waitForFunction(() => document.querySelector('#w3d-astro canvas') ||
+      /(离线时无法加载|暂不支持)/.test(document.querySelector('#w3d-astro .w3d-loading')?.textContent || ''), { timeout: 15000 });
+    const western = await page.evaluate(() => ({
+      values: [...document.querySelectorAll('#w3d-astro [data-report-value]')].map(el => el.textContent.trim()),
+      sun: window.__w3dData.astro.sun.name,
+      moon: window.__w3dData.astro.moon.name,
+    }));
+    assert.equal(western.values.length, 3);
+    assert.ok(western.values[0].includes(western.sun) && western.values[1].includes(western.moon),
+      '离线西方场景显示真实太阳与月亮信息');
+    await page.click('#characterResultHero .result-portrait-toggle');
+    assert.equal(await page.$eval('#characterResultHero .result-portrait-toggle', el => el.getAttribute('aria-expanded')), 'false');
+    await page.click('#characterResultHero .result-portrait-toggle');
+    await page.click('#modeEastern');
+    await page.waitForFunction(() => document.documentElement.dataset.systemMode === 'eastern');
     const { day, summary } = await page.evaluate(() => ({ day: window._ctx.dg + window._ctx.dw, summary: document.querySelector('#s-ming .qr-summary').textContent }));
     await page.click('#reportTraitReselect');
     await spinFor(page, 'moonfox');
@@ -103,12 +140,12 @@ try {
   await page.waitForFunction(() => window._tools2Ready === true && document.getElementById('traitMachine')?.dataset.ready === 'true');
   // None of the roles are chosen online; all scenes must still work offline.
   await page.evaluate(async () => {
-    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]) await caches.open(`wenda-cache-v${version}`);
+    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]) await caches.open(`wenda-cache-v${version}`);
     await caches.open('unrelated-app-cache');
     await navigator.serviceWorker.register('./sw.js');
     await navigator.serviceWorker.ready;
   });
-  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v30') && !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28|29)$/.test(key)));
+  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v34') && !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33)$/.test(key)));
   assert.ok(await page.evaluate(async () => (await caches.keys()).includes('unrelated-app-cache')), '更新不能删除其他应用的缓存');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => navigator.serviceWorker.controller && window._tools2Ready === true && document.getElementById('traitMachine')?.dataset.ready === 'true');
@@ -122,9 +159,9 @@ try {
     './art/earthfire-flame-seat.webp', './art/earthfire-hall-wide.webp', './art/earthfire-hall-mobile.webp', './art/earthfire-runes.webp', './art/earthfire-rune-seal.webp',
     './art/yuchen-empress.webp', './art/yuchen-empress-avatar.webp', './art/yuchen-empress-blink.webp', './art/yuchen-empress-speak.webp',
     './art/yuchen-hall-wide.webp', './art/yuchen-hall-mobile.webp',
-    './art/qinglan.webp', './art/qinglan-avatar.webp', './art/qinglan-blink.webp', './art/qinglan-speak.webp',
+    './art/qinglan-renewed.webp', './art/qinglan-renewed-avatar.webp', './art/qinglan-renewed-blink.webp', './art/qinglan-renewed-speak.webp',
     './art/qinglan-room-wide.webp', './art/qinglan-room-mobile.webp', './art/qinglan-sword.webp',
-    './art/xingling.webp', './art/xingling-avatar.webp', './art/xingling-blink.webp', './art/xingling-speak.webp',
+    './art/xingling-renewed.webp', './art/xingling-renewed-avatar.webp', './art/xingling-renewed-blink.webp', './art/xingling-renewed-speak.webp',
     './art/xingling-room-wide.webp', './art/xingling-room-mobile.webp', './art/xingling-fan.webp',
     './art/luye.webp', './art/luye-avatar.webp', './art/luye-blink.webp', './art/luye-speak.webp',
     './art/luye-room-wide.webp', './art/luye-room-mobile.webp', './art/luye-turntable.svg', './art/luye-vinyl.svg',
@@ -176,7 +213,7 @@ try {
   assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
   assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined);
   assert.deepEqual(errors, [], '离线页面不应产生未捕获的 JavaScript 错误');
-  console.log('✓ /demo/ 生产构建：缓存更新、八角色离线选择/重选、真实结果、固定近景与探索日历');
+  console.log('✓ /demo/ 生产构建：缓存更新、八角色离线选择/重选、真实结果、西方信息回退、固定近景与探索日历');
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));

@@ -471,7 +471,7 @@ export function renderWesternAstrologySection(ctx) {
   const timeStr = input.timeStr || '12:00';
   const [h, min] = timeStr.split(':').map(Number);
 
-  const chart = calcWesternChart(y, m, d, h || 12, min || 0, city.o || 116.4, city.a || 39.9);
+  const chart = calcWesternChart(y, m, d, Number.isFinite(h) ? h : 12, Number.isFinite(min) ? min : 0, city.o ?? 116.4, city.a ?? 39.9);
   const sun = chart.sun;
   const moon = chart.moon;
   const asc = chart.asc;

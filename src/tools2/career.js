@@ -231,7 +231,7 @@ export const career = {
             quote: '不冲动跳船，用最小可行性版本跑通第一单闭环。',
             foot: '测评仅作行动参考，现实条件优先。'
           });
-          exportShareCard(card, '问问大师_事业测评_' + S.goal);
+          exportShareCard(card, '问问大师_事业测评_' + S.goal, btn);
         } catch (err) {
           console.error(err);
         }
@@ -342,7 +342,7 @@ export const career = {
             quote: '提前排查现实红旗，做好备选方案，从容应对职场变局。',
             foot: '风险评估仅作个人预案参考，不构成法律意见。'
           });
-          exportShareCard(card, '问问大师_职场风控_' + lv);
+          exportShareCard(card, '问问大师_职场风控_' + lv, btn);
         } catch (err) {
           console.error(err);
         }

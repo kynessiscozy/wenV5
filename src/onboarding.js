@@ -1,5 +1,6 @@
 /* A compact, always-available guide to the current experience. */
 import { getWesternSvgIcon } from './render/western-view.js';
+import { focusSafely } from './ui/focus.js';
 
 const tabs = [
   ['tour', '开始', 'sparkle'],
@@ -27,7 +28,7 @@ const content = {
   tour: () => header('从这里开始', '一起看看，慢慢探索', '选择一种同行特质，再从自己的问题出发。') + steps([
     ['转动特质轮', '转一转，确认结果或再转一次。进入后也可以重新选择；更换特质不会改变已输入的信息或计算结果。'],
     ['填写出生信息', '填写日期、时间和地点后开始推演。结果出现后会停留，点击「查看报告」继续。'],
-    ['阅读报告', '先看命盘一览；用顶部切换东方与西方，底部切换命盘、运势和关系。卡片里的按钮可继续查看细节。'],
+    ['阅读报告', '先看同行卡中的命盘信息；用顶部切换东方与西方，底部切换命盘、运势和关系。卡片里的按钮可继续查看细节。'],
     ['继续探索', '工具页有不同主题的体验。问问对话使用外部 AI 服务前，需要在设置中配置服务。'],
   ]),
   eastern: () => header('东方命理', '先看一览，再看依据', '四柱和五行是一套传统的解读方式，不是对人生的定论。') + steps([
@@ -37,7 +38,7 @@ const content = {
   ]),
   western: () => header('西方星相', '从太阳、月亮和上升开始', '星盘根据出生信息计算；出生时间和地点会影响部分结果。') + steps([
     ['认识三个起点', '太阳、月亮和上升分别是占星解读中常用的三个视角。继续阅读可查看行星、宫位和相位。'],
-    ['与星盘互动', '拖动场景可旋转视角，使用鼠标滚轮可缩放；点击复位按钮返回初始视角。设备不支持 3D 时仍可阅读文字报告。'],
+    ['与星盘互动', '拖动场景可旋转视角，点击人物可收起立绘，再用「显示立绘」恢复。鼠标滚轮可缩放，复位按钮可返回初始视角。设备不支持 3D 时仍可阅读文字报告。'],
     ['探索灵数', '关系页也提供基于出生日期的生命灵数体验。它是另一种解读框架，并非科学测量。'],
   ]),
   glossary: () => {
@@ -70,7 +71,7 @@ const content = {
 };
 
 export function openNoviceGuide(initialTab = 'tour') {
-  activeGuideTab = Object.hasOwn(content, initialTab) ? initialTab : 'tour';
+  activeGuideTab = Object.prototype.hasOwnProperty.call(content, initialTab) ? initialTab : 'tour';
   let modal = document.getElementById('noviceGuideModal');
   if (!modal) {
     modal = document.createElement('div');
@@ -98,19 +99,19 @@ export function openNoviceGuide(initialTab = 'tour') {
   if (!modal.classList.contains('open')) returnFocus = document.activeElement;
   modal.classList.add('open');
   switchNoviceGuideTab(activeGuideTab);
-  modal.querySelector('.ng-close-btn')?.focus({ preventScroll: true });
+  focusSafely(modal.querySelector('.ng-close-btn'));
 }
 
 export function closeNoviceGuide() {
   const modal = document.getElementById('noviceGuideModal');
   if (!modal?.classList.contains('open')) return;
   modal.classList.remove('open');
-  if (returnFocus?.isConnected && returnFocus.getClientRects().length) returnFocus.focus({ preventScroll: true });
+  if (returnFocus?.isConnected && returnFocus.getClientRects().length) focusSafely(returnFocus);
   returnFocus = null;
 }
 
 export function switchNoviceGuideTab(tabKey) {
-  activeGuideTab = Object.hasOwn(content, tabKey) ? tabKey : 'tour';
+  activeGuideTab = Object.prototype.hasOwnProperty.call(content, tabKey) ? tabKey : 'tour';
   const modal = document.getElementById('noviceGuideModal');
   if (!modal) return;
   modal.querySelectorAll('.ng-tab-btn').forEach(button => {

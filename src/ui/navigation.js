@@ -59,8 +59,7 @@ export function jumpTo(secId,cardKey){
 }
 
 export function applyTheme(yongShen){
-  /* Claude 风格只保留一个强调色（赭橙），不再按用神切换整站色相与背景。
-     用神仅作为数据标记写入 <html data-yongshen>，供五行标签等局部着色使用。 */
+  /* 特质决定全站强调色；用神只作数据标记，供五行等局部内容使用。 */
   document.documentElement.setAttribute('data-yongshen', yongShen || '土');
 }
 
