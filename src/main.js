@@ -42,7 +42,8 @@ import {
 } from './share/long-report.js';
 import { initTools3DRingCarousel } from './render/tools-ring.js';
 import { initLiquidOrb } from './fx/liquid-orb.js';
-import { characterCompanion } from './home.js';
+import { characterCompanion, homeThemePicker } from './home.js';
+import { mountCharacterReport } from './ui/character-report.js';
 import { beginCharacterCalculation, warmCharacterCalculation } from './ui/character-calculation.js';
 import { TJX } from './state/tjx.js';
 import { getResultStyle } from './state/result-style.js';
@@ -310,6 +311,21 @@ initEvolveUI();
   };
 })();
 
+function refreshCharacterReport(isDemo=!!window._ctx?.isDemoPreview){
+  try{
+    mountCharacterReport({ctx:window._ctx,western:window.__w3dData,isDemo,
+      onReselect:trigger=>homeThemePicker?.open(trigger)});
+  }catch(error){
+    // A missing optional character asset must not prevent the report itself.
+    console.warn('[report] 角色导览暂不可用',error);
+  }
+}
+// Switching traits updates the already calculated report without recalculating
+// it, discarding inputs, or changing the separate 问问 assistant.
+window.addEventListener('tj:trait-change',()=>{
+  if(window._ctx && document.getElementById('s-ming'))refreshCharacterReport();
+});
+
 let calculationInProgress=false;
 async function calc(isDemoPreview=false){
   if(calculationInProgress)return;
@@ -347,6 +363,9 @@ async function calc(isDemoPreview=false){
       const reportInner=document.getElementById('p2Inner');
       if(reportInner)reportInner.insertAdjacentHTML('afterbegin','<div class="demo-report-note" role="status"><span>示例</span><b>当前为体验用示例报告</b><em>内容基于默认示例信息生成，请勿用于个人判断。</em></div>');
     }
+    // The chosen home character accompanies the real report, including when
+    // a calendar update recalculates it without immediately opening the page.
+    refreshCharacterReport(!!isDemoPreview);
   }
 
   // 日历录入只更新档案并留在日历；所有真正打开报告的入口共享同一推演场景。

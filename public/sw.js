@@ -1,6 +1,6 @@
 /* 问问大师 PWA：离线可用 + 秒开的缓存策略。
    静态资源带 hash，可长期缓存；HTML 走 network-first 保证更新及时。 */
-const CACHE = 'wenda-cache-v27';
+const CACHE = 'wenda-cache-v29';
 const BASE = './';
 
 const OPTIONAL_ASSETS = [

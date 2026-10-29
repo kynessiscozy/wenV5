@@ -76,25 +76,36 @@ export function initCharacterCompanion({
       if (isDemo) return;
       const section = document.getElementById('s-ming');
       if (!section) return;
-      let slot = document.getElementById('characterReportGuide');
-      if (!slot) {
-        slot = document.createElement('aside');
-        slot.id = 'characterReportGuide';
-        slot.className = 'character-report-guide';
-        slot.setAttribute('aria-label', `${character.name}的提示`);
-        section.prepend(slot);
-      }
-      mountCharacterPrompt(slot, {
-        character,
-        variant: 'report',
-        message: '命盘好了，想一起聊聊吗？',
-        actionLabel: `和${character.name}聊聊`,
-        onAction: openAsk,
-        dismissLabel: `收起${character.name}的提示`,
-        onDismiss: () => {
-          slot.remove();
-          document.getElementById('aiFab')?.focus({ preventScroll: true });
-        },
+      // Keep the existing 问问 chat option distinct from the selected guide.
+      // Each system has its own location after the first piece of actual content.
+      const systems = [
+        { id: 'characterReportGuide', root: section.querySelector(':scope > .sys-eastern'), anchor: '.qr-card' },
+        { id: 'characterReportGuideWestern', root: section.querySelector(':scope > .sys-western'), anchor: '#w3d-astro' },
+      ];
+      systems.forEach(({ id, root, anchor }) => {
+        if (!root) return;
+        let slot = document.getElementById(id);
+        if (!slot) {
+          slot = document.createElement('aside');
+          slot.id = id;
+          slot.className = 'character-report-guide';
+          slot.setAttribute('aria-label', `${character.name}的提示`);
+          const content = root.querySelector(anchor);
+          if (content) content.insertAdjacentElement('afterend', slot);
+          else root.prepend(slot);
+        }
+        mountCharacterPrompt(slot, {
+          character,
+          variant: 'report',
+          message: id === 'characterReportGuideWestern' ? '星盘好了，想一起聊聊吗？' : '命盘好了，想一起聊聊吗？',
+          actionLabel: `和${character.name}聊聊`,
+          onAction: openAsk,
+          dismissLabel: `收起${character.name}的提示`,
+          onDismiss: () => {
+            section.querySelectorAll('.character-report-guide').forEach(guide => guide.remove());
+            document.getElementById('aiFab')?.focus({ preventScroll: true });
+          },
+        });
       });
     },
   };

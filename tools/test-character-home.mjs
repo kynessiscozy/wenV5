@@ -206,12 +206,14 @@ try {
     assert.ok(!/问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言/.test(await page.$eval('#traitSelection', el => el.textContent)), '选择页不应暴露人物名称');
     assert.equal(await page.$$eval('.trait-mark', marks => marks.every(mark => mark.getAttribute('aria-hidden') === 'true')), true);
     const choiceTree = await (await page.createCDPSession()).send('Accessibility.getFullAXTree');
-    const choiceNames = choiceTree.nodes.filter(node => !node.ignored && node.role?.value === 'button').map(node => node.name?.value);
-    assert.deepEqual(choiceNames, ['温柔', '神秘', '威严', '从容', '洒脱', '魅惑', '好奇', '自信'], '屏幕阅读器也只应读出特质');
+    const traits = ['温柔', '神秘', '威严', '从容', '洒脱', '魅惑', '好奇', '自信'];
+    const choiceNames = choiceTree.nodes.filter(node => !node.ignored && ['button', 'togglebutton'].includes(node.role?.value) && traits.includes(node.name?.value)).map(node => node.name?.value);
+    assert.deepEqual(choiceNames, traits, '屏幕阅读器也只应读出特质');
     const fetched = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name));
     assert.ok(!fetched.some(name => /(?:wenwen-reimagined|moon-fox-reimagined|earthfire-sovereign|yuchen-empress|qinglan|xingling|luye|suyan)\.webp/.test(name)), '未选择前不应预加载任何主图');
     await page.keyboard.press('Tab');
-    assert.equal(await page.evaluate(() => document.activeElement.dataset.trait), 'wenwen');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'traitSpin', '老虎机可以用键盘操作');
+    await page.focus('[data-trait="wenwen"]');
     await page.keyboard.press('ArrowRight');
     assert.equal(await page.evaluate(() => document.activeElement.dataset.trait), 'moonfox');
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined, '方向键只移动焦点，不应选择角色');
@@ -228,7 +230,19 @@ try {
       document.querySelector('[data-trait="diyan"]').click();
     });
     await new Promise(resolve => setTimeout(resolve, 250));
-    assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'moonfox', '已选角色在本次页面中不可更改');
+    assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'moonfox', '后台存储或隐藏选择项不能意外更改角色');
+    await page.click('#homeTraitReset');
+    assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
+    assert.equal(await page.$eval('#page1', el => el.inert), true, '重选时应屏蔽背景');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.$eval('#traitSelection', el => el.hidden), true);
+    assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'moonfox', '取消不能更改原角色');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'homeTraitReset', '取消后焦点返回入口');
+    await page.click('#homeTraitReset');
+    await page.click('[data-trait="diyan"]');
+    await page.waitForFunction(() => document.documentElement.dataset.homeTheme === 'diyan' && document.getElementById('traitSelection').hidden);
+    assert.equal(await page.$eval('#page1', el => el.inert), false);
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'homeTraitReset', '选择完成后焦点返回入口');
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForSelector('[data-trait="yuchen"]');
     assert.equal(await page.$eval('#traitSelection', el => el.hidden), false, '刷新后必须重新选择');
@@ -237,7 +251,7 @@ try {
     await page.waitForFunction(() => document.documentElement.dataset.homeTheme === 'yuchen' && document.getElementById('traitSelection').hidden);
     await context.close();
   }
-  console.log('✓ 首次选择特质、单向锁定、键盘与刷新重选');
+  console.log('✓ 首次选择、主动重选、取消、键盘及刷新重选');
 
   // All eight choices remain reachable without clipping at common phone and
   // landscape sizes, including the 320px-wide and short-height layouts.
@@ -247,11 +261,13 @@ try {
       const picker = document.getElementById('traitSelection');
       return { scrollWidth: picker.scrollWidth, width: picker.clientWidth,
         scrollHeight: picker.scrollHeight, height: picker.clientHeight,
-        rects: [...picker.querySelectorAll('button')].map(button => button.getBoundingClientRect().toJSON()) };
+        rects: [...picker.querySelectorAll('.trait-choice')].map(button => button.getBoundingClientRect().toJSON()),
+        spin: picker.querySelector('#traitSpin').getBoundingClientRect().toJSON(),
+        lever: picker.querySelector('#traitLever').getBoundingClientRect().toJSON() };
     });
     assert.equal(layout.rects.length, 8);
     assert.equal(layout.scrollWidth, layout.width, '选择页不能横向溢出');
-    assert.ok(layout.rects.every(rect => rect.left >= 0 && rect.right <= width && rect.top >= 0 && rect.bottom <= height), `${width}x${height}: 八个选项应完整可见`);
+    assert.ok([...layout.rects, layout.spin, layout.lever].every(rect => rect.left >= 0 && rect.right <= width && rect.top >= 0 && rect.bottom <= height), `${width}x${height}: 特质、转动与拉杆应完整可见`);
     await context.close();
   }
   console.log('✓ 八项特质在手机、横屏与桌面均完整可见');
@@ -268,7 +284,10 @@ try {
     await other.evaluate(() => localStorage.setItem('tj_home_character', 'diyan'));
     await new Promise(resolve => setTimeout(resolve, 250));
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'wenwen');
-    assert.equal(await other.$eval('html', el => el.dataset.homeTheme), 'diyan');
+    await page.click('#homeTraitReset');
+    await page.click('[data-trait="suyan"]');
+    await page.waitForFunction(() => document.documentElement.dataset.homeTheme === 'suyan' && document.getElementById('traitSelection').hidden);
+    assert.equal(await other.$eval('html', el => el.dataset.homeTheme), 'diyan', '另一标签重选不能改变当前角色');
     await context.close();
   }
   console.log('✓ 跨标签互不干扰');
@@ -507,7 +526,9 @@ try {
     const before = await page.$eval('.character-camera-subject', el => getComputedStyle(el).transform);
     await page.mouse.move(x, y); await page.mouse.down(); await page.mouse.move(x + 45, y, { steps: 5 }); await page.mouse.up();
     assert.equal(await page.$eval('#characterScene', el => el.dataset.cameraShot), 'close');
-    assert.equal(await page.$eval('.character-camera-subject', el => getComputedStyle(el).transform), before);
+    const after = await page.$eval('.character-camera-subject', el => getComputedStyle(el).transform);
+    const values = matrix => matrix.match(/[-\d.]+/g).map(Number);
+    assert.ok(values(after).every((value, i) => Math.abs(value - values(before)[i]) < .05), '拖动不应改变近景，容许极小的动画取整误差');
     assert.equal(await page.$eval('#formModal', el => el.classList.contains('open')), false);
     await page.click('#characterPortraitButton');
     await page.waitForSelector('#formModal.open');

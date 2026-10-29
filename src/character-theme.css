@@ -988,8 +988,10 @@ html[data-theme="dark"] .character-portrait img[data-character-asset="portrait"]
   cursor: pointer;
 }
 .character-companion-next[hidden], .character-form-focus[hidden] { display: none; }
-.character-guide-link { position: relative; isolation: isolate; min-height: 44px; margin-top: 4px; padding: 0 2px; border: 0; color: var(--home-muted); background: transparent; font: 600 12px/1 var(--sf); cursor: pointer; }
-.character-guide-link::before {
+.character-text-actions { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.character-guide-link, .character-reselect { position: relative; isolation: isolate; min-height: 44px; margin-top: 4px; padding: 0 2px; border: 0; color: var(--home-muted); background: transparent; font: 600 12px/1 var(--sf); cursor: pointer; }
+.character-reselect { color: var(--home-text); }
+.character-guide-link::before, .character-reselect::before {
   content: '';
   position: absolute;
   z-index: -1;
@@ -997,20 +999,21 @@ html[data-theme="dark"] .character-portrait img[data-character-asset="portrait"]
   pointer-events: none;
   background: radial-gradient(ellipse closest-side at center, rgba(27, 14, 26, .84), rgba(27, 14, 26, .65) 55%, transparent 100%);
 }
-html[data-home-theme="moonfox"] .character-guide-link::before {
+html[data-home-theme="moonfox"] .character-guide-link::before,
+html[data-home-theme="moonfox"] .character-reselect::before {
   background: radial-gradient(ellipse closest-side at center, rgba(4, 16, 32, .86), rgba(4, 16, 32, .66) 55%, transparent 100%);
 }
 html[data-home-theme="moonfox"] .character-footer { color: #eff9ff; }
 html[data-home-theme="moonfox"] .character-footer::before {
   background: radial-gradient(ellipse 150px 28px at 130px 50%, rgba(4, 16, 32, .75), rgba(4, 16, 32, .57) 55%, transparent 100%);
 }
-.character-guide-link:hover, .character-companion-next:hover { text-decoration: underline; }
+.character-guide-link:hover, .character-reselect:hover, .character-companion-next:hover { text-decoration: underline; }
 .character-companion-option:focus-visible, .character-companion-next:focus-visible,
-.character-guide-link:focus-visible, .character-portrait:focus-visible,
+.character-guide-link:focus-visible, .character-reselect:focus-visible, .character-portrait:focus-visible,
 .character-btn:focus-visible, .character-header .home-menu-btn:focus-visible,
 .character-header .theme-toggle-home:focus-visible { outline: 2px solid var(--home-focus); outline-offset: 3px; }
 .character-companion-option:focus-visible, .character-companion-next:focus-visible,
-.character-guide-link:focus-visible, .character-btn:focus-visible { border-radius: 999px; }
+.character-guide-link:focus-visible, .character-reselect:focus-visible, .character-btn:focus-visible { border-radius: 999px; }
 /* The scene's focused-action badge supplies the focus indicator without a portrait frame. */
 .character-scene .character-portrait:focus-visible { border-radius: 0; outline: none; }
 .character-prompt button:focus-visible { outline: 2px solid var(--c-accent-text); outline-offset: 3px; }

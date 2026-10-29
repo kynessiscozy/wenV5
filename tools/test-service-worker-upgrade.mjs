@@ -26,7 +26,7 @@ let failOneArtwork = false;
 const server = createServer((incoming, outgoing) => {
   const pathname = incoming.url?.split('?')[0];
   if (pathname === '/sw.js') {
-    const marker = phase === 'newer' ? '\n// another release\n' : phase === 'fault' ? '\n// unavailable release\n' : '';
+    const marker = phase === 'newer' ? '\n// another release\n' : phase === 'reselect' ? '\n// reselect release\n' : phase === 'busy' ? '\n// busy entry release\n' : phase === 'fault' ? '\n// unavailable release\n' : '';
     const source = phase === 'old' ? legacyWorker : installDelay + worker + marker;
     outgoing.writeHead(200, { 'Content-Type': 'application/javascript', 'Cache-Control': 'no-store' });
     outgoing.end(source);
@@ -139,9 +139,36 @@ try {
   await page.setOfflineMode(false);
   console.log('✓ 人物图片在线更新，离线仍可读取');
 
-  // A later update must never interrupt a selected character or an open form.
+  // A worker arriving during the initial committed choice must not reload the
+  // selection in the middle of its animation/image preparation either.
+  await page.evaluate(() => {
+    window.__controllerChanges = 0;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { window.__controllerChanges++; });
+    window.__oldDecode = HTMLImageElement.prototype.decode;
+    HTMLImageElement.prototype.decode = function () {
+      if (this.src.endsWith('/wenwen-reimagined.webp')) return new Promise(resolve => { window.__releaseBusyDecode = resolve; });
+      return window.__oldDecode.call(this);
+    };
+    window.__oldTimeout = window.setTimeout;
+    window.setTimeout = (fn, ms, ...args) => window.__oldTimeout(fn, ms === 2500 ? 15000 : ms, ...args);
+  });
   await page.click('[data-trait="wenwen"]');
+  await page.waitForFunction(() => document.getElementById('traitSelection').getAttribute('aria-busy') === 'true' && window.__releaseBusyDecode);
+  const beforeBusy = navigations;
+  phase = 'busy';
+  await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
+  await page.waitForFunction(() => window.__controllerChanges > 0, { timeout: 15000 });
+  assert.equal(navigations, beforeBusy, '首次选择加载期间不能因更新重载');
+  assert.equal(await page.$eval('#traitSelection', element => element.getAttribute('aria-busy')), 'true');
+  await page.evaluate(() => {
+    HTMLImageElement.prototype.decode = window.__oldDecode;
+    window.setTimeout = window.__oldTimeout;
+    window.__releaseBusyDecode();
+  });
   await page.waitForFunction(() => document.getElementById('traitSelection').hidden);
+  console.log('✓ 首次选择加载期间更新不会中断场景');
+
+  // A later update must never interrupt a selected character or an open form.
   await page.click('#homeCtaMain');
   await page.waitForSelector('#formModal.open', { timeout: 15000 });
   await page.$eval('#cInp', input => { input.value = '尚未完成的输入'; });
@@ -158,6 +185,24 @@ try {
   assert.equal(await page.$eval('html', element => element.dataset.homeTheme), 'wenwen');
   assert.equal(await page.$eval('#formModal', element => element.classList.contains('open')), true);
   console.log('✓ 会话或表单进行中更新不会丢失输入');
+
+  // The same selector can be reopened after a character is chosen. A worker
+  // update here must not mistake it for the fresh, safe-to-reload entry page.
+  await page.evaluate(() => window.TJCloseForm());
+  await page.waitForFunction(() => !document.getElementById('formModal').classList.contains('open'));
+  await page.click('#homeTraitReset');
+  await page.waitForFunction(() => !document.getElementById('traitSelection').hidden);
+  await page.evaluate(() => { window.__controllerChanges = 0; });
+  phase = 'reselect';
+  await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
+  await page.waitForFunction(() => window.__controllerChanges > 0, { timeout: 15000 });
+  assert.equal(navigations, before, '重选打开时不能因更新重载');
+  assert.equal(await page.$eval('#traitSelection', element => element.hidden), false);
+  assert.equal(await page.$eval('#cInp', input => input.value), '尚未完成的输入');
+  await page.click('[data-trait="moonfox"]');
+  await page.waitForFunction(() => document.getElementById('traitSelection').hidden && document.documentElement.dataset.homeTheme === 'moonfox');
+  assert.equal(await page.$eval('#cInp', input => input.value), '尚未完成的输入');
+  console.log('✓ 重选特质期间更新不会丢失输入或打断选择');
 
   // A failed installation must leave the previous worker and its cache usable.
   await page.evaluate(async () => {

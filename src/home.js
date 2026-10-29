@@ -71,7 +71,7 @@ export const characterCompanion = initCharacterCompanion({
     if (!document.getElementById('aiSheet')?.classList.contains('open')) window.openAsk?.();
   },
 });
-initHomeTheme({ setHomeCharacter: characterCompanion.setHomeCharacter });
+export const homeThemePicker = initHomeTheme({ setHomeCharacter: characterCompanion.setHomeCharacter });
 
 // Heavy report engines are not required to render or operate the home scene.
 import('./main.js').catch(error => {
