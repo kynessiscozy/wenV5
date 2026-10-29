@@ -29,7 +29,8 @@
       function reloadUpdatedSelection() {
         var selection = document.getElementById('traitSelection');
         // Never interrupt an in-progress character session or form.
-        if (!reloadingForUpdate && selection && !selection.hidden) {
+        if (!reloadingForUpdate && selection && !selection.hidden &&
+            !document.documentElement.dataset.homeTheme && selection.getAttribute('aria-busy') !== 'true') {
           reloadingForUpdate = true;
           window.location.reload();
         }
@@ -64,6 +65,7 @@
 <link rel="stylesheet" href="/src/character-theme.css">
 <link rel="stylesheet" href="/src/character-calculation.css">
 <link rel="stylesheet" href="/src/trait-selection.css">
+<link rel="stylesheet" href="/src/character-report.css">
 <style>
 .result-style-heading{display:flex;align-items:baseline;gap:8px;margin-bottom:7px;min-width:0}
 .result-style-label{font-size:.72em;font-weight:500;color:var(--c-text-2);white-space:nowrap}
@@ -77,7 +79,7 @@
 </head>
 <body class="home">
 
-<!-- A new visit begins with one deliberate, page-lifetime choice. -->
+<!-- Choose a trait before entering; the same selector can be reopened later. -->
 <section class="trait-selection" id="traitSelection" role="dialog" aria-modal="true" aria-labelledby="traitTitle" aria-describedby="traitIntro traitHint" tabindex="-1">
   <div class="trait-atmosphere" aria-hidden="true">
     <span class="trait-orbit trait-orbit--outer"></span><span class="trait-orbit trait-orbit--inner"></span>
@@ -87,12 +89,33 @@
     </svg>
   </div>
   <div class="trait-content">
+    <button class="trait-cancel" id="traitCancel" type="button" hidden>返回</button>
     <p class="trait-eyebrow">心性相逢 <span aria-hidden="true">✦</span> 一念启程</p>
-    <h1 id="traitTitle">此刻，哪一种<br>更像你？</h1>
-    <p class="trait-intro" id="traitIntro">选择与你共鸣的一种特质</p>
-    <div class="trait-options" id="traitOptions" role="group" aria-label="选择一种特质"></div>
+    <h1 id="traitTitle">让心意，<br>转个方向</h1>
+    <p class="trait-intro" id="traitIntro">转一转，或直接选择一种特质</p>
+    <div class="trait-machine" id="traitMachine">
+      <div class="trait-machine-aura" aria-hidden="true"></div>
+      <div class="trait-machine-body">
+        <div class="trait-machine-crown" aria-hidden="true"><span>✦</span><b>心 性 之 轮</b><span>✦</span></div>
+        <div class="trait-machine-lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="trait-machine-window" aria-hidden="true">
+          <div class="trait-side-reel trait-side-reel--left"><i></i><b></b><i></i></div>
+          <div class="trait-center-reel"><div class="trait-reel-track" id="traitReelTrack"></div></div>
+          <div class="trait-side-reel trait-side-reel--right"><i></i><b></b><i></i></div>
+        </div>
+        <div class="trait-machine-foot">
+          <span class="trait-foot-ornament" aria-hidden="true">✧</span>
+          <button class="trait-spin" id="traitSpin" type="button"><span>转一转</span><span aria-hidden="true">↻</span></button>
+          <span class="trait-foot-ornament" aria-hidden="true">✧</span>
+        </div>
+      </div>
+      <button class="trait-lever" id="traitLever" type="button" aria-label="随机转动特质"><span class="trait-lever-arm" aria-hidden="true"></span><span class="trait-lever-knob" aria-hidden="true"></span></button>
+    </div>
+    <button class="trait-confirm" id="traitConfirm" type="button" hidden>选择这个特质</button>
+    <p class="trait-choice-label">或选择你喜欢的</p>
+    <div class="trait-options" id="traitOptions" role="group" aria-label="直接选择一种特质"></div>
     <p class="trait-status" id="traitStatus" role="status" aria-live="polite">正在准备…</p>
-    <p class="trait-hint" id="traitHint">选定后陪伴本次旅程 · 刷新可重新选择</p>
+    <p class="trait-hint" id="traitHint">只展示特质，人物将在选择后出现</p>
     <noscript><p class="trait-noscript">请启用 JavaScript 后选择特质。</p></noscript>
   </div>
 </section>
@@ -454,7 +477,10 @@
                 <span>日历</span>
               </button>
             </div>
-            <button class="character-guide-link" type="button" onclick="openNoviceGuide()">使用指南 ↗</button>
+            <div class="character-text-actions">
+              <button class="character-reselect" id="homeTraitReset" type="button" aria-haspopup="dialog" aria-controls="traitSelection">重新选择特质 <span aria-hidden="true">↻</span></button>
+              <button class="character-guide-link" type="button" onclick="openNoviceGuide()">使用指南 ↗</button>
+            </div>
           </div>
         </section>
 

@@ -302,12 +302,23 @@ assert.ok(names.every(el => el.textContent === '小星'), '切换首页角色不
 nodes.get('characterPortraitButton').click();
 assert.equal(formOpened, 3, '切换角色后人物仍只绑定一次真实表单');
 
+const easternReport = new Element('div');
+const westernReport = new Element('div');
+nodes.get('s-ming').querySelector = selector => ({
+  ':scope > .sys-eastern': easternReport,
+  ':scope > .sys-western': westernReport,
+}[selector] || null);
 adapter.onReportReady({ isDemo: true });
-assert.equal(nodes.get('s-ming').children.length, 0, '示例报告不能假称个人命盘');
+assert.equal(easternReport.children.length + westernReport.children.length, 0, '示例报告不能假称个人命盘');
 adapter.onReportReady();
-const reportPrompt = nodes.get('s-ming').children[0].children[0];
-assert.equal(reportPrompt.children[2].textContent, '和小星聊聊');
-assert.equal(reportPrompt.children[3].getAttribute('aria-label'), '收起小星的提示');
+const reportPrompt = easternReport.children[0].children[0];
+const westernPrompt = westernReport.children[0].children[0];
+for (const prompt of [reportPrompt, westernPrompt]) {
+  assert.equal(prompt.children[2].textContent, '和小星聊聊');
+  assert.equal(prompt.children[3].getAttribute('aria-label'), '收起小星的提示');
+}
+assert.equal(westernPrompt.children[1].textContent, '星盘好了，想一起聊聊吗？');
 reportPrompt.children[2].click();
-assert.equal(chatOpened, 1, '报告提示仍应连接真实对话入口');
+westernPrompt.children[2].click();
+assert.equal(chatOpened, 2, '两个体系的报告提示都应连接真实对话入口');
 console.log('✓ 角色素材、场景道具、可选表情与可复用组件');

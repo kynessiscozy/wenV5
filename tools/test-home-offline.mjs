@@ -43,7 +43,37 @@ async function offlineCalculation(page, id, assetName = '') {
       pillars.every(item => item.textContent === window._ctx.b[item.dataset.calculationPillar].g + window._ctx.b[item.dataset.calculationPillar].z);
   }, { timeout: 10000 }, id, assetName);
   await page.click('#calculationContinue');
-  await page.waitForFunction(() => document.body.classList.contains('report-active'));
+  await page.waitForFunction((theme) => {
+    const hero = document.getElementById('characterResultHero');
+    const portrait = hero?.querySelector('.result-character-portrait');
+    const chapter = document.querySelector('#s-yun .result-character-chapter');
+    const summary = document.querySelector('#s-ming .result-character-insight');
+    return document.body.classList.contains('report-active') && hero?.dataset.reportCharacter === theme &&
+      chapter?.dataset.reportCharacter === theme && summary?.dataset.reportCharacter === theme &&
+      portrait?.complete && portrait.naturalWidth > 0 &&
+      hero.querySelector('[data-report-value="day-master"]').textContent === window._ctx.dg + window._ctx.dw;
+  }, { timeout: 10000 }, id);
+  await new Promise(resolve => setTimeout(resolve, 400));
+  await page.click('.result-character-hint-button');
+  await page.waitForFunction(() => {
+    const hint = document.getElementById('characterResultHint');
+    const speaking = document.querySelector('#characterResultHero .result-character-speaking');
+    return !hint.hidden && hint.textContent.includes(window._ctx.dg + window._ctx.dw) &&
+      speaking?.complete && speaking.naturalWidth > 0;
+  }, { timeout: 10000 });
+  if (id === 'wenwen') {
+    const day = await page.evaluate(() => window._ctx.dg + window._ctx.dw);
+    await page.click('#reportTraitReselect');
+    await page.click('[data-trait="moonfox"]');
+    await page.waitForFunction(() => document.getElementById('traitSelection').hidden &&
+      document.querySelector('#characterResultHero')?.dataset.reportCharacter === 'moonfox');
+    assert.equal(await page.evaluate(() => window._ctx.dg + window._ctx.dw), day, '离线重选不能重算或丢失结果');
+    assert.equal(await page.$eval('#s-ming .result-character-insight', el => el.dataset.reportCharacter), 'moonfox');
+    await page.click('#reportTraitReselect');
+    await page.click('[data-trait="wenwen"]');
+    await page.waitForFunction(() => document.getElementById('traitSelection').hidden &&
+      document.querySelector('#characterResultHero')?.dataset.reportCharacter === 'wenwen');
+  }
   await page.evaluate(() => window.goBack());
   await page.waitForFunction(() => !document.body.classList.contains('report-active'));
   await new Promise(resolve => setTimeout(resolve, 550)); // Let the home page finish sliding back.
@@ -72,12 +102,12 @@ try {
   await page.waitForFunction(() => window._tools2Ready === true && document.querySelectorAll('#traitOptions button').length === 8);
   // None of the roles are chosen online; all scenes must still work offline.
   await page.evaluate(async () => {
-    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26]) await caches.open(`wenda-cache-v${version}`);
+    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]) await caches.open(`wenda-cache-v${version}`);
     await caches.open('unrelated-app-cache');
     await navigator.serviceWorker.register('./sw.js');
     await navigator.serviceWorker.ready;
   });
-  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v27') && !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26)$/.test(key)));
+  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v29') && !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28)$/.test(key)));
   assert.ok(await page.evaluate(async () => (await caches.keys()).includes('unrelated-app-cache')), '更新不能删除其他应用的缓存');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => navigator.serviceWorker.controller && window._tools2Ready === true && document.querySelectorAll('#traitOptions button').length === 8);
@@ -126,6 +156,12 @@ try {
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), id);
     if (id !== roles.at(-1)[0]) await page.reload({ waitUntil: 'domcontentloaded' });
   }
+  await page.click('#homeTraitReset');
+  await page.click('#traitLever');
+  await page.waitForFunction(() => !document.getElementById('traitConfirm').hidden, { timeout: 5000 });
+  assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'suyan', '离线转动结果在确认前不能改变角色');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'suyan');
   await page.setViewport({ width: 1280, height: 720 });
   await page.waitForFunction(() => document.querySelector('.character-backdrop img').complete &&
     document.querySelector('.character-backdrop img').naturalWidth > 0 && document.querySelector('.character-backdrop img').currentSrc.endsWith('/suyan-room-wide.webp'));
@@ -139,7 +175,7 @@ try {
   assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
   assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined);
   assert.deepEqual(errors, [], '离线页面不应产生未捕获的 JavaScript 错误');
-  console.log('✓ /demo/ 生产构建：缓存更新、八角色离线选择/刷新、真实结果、固定近景与探索日历');
+  console.log('✓ /demo/ 生产构建：缓存更新、八角色离线选择/重选、真实结果、固定近景与探索日历');
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));

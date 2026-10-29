@@ -2381,6 +2381,11 @@ html[data-theme] .ig-dock .ai-fab .ai-orb-particle{
   content:'';position:absolute;left:12px;right:12px;bottom:-1px;
   height:2px;border-radius:2px 2px 0 0;background:transparent;transition:background .2s ease;
 }
+@media(max-width:360px){
+  /* Keep both systems' section tabs within narrow report viewports. */
+  .ming-tab,.yun-tab,.rel-tab,.wastro-tab,.whoro-tab,.wnum-tab{padding-left:8px;padding-right:8px;letter-spacing:1px}
+  .p2-top .mode-top-switch{padding-left:5px!important;padding-right:5px!important}
+}
 .wastro-tab:hover,.whoro-tab:hover,.wnum-tab:hover{color:var(--c-text-2)}
 .wastro-tab.active,.whoro-tab.active,.wnum-tab.active{color:var(--c-accent-text);font-weight:600}
 .wastro-tab.active::after,.whoro-tab.active::after,.wnum-tab.active::after{background:var(--c-accent)}
