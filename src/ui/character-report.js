@@ -4,7 +4,7 @@ import { HOME_THEMES } from './home-theme.js';
 // scene. No character identity or chart data is stored or sent anywhere here.
 function selectedTheme() {
   const id = document.documentElement.dataset.homeTheme;
-  return Object.hasOwn(HOME_THEMES, id) ? [id, HOME_THEMES[id]] : null;
+  return Object.prototype.hasOwnProperty.call(HOME_THEMES, id) ? [id, HOME_THEMES[id]] : null;
 }
 
 function element(tag, className, text) {
@@ -80,6 +80,88 @@ function makeTheatre(container) {
   const theatre = element('div', 'result-western-theatre sys-western');
   theatre.append(container); // Keep the existing canvas, controls and 3D state.
   return theatre;
+}
+
+// Portrait visibility is a report preference, shared across the three western
+// scenes and preserved when a trait is reselected without rebuilding the canvas.
+let westernPortraitHidden = false;
+let portraitInteractionInstalled = false;
+
+function syncPortraitToggle(host) {
+  host.classList.toggle('is-portrait-hidden', westernPortraitHidden);
+  const button = host.querySelector('.result-portrait-toggle');
+  if (!button) return;
+  button.textContent = westernPortraitHidden ? '显示立绘' : '收起立绘';
+  button.setAttribute('aria-label', westernPortraitHidden ? '显示人物立绘' : '收起人物立绘');
+  button.setAttribute('aria-expanded', String(!westernPortraitHidden));
+}
+
+function setPortraitHidden(hidden) {
+  westernPortraitHidden = hidden;
+  document.querySelectorAll('#page2 .result-character-hero, #page2 .result-character-chapter').forEach(syncPortraitToggle);
+}
+
+function addPortraitToggle(host, figure, section) {
+  figure.id = `resultPortrait-${section}`;
+  const button = element('button', 'result-portrait-toggle sys-western');
+  button.type = 'button';
+  button.setAttribute('aria-controls', figure.id);
+  button.title = '也可以轻点人物；拖动仍可旋转场景';
+  button.addEventListener('click', () => setPortraitHidden(!westernPortraitHidden));
+  host.append(button);
+  syncPortraitToggle(host);
+}
+
+function portraitHit(host, x, y) {
+  const figure = host.querySelector('.result-character-figure, .result-chapter-figure');
+  const image = figure?.querySelector('.result-character-portrait');
+  if (!figure || !image || !figure.getClientRects().length) return false;
+  const rect = figure.getBoundingClientRect(), frame = host.getBoundingClientRect();
+  const ratio = Number(image.getAttribute('width')) / Number(image.getAttribute('height'));
+  if (!ratio) return false;
+  // object-fit: contain, object-position: center top. Exclude transparent margins
+  // and the clipped part of the figure rather than covering the whole canvas.
+  const width = Math.min(rect.width, rect.height * ratio);
+  const height = width / ratio, left = rect.left + (rect.width - width) / 2;
+  return x >= Math.max(frame.left, left + width * .08) && x <= Math.min(frame.right, left + width * .92) &&
+    y >= Math.max(frame.top, rect.top + height * .06) && y <= Math.min(frame.bottom, rect.top + height * .9);
+}
+
+function installPortraitInteraction() {
+  if (portraitInteractionInstalled) return;
+  portraitInteractionInstalled = true;
+  const presses = new Map();
+  const hostFor = target => target?.closest?.('.result-western-theatre .w3d-hero')
+    ?.closest('.result-character-hero, .result-character-chapter');
+  const canStart = event => {
+    if (westernPortraitHidden || document.documentElement.dataset.systemMode !== 'western' ||
+        event.target?.closest?.('button, a, input, select, textarea')) return null;
+    const host = hostFor(event.target);
+    return host && portraitHit(host, event.clientX, event.clientY) ? host : null;
+  };
+  if (window.PointerEvent) {
+    // Do not intercept the actual pointer stream: an intentional drag starting
+    // over the art still reaches the same 3D orbit and its pointer capture.
+    document.addEventListener('pointerdown', event => {
+      if (event.isPrimary === false || (event.pointerType === 'mouse' && event.button !== 0)) return;
+      const host = canStart(event);
+      if (host) presses.set(event.pointerId, { host, x: event.clientX, y: event.clientY, moved: false });
+    }, true);
+    document.addEventListener('pointermove', event => {
+      const press = presses.get(event.pointerId);
+      if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 9) press.moved = true;
+    }, true);
+    document.addEventListener('pointerup', event => {
+      const press = presses.get(event.pointerId);
+      presses.delete(event.pointerId);
+      if (press && !press.moved && press.host.isConnected && !westernPortraitHidden &&
+          portraitHit(press.host, event.clientX, event.clientY)) setPortraitHidden(true);
+    }, true);
+    document.addEventListener('pointercancel', event => presses.delete(event.pointerId), true);
+  } else {
+    // Older browsers without pointer events still get a simple tap/click path.
+    document.addEventListener('click', event => { if (event.detail && canStart(event)) setPortraitHidden(true); }, true);
+  }
 }
 
 function makeHero(id, theme, ctx, western, isDemo, onReselect, overview, astro) {
@@ -171,44 +253,18 @@ function makeHero(id, theme, ctx, western, isDemo, onReselect, overview, astro) 
   hero.append(copy);
   if (overview) {
     const eastern = element('div', 'result-character-overview sys-eastern');
-    // The visible title remains the existing fold button; expose a proper
-    // report heading as well, without nesting a heading inside that button.
-    eastern.append(element('h1', 'result-overview-heading', '命盘一览'), overview);
+    // Keep a structural heading for assistive technology without adding a
+    // second visible title above the calculated values.
+    eastern.append(element('h1', 'result-overview-heading', '命盘'), overview);
     hero.append(eastern);
   }
+  addPortraitToggle(hero, figure, 'ming');
   return hero;
 }
 
-function pillar(value) {
-  return value?.g && value?.z ? `${value.g}${value.z}` : '';
-}
-
-// Put the selected character next to the report's existing calculated summary,
-// not a second invented prediction. The original text and actions stay intact.
-function accompanySummary(section, id, theme, isDemo) {
-  const summary = section.querySelector('.sys-eastern .qr-summary');
-  if (!summary) return;
-  const existing = summary.parentElement?.closest('.result-character-insight');
-  if (existing) {
-    existing.dataset.reportCharacter = id;
-    existing.style.setProperty('--result-character-accent', theme.trait.color);
-    existing.querySelector('.result-insight-figure')?.replaceWith(makePortrait(theme.character, 'result-insight-figure'));
-    const label = existing.querySelector('.result-insight-label');
-    if (label) label.textContent = `${theme.trait.label} · ${isDemo ? '示例解读' : '解读'}`;
-    return;
-  }
-  const insight = element('div', 'result-character-insight');
-  insight.dataset.reportCharacter = id;
-  insight.style.setProperty('--result-character-accent', theme.trait.color);
-  const figure = makePortrait(theme.character, 'result-insight-figure');
-  const body = element('div', 'result-insight-body');
-  body.append(element('p', 'result-insight-label', `${theme.trait.label} · ${isDemo ? '示例解读' : '解读'}`));
-  summary.parentNode.insertBefore(insight, summary);
-  body.append(summary);
-  insight.append(figure, body);
-}
-
-function makeChapter(id, theme, section, easternText, westernText, theatreContainer) {
+// Put each original quick-read card inside its companion scene. Moving the
+// existing node preserves actual data, action handlers and folding state.
+function makeChapter(id, theme, section, westernText, theatreContainer, overview, isDemo) {
   const aside = element('aside', 'result-character-chapter');
   aside.dataset.reportCharacter = id;
   aside.dataset.reportChapter = section;
@@ -216,16 +272,21 @@ function makeChapter(id, theme, section, easternText, westernText, theatreContai
   aside.setAttribute('aria-label', `${theme.trait.label}同行解读`);
   const theatre = makeTheatre(theatreContainer);
   if (theatre) aside.append(theatre);
-  aside.append(makePortrait(theme.character, 'result-chapter-figure'));
+  const figure = makePortrait(theme.character, 'result-chapter-figure');
+  aside.append(figure);
 
   const copy = element('div', 'result-chapter-copy');
-  copy.append(element('p', 'result-chapter-kicker', `${theme.trait.label} · 同行解读`));
-  for (const [mode, title, detail] of [['eastern', ...easternText], ['western', ...westernText]]) {
-    const reading = element('div', `result-chapter-reading sys-${mode}`);
-    reading.append(element('h2', '', title), element('p', '', detail));
-    copy.append(reading);
-  }
+  copy.append(element('p', 'result-chapter-kicker', `${theme.trait.label} · 同行解读${isDemo ? ' · 示例' : ''}`));
+  const reading = element('div', 'result-chapter-reading sys-western');
+  reading.append(element('h2', '', westernText[0]), element('p', '', westernText[1]));
+  copy.append(reading);
   aside.append(copy);
+  if (overview) {
+    const eastern = element('div', 'result-character-overview result-chapter-overview sys-eastern');
+    eastern.append(overview);
+    aside.append(eastern);
+  }
+  addPortraitToggle(aside, figure, section);
   return aside;
 }
 
@@ -242,23 +303,21 @@ export function mountCharacterReport({ ctx, western = {}, isDemo = false, onRese
   // Build the new character surfaces around the existing overview and 3D
   // containers. They are moved, not recreated, so fold and orbit state survive.
   const overview = ming.querySelector('.sys-eastern .qr-card');
+  const luckOverview = yun.querySelector('.sys-eastern .qr-card');
+  const relationOverview = rel.querySelector('.sys-eastern .qr-card');
   const astro = ming.querySelector('#w3d-astro');
   const horo = yun.querySelector('#w3d-horo');
   const num = rel.querySelector('#w3d-num');
-  const originals = [overview, astro, horo, num].filter(Boolean).map(node => ({
+  const originals = [overview, luckOverview, relationOverview, astro, horo, num].filter(Boolean).map(node => ({
     node, parent: node.parentNode, next: node.nextSibling,
   }));
-  const luck = [pillar(ctx.cDy) && `${pillar(ctx.cDy)}大运`, pillar(ctx.cLn) && `${pillar(ctx.cLn)}流年`].filter(Boolean).join(' · ');
-  const dayPillar = pillar(ctx.b?.D);
   let hero, luckChapter, relationChapter;
   try {
     hero = makeHero(id, theme, ctx, western, isDemo, onReselect, overview, astro);
     luckChapter = makeChapter(id, theme, 'yun',
-      ['从时间里看节奏', luck ? `以${isDemo ? '示例的' : ''}${luck}为线索，看看当下的变化。` : '从大运与流年出发，看看当下的变化。'],
-      [isDemo ? '示例星象' : '星象一览', '拖动星象，看看此刻的变化。'], horo);
+      [isDemo ? '示例星象' : '星象一览', '拖动星象，看看此刻的变化。'], horo, luckOverview, isDemo);
     relationChapter = makeChapter(id, theme, 'rel',
-      [isDemo ? '看看示例中的关系' : '看见关系里的你', dayPillar ? `以${isDemo ? '示例的' : ''}日柱${dayPillar}为线索，看看关系中的互动。` : '从命盘出发，看看关系中的互动。'],
-      [isDemo ? '示例灵数' : '灵数一览', '从主命数出发，探索数字线索。'], num);
+      [isDemo ? '示例灵数' : '灵数一览', '从主命数出发，探索数字线索。'], num, relationOverview, isDemo);
   } catch (error) {
     // A bad optional character definition must never remove calculated report
     // data or a working canvas. The previous surfaces are still connected here.
@@ -271,5 +330,5 @@ export function mountCharacterReport({ ctx, western = {}, isDemo = false, onRese
   ming.prepend(hero);
   yun.prepend(luckChapter);
   rel.prepend(relationChapter);
-  [yun, rel].forEach(section => accompanySummary(section, id, theme, isDemo));
+  installPortraitInteraction();
 }

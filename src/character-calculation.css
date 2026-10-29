@@ -47,6 +47,9 @@
 .calculation-overlay[data-calculation-theme="luye"] .calculation-props--luye,
 .calculation-overlay[data-calculation-theme="suyan"] .calculation-props--suyan { display: block; }
 .calculation-props img { display: block; width: 100%; height: 100%; object-fit: contain; }
+/* Optional props are not requested under reduced motion; avoid the browser's
+   empty-image outline both then and while any scene image is loading. */
+.calculation-props img:not([src]), .calculation-overlay img.is-calculation-image-loading { visibility: hidden; }
 .calculation-portrait {
   position: absolute; z-index: 2; left: 0; bottom: 0; width: 100%; height: 100%;
   object-fit: contain; object-position: center bottom; transform-origin: 50% 80%;

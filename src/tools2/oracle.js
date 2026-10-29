@@ -143,7 +143,7 @@ export const oracle = {
               quote: lot.poem,
               foot: '签文用于自我反思，不构成现实决策依据。',
             });
-            exportShareCard(card, '问问大师_摇签问卜');
+            exportShareCard(card, '问问大师_摇签问卜', btn);
           } catch (e) {}
           btn.disabled = false; btn.textContent = '生成签文卡';
         });

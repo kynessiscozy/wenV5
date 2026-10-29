@@ -93,7 +93,7 @@ export const daily = {
             quote: '同一天内容固定，用于整理节奏，不预测吉凶。',
             foot: '问问大师 · 今日日签',
           });
-          exportShareCard(card, '问问大师_今日日签');
+          exportShareCard(card, '问问大师_今日日签', btn);
         } catch (e) { showToast('分享卡生成失败'); }
         btn.disabled = false; btn.textContent = '生成分享卡';
       });

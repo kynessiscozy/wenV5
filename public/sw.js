@@ -1,6 +1,6 @@
 /* 问问大师 PWA：离线可用 + 秒开的缓存策略。
    静态资源带 hash，可长期缓存；HTML 走 network-first 保证更新及时。 */
-const CACHE = 'wenda-cache-v30';
+const CACHE = 'wenda-cache-v34';
 const BASE = './';
 
 const OPTIONAL_ASSETS = [
@@ -13,9 +13,9 @@ const OPTIONAL_ASSETS = [
   'art/earthfire-flame-seat.webp', 'art/earthfire-hall-wide.webp', 'art/earthfire-hall-mobile.webp', 'art/earthfire-runes.webp', 'art/earthfire-rune-seal.webp',
   'art/yuchen-empress.webp', 'art/yuchen-empress-avatar.webp', 'art/yuchen-empress-blink.webp', 'art/yuchen-empress-speak.webp',
   'art/yuchen-hall-wide.webp', 'art/yuchen-hall-mobile.webp',
-  'art/qinglan.webp', 'art/qinglan-avatar.webp', 'art/qinglan-blink.webp', 'art/qinglan-speak.webp',
+  'art/qinglan-renewed.webp', 'art/qinglan-renewed-avatar.webp', 'art/qinglan-renewed-blink.webp', 'art/qinglan-renewed-speak.webp',
   'art/qinglan-room-wide.webp', 'art/qinglan-room-mobile.webp', 'art/qinglan-sword.webp',
-  'art/xingling.webp', 'art/xingling-avatar.webp', 'art/xingling-blink.webp', 'art/xingling-speak.webp',
+  'art/xingling-renewed.webp', 'art/xingling-renewed-avatar.webp', 'art/xingling-renewed-blink.webp', 'art/xingling-renewed-speak.webp',
   'art/xingling-room-wide.webp', 'art/xingling-room-mobile.webp', 'art/xingling-fan.webp',
   'art/luye.webp', 'art/luye-avatar.webp', 'art/luye-blink.webp', 'art/luye-speak.webp',
   'art/luye-room-wide.webp', 'art/luye-room-mobile.webp', 'art/luye-turntable.svg', 'art/luye-vinyl.svg',

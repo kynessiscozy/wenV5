@@ -833,7 +833,7 @@ export const tarot = {
             quote: summaryQuotes,
             foot: '塔罗用于启发心智与觉察，不构成现实决定依据。'
           });
-          exportShareCard(card, '问问大师_塔罗测算_' + curSpread.id);
+          exportShareCard(card, '问问大师_塔罗测算_' + curSpread.id, btn);
         } catch (err) {
           console.error(err);
         }

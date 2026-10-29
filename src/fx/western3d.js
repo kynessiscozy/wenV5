@@ -4,8 +4,7 @@
    · 三个标签各一个场景：astro 星盘 / horo 黄道天球 / num 生命矩阵
    · 数据驱动：由 western-view 渲染时写入 window.__w3dData
    · 生命周期：懒加载 three、仅当前可见分区渲染、切走即暂停
-   · 主题：材质/文字色跟随 --c-accent（光球调色盘联动），
-     主题或调色盘变化时重建场景
+   · 主题：黄道天球的强调材质跟随当前特质，切换时保留场景与视角
    · 降级：prefers-reduced-motion 只渲染单帧；Eastern 模式全部暂停
    ============================================================ */
 
@@ -13,6 +12,7 @@ import { drawZodiacArt } from '../render/zodiac-art.js';
 
 let THREE = null;                 // 懒加载的 three 模块
 let ADDONS = null;                // 懒加载的 postprocessing/environment 插件
+let threeLoading = null;          // 并发切换时共享同一次加载
 const built = {};                 // key -> { renderer, scene, camera, anim, mats, raf, container }
 const STATE = { activeKey: null, disposed: false };
 let syncQueued = false;
@@ -25,9 +25,14 @@ const WSIGN_IDS = ['ari','tau','gem','cnc','leo','vir','lib','sco','sgr','cap','
 /* ---------- 主题色 ---------- */
 function themeColors() {
   const cs = getComputedStyle(document.documentElement);
-  const accent = (cs.getPropertyValue('--c-accent') || '#d97757').trim();
+  const accent = (cs.getPropertyValue('--trait-color') || '#d9b36a').trim();
   const text = (cs.getPropertyValue('--c-text-hi') || '#f5f4ee').trim();
-  return { accent, text };
+  const hueValue = cs.getPropertyValue('--trait-h').trim();
+  const hue = hueValue === '' ? NaN : Number(hueValue);
+  // Match the dark theatre background to the selected trait, including the
+  // large canvas area rather than only the small material accents.
+  const stage = Number.isFinite(hue) ? `hsl(${hue}, 38%, 10%)` : '#0a0e1c';
+  return { accent, text, stage };
 }
 
 /* ---------- 纹理工具 ---------- */
@@ -127,6 +132,7 @@ function baseLights(THREE, scene, accent) {
   const glow = new THREE.PointLight(new THREE.Color(accent), 6, 12);
   glow.position.set(0, 0.5, 0);
   scene.add(glow);
+  return glow;
 }
 
 function makeRenderer(container) {
@@ -403,13 +409,14 @@ function buildHoro(THREE, container, data) {
   const camera = makeCamera(container);
   camera.position.set(0, 2.7, 4.9);
   camera.lookAt(0, 0, 0);
-  baseLights(THREE, scene, accent);
+  const accentLight = baseLights(THREE, scene, accent);
 
   const g = new THREE.Group();
   scene.add(g);
 
   // 外圈黄道十二宫
-  g.add(ring(THREE, 2.45, 0.02, accent, 0.8));
+  const outerRing = ring(THREE, 2.45, 0.02, accent, 0.8);
+  g.add(outerRing);
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * Math.PI * 2;
     const sp = sprite(glyphTexture(ZODIAC[i], text), 0.34, 1);
@@ -454,7 +461,7 @@ function buildHoro(THREE, container, data) {
     });
     sun.scale.setScalar(1 + Math.sin(t * 0.002) * 0.05);
   };
-  return { renderer, scene, camera, anim, mats: { accent: [sunMat] }, accent };
+  return { renderer, scene, camera, anim, mats: { accent: [outerRing.material, sunMat, ...orbs.map(orb => orb.material)] }, accent, accentLight };
 }
 
 /* ---------- 场景 3：num 生命矩阵 · 灵数粒子云(移植自 ASTRA threejs 版) ----------
@@ -665,19 +672,29 @@ function reducedMotion() {
 }
 
 async function ensure(key) {
-  if (built[key] && built[key].container.isConnected) return built[key];
-  if (built[key]) { dispose(key); }
-  if (!THREE) {
-    THREE = await import('three');
-    const A = await Promise.all([
-      import('three/addons/postprocessing/EffectComposer.js'),
-      import('three/addons/postprocessing/RenderPass.js'),
-      import('three/addons/postprocessing/UnrealBloomPass.js'),
-      import('three/addons/environments/RoomEnvironment.js'),
-    ]);
-    ADDONS = { EffectComposer: A[0].EffectComposer, RenderPass: A[1].RenderPass, UnrealBloomPass: A[2].UnrealBloomPass, RoomEnvironment: A[3].RoomEnvironment };
+  const current = document.getElementById(CONTAINER_IDS[key]);
+  if (built[key] && built[key].container === current && current?.isConnected) return built[key];
+  if (built[key]) dispose(key);
+  if (!THREE || !ADDONS) {
+    if (!threeLoading) {
+      threeLoading = Promise.all([
+        import('three'),
+        import('three/addons/postprocessing/EffectComposer.js'),
+        import('three/addons/postprocessing/RenderPass.js'),
+        import('three/addons/postprocessing/UnrealBloomPass.js'),
+        import('three/addons/environments/RoomEnvironment.js'),
+      ]).then(([three, composer, pass, bloom, environment]) => {
+        THREE = three;
+        ADDONS = { EffectComposer: composer.EffectComposer, RenderPass: pass.RenderPass,
+          UnrealBloomPass: bloom.UnrealBloomPass, RoomEnvironment: environment.RoomEnvironment };
+      }).catch(error => { threeLoading = null; throw error; });
+    }
+    await threeLoading;
   }
   const container = document.getElementById(CONTAINER_IDS[key]);
+  // Another sync may have finished while the shared imports were pending.
+  if (built[key] && built[key].container === container && container?.isConnected) return built[key];
+  if (built[key]) dispose(key);
   if (!container || !container.offsetWidth) return null;
   const data = (window.__w3dData || {})[key] || {};
   const s = BUILDERS[key](THREE, container, data);
@@ -782,6 +799,25 @@ function dispose(key) {
 
 function disposeAll() { Object.keys(built).forEach(dispose); }
 
+// Update existing scenes in place: rebuilding would discard the user's orbit,
+// renderer and WebGL state. All three get a trait-coloured stage; the zodiac
+// scene also has accent materials and a light to recolor.
+function syncTraitAccent(scene) {
+  if (!scene) return;
+  const { accent, stage } = themeColors();
+  if (scene.stage !== stage) {
+    scene.scene.background?.set(stage);
+    scene.stage = stage;
+  }
+  if (!scene.mats?.accent || scene.accent === accent) return;
+  scene.mats.accent.forEach(material => {
+    material.color?.set(accent);
+    material.emissive?.set(accent);
+  });
+  scene.accentLight?.color.set(accent);
+  scene.accent = accent;
+}
+
 /* ---------- 同步：根据 模式 + 激活分区 决定谁在渲染 ---------- */
 export function syncWestern3D() {
   if (syncQueued) return;
@@ -793,15 +829,26 @@ export function syncWestern3D() {
     const activeSec = document.querySelector('.sec.active')?.id || null;
     const key = mode === 'western' ? KEYS[activeSec] : null;
     STATE.activeKey = key;
-    Object.keys(KEYS).forEach(k => { if (k !== key) stop(KEYS[k]); });
+    Object.values(KEYS).forEach(sceneKey => { if (sceneKey !== key) stop(sceneKey); });
     if (!key) return;
     try {
       const s = await ensure(key);
-      if (s) start(key);
+      if (s && !STATE.disposed && STATE.activeKey === key && s.container.isConnected) {
+        syncTraitAccent(s);
+        start(key);
+        redrawInteraction(s);
+      }
     } catch (e) {
       console.warn('[western3d]', e);
       const ld = document.querySelector('#' + CONTAINER_IDS[key] + ' .w3d-loading');
-      if (ld) ld.innerHTML = '<span>当前设备暂不支持 3D 渲染</span>';
+      if (ld) {
+        // A missing lazy-loaded module is a network problem, not necessarily a
+        // device limitation. Real chart values remain visible above this layer.
+        const modulesMissing = !THREE || !ADDONS;
+        ld.textContent = modulesMissing
+          ? (navigator.onLine === false ? '离线时无法加载星象画面，联网后刷新重试' : '星象画面加载失败，请检查网络后刷新重试')
+          : '当前设备暂不支持 3D 渲染';
+      }
     }
   }, 120);
 }

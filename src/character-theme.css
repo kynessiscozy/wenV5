@@ -1,4 +1,49 @@
 /* 2.5D character direction: the existing engines and report UI remain intact. */
+/* The selected trait owns the app accent. The light and dark modes keep their
+   own surfaces and text contrast; no independent color preference is read. */
+html[data-home-theme] {
+  --accent-h: var(--trait-h, 18);
+  --accent-s: var(--trait-s, 62%);
+  --accent-l: 34%;
+  --c-accent: hsl(var(--accent-h), var(--accent-s), 34%);
+  --c-accent-hover: hsl(var(--accent-h), var(--accent-s), 28%);
+  --c-accent-soft: hsl(var(--accent-h), var(--accent-s), 94%);
+  --c-accent-text: hsl(var(--accent-h), var(--accent-s), 28%);
+  --c-on-accent: #fff;
+
+  /* The trait defines the whole palette, not just small selected controls.
+     Large backgrounds, surfaces and glass all carry the same hue while text
+     retains enough contrast to stay readable across every character. */
+  --c-bg: hsl(var(--accent-h), 54%, 91%);
+  --c-bg-2: hsl(var(--accent-h), 45%, 87%);
+  --c-surface: hsl(var(--accent-h), 56%, 97%);
+  --c-surface-2: hsl(var(--accent-h), 48%, 94%);
+  --c-surface-3: hsl(var(--accent-h), 42%, 90%);
+  --c-surface-4: hsl(var(--accent-h), 35%, 85%);
+  --c-border: hsla(var(--accent-h), 30%, 26%, .14);
+  --c-border-2: hsla(var(--accent-h), 30%, 26%, .22);
+  --c-border-3: hsla(var(--accent-h), 30%, 26%, .32);
+  --c-text-2: hsl(var(--accent-h), 9%, 25%);
+  --c-text-3: hsl(var(--accent-h), 8%, 34%);
+  --c-text-4: hsl(var(--accent-h), 8%, 42%);
+  --result-scene-bg: hsl(var(--accent-h), 29%, 13%);
+}
+html[data-home-theme][data-theme="dark"] {
+  --c-accent-soft: hsla(var(--accent-h), var(--accent-s), 70%, .16);
+  --c-accent-text: hsl(var(--accent-h), var(--accent-s), 82%);
+  --c-bg: hsl(var(--accent-h), 29%, 12%);
+  --c-bg-2: hsl(var(--accent-h), 27%, 9%);
+  --c-surface: hsl(var(--accent-h), 24%, 19%);
+  --c-surface-2: hsl(var(--accent-h), 22%, 21%);
+  --c-surface-3: hsl(var(--accent-h), 22%, 25%);
+  --c-surface-4: hsl(var(--accent-h), 19%, 30%);
+  --c-border: hsla(var(--accent-h), 50%, 87%, .16);
+  --c-border-2: hsla(var(--accent-h), 50%, 87%, .24);
+  --c-border-3: hsla(var(--accent-h), 50%, 87%, .32);
+  --c-text-2: rgba(245, 244, 238, .82);
+  --c-text-3: rgba(245, 244, 238, .70);
+  --c-text-4: rgba(245, 244, 238, .60);
+}
 html[data-theme] body.home .mesh,
 html[data-theme] body.home .particles,
 html[data-theme] body.home .cursor-ring,
@@ -488,11 +533,13 @@ html[data-home-theme="diyan"] .character-camera-subject {
 html[data-home-theme="yuchen"] .character-camera-subject {
   --character-hit-shape: polygon(44% 3%, 55% 3%, 62% 15%, 64% 23%, 69% 28%, 70% 40%, 79% 45%, 77% 70%, 100% 90%, 100% 100%, 0% 100%, 0% 90%, 20% 70%, 24% 40%, 23% 30%, 32% 28%, 34% 23%, 39% 15%);
 }
+/* Match the redrawn silhouettes, including the flowing hair and raised props,
+   rather than retaining the former poses' clickable areas. */
 html[data-home-theme="qinglan"] .character-camera-subject {
-  --character-hit-shape: polygon(33% 6%, 54% 6%, 78% 13%, 82% 25%, 82% 40%, 100% 48%, 100% 68%, 90% 85%, 53% 98%, 20% 98%, 0% 80%, 0% 70%, 8% 48%, 15% 38%, 25% 25%);
+  --character-hit-shape: polygon(8.4% 27.6%, 14.7% 21.9%, 40.2% 11.8%, 93.5% 27.1%, 86.6% 90.5%, 79.1% 91.2%, 50% 87.1%, 13.3% 73.1%);
 }
 html[data-home-theme="xingling"] .character-camera-subject {
-  --character-hit-shape: polygon(38% 7%, 64% 7%, 70% 22%, 85% 30%, 90% 40%, 80% 55%, 100% 60%, 100% 78%, 90% 90%, 30% 92%, 0% 80%, 0% 43%, 22% 43%, 27% 30%, 38% 25%);
+  --character-hit-shape: polygon(8.4% 29.7%, 36.6% 9.7%, 47.8% 7.7%, 69.9% 13%, 86.6% 38.3%, 85.6% 88.9%, 45.9% 88.2%, 13.3% 71.6%);
 }
 html[data-home-theme="luye"] .character-camera-subject {
   --character-hit-shape: polygon(33% 6%, 58% 6%, 60% 20%, 76% 25%, 86% 40%, 85% 55%, 81% 75%, 80% 100%, 25% 100%, 14% 65%, 12% 55%, 20% 40%, 28% 27%, 34% 20%);
@@ -871,6 +918,7 @@ html[data-theme="dark"] .character-portrait img[data-character-asset="portrait"]
 }
 .character-portrait .character-expression {
   position: absolute;
+  z-index: 1; /* The portrait's filter creates a stacking context; expressions must sit above it. */
   inset: 0;
   opacity: 0;
   pointer-events: none;
@@ -1051,6 +1099,7 @@ html[data-home-theme="moonfox"] .character-footer::before {
 html[data-theme] body[data-glass] #formModal .form-modal-sheet {
   position: relative;
   width: min(100%, 530px);
+  max-height: calc(100vh - 40px); /* Safari before dynamic viewport units */
   max-height: calc(100dvh - 40px);
   overflow-y: auto !important;
   padding: 30px 30px 24px;
@@ -1065,6 +1114,30 @@ html[data-theme] body[data-glass] #formModal .form-modal-sheet {
 #formModal .form-modal-tt { margin: 0 0 7px; font-size: 23px; letter-spacing: .03em; }
 .form-modal-intro { margin-bottom: 22px; color: var(--c-text-3); font-size: 12px; line-height: 1.6; }
 #formModal .switch { padding: 0; border: 0; }
+#formModal .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+#formModal .fd, #formModal .cw { min-width: 0; }
+#formModal .fd input:not([type="hidden"]), #formModal .fd select { width: 100%; min-width: 0; max-width: 100%; }
+.character-form-error {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(155, 66, 50, .1);
+  border: 1px solid rgba(155, 66, 50, .35);
+  color: var(--c-text-hi);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.character-form-error[hidden] { display: none; }
+#formModal [aria-invalid="true"] { outline: 2px solid #b54f3f; outline-offset: 2px; }
+.cdd .co {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+}
+.cdd .co:focus-visible { outline: 2px solid var(--c-accent-text); outline-offset: -2px; }
 .character-form-submit {
   width: 100%;
   min-height: 49px;
@@ -1076,15 +1149,15 @@ html[data-theme] body[data-glass] #formModal .form-modal-sheet {
   padding: 0 20px;
   border: 0;
   border-radius: 14px;
-  background: #ac604d;
-  color: #fff;
+  background: var(--c-accent);
+  color: var(--c-on-accent);
   font-size: 14px;
   font-weight: 700;
   letter-spacing: .08em;
   cursor: pointer;
-  box-shadow: 0 7px 18px rgba(172, 100, 80, .2);
+  box-shadow: 0 7px 18px hsla(var(--accent-h), var(--accent-s), 34%, .2);
 }
-.character-form-submit:hover { background: #96503f; }
+.character-form-submit:hover { background: var(--c-accent-hover); }
 .character-form-privacy { margin-top: 12px; color: var(--c-text-3); text-align: center; font-size: 11px; line-height: 1.5; }
 
 @media (max-width: 900px) {
@@ -1114,8 +1187,15 @@ html[data-theme] body[data-glass] #formModal .form-modal-sheet {
   .scene-sparkles--right { width: 26%; right: 0; top: 18%; }
   html[data-theme] body[data-glass] #formModal .form-modal-sheet { padding: 26px 20px 21px; border-radius: 22px; }
   #formModal .form-modal-tt { font-size: 20px; }
+  /* iOS zooms the page when a focused input is smaller than 16px. */
+  #formModal .fd input:not([type="hidden"]), #formModal .fd select {
+    font-size: 16px !important;
+    font-size: max(16px, calc(14px * var(--font-scale, 1))) !important;
+  }
 }
 @media (max-width: 360px) {
+  /* Native date/time controls need more room than half a narrow phone. */
+  #formModal .form-grid > .fd:nth-child(-n+2) { grid-column: 1 / -1; }
   #page1 .p1-inner { padding-right: 16px; padding-left: 16px; }
   .character-scene { width: calc(100% + 32px); height: min(clamp(280px, 62vh, 500px), calc(150vw - 24px)); }
 }

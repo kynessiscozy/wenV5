@@ -1,15 +1,35 @@
 import { HOME_THEMES } from './home-theme.js';
+import { focusSafely } from './focus.js';
 
 const SCENE_DURATION = 2100;
 
+// Presentation helpers must not make the calculation fail on older WebViews.
+function mediaQuery(query) {
+  try { return window.matchMedia(query); }
+  catch (_) { return { matches: false }; }
+}
+
 function selectedThemeId() {
   const requested = document.documentElement.dataset.homeTheme;
-  return Object.hasOwn(HOME_THEMES, requested) ? requested : 'wenwen';
+  return Object.prototype.hasOwnProperty.call(HOME_THEMES, requested) ? requested : 'wenwen';
 }
 function setImage(image, src) {
   if (!image || !src) return;
+  // A missing, loading, or failed image otherwise draws the browser's broken
+  // image outline through the scene. Reveal only the current, decoded asset;
+  // also hide the previous portrait while a different role is loading.
+  if (!image.__calculationImageObserved) {
+    const sync = () => image.classList.toggle('is-calculation-image-loading', !image.complete || !image.naturalWidth);
+    image.addEventListener('load', sync);
+    image.addEventListener('error', sync);
+    image.__calculationImageObserved = true;
+  }
   // Retry a previously failed optional image the next time it is requested.
-  if (image.getAttribute('src') !== src || (image.complete && !image.naturalWidth)) image.setAttribute('src', src);
+  if (image.getAttribute('src') !== src || (image.complete && !image.naturalWidth)) {
+    image.classList.add('is-calculation-image-loading');
+    image.setAttribute('src', src);
+  }
+  image.classList.toggle('is-calculation-image-loading', !image.complete || !image.naturalWidth);
 }
 function requestRoleProps(overlay, themeId) {
   overlay.querySelectorAll(`.calculation-props--${themeId} [data-calculation-src]`).forEach((image) => setImage(image, image.dataset.calculationSrc));
@@ -17,7 +37,7 @@ function requestRoleProps(overlay, themeId) {
 
 /** Start fetching the chosen role's optional props while the user fills the form. */
 export function warmCharacterCalculation() {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (mediaQuery('(prefers-reduced-motion: reduce)').matches) return;
   const overlay = document.getElementById('calculationOverlay');
   if (overlay) requestRoleProps(overlay, selectedThemeId());
 }
@@ -31,7 +51,7 @@ export function beginCharacterCalculation() {
 
   const themeId = selectedThemeId();
   const theme = HOME_THEMES[themeId];
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const reducedMotion = mediaQuery('(prefers-reduced-motion: reduce)');
   const previousFocus = document.activeElement;
   const startedAt = performance.now();
   let skipped = false;
@@ -40,22 +60,25 @@ export function beginCharacterCalculation() {
   let releaseResult = null;
   let waitTimer = null;
 
-  const narrow = window.matchMedia('(max-aspect-ratio: 4/5)').matches;
+  const narrow = mediaQuery('(max-aspect-ratio: 4/5)').matches;
   setImage(overlay.querySelector('[data-calculation-backdrop]'), narrow ? theme.backdrop.mobile : theme.backdrop.wide);
   setImage(overlay.querySelector('[data-calculation-portrait]'), theme.character.assets.portrait.src);
   if (!reducedMotion.matches) requestRoleProps(overlay, themeId);
   overlay.dataset.calculationTheme = themeId;
   overlay.dataset.calculationState = 'computing';
   delete overlay.dataset.animationSkipped;
-  document.getElementById('calculationByline').textContent = `${theme.trait.label} · 命盘推演`;
-  document.getElementById('calculationTitle').textContent = '正在推演';
-  document.getElementById('calculationStatus').textContent = '排定四柱，合参星位…';
+  const byline = document.getElementById('calculationByline');
+  const title = document.getElementById('calculationTitle');
+  const status = document.getElementById('calculationStatus');
+  if (byline) byline.textContent = `${theme.trait.label} · 命盘推演`;
+  if (title) title.textContent = '正在推演';
+  if (status) status.textContent = '排定四柱，合参星位…';
   overlay.querySelectorAll('[data-calculation-pillar]').forEach((item) => { item.textContent = '—'; });
   overlay.querySelector('.calculation-pillars')?.setAttribute('aria-label', '四柱结果');
   skip.hidden = reducedMotion.matches;
   proceed.hidden = true;
   overlay.hidden = false;
-  (skip.hidden ? overlay : skip).focus({ preventScroll: true });
+  focusSafely(skip.hidden ? overlay : skip);
 
   // Move focus first, then make every other body layer unavailable until the
   // report is ready. Restore each element's previous state on all exits.
@@ -83,7 +106,7 @@ export function beginCharacterCalculation() {
     event.stopPropagation();
     if (event.key === 'Tab') {
       event.preventDefault();
-      (overlay.dataset.calculationState === 'ready' ? proceed : skip.hidden ? overlay : skip).focus({ preventScroll: true });
+      focusSafely(overlay.dataset.calculationState === 'ready' ? proceed : skip.hidden ? overlay : skip);
     } else if (event.key === 'Escape') {
       event.preventDefault();
       // Escape skips only the animation; it can never dismiss the result.
@@ -96,7 +119,10 @@ export function beginCharacterCalculation() {
   overlay.addEventListener('click', onClick);
   overlay.addEventListener('keydown', onKeyDown);
   document.addEventListener('visibilitychange', onVisibility);
-  reducedMotion.addEventListener?.('change', onMotionChange);
+  try {
+    if (reducedMotion.addEventListener) reducedMotion.addEventListener('change', onMotionChange);
+    else reducedMotion.addListener?.(onMotionChange); // older Safari
+  } catch (_) {}
 
   return {
     /** Let the browser paint the scene before the synchronous engine runs. */
@@ -130,11 +156,11 @@ export function beginCharacterCalculation() {
       }
       if (finished) return;
       overlay.dataset.calculationState = 'ready';
-      document.getElementById('calculationTitle').textContent = '推演完成';
-      document.getElementById('calculationStatus').textContent = '点击画面或查看报告继续';
+      if (title) title.textContent = '推演完成';
+      if (status) status.textContent = '点击画面或查看报告继续';
       skip.hidden = true;
       proceed.hidden = false;
-      proceed.focus({ preventScroll: true });
+      focusSafely(proceed);
       // No timer, visibility change, or motion preference may dismiss this result.
       await new Promise((resolve) => { releaseResult = resolve; });
       releaseResult = null;
@@ -149,7 +175,10 @@ export function beginCharacterCalculation() {
       overlay.removeEventListener('click', onClick);
       overlay.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('visibilitychange', onVisibility);
-      reducedMotion.removeEventListener?.('change', onMotionChange);
+      try {
+        if (reducedMotion.removeEventListener) reducedMotion.removeEventListener('change', onMotionChange);
+        else reducedMotion.removeListener?.(onMotionChange);
+      } catch (_) {}
       overlay.hidden = true;
       delete overlay.dataset.calculationState;
       delete overlay.dataset.animationSkipped;
@@ -158,7 +187,7 @@ export function beginCharacterCalculation() {
         if (aria === null) element.removeAttribute('aria-hidden');
         else element.setAttribute('aria-hidden', aria);
       });
-      if (restoreFocus && previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+      if (restoreFocus && previousFocus?.isConnected) focusSafely(previousFocus);
     },
   };
 }

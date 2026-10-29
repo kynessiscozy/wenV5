@@ -9,6 +9,7 @@ import { QINGLAN } from '../src/character/qinglan.js';
 import { XINGLING } from '../src/character/xingling.js';
 import { LUYE } from '../src/character/luye.js';
 import { SUYAN } from '../src/character/suyan.js';
+import { HOME_THEMES } from '../src/ui/home-theme.js';
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173/';
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
@@ -209,7 +210,7 @@ try {
     assert.ok(choiceNames.some(name => name?.includes('转一转')), '屏幕阅读器可以操作随机转轮');
     assert.ok(!choiceNames.some(name => /问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言/.test(name || '')), '屏幕阅读器也不暴露角色名');
     const fetched = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name));
-    assert.ok(!fetched.some(name => /(?:wenwen-reimagined|moon-fox-reimagined|earthfire-sovereign|yuchen-empress|qinglan|xingling|luye|suyan)\.webp/.test(name)), '未选择前不应预加载任何主图');
+    assert.ok(!fetched.some(name => /(?:wenwen-reimagined|moon-fox-reimagined|earthfire-sovereign|yuchen-empress|qinglan(?:-renewed)?|xingling(?:-renewed)?|luye|suyan)\.webp/.test(name)), '未选择前不应预加载任何主图');
     await page.keyboard.press('Tab');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'traitSpin', '老虎机可以用键盘操作');
     await page.keyboard.press('Escape');
@@ -376,9 +377,9 @@ try {
           subjectZ: getComputedStyle(subject.parentElement).zIndex, sceneryZ: getComputedStyle(scenery).zIndex,
           props: [...scene.querySelectorAll('[data-character-scene-optional]')].filter(el => !el.hidden).map(el => el.dataset.characterAsset),
           expressionAligned: [...scene.querySelectorAll('.character-expression')].every(el => !el.hidden && el.naturalWidth === portrait.naturalWidth && el.naturalHeight === portrait.naturalHeight),
-          labels: [document.getElementById('characterPortraitButton').getAttribute('aria-label'), role],
+          labels: [document.getElementById('characterPortraitButton').getAttribute('aria-label'), role], alt: portrait.alt,
         };
-      }, config.character.assets.portrait.src, config.room, config.character.name, config.hit);
+      }, config.character.assets.portrait.src, config.room, HOME_THEMES[id].trait.label, config.hit);
       assert.ok(state.image && state.bg && state.shot === 'close' && state.scale > 1.2, `${id}: 所选角色和近景应一致`);
       const landscapeBoost = width > height && height <= 550 ? 1.35 : 1;
       assert.ok(Math.abs(state.scale - config.character.camera.closeScale * landscapeBoost) < .01, `${id}: 横屏与竖屏都应使用角色自己的近景比例`);
@@ -392,6 +393,8 @@ try {
       assert.ok(state.noHorizontalScroll);
       assert.ok(state.cta.top >= 0 && state.cta.bottom <= height + 1, `${id} ${width}x${height}: 主操作应在首屏`);
       assert.match(state.labels[0], new RegExp(state.labels[1]));
+      assert.ok(!state.labels[0].includes(config.character.name), `${id}: 读屏不应显示角色名`);
+      assert.ok(state.alt.includes(state.labels[1]) && !state.alt.includes(config.character.name), `${id}: 图像备用文案只显示特质`);
       if (reference) {
         assert.ok(Math.abs(state.hero.height - reference.height) < 1 && Math.abs(state.hero.y - reference.y) < 1, '八角色使用同一近景画幅');
       } else reference = state.hero;
@@ -457,11 +460,15 @@ try {
   }
   console.log('✓ 横竖屏切换保留角色并重新适配近景');
 
-  // The refreshed expression sprites should only cover their own eyes or
-  // mouth, never a whole face or a mismatched portrait.
+  // Every expression sprite should only cover its own eyes or mouth, never
+  // a whole face or a mismatched portrait, and must actually be painted.
   for (const [id, limits] of Object.entries({
-    qinglan: { blink: [330, 190, 425, 253], speak: [374, 240, 429, 286] },
-    xingling: { blink: [372, 194, 465, 249], speak: [399, 245, 455, 286] },
+    wenwen: { blink: [365, 190, 477, 261], speak: [410, 248, 472, 293] },
+    moonfox: { blink: [313, 137, 400, 194], speak: [343, 184, 395, 229] },
+    diyan: { blink: [256, 209, 320, 243], speak: [275, 245, 315, 273] },
+    yuchen: { blink: [443, 259, 531, 298], speak: [468, 297, 511, 332] },
+    qinglan: { blink: [330, 234, 408, 267], speak: [340, 270, 386, 301] },
+    xingling: { blink: [382, 207, 463, 244], speak: [394, 250, 441, 282] },
     luye: { blink: [340, 199, 446, 250], speak: [359, 244, 456, 316] },
     suyan: { blink: [395, 160, 496, 208], speak: [413, 201, 496, 264] },
   })) {
@@ -485,13 +492,77 @@ try {
       assert.ok(box.count > 300 && box.left >= left && box.top >= top && box.right <= right && box.bottom <= bottom,
         `${id}: ${kind} 表情必须对齐五官 ${JSON.stringify(box)}`);
     }
+    {
+      // Sample the actual CSS animations: a sprite can be correctly aligned
+      // yet painted behind the filtered portrait and therefore never visible.
+      await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await page.evaluate(() => {
+        for (const animation of document.getAnimations()) animation.pause();
+        const blink = document.querySelector('.character-blink').getAnimations().find(animation => animation.animationName === 'character-blink');
+        if (!blink) throw new Error('缺少眨眼动画');
+        blink.currentTime = 0;
+      });
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      // Give the compositor time to commit the paused zero-opacity frame.
+      await new Promise(resolve => setTimeout(resolve, 120));
+      const normal = await page.screenshot({ encoding: 'base64' });
+      for (const kind of ['blink', 'speak']) {
+        const region = await page.$eval(`.character-${kind}`, (image, box) => {
+          const rect = image.getBoundingClientRect();
+          return { left: rect.left + box.left * rect.width / image.naturalWidth,
+            top: rect.top + box.top * rect.height / image.naturalHeight,
+            right: rect.left + box.right * rect.width / image.naturalWidth,
+            bottom: rect.top + box.bottom * rect.height / image.naturalHeight };
+        }, bounds[kind]);
+        await page.evaluate(kind => {
+          if (kind === 'blink') {
+            const animation = document.querySelector('.character-blink').getAnimations().find(item => item.animationName === 'character-blink');
+            animation.currentTime = 6150;
+          } else {
+            document.querySelector('.character-blink').getAnimations().find(item => item.animationName === 'character-blink').currentTime = 0;
+            document.getElementById('characterScene').dataset.speaking = 'true';
+            const animation = document.querySelector('.character-speak').getAnimations().find(item => item.animationName === 'character-speaking');
+            if (!animation) throw new Error('缺少嘴型动画');
+            animation.pause(); animation.currentTime = 50;
+          }
+        }, kind);
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        assert.equal(await page.$eval(`.character-${kind}`, image => getComputedStyle(image).opacity), '1', `${id}: ${kind} 动画应处于可见帧`);
+        let changed = 0;
+        // A loaded renderer may commit the compositor a frame late; continue
+        // sampling the same paused animation, never relaxing the pixel check.
+        for (let attempt = 0; attempt < 5; attempt++) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          const expression = await page.screenshot({ encoding: 'base64' });
+          changed = await page.evaluate(async ({ normal, expression, region }) => {
+            const load = data => new Promise(resolve => { const image = new Image(); image.onload = () => resolve(image); image.src = `data:image/png;base64,${data}`; });
+            const [before, after] = await Promise.all([load(normal), load(expression)]);
+            const canvas = document.createElement('canvas'); canvas.width = before.width; canvas.height = before.height;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(before, 0, 0); const a = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            ctx.drawImage(after, 0, 0); const b = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let count = 0;
+            for (let y = Math.max(0, Math.floor(region.top)); y <= Math.min(canvas.height - 1, Math.ceil(region.bottom)); y++) {
+              for (let x = Math.max(0, Math.floor(region.left)); x <= Math.min(canvas.width - 1, Math.ceil(region.right)); x++) {
+                const i = (y * canvas.width + x) * 4;
+                if (Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2])) > 8) count++;
+              }
+            }
+            return count;
+          }, { normal, expression, region });
+          if (changed > 15) break;
+        }
+        assert.ok(changed > 15, `${id}: ${kind} 表情应实际叠在立绘上而非藏在后面，实际 ${changed} 像素`);
+      }
+    }
     await context.close();
   }
-  console.log('✓ 新造型的眨眼与嘴型层对齐');
+  console.log('✓ 八角色的眨眼与嘴型对齐且实际可见');
 
-  // The modern silhouettes must cover the actual portrait without turning a
-  // large transparent area of the room into an invisible interaction target.
-  for (const id of ['luye', 'suyan']) {
+  // The new and redrawn silhouettes must cover the actual portrait without
+  // turning a large transparent area of the room into an invisible target.
+  for (const id of ['qinglan', 'xingling', 'luye', 'suyan']) {
     const { page, context } = await newPage(390, 844, { homeTheme: id });
     const coverage = await page.evaluate(async () => {
       const img = document.querySelector('[data-character-asset="portrait"]');
@@ -519,7 +590,7 @@ try {
     assert.ok(coverage.precision > .65, `${id}: 人物外的大块透明背景不应触发`);
     await context.close();
   }
-  console.log('✓ 现代角色的命中轮廓覆盖人物并避开透明背景');
+  console.log('✓ 新版与现代角色的命中轮廓覆盖人物并避开透明背景');
 
   // Dragging no longer changes the camera and cannot accidentally open the form.
   {
@@ -883,13 +954,16 @@ try {
     await page.waitForFunction(() => document.querySelector('.chat-ai-text')?.textContent.includes('我们可以从一件小事开始。'), { timeout: 10000 });
     assert.match(await page.evaluate(() => window.__aiCalls[0].body.messages[0].content), /用户命盘/);
     await page.evaluate(() => window.closeAsk());
-    await page.waitForFunction(() => !!window._tjLiquidOrb, { timeout: 15000 });
+    const traitColor = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--trait-color').trim());
     await page.click('#p2MenuBtn');
     await page.waitForSelector('#p2MenuDrawer.open');
-    await page.click('#p2OrbBtn');
-    await page.waitForSelector('#p2OrbPalette.open [data-key="violet"]', { visible: true });
-    await page.click('#p2OrbPaletteGrid [data-key="violet"]');
-    assert.equal(await page.evaluate(() => window._tjLiquidOrb.getColorKey()), 'violet');
+    await page.waitForFunction(() => document.querySelector('#p2MenuDrawer.open')?.getBoundingClientRect().left >= -1);
+    assert.equal(await page.$('#p2OrbBtn'), null, '旧的独立主题色入口应移除');
+    await page.click('#p2ThemeSeg [data-val="dark"]');
+    assert.equal(await page.$eval('html', el => el.dataset.theme), 'dark', '仍可切换深色模式');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--trait-color').trim()), traitColor, '明暗切换不改变特质色');
+    await page.click('#p2ThemeSeg [data-val="light"]');
+    assert.equal(await page.$eval('html', el => el.dataset.theme), 'light');
     await page.click('.p2-menu-close');
     await page.evaluate(() => window.goBack());
     await page.waitForFunction(() => !document.getElementById('page1').classList.contains('hidden'));

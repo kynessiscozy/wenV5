@@ -384,7 +384,7 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   H+=`<div class="yun-panes">`;
 
   // ===== 年档：当年核心趋势 + 人生时间线（合并掉原"大运时间轴"，十年只呈现一次）=====
-  yYear=`<div class="glass card-1" data-card="trend"><div class="card-hd"><div><div class="card-tt">${CURR_YEAR}年核心趋势</div><div class="card-st">${cLn.g}${cLn.z} ${cLn.sx}年 · ${lnSS}</div></div><button class="card-share" type="button" onclick="TJShareReport()" title="分享命盘摘要卡片" aria-label="分享命盘摘要卡片"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M8 7l4-4 4 4"/></svg></button></div>
+  yYear=`<div class="glass card-1" data-card="trend"><div class="card-hd"><div><div class="card-tt">${CURR_YEAR}年核心趋势</div><div class="card-st">${cLn.g}${cLn.z} ${cLn.sx}年 · ${lnSS}</div></div><button class="card-share" type="button" onclick="TJShareReport()" title="分享当年海报" aria-label="分享当年海报"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M8 7l4-4 4 4"/></svg></button></div>
 <div class="y-hero">${[{l:'事业',v:cs,c:'var(--c-yellow)'},{l:'财运',v:ws,c:'var(--c-orange)'},{l:'感情',v:ls,c:'var(--c-red)'},{l:'健康',v:hs,c:'var(--c-green)'}].map(x=>`<div class="y-hero-item"><div class="y-hero-label">${x.l}</div><div class="y-hero-stars">${'★★★★★'.split('').map((s,i)=>`<span style="color:${i<Math.round(x.v/20)?x.c:'var(--c-border-2)'}">${s}</span>`).join('')}</div><div class="y-hero-score">${x.v}分</div></div>`).join('')}</div>
 <div class="at"><p>今年<span class="hl">${cLn.g}${cLn.z}</span>年，流年十神为「<span class="tg">${lnSS}</span>」。${cs>72?'整体势能向上，适合主动进取。':'整体以稳为主，厚积薄发。'}当前<span class="hl">${cDy.g}${cDy.z}</span>大运，${dySS.includes('官')?'事业压力与机遇并存':dySS.includes('财')?'财运通道打开':dySS.includes('印')?'适合学习沉淀':''}。</p></div></div>`+yYear;
 
@@ -404,7 +404,7 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
     const bestCopy=week.best.tone==='rest'||week.best.tone==='friction'
       ?'这一天节奏相对友好，把最需要推进的事放在这里。'
       :'这一天与命盘相合度最高，适合安排重要沟通、决策或启动事项。';
-    yWeek+=`<div class="glass card-1" data-card="weekFortune"><div class="card-hd"><div><div class="card-tt">本周运势</div><div class="card-st">${fmt(week.start)} – ${fmt(week.end)} · 逐日干支 × 你的命盘</div></div><button class="card-share" type="button" onclick="TJShareWeek()" title="分享本周运势卡片" aria-label="分享本周运势卡片"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M8 7l4-4 4 4"/></svg></button></div>`;
+    yWeek+=`<div class="glass card-1" data-card="weekFortune"><div class="card-hd"><div><div class="card-tt">本周运势</div><div class="card-st">${fmt(week.start)} – ${fmt(week.end)} · 逐日干支 × 你的命盘</div></div><button class="card-share" type="button" onclick="TJShareWeek()" title="分享本周海报" aria-label="分享本周海报"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M8 7l4-4 4 4"/></svg></button></div>`;
     yWeek+=`<div class="wk-grid">${week.days.map(x=>`<div class="wk-day ${x.isToday?'is-today':''} ${toneCls[x.tone]||''}"><div class="wk-day-label">${x.isToday?'今天':x.label}</div><div class="wk-day-date">${x.short}</div><div class="wk-day-gz">${x.day.gz}</div><div class="wk-day-tone">${TONE_COPY[x.tone]?TONE_COPY[x.tone].label:x.tone}</div><div class="wk-day-energy">${x.energy}</div></div>`).join('')}</div>`;
     yWeek+=`<div class="wk-highlights"><div class="wk-hl wk-hl-good"><span class="wk-hl-k">相对顺利</span><span class="wk-hl-v">${week.best.label}（${week.best.short} · ${week.best.day.gz}）</span></div><div class="wk-hl wk-hl-warn"><span class="wk-hl-k">多留余量</span><span class="wk-hl-v">${week.worst.label}（${week.worst.short} · ${week.worst.day.gz}）</span></div></div>`;
     yWeek+=`<div class="at"><p>${week.summary}${bestCopy}</p></div>`;
@@ -417,7 +417,7 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   const _nowZhi=DZ[_nowIdx];
   const _nowFit=(_nowHour>=9&&_nowHour<18)?'沟通、推进、处理要事':'复盘、整理、放松恢复';
   const _favHour=wx.ys==='木'?'3–7 点':wx.ys==='火'?'9–13 点':wx.ys==='土'?'7–9 点或 13–15 点':wx.ys==='金'?'15–19 点':'21–1 点';
-  yDay+=`<div class="glass card-1 focus-card" data-card="todayAdv"><div class="card-hd"><div><div class="card-tt">今日建议 · 当下关注</div><div class="card-st">${todayJ}${_advDomain?' · '+_advDomain:''}</div></div><button class="card-share" type="button" onclick="TJShareRiQian()" title="分享今日卡片" aria-label="分享今日卡片"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M8 7l4-4 4 4"/></svg></button></div>`;
+  yDay+=`<div class="glass card-1 focus-card" data-card="todayAdv"><div class="card-hd"><div><div class="card-tt">今日建议 · 当下关注</div><div class="card-st">${todayJ}${_advDomain?' · '+_advDomain:''}</div></div><button class="card-share" type="button" onclick="TJShareRiQian()" title="分享今日海报" aria-label="分享今日海报"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M8 7l4-4 4 4"/></svg></button></div>`;
   // 当前时段横幅
   yDay+=`<div class="td-now">
     <div class="td-now-item"><span class="td-k">当前时段</span><b>${_nowZhi}时</b></div>
@@ -614,12 +614,18 @@ export function renderBeginnerBrief(sec,d){
   return `<div class="beginner-brief"><div class="bb-eyebrow">新手解读报告</div>${_styleBanner}${basicHtml}<div class="bb-title">${title}</div>${scoreHtml}<div class="bb-row"><div class="bb-label">你现在的状态</div><div class="bb-text">${portrait}</div></div><div class="bb-row"><div class="bb-label">对你有利的方向</div><div class="bb-text">${opportunity}</div></div><div class="bb-row"><div class="bb-label">接下来怎么做</div><div class="bb-text bb-action">${action}</div></div><div class="bb-note">${tip}</div><button class="bb-master" type="button" onclick="setUserMode('master')">查看完整专业依据　→</button></div>`;
 }
 export function organizeMasterReportLayout(ctx){
-  const ming=document.getElementById('s-ming'),yun=document.getElementById('s-yun');
+  const ming=document.getElementById('s-ming'),yun=document.getElementById('s-yun'),rel=document.getElementById('s-rel');
   if(!ming||!yun)return;
-  // 命盘一览：将原速读标题调整为信息总览。
-  const overview=ming.querySelector('.qr-title');if(overview)overview.textContent='命盘一览';
-  // AI 摘要成为「命盘一览」的一部分，直接完整展示，不再额外展开。
+  // Preserve the real readings and their fold controls without repeating section titles.
   const overviewCard=ming.querySelector('.qr-card'),aiSum=ming.querySelector('.ai-sum');
+  [[ming,'命盘速读'],[yun,'运势解读'],[rel,'关系解读']].forEach(([section,label])=>{
+    const head=section?.querySelector('.qr-card .qr-head');if(!head)return;
+    const expanded=head.getAttribute('aria-expanded')!=='false';
+    const title=head.querySelector('.qr-title');if(title)title.textContent=expanded?'收起':'展开';
+    head.dataset.compactOverview='true';head.dataset.overviewLabel=label;
+    head.setAttribute('aria-label',(expanded?'收起':'展开')+label);
+  });
+  // AI 摘要直接并入速读，不再额外展开。
   if(overviewCard&&aiSum){
     aiSum.classList.remove('glass','card-1','collapsible');aiSum.classList.add('overview-ai','expanded');
     const toggle=aiSum.querySelector('.ai-sum-toggle');if(toggle)toggle.remove();
@@ -713,10 +719,8 @@ export function organizeMasterReportLayout(ctx){
   if(timeline){const tt=timeline.querySelector('.card-tt');if(tt)tt.textContent='人生时间线';}
   [trend,timeline,focus,months].filter(c=>c&&!c.closest('.yun-pane')).forEach(card=>yun.appendChild(card));
 
-  // 关系页：以关系速读为入口，补齐亲密、朋友、亲人三类关系画像。
-  const rel=document.getElementById('s-rel');
+  // 关系页：补齐亲密、朋友、亲人三类关系画像。
   if(rel&&!rel.querySelector('.relation-profile')){
-    const relQuick=rel.querySelector('.qr-title');if(relQuick)relQuick.textContent='关系速读';
     const p=(ctx.P&&ctx.P[ctx.dg])||{};
     const style=typeof getRelationMode==='function'?getRelationMode(ctx.dg,ctx.ss,ctx.gen):'重视真诚与稳定的相处';
     const strong=ctx.wx.st?'习惯主动承担、推动关系进展':'习惯照顾他人感受、配合关系节奏';
@@ -829,7 +833,7 @@ export function renderQuickRead(secKey,d){
     items.push({l:'财运',v:d.ws+'分'});
     const tone=d.cs>72?'势能向上':d.cs>55?'平稳推进':'守势为主';
     const summary='今年「<b>'+(cLn?cLn.g+cLn.z:'-')+'</b>」流年十神「<b>'+d.cLnSS+'</b>」，整体'+tone+'。当前大运「<b>'+cDy.g+cDy.z+'</b>」（'+cDy.as+'~'+cDy.ae+'岁）'+(d.cDySS.includes('财')?'，财路已开':d.cDySS.includes('官')?'，仕途明朗':d.cDySS.includes('印')?'，宜学养沉淀':'，宜稳中求进')+'。';
-    return _qrCard('运势速读',items,summary,[
+    return _qrCard('收起',items,summary,[
       {k:'trend',t:'四维评分→'},{k:'dayun',t:'大运时间轴→'},{k:'liuyue',t:'本月详解→'}
     ]);
   }
@@ -841,7 +845,7 @@ export function renderQuickRead(secKey,d){
     items.push({l:'感情节奏',v:wx.st?'主导型':'迁就型'});
     items.push({l:'流年合婚',v:d.cLnSS.includes(d.gen==='male'?'财':'官')?'利结合':'宜深耕'});
     const summary='你的'+star+'代表伴侣特质，性格上属于「<b>'+(wx.st?'主导型':'迁就型')+'</b>」。'+(hasPeach?'命带桃花，异性缘充足但需筛选；':'桃花不显，缘分多来自熟人介绍；')+(d.cLnSS.includes(d.gen==='male'?'财':'官')?'今年配偶星到位，未婚利结合。':'今年感情节奏偏稳，宜深耕已有关系。');
-    return _qrCard('关系速读',items,summary,[
+    return _qrCard('收起',items,summary,[
       {k:'loveMode',t:'相处模式→'},{k:'loveMatch',t:'适合对象→'}
     ]);
   }
@@ -931,7 +935,7 @@ export function drawCurve(data,dys,age){
   const ctx=cv.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);ctx.scale(dpr,dpr);
   const w=cssW,h=cssH;const p={t:14,b:26,l:30,r:14},cw=w-p.l-p.r,ch=h-p.t-p.b;
   [0,50,100].forEach(v=>{const y=p.t+ch-(v/100)*ch;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.strokeStyle=_gridLine();ctx.stroke()});
-  const grad=ctx.createLinearGradient(0,p.t,0,h-p.b);const _ac=window._accentRGB||[200,164,90];grad.addColorStop(0,`rgba(${_ac},0.18)`);grad.addColorStop(1,`rgba(${_ac},0)`);
+  const grad=ctx.createLinearGradient(0,p.t,0,h-p.b);const _ac=getComputedStyle(document.documentElement).getPropertyValue(_isDark()?'--trait-graph-dark':'--trait-graph-light').trim()||'200,164,90';grad.addColorStop(0,`rgba(${_ac},0.18)`);grad.addColorStop(1,`rgba(${_ac},0)`);
   ctx.beginPath();data.forEach((v,i)=>{const x=p.l+i*(cw/(data.length-1)),y=p.t+ch-(v/100)*ch;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});ctx.lineTo(p.l+(data.length-1)*(cw/(data.length-1)),p.t+ch);ctx.lineTo(p.l,p.t+ch);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
   ctx.beginPath();data.forEach((v,i)=>{const x=p.l+i*(cw/(data.length-1)),y=p.t+ch-(v/100)*ch;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});ctx.strokeStyle=`rgba(${_ac},0.5)`;ctx.lineWidth=2;ctx.stroke();
   data.forEach((v,i)=>{const x=p.l+i*(cw/(data.length-1)),y=p.t+ch-(v/100)*ch;const cu=age>=dys[i].as&&age<=dys[i].ae;ctx.beginPath();ctx.arc(x,y,cu?5:2.5,0,Math.PI*2);ctx.fillStyle=cu?`rgb(${_ac})`:`rgba(${_ac},.35)`;ctx.fill();if(cu){ctx.beginPath();ctx.arc(x,y,9,0,Math.PI*2);ctx.strokeStyle=`rgba(${_ac},.2)`;ctx.lineWidth=2;ctx.stroke()}ctx.fillStyle=_axisText();ctx.font='7px sans-serif';ctx.textAlign='center';ctx.fillText(dys[i].g+dys[i].z,x,h-p.b+11);ctx.fillText(dys[i].as+'岁',x,h-p.b+20);});

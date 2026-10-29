@@ -28,7 +28,7 @@ const CARD_TOPIC = {
     ask: f => `我的四柱是 ${f.pillars}，日主${f.dayMaster}。这组八字说明我是什么样的人？请用大白话讲，不要只解释「八字」这个词的定义。`,
   },
   'qr-card': {
-    name: '命盘一览',
+    name: '命盘速读',
     ask: f => `我的命盘是：日主${f.dayMaster}、${f.strength}、用神${f.yongShen}、格局${f.pattern}。把这几项合起来看，对我意味着什么？`,
   },
   structure: {

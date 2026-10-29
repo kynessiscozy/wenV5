@@ -363,7 +363,7 @@ export const answerbook = {
             quote: '把这句话当作一个新的视角，再结合事实、感受与现实条件作决定。',
             foot: '答案之书不是预测，也不替代你的判断。',
           });
-          exportShareCard(card, '问问大师_答案之书');
+          exportShareCard(card, '问问大师_答案之书', btn);
         } catch (e) {}
         btn.disabled = false; btn.textContent = '分享这一页';
       });

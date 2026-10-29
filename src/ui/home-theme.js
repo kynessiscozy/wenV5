@@ -1,3 +1,5 @@
+import { focusSafely } from './focus.js';
+import { syncBrowserThemeColor } from './theme-color.js';
 import { WENWEN } from '../character/wenwen.js';
 import { MOON_FOX } from '../character/moon-fox.js';
 import { EARTHFIRE_SOVEREIGN } from '../character/earthfire-sovereign.js';
@@ -23,7 +25,7 @@ export const HOME_THEMES = Object.freeze({
     backdrop: Object.freeze({ wide: './art/moon-fox-study-wide.webp', mobile: './art/moon-fox-study-mobile.webp' }),
   }),
   diyan: Object.freeze({
-    trait: Object.freeze({ label: '威严', mark: '威', color: '#efae8b' }),
+    trait: Object.freeze({ label: '威严', mark: '威', color: '#ec8278' }),
     reportLead: '先定根基，再看全局。',
     character: EARTHFIRE_SOVEREIGN,
     backdrop: Object.freeze({ wide: './art/earthfire-hall-wide.webp', mobile: './art/earthfire-hall-mobile.webp' }),
@@ -59,6 +61,40 @@ export const HOME_THEMES = Object.freeze({
     backdrop: Object.freeze({ wide: './art/suyan-room-wide.webp', mobile: './art/suyan-room-mobile.webp' }),
   }),
 });
+
+// Derive readable UI shades from the registry's single character color. The
+// illustrated swatch stays unchanged; a darker solid is used behind white text.
+function applyTraitAccent(color) {
+  const match = /^#([0-9a-f]{6})$/i.exec(color || '');
+  if (!match) return;
+  const rgb = [0, 2, 4].map(i => parseInt(match[1].slice(i, i + 2), 16));
+  const [r, g, b] = rgb.map(value => value / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const delta = max - min, lightness = (max + min) / 2;
+  let hue = 0;
+  if (delta) {
+    if (max === r) hue = ((g - b) / delta) % 6;
+    else if (max === g) hue = (b - r) / delta + 2;
+    else hue = (r - g) / delta + 4;
+    hue = (hue * 60 + 360) % 360;
+  }
+  const saturation = delta ? delta / (1 - Math.abs(2 * lightness - 1)) : 0;
+  const h = Math.round(hue);
+  const s = Math.max(45, Math.min(75, Math.round(saturation * 100)));
+  // Match --c-accent at 34% for the canvas chart on a light surface.
+  const l = .34, a = s / 100 * Math.min(l, 1 - l);
+  const channel = n => {
+    const k = (n + h / 30) % 12;
+    return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))));
+  };
+  const root = document.documentElement;
+  root.style.setProperty('--trait-color', color);
+  root.style.setProperty('--trait-h', String(h));
+  root.style.setProperty('--trait-s', `${s}%`);
+  root.style.setProperty('--trait-graph-light', [channel(0), channel(8), channel(4)].join(','));
+  root.style.setProperty('--trait-graph-dark', rgb.join(','));
+  syncBrowserThemeColor();
+}
 
 /** Choose a trait at entry, or reopen the selector without losing the current session. */
 export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
@@ -127,7 +163,7 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
       ? document.getElementById('reportTraitReselect') || document.getElementById('p2MenuBtn')
       : document.getElementById(firstChoice ? 'homeCtaMain' : 'homeTraitReset');
     const target = current?.isConnected && current.getClientRects().length ? current : fallback;
-    target?.focus({ preventScroll: true });
+    focusSafely(target);
     returnFocus = null;
   }
 
@@ -173,9 +209,12 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     const checkBackdrop = guardImage(backdrop, () => window.matchMedia('(max-aspect-ratio: 4/5)').matches ? theme.backdrop.mobile : theme.backdrop.wide);
     selected = id;
     document.documentElement.dataset.homeTheme = id;
+    applyTraitAccent(theme.trait.color);
     if (source) source.srcset = theme.backdrop.mobile;
     if (backdrop) backdrop.src = theme.backdrop.wide;
-    setHomeCharacter(theme.character);
+    // The public interface identifies companions by trait, including their
+    // accessible label; the underlying reusable character keeps its identity.
+    setHomeCharacter(theme.character, theme.trait.label);
     checkPortrait();
     checkBackdrop();
     document.documentElement.dataset.homeReady = 'true';
@@ -273,11 +312,11 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     // Only a completed spin can be confirmed; the picker has no direct path.
     const id = draft;
     if (selection.hidden || state !== 'idle' || confirm.hidden ||
-        confirm.dataset.result !== id || !Object.hasOwn(HOME_THEMES, id)) return;
+        confirm.dataset.result !== id || !Object.prototype.hasOwnProperty.call(HOME_THEMES, id)) return;
     const ticket = ++generation;
     const initialChoice = !selected;
     setState('loading');
-    selection.focus({ preventScroll: true });
+    focusSafely(selection);
     if (status) status.textContent = '正在开启场景…';
     try {
       await prepareTheme(id);
@@ -307,7 +346,7 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     } else random = Math.random();
     const [id, theme] = entries[Math.floor(random * entries.length)];
     setState('spinning');
-    selection.focus({ preventScroll: true });
+    focusSafely(selection);
     if (status) status.textContent = '正在转动…';
     await turnReel(id, 1250);
     if (ticket !== generation) return;
@@ -318,7 +357,7 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     spin.querySelector('span').textContent = '再转一次';
     setState('idle');
     if (status) status.textContent = `转到了${theme.trait.label}，可以选择它或再转一次。`;
-    confirm.focus({ preventScroll: true });
+    focusSafely(confirm);
     confirm.scrollIntoView({ block: 'nearest', behavior: motion.matches ? 'auto' : 'smooth' });
   }
 
@@ -347,7 +386,7 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     selection.dataset.reselect = 'true';
     selection.hidden = false;
     selection.scrollTop = 0;
-    selection.focus({ preventScroll: true });
+    focusSafely(selection);
     shieldBackground();
     return true;
   }
@@ -367,18 +406,18 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     if (event.key === 'Escape') { event.preventDefault(); closePicker(); return; }
     const buttons = [...selection.querySelectorAll('button:not(:disabled)')].filter(button => button.getClientRects().length);
     if (event.key === 'Tab') {
-      if (!buttons.length) { event.preventDefault(); selection.focus({ preventScroll: true }); return; }
+      if (!buttons.length) { event.preventDefault(); focusSafely(selection); return; }
       const index = buttons.indexOf(document.activeElement);
       if (index < 0 || (!event.shiftKey && index === buttons.length - 1) || (event.shiftKey && index === 0)) {
         event.preventDefault();
-        buttons[event.shiftKey ? buttons.length - 1 : 0].focus({ preventScroll: true });
+        focusSafely(buttons[event.shiftKey ? buttons.length - 1 : 0]);
       }
     }
   });
 
   renderReel('');
   if (status) status.textContent = '';
-  selection.focus({ preventScroll: true });
+  focusSafely(selection);
   shieldBackground();
   machine.dataset.ready = 'true';
   spin.disabled = false;

@@ -635,7 +635,7 @@ export const horoscope = {
             quote: match.dynamicDesc,
             foot: '合盘结果仅供相处参考，真诚沟通是良好关系的基石。'
           });
-          exportShareCard(card, '问问大师_合盘_' + sA.name + '_' + sB.name);
+          exportShareCard(card, '问问大师_合盘_' + sA.name + '_' + sB.name, btn);
         } catch (err) {
           console.error(err);
         }

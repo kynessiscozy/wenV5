@@ -8,8 +8,8 @@ const THEMES = {
   moonfox: { trait: '神秘', portrait: 'moon-fox-reimagined.webp', art: 'awakening-fox-fan.webp', selector: '.calculation-tail--left img', animation: 'calculation-tail-left' },
   diyan: { trait: '威严', portrait: 'earthfire-sovereign.webp', art: 'earthfire-flame-seat.webp', selector: '.calculation-fire-seat', animation: 'calculation-fire-seat' },
   yuchen: { trait: '从容', portrait: 'yuchen-empress.webp', art: 'awakening-phoenix-wing.webp', selector: '.calculation-wing--left', animation: 'calculation-wing-left' },
-  qinglan: { trait: '洒脱', portrait: 'qinglan.webp', art: 'qinglan-sword.webp', selector: '.calculation-sword', animation: 'calculation-sword-draw' },
-  xingling: { trait: '魅惑', portrait: 'xingling.webp', art: 'xingling-fan.webp', selector: '.calculation-star-fan', animation: 'calculation-fan-unfold' },
+  qinglan: { trait: '洒脱', portrait: 'qinglan-renewed.webp', art: 'qinglan-sword.webp', selector: '.calculation-sword', animation: 'calculation-sword-draw' },
+  xingling: { trait: '魅惑', portrait: 'xingling-renewed.webp', art: 'xingling-fan.webp', selector: '.calculation-star-fan', animation: 'calculation-fan-unfold' },
   luye: { trait: '好奇', portrait: 'luye.webp', art: 'luye-turntable.svg', selector: '.calculation-turntable', animation: 'calculation-turntable-enter', detail: '.calculation-vinyl', detailAnimation: 'calculation-vinyl-spin' },
   suyan: { trait: '自信', portrait: 'suyan.webp', art: 'suyan-camera.svg', selector: '.calculation-camera-prop', animation: 'calculation-camera-focus', detail: '.calculation-camera-iris', detailAnimation: 'calculation-iris-focus' },
 };
@@ -289,12 +289,14 @@ try {
     await page.click('.character-form-submit');
     await waitForResultScene(page, 'wenwen');
     await page.waitForFunction(() => { const image = document.querySelector('.calculation-scroll img'); return image.complete && !image.naturalWidth; });
+    assert.equal(await page.$eval('.calculation-scroll img', image => getComputedStyle(image).visibility), 'hidden', '失败道具不能留下破图轮廓');
     await continueToReport(page);
     await page.evaluate(() => window.goBack()); await delay(550);
     await openForm(page);
     await page.click('.character-form-submit');
     await waitForResultScene(page, 'wenwen');
     await page.waitForFunction(() => document.querySelector('.calculation-scroll img').naturalWidth > 0, { timeout: 5000 });
+    assert.equal(await page.$eval('.calculation-scroll img', image => getComputedStyle(image).visibility), 'visible', '重试成功后恢复显示道具');
     assert.ok(failures >= 3, '失败的道具在下次推演时应重试');
     await continueToReport(page);
     await context.close();
@@ -318,6 +320,7 @@ try {
     await Promise.race([started, delay(5000).then(() => { throw new Error('慢网道具请求未开始'); })]);
     await waitForResultScene(page, 'wenwen');
     assert.ok(held.length > 0);
+    assert.equal(await page.$eval('.calculation-scroll img', image => getComputedStyle(image).visibility), 'hidden', '慢网加载时不能出现空图片轮廓');
     assert.equal(await page.evaluate(() => document.body.classList.contains('report-active')), false);
     await continueToReport(page);
     await Promise.all(held.map(request => request.continue().catch(() => {})));
@@ -376,6 +379,8 @@ try {
     await waitForResultScene(page, 'yuchen');
     const elapsed = Date.now() - start;
     assert.ok(elapsed < 1800, `减动态不应等待演出，实际 ${elapsed}ms`);
+    assert.ok(await page.$$eval('.calculation-props--yuchen img:not([src])', images => images.length > 0 && images.every(image => getComputedStyle(image).visibility === 'hidden')),
+      '减动态不加载道具时不能留下空图片轮廓');
     assert.deepEqual(await page.evaluate(() => window.__reducedScene), { animation: 'none', skipHidden: true });
     await delay(400);
     assert.equal(await page.evaluate(() => document.body.classList.contains('report-active')), false, '减动态也必须等待用户确认结果');

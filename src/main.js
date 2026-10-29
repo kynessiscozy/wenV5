@@ -1,4 +1,5 @@
 import { showToast } from './ui/toast.js';
+import { focusSafely } from './ui/focus.js';
 import { CURR_YEAR, TG, DZ, SX, WX, GW, ZW, ZC, WC, NY, SS } from './engines/shared.js';
 import { CD, CG } from './engines/cities.js';
 import { _initJq, solarTermDate, jqDate, getMonthPillar, trueSolarTime, resolveBirthDateTime, getDayPillarIndex } from './engines/calendar.js';
@@ -30,31 +31,23 @@ import { runLotteryTool } from './tools/lottery.js';
 import { runZodiacTool } from './tools/zodiac.js';
 import { runRelationTool } from './tools/relation.js';
 import { openAnswerBook } from './tools/answerbook-v2.js';
-import { renderShareCard, exportShareCard } from './share/card.js';
-import {
-  openFullReportShare,
-  closeFullReportShare,
-  switchFullReportShareMode,
-  renderLongReportCanvas,
-  exportFullReportImage,
-  copyFullReportImage,
-  printFullReport
-} from './share/long-report.js';
+import { openPosterShare as showPosterShare, openCanvasShare } from './share/studio.js';
 import { initTools3DRingCarousel } from './render/tools-ring.js';
-import { initLiquidOrb } from './fx/liquid-orb.js';
 import { characterCompanion, homeThemePicker } from './home.js';
 import { mountCharacterReport } from './ui/character-report.js';
 import { beginCharacterCalculation, warmCharacterCalculation } from './ui/character-calculation.js';
 import { TJX } from './state/tjx.js';
 import { getResultStyle } from './state/result-style.js';
 
-window.openFullReportShare = openFullReportShare;
-window.closeFullReportShare = closeFullReportShare;
-window.switchFullReportShareMode = switchFullReportShareMode;
-window.renderLongReportCanvas = renderLongReportCanvas;
-window.exportFullReportImage = exportFullReportImage;
-window.copyFullReportImage = copyFullReportImage;
-window.printFullReport = printFullReport;
+// The preview module loads with the report, so an already available report
+// can still be shared for the first time without a network connection.
+window.openPosterShare = function(kind = 'report') {
+  try { showPosterShare({ kind, opener: document.activeElement }); }
+  catch(error) { console.error('[share]', error); showToast(error?.message || '分享暂时不可用，请重试'); }
+};
+window.TJOpenSharePreview = openCanvasShare;
+// Preserve the old entry point for integrations while opening the new studio.
+window.openFullReportShare = () => window.openPosterShare('report');
 window.openNoviceGuide = openNoviceGuide;
 window.closeNoviceGuide = closeNoviceGuide;
 window.switchNoviceGuideTab = switchNoviceGuideTab;
@@ -99,7 +92,7 @@ import {
   applyThemePref, getThemePref
 } from './ui/index.js';
 import { initFontSize } from './font-size.js';
-import { initWeather, getWxGeo } from './ui/weather.js';
+import { initWeather } from './ui/weather.js';
 import { initOnboarding, openNoviceGuide, closeNoviceGuide, switchNoviceGuideTab, initGlobalNoviceGuide } from './onboarding.js';
 import { initEvolveUI } from './evolve/ui.js';
 
@@ -167,50 +160,12 @@ let aboutReturnFocus=null;
   window.runRelationTool=runRelationTool;
 
   // 3. 之前已暴露的函数（保持不变）
-  window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.openArchiveModal=openArchiveModal;window.closeArchiveModal=closeArchiveModal;window.loadProfileFromArchive=loadProfileFromArchive;window.deleteProfileFromArchive=deleteProfileFromArchive;window.confirmSaveProfile=confirmSaveProfile;window.quickSaveName=quickSaveName;window.updateSaveNameCount=updateSaveNameCount;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){const m=document.getElementById('aboutModal');if(!m)return;aboutReturnFocus=document.activeElement;m.classList.add('open');m.querySelector('.modal-close')?.focus({preventScroll:true});};window.closeAboutModal=function(){const m=document.getElementById('aboutModal');if(!m?.classList.contains('open'))return;m.classList.remove('open');if(aboutReturnFocus?.isConnected&&aboutReturnFocus.getClientRects().length)aboutReturnFocus.focus({preventScroll:true});aboutReturnFocus=null;};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};
+  window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.openArchiveModal=openArchiveModal;window.closeArchiveModal=closeArchiveModal;window.loadProfileFromArchive=loadProfileFromArchive;window.deleteProfileFromArchive=deleteProfileFromArchive;window.confirmSaveProfile=confirmSaveProfile;window.quickSaveName=quickSaveName;window.updateSaveNameCount=updateSaveNameCount;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){const m=document.getElementById('aboutModal');if(!m)return;aboutReturnFocus=document.activeElement;m.classList.add('open');focusSafely(m.querySelector('.modal-close'));};window.closeAboutModal=function(){const m=document.getElementById('aboutModal');if(!m?.classList.contains('open'))return;m.classList.remove('open');if(aboutReturnFocus?.isConnected&&aboutReturnFocus.getClientRects().length)focusSafely(aboutReturnFocus);aboutReturnFocus=null;};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};
 
-  // 4. 缺失函数：分享卡片（报告卡片右上角分享按钮）
-  window.TJShareReport=function(){
-    const d=window._ctx||window._baziData||{};if(!d.Y)return showToast('请先完成推演');
-    const b=d.Y.g+d.Y.z;
-    const cv=renderShareCard({
-      title:b+' · '+d.b.sx+'年',
-      sub:d.b?'日主 '+d.D.g+d.D.z:'',
-      rows:[
-        {k:'命盘',v:b+' '+d.M.g+d.M.z+' '+d.D.g+d.D.z+' '+d.H.g+d.H.z},
-        {k:'五行',v:d.wx?.c?Object.entries(d.wx.c).map(([k,v])=>k+Math.round(v)).join(' '):''},
-        {k:'用神',v:d.wx?.ys||''},
-      ],
-      foot:'问问大师 · '+new Date().toLocaleDateString('zh-CN')
-    });
-    if(cv)exportShareCard(cv,'问问大师_命盘摘要');
-  };
-  window.TJShareRiQian=function(){
-    const d=window._ctx||window._baziData||{};if(!d.D)return showToast('请先完成推演');
-    const cv=renderShareCard({
-      title:'今日建议',
-      sub:d.D.g+d.D.z+'日 · '+(d.lnSS||''),
-      rows:[
-        {k:'宜',v:d._advYiJi?.yi?.join(' ')||''},
-        {k:'忌',v:d._advYiJi?.ji?.join(' ')||''},
-      ],
-      foot:'问问大师 · '+new Date().toLocaleDateString('zh-CN')
-    });
-    if(cv)exportShareCard(cv,'问问大师_今日建议');
-  };
-  window.TJShareWeek=function(){
-    const d=window._ctx||window._baziData||{};if(!d.D)return showToast('请先完成推演');
-    const cv=renderShareCard({
-      title:'本周运势',
-      sub:d.week?d.week.start+' – '+d.week.end:'',
-      rows:[
-        {k:'顺利',v:d.week?.best?.label||''},
-        {k:'多留余量',v:d.week?.worst?.label||''},
-      ],
-      foot:'问问大师 · '+new Date().toLocaleDateString('zh-CN')
-    });
-    if(cv)exportShareCard(cv,'问问大师_本周运势');
-  };
+  // Report and contextual share buttons all open the same preview studio.
+  window.TJShareReport=()=>window.openPosterShare('year');
+  window.TJShareRiQian=()=>window.openPosterShare('today');
+  window.TJShareWeek=()=>window.openPosterShare('week');
 
   // 5. 缺失函数：速读卡折叠/展开
   window.TJToggleQuickRead=function(btn){
@@ -218,6 +173,13 @@ let aboutReturnFocus=null;
     const expanded=btn.getAttribute('aria-expanded')==='true';
     btn.setAttribute('aria-expanded',!expanded);
     card.classList.toggle('qr-collapsed',expanded);
+    const body=card.querySelector('.qr-body');
+    if(body){if(expanded)body.setAttribute('inert','');else body.removeAttribute('inert');body.setAttribute('aria-hidden',String(expanded));}
+    if(btn.dataset.compactOverview==='true'){
+      const title=btn.querySelector('.qr-title');
+      if(title)title.textContent=expanded?'展开':'收起';
+      btn.setAttribute('aria-label',(expanded?'展开':'收起')+(btn.dataset.overviewLabel||'命盘速读'));
+    }
   };
 
   // 5.5 运势页：年/月/周/日 档位切换
@@ -327,19 +289,90 @@ window.addEventListener('tj:trait-change',()=>{
   if(window._ctx && document.getElementById('s-ming'))refreshCharacterReport();
 });
 
+// A visible, persistent error is actionable on a small screen, unlike a short toast.
+function clearFormError(){
+  const error=document.getElementById('formError');
+  if(error){error.hidden=true;error.textContent='';}
+  document.querySelectorAll('#formModal [aria-invalid="true"]').forEach(el=>el.removeAttribute('aria-invalid'));
+}
+function showFormError(message,field){
+  const modal=document.getElementById('formModal');
+  if(!modal?.classList.contains('open'))window.TJOpenForm?.();
+  const error=document.getElementById('formError');
+  if(modal?.classList.contains('open')&&error){
+    clearFormError();
+    error.textContent=message;error.hidden=false;
+    if(field){
+      field.setAttribute('aria-invalid','true');
+      // TJOpenForm may have queued focus on the heading; the invalid field wins.
+      requestAnimationFrame(()=>{if(modal.classList.contains('open')&&field.getAttribute('aria-invalid')==='true')field.focus();});
+    }
+  }else showToast(message,{type:'error',duration:6000});
+}
+
+const CITY_SELECTION_MESSAGE='请从候选列表选择出生地点；找不到时可选择附近城市。';
+function closeCityDropdown(){
+  const dd=document.getElementById('cDD'),inp=document.getElementById('cInp');
+  dd?.classList.remove('show');
+  inp?.setAttribute('aria-expanded','false');
+  inp?.removeAttribute('aria-activedescendant');
+}
+function selectBirthCity(id){
+  const city=CD[id],inp=document.getElementById('cInp'),hid=document.getElementById('bPlace');
+  if(!city||!inp||!hid)return;
+  if(hid.value!==id||inp.value!==city.n)window._formDirty=true;
+  hid.value=id;inp.value=city.n;
+  closeCityDropdown();clearFormError();
+}
+function resolveBirthCity(){
+  const inp=document.getElementById('cInp'),hid=document.getElementById('bPlace');
+  const text=(inp?.value||'').trim();
+  if(!text)return null;
+  const selected=CD[hid?.value];
+  if(selected&&text===selected.n)return {id:hid.value,city:selected};
+  // Exact names, ids and unambiguous abbreviations are safe to accept even
+  // when the user pressed submit instead of tapping a suggestion. Never guess
+  // from a partial or ambiguous query (e.g. sz = 深圳 / 苏州).
+  const key=text.toLowerCase().replace(/市$/,'');
+  const matches=Object.entries(CD).filter(([id,city])=>
+    id.toLowerCase()===key||city.n.toLowerCase().replace(/市$/,'')===key||(city.p||'').toLowerCase()===key);
+  if(matches.length!==1)return null;
+  const [id,city]=matches[0];
+  selectBirthCity(id);
+  return {id,city};
+}
+function validBirthDate(value){
+  const match=/^(\d{4,})-(\d{2})-(\d{2})$/.exec(value);
+  if(!match)return false;
+  const [,ys,ms,ds]=match;const y=Number(ys),m=Number(ms),d=Number(ds);
+  if(y<1||y>9999||m<1||m>12||d<1||d>31)return false;
+  const date=new Date(0);date.setUTCFullYear(y,m-1,d);date.setUTCHours(0,0,0,0);
+  return date.getUTCFullYear()===y&&date.getUTCMonth()===m-1&&date.getUTCDate()===d;
+}
+
 let calculationInProgress=false;
 async function calc(isDemoPreview=false){
   if(calculationInProgress)return;
-  const bd=document.getElementById('bDate').value;if(!bd)return showToast('请选择出生日期');
-  const timeStr=document.getElementById('bTime').value||'09:00';const[hh,mm]=timeStr.split(':').map(Number);
-  const bp=document.getElementById('bPlace').value||'beijing';const gen=document.getElementById('bGen').value;
+  const formModal=document.getElementById('formModal');
+  const fromForm=!!(formModal&&formModal.classList.contains('open'))&&!isDemoPreview;
+  const dateField=document.getElementById('bDate'),timeField=document.getElementById('bTime');
+  const bd=dateField.value;
+  if(!validBirthDate(bd))return showFormError(bd?'请输入有效的出生日期。':'请选择出生日期。',dateField);
+  const timeStr=timeField.value||'09:00';
+  if(timeField.validity?.badInput||!/^([01]\d|2[0-3]):[0-5]\d(?::00(?:\.0{1,3})?)?$/.test(timeStr)){
+    return showFormError('请输入有效的出生时间。',timeField);
+  }
+  const [hh,mm]=timeStr.split(':').map(Number);
+  const place=resolveBirthCity();
+  if(!place)return showFormError(CITY_SELECTION_MESSAGE,document.getElementById('cInp'));
+  const {id:bp,city}=place;
+  const gen=document.getElementById('bGen').value;
   const q=document.getElementById('bQ').value;
   const resultStyleId=document.getElementById('bResultStyle')?.value||'companion';
   const resultStyle=getResultStyle(resultStyleId);
   const useTrueSolar=document.getElementById('swTrueSolar').classList.contains('on');
-  const[y,m,d]=bd.split('-').map(Number);const city=CD[bp]||{n:'未知',o:116.4,a:39.9};
-  const formModal=document.getElementById('formModal');
-  const fromForm=!!(formModal&&formModal.classList.contains('open'))&&!isDemoPreview;
+  const[y,m,d]=bd.split('-').map(Number);
+  clearFormError();closeCityDropdown();
 
   // 纯计算与渲染。失败抛错，由两条过渡路径各自处理界面。
   function doCompute(){
@@ -353,8 +386,6 @@ async function calc(isDemoPreview=false){
     window._ctx=_preCtx;window._baziData=_preCtx;window._reportData=_preCtx;
     window._formDirty=false; // 已推演应用，表单修改视为已保存
     applyTheme(wx.ys);
-    // Claude 风格：图表统一使用主题强调色（赭橙），不随用神变色
-    window._accentRGB=[217,119,87];
     renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,y,shensha,liuyue);
     // 让问问大师与报告顶部共享“示例报告”状态。
     if(window._ctx)window._ctx.isDemoPreview=!!isDemoPreview;
@@ -373,7 +404,7 @@ async function calc(isDemoPreview=false){
   const calModal=document.getElementById('toolModal');
   const fromCalendar=fromForm&&!!(calModal&&calModal.classList.contains('cal-fullscreen'));
   const previous={ctx:window._ctx,bazi:window._baziData,report:window._reportData,dirty:window._formDirty,
-    accent:window._accentRGB,yongShen:document.documentElement.getAttribute('data-yongshen')};
+    yongShen:document.documentElement.getAttribute('data-yongshen')};
   calculationInProgress=true;
   let scene=null,completed=false;
   try{
@@ -405,17 +436,19 @@ async function calc(isDemoPreview=false){
     characterCompanion.onReportReady({isDemo:isDemoPreview});
     document.querySelectorAll('.tab-item')[0].click();
     formReturnFocus=null;
-    document.getElementById('p2MenuBtn')?.focus({preventScroll:true});
+    focusSafely(document.getElementById('p2MenuBtn'));
     completed=true;
   }catch(e){
     // Keep the original form and last successful context available for retry.
     window._ctx=previous.ctx;window._baziData=previous.bazi;window._reportData=previous.report;
-    window._formDirty=previous.dirty;window._accentRGB=previous.accent;
+    window._formDirty=previous.dirty;
     if(previous.yongShen===null)document.documentElement.removeAttribute('data-yongshen');
     else document.documentElement.setAttribute('data-yongshen',previous.yongShen);
     scene?.close({restoreFocus:true});
     console.error(e);
-    showToast('推演出错：'+e.message+'\n\n建议：请检查输入信息是否正确，或刷新页面重试。');
+    const detail=e?.message||String(e);
+    if(fromForm)showFormError('推演未完成：'+detail+'。出生信息已保留，请检查后重试。');
+    showToast('推演出错：'+detail+'。出生信息已保留，请检查后重试。',{type:'error',duration:6000});
   }finally{
     scene?.close({restoreFocus:!completed});
     calculationInProgress=false;
@@ -431,7 +464,7 @@ function restoreFormFocus(){
     target=document.getElementById(document.body.classList.contains('report-active')?'p2MenuBtn':'homeCtaMain');
   }
   if(target && target.isConnected && target.getClientRects().length && typeof target.focus==='function'){
-    target.focus({preventScroll:true});
+    focusSafely(target);
   }
 }
 window.TJOpenForm=function(){
@@ -441,36 +474,27 @@ window.TJOpenForm=function(){
   m.classList.add('open');
   document.body.classList.add('form-open');
   // Non-blocking: the chosen character's props can arrive while the form is filled.
-  if(!document.getElementById('toolModal')?.classList.contains('cal-fullscreen'))warmCharacterCalculation();
-
-  // 自动填入天气地理位置
-  const geo = getWxGeo();
-  if (geo && geo.city) {
-    const inp = document.getElementById('cInp');
-    const hid = document.getElementById('bPlace');
-    let matched = null;
-    for (const [id, info] of Object.entries(CD)) {
-      if (geo.city.includes(info.n) || info.n.includes(geo.city)) {
-        matched = { id, name: info.n };
-        break;
-      }
-    }
-    if (matched) {
-      hid.value = matched.id;
-      inp.value = matched.name;
-    }
+  if(!document.getElementById('toolModal')?.classList.contains('cal-fullscreen')){
+    try{warmCharacterCalculation();}catch(error){console.warn('[calculation] 道具预加载失败',error);}
   }
 
+  // The weather location is not necessarily the user's birthplace. Do not
+  // overwrite a selected or partially entered city when the form is reopened.
+
   requestAnimationFrame(()=>{
-    if(m.classList.contains('open'))document.getElementById('formModalTitle')?.focus({preventScroll:true});
+    if(m.classList.contains('open'))focusSafely(document.getElementById('formModalTitle'));
   });
 };
 window.TJCloseForm=function(){
   const m=document.getElementById('formModal');
   if(m)m.classList.remove('open');
+  closeCityDropdown();
   document.body.classList.remove('form-open');
   restoreFormFocus();
 };
+// Clear stale feedback only when the user edits an input; an error otherwise remains visible.
+document.getElementById('formModal')?.addEventListener('input',clearFormError);
+document.getElementById('formModal')?.addEventListener('change',clearFormError);
 // Keep keyboard focus inside the modal until it is closed.
 document.getElementById('formModal')?.addEventListener('keydown',e=>{
   if(e.key!=='Tab')return;
@@ -692,56 +716,98 @@ async function handleImport(input){const file=input.files[0];if(!file)return;try
 
 (function(){
   const inp=document.getElementById('cInp'),hid=document.getElementById('bPlace'),dd=document.getElementById('cDD');
-  let ai=-1;
-  // 将候选层提升到 body，避免被表单、卡片或滚动容器裁剪。
-  if(dd){document.body.appendChild(dd);dd.classList.add('cdd-floating');}
+  if(!inp||!hid||!dd)return;
+  let ai=-1,blurTimer=null;
+  // Escape overflow clipping, while keeping the list anchored to the input.
+  document.body.appendChild(dd);dd.classList.add('cdd-floating');
   function placeDropdown(){
-    if(!dd||!inp)return;
-    const r=inp.getBoundingClientRect();
+    const r=inp.getBoundingClientRect(),viewport=window.visualViewport;
+    const top=viewport?.offsetTop||0;
+    const bottom=top+(viewport?.height||window.innerHeight);
+    const submit=document.querySelector('#formModal .character-form-submit')?.getBoundingClientRect();
+    const error=document.getElementById('formError');
+    const feedback=!error?.hidden?error?.getBoundingClientRect():null;
+    // Keep the submit button and any validation feedback tappable and visible.
+    const lowerEdge=Math.min(bottom-8,
+      submit&&submit.top>r.bottom?submit.top-8:bottom-8,
+      feedback&&feedback.top>r.bottom?feedback.top-8:bottom-8);
+    const spaceBelow=Math.max(0,lowerEdge-r.bottom-4);
+    const spaceAbove=Math.max(0,r.top-top-8);
+    const below=spaceBelow>=120||spaceBelow>=spaceAbove;
+    const maxHeight=Math.min(260,below?spaceBelow:spaceAbove);
     dd.style.left=Math.round(r.left)+'px';
     dd.style.width=Math.round(r.width)+'px';
-    const spaceBelow=window.innerHeight-r.bottom-8;
-    const spaceAbove=r.top-8;
-    const h=Math.min(260,Math.max(120,spaceBelow));
-    if(spaceBelow>=150||spaceBelow>=spaceAbove){
-      dd.style.top=Math.round(r.bottom+4)+'px';
-      dd.style.maxHeight=Math.round(Math.max(120,spaceBelow))+'px';
-    }else{
-      dd.style.top='auto';
-      dd.style.bottom=Math.round(window.innerHeight-r.top+4)+'px';
-      dd.style.maxHeight=Math.round(Math.max(120,spaceAbove))+'px';
+    dd.style.bottom='auto';
+    dd.style.maxHeight=Math.round(maxHeight)+'px';
+    if(below){dd.style.top=Math.round(r.bottom+4)+'px';}
+    else{
+      // A short list should touch the input instead of floating maxHeight away.
+      const height=dd.getBoundingClientRect().height;
+      dd.style.top=Math.round(Math.max(top+4,r.top-4-height))+'px';
     }
   }
   function rdd(f){
-    let h='',n=0;const q=(f||'').toLowerCase();
+    let h='',n=0;const q=(f||'').trim().toLowerCase();
     CG.forEach(g=>{
       const m=g.c.filter(c=>!q||c.n.includes(q)||c.i.includes(q)||g.g.includes(q)||(c.p&&c.p.toLowerCase().includes(q)));
       if(!m.length)return;
-      h+=`<div class="cg">${g.g}</div>`;
-      m.forEach(c=>{h+=`<div class="co" data-i="${c.i}" data-n="${c.n}"><span>${c.n}</span><span class="cp">${g.g}</span></div>`;n++;});
+      h+=`<div class="cg" role="presentation">${g.g}</div>`;
+      m.forEach(c=>{h+=`<button type="button" class="co" role="option" aria-selected="false" tabindex="-1" id="city-option-${c.i}" data-i="${c.i}"><span>${c.n}</span><span class="cp">${g.g}</span></button>`;n++;});
     });
-    if(!n)h='<div style="padding:18px;text-align:center;color:var(--c-text-3);font-size:.82em">未找到</div>';
-    dd.innerHTML=h;ai=-1;
-    dd.querySelectorAll('.co').forEach(el=>el.addEventListener('mousedown',e=>{e.preventDefault();sel(el.dataset.i,el.dataset.n);}));
+    if(!n)h='<div class="cg" role="presentation">未找到城市，请选择附近城市</div>';
+    dd.innerHTML=h;ai=-1;inp.removeAttribute('aria-activedescendant');
   }
   function openDD(){
-    placeDropdown();dd.classList.add('show');
+    if(!document.getElementById('formModal')?.classList.contains('open'))return;
+    dd.classList.add('show');inp.setAttribute('aria-expanded','true');placeDropdown();
   }
-  function sel(i,n){hid.value=i;inp.value=n;dd.classList.remove('show');dd.style.bottom='';}
-  inp.addEventListener('focus',()=>{rdd(inp.value===(CD[hid.value]||{}).n?'':inp.value);openDD();});
-  inp.addEventListener('input',()=>{rdd(inp.value);hid.value='';openDD();});
-  inp.addEventListener('blur',()=>setTimeout(()=>dd.classList.remove('show'),150));
-  window.addEventListener('resize',()=>{if(dd.classList.contains('show'))placeDropdown();});
-  window.addEventListener('scroll',()=>{if(dd.classList.contains('show'))placeDropdown();},true);
+  function updateActive(opts){
+    opts.forEach((option,index)=>{
+      const active=index===ai;option.classList.toggle('act',active);
+      option.setAttribute('aria-selected',String(active));
+    });
+    if(opts[ai]){
+      inp.setAttribute('aria-activedescendant',opts[ai].id);
+      opts[ai].scrollIntoView({block:'nearest'});
+    }else inp.removeAttribute('aria-activedescendant');
+  }
+  inp.addEventListener('focus',()=>{clearTimeout(blurTimer);rdd(inp.value===(CD[hid.value]||{}).n?'':inp.value);openDD();});
+  inp.addEventListener('input',()=>{hid.value='';rdd(inp.value);openDD();});
+  inp.addEventListener('blur',()=>{blurTimer=setTimeout(closeCityDropdown,200);});
+  // mousedown prevents an early blur; click also fires reliably for touch and
+  // assistive technology on the semantic button, including older iOS Safari.
+  dd.addEventListener('mousedown',e=>{if(e.target.closest('.co'))e.preventDefault();});
+  dd.addEventListener('click',e=>{const option=e.target.closest('.co');if(option){clearTimeout(blurTimer);selectBirthCity(option.dataset.i);}});
+  const reposition=()=>{
+    if(!dd.classList.contains('show'))return;
+    const r=inp.getBoundingClientRect(),sheet=document.querySelector('#formModal .form-modal-sheet')?.getBoundingClientRect();
+    const viewport=window.visualViewport,top=viewport?.offsetTop||0,bottom=top+(viewport?.height||window.innerHeight);
+    if(r.bottom<=Math.max(top,sheet?.top??top)||r.top>=Math.min(bottom,sheet?.bottom??bottom))closeCityDropdown();
+    else placeDropdown();
+  };
+  window.addEventListener('resize',reposition);
+  window.addEventListener('scroll',reposition,true);
+  window.visualViewport?.addEventListener('resize',reposition);
+  window.visualViewport?.addEventListener('scroll',reposition);
   inp.addEventListener('keydown',e=>{
+    // Enter/Escape may belong to the Chinese input method, not the picker.
+    if(e.isComposing||e.keyCode===229)return;
     const opts=dd.querySelectorAll('.co');
-    if(e.key==='ArrowDown'){e.preventDefault();ai=Math.min(ai+1,opts.length-1);opts.forEach((o,i)=>o.classList.toggle('act',i===ai));if(opts[ai])opts[ai].scrollIntoView({block:'nearest'});}
-    else if(e.key==='ArrowUp'){e.preventDefault();ai=Math.max(ai-1,0);opts.forEach((o,i)=>o.classList.toggle('act',i===ai));}
-    else if(e.key==='Enter'){e.preventDefault();if(ai>=0&&opts[ai])sel(opts[ai].dataset.i,opts[ai].dataset.n);}
-    else if(e.key==='Escape')dd.classList.remove('show');
+    if(e.key==='ArrowDown'){e.preventDefault();if(!dd.classList.contains('show'))openDD();ai=Math.min(ai+1,opts.length-1);updateActive(opts);}
+    else if(e.key==='ArrowUp'){e.preventDefault();ai=Math.max(ai-1,0);updateActive(opts);}
+    else if(e.key==='Enter'){
+      e.preventDefault();
+      if(ai>=0&&opts[ai])selectBirthCity(opts[ai].dataset.i);
+      else{
+        const match=resolveBirthCity();
+        if(match)selectBirthCity(match.id);
+        else showFormError(CITY_SELECTION_MESSAGE,inp);
+      }
+    }
+    else if(e.key==='Escape'&&dd.classList.contains('show')){e.stopPropagation();closeCityDropdown();}
   });
-  window.rdd=rdd;window.sel=sel;
-})();;
+  window.rdd=rdd;window.sel=selectBirthCity;
+})();
 
 /* 首页汉堡菜单 */
 function toggleHomeMenu(force){
@@ -760,94 +826,11 @@ function toggleHomeMenu(force){
   dw.classList.toggle('open',open);
   dw.inert=!open;
   dw.setAttribute('aria-hidden',String(!open));
-  if(open)dw.querySelector('.home-menu-close')?.focus({preventScroll:true});
-  else if(dw.contains(document.activeElement))btn.focus({preventScroll:true});
+  if(open)focusSafely(dw.querySelector('.home-menu-close'));
+  else if(dw.contains(document.activeElement))focusSafely(btn);
   document.body.style.overflow=open?'hidden':'';
 }
 window.toggleHomeMenu=toggleHomeMenu;
-
-/* ---------- 首页右上角：光球调色盘 ---------- */
-let _orbPaletteBound=false;
-function orbPaletteApply(key){
-  const orb=window._tjLiquidOrb;
-  if(orb&&orb.setColor)orb.setColor(key);
-  const presets=orb&&orb.getPresets?orb.getPresets():[];
-  const cur=orb&&orb.getColorKey?orb.getColorKey():key;
-  const sw=presets.find((p)=>p.key===key);
-  // 同步按钮图标渐变色
-  const btn=document.getElementById('homeOrbPaletteBtn');
-  if(btn&&sw){
-    const stops=btn.querySelectorAll('[id="homeOrbBtnBody"] stop');
-    if(stops.length>=3){
-      stops[0].setAttribute('stop-color',lighten(sw.swatch,46));
-      stops[1].setAttribute('stop-color',lighten(sw.swatch,22));
-      stops[2].setAttribute('stop-color',sw.swatch);
-    }
-  }
-  // 高亮选中
-  const grid=document.getElementById('homeOrbPaletteGrid');
-  if(grid){
-    grid.querySelectorAll('.home-orb-palette-swatch').forEach((el)=>{
-      el.classList.toggle('active', el.dataset.key===cur);
-    });
-  }
-  // 同步 P2 菜单里的主题色板高亮
-  const p2grid=document.getElementById('p2OrbPaletteGrid');
-  if(p2grid){
-    p2grid.querySelectorAll('.p2-orb-palette-swatch').forEach((el)=>{
-      el.classList.toggle('active', el.dataset.key===cur);
-    });
-  }
-  if(typeof _syncP2Orb==='function')_syncP2Orb();
-}
-function hexToRgb(hex){
-  hex=hex.replace('#','');
-  if(hex.length===3)hex=hex.split('').map((c)=>c+c).join('');
-  return { r:parseInt(hex.slice(0,2),16), g:parseInt(hex.slice(2,4),16), b:parseInt(hex.slice(4,6),16) };
-}
-function mixHex(hex, target, t){
-  const a=hexToRgb(hex), b=hexToRgb(target);
-  const m=(x,y)=>Math.round(x+(y-x)*t);
-  return 'rgb('+m(a.r,b.r)+','+m(a.g,b.g)+','+m(a.b,b.b)+')';
-}
-function lighten(hex,pct){
-  return mixHex(hex,'#ffffff',pct/100);
-}
-function buildOrbPalette(){
-  const grid=document.getElementById('homeOrbPaletteGrid');
-  if(!grid)return;
-  const orb=window._tjLiquidOrb;
-  const presets=orb&&orb.getPresets?orb.getPresets():[];
-  const cur=orb&&orb.getColorKey?orb.getColorKey():'brand';
-  grid.innerHTML='';
-  presets.forEach((p)=>{
-    const el=document.createElement('button');
-    el.type='button';
-    el.className='home-orb-palette-swatch'+(p.key===cur?' active':'');
-    el.dataset.key=p.key;
-    el.style.background='radial-gradient(circle at 32% 30%, '+lighten(p.swatch,42)+', '+p.swatch+' 70%)';
-    el.setAttribute('aria-label',p.name);
-    el.title=p.name;
-    el.onclick=function(e){ e.stopPropagation(); orbPaletteApply(p.key); };
-    grid.appendChild(el);
-  });
-  // 按钮点击切换面板
-  const btn=document.getElementById('homeOrbPaletteBtn');
-  const panel=document.getElementById('homeOrbPalettePanel');
-  if(btn&&panel&&!_orbPaletteBound){
-    _orbPaletteBound=true;
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();
-      panel.classList.toggle('open');
-    });
-    document.addEventListener('click',function(){
-      if(panel.classList.contains('open'))panel.classList.remove('open');
-    });
-  }
-  orbPaletteApply(cur);
-}
-window.orbPaletteApply=orbPaletteApply;
-
 
 /* 推演结果页汉堡菜单 */
 function toggleP2Menu(force){
@@ -863,8 +846,8 @@ function toggleP2Menu(force){
   ov.classList.toggle('open',open);
   dw.classList.toggle('open',open);
   document.body.style.overflow=open?'hidden':'';
-  /* 打开时同步主题选择器和光球主题色 */
-  if(open){_syncP2ThemeSeg();_syncP2Orb();}
+  /* 打开时同步浅色、深色与跟随系统设置。 */
+  if(open)_syncP2ThemeSeg();
 }
 window.toggleP2Menu=toggleP2Menu;
 
@@ -885,55 +868,6 @@ function _syncP2ThemeSeg(){
     });
   }
 }
-
-/* P2 菜单内联光球主题色切换 */
-let _p2OrbBound=false;
-function _syncP2Orb(){
-  const grid=document.getElementById('p2OrbPaletteGrid');
-  const btn=document.getElementById('p2OrbBtn');
-  if(!grid)return;
-  const orb=window._tjLiquidOrb;
-  const cur=orb&&orb.getColorKey?orb.getColorKey():'brand';
-  grid.querySelectorAll('.p2-orb-palette-swatch').forEach((el)=>{
-    el.classList.toggle('active',el.dataset.key===cur);
-  });
-  if(btn){
-    btn.style.setProperty('--p2-orb-accent','var(--c-accent)');
-  }
-}
-function buildP2OrbPalette(){
-  const grid=document.getElementById('p2OrbPaletteGrid');
-  if(!grid)return;
-  const orb=window._tjLiquidOrb;
-  const presets=orb&&orb.getPresets?orb.getPresets():[];
-  if(presets.length)grid.innerHTML='';
-  presets.forEach((p)=>{
-    const el=document.createElement('button');
-    el.type='button';
-    el.className='p2-orb-palette-swatch';
-    el.dataset.key=p.key;
-    el.style.background='radial-gradient(circle at 32% 30%, '+lighten(p.swatch,42)+', '+p.swatch+' 70%)';
-    el.setAttribute('aria-label',p.name);
-    el.title=p.name;
-    el.onclick=function(e){ e.stopPropagation(); orbPaletteApply(p.key); };
-    grid.appendChild(el);
-  });
-  const btn=document.getElementById('p2OrbBtn');
-  const palette=document.getElementById('p2OrbPalette');
-  if(btn&&palette&&!_p2OrbBound){
-    _p2OrbBound=true;
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();
-      palette.classList.toggle('open');
-    });
-    document.addEventListener('click',function(){
-      if(palette.classList.contains('open'))palette.classList.remove('open');
-    });
-  }
-  _syncP2Orb();
-}
-window.buildP2OrbPalette=buildP2OrbPalette;
-window._syncP2Orb=_syncP2Orb;
 
 /* 离开报告页时自动关闭 p2 菜单 */
 (function(){
@@ -1355,12 +1289,6 @@ function toggleDensity(){
     setTimeout(()=>rip.remove(),700);
   });
 })();
-
-/* Keep report color settings, but do not animate the replaced home orb. */
-onWindowLoad(function(){
-  initLiquidOrb({animate:false});
-  if (typeof buildP2OrbPalette === 'function') buildP2OrbPalette();
-});
 
 /* ===== iOS 27 Liquid Glass：强度切换 + 标签栏指示条液化滑动 ===== */
 /* ===== 新手版 / 大师版：术语解释 + 专业数据折叠 ===== */
