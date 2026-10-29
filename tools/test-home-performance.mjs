@@ -1,3 +1,4 @@
+import { spinFor } from './trait-picker-helper.mjs';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -74,8 +75,8 @@ async function openContext(homeTheme = 'wenwen') {
 }
 
 async function choose(page, id) {
-  await page.waitForSelector(`[data-trait="${id}"]`, { timeout: 15000 });
-  await page.click(`[data-trait="${id}"]`);
+  await page.waitForSelector('#traitMachine[data-ready="true"]', { timeout: 15000 });
+  await spinFor(page, id);
   const theme = HOME_THEMES[id];
   await page.waitForFunction((role, portrait, room) => {
     const p = document.querySelector('[data-character-asset="portrait"]');
@@ -101,9 +102,11 @@ try {
     await waitForHeld(gate, '/assets/index-');
     await page.waitForFunction(() => document.querySelector('#traitStatus')?.textContent.includes('请检查网络'), { timeout: 5000 });
     assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
+    assert.equal(await page.$$eval('#traitSpin, #traitLever', buttons => buttons.every(button => button.disabled)), true, '模块未就绪时不能触发无效转动');
     await gate.release();
     await navigation;
-    await page.waitForSelector('#traitOptions button', { timeout: 15000 });
+    await page.waitForSelector('#traitMachine[data-ready="true"]', { timeout: 15000 });
+    assert.equal(await page.$eval('#traitSpin', el => el.disabled), false, '入口加载完成后可以转动');
     assert.equal(await page.$eval('#traitStatus', el => el.textContent), '');
     assert.deepEqual(errors, []);
     await context.close();
@@ -116,7 +119,7 @@ try {
     await page.setRequestInterception(true);
     const gate = gateRequests(page, () => false);
     await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#traitOptions button');
+    await page.waitForSelector('#traitMachine[data-ready="true"]');
     const portraits = Object.values(HOME_THEMES).map(item => item.character.assets.portrait.src.split('/').at(-1));
     assert.ok(!gate.seen.some(url => portraits.some(file => url.endsWith('/' + file))), '选择之前不应下载人物主图');
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined, '旧存储不能使角色预先选定');
@@ -229,10 +232,10 @@ try {
     await page.setRequestInterception(true);
     const gate = gateRequests(page, url => url.endsWith('/yuchen-empress.webp'));
     await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-trait="yuchen"]');
-    await page.click('[data-trait="yuchen"]');
+    await page.waitForSelector('#traitMachine[data-ready="true"]');
+    await spinFor(page, 'yuchen');
     await waitForHeld(gate, '/yuchen-empress.webp');
-    assert.equal(await page.$$eval('#traitOptions button', buttons => buttons.every(button => button.disabled)), true);
+    assert.equal(await page.$$eval('#traitSpin, #traitLever, #traitConfirm', buttons => buttons.every(button => button.disabled)), true);
     await page.waitForFunction(() => document.documentElement.dataset.homeTheme === 'yuchen', { timeout: 5000 });
     assert.equal(await page.$eval('[data-character-asset="portrait"]', image => getComputedStyle(image).visibility), 'hidden');
     await gate.release();
@@ -307,7 +310,7 @@ try {
     await client.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 200 * 1024, uploadThroughput: 200 * 1024 });
     await client.send('Emulation.setCPUThrottlingRate', { rate: 4 });
     await page.goto(base, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForSelector(`[data-trait="${id}"]`, { timeout: 30000 });
+    await page.waitForSelector('#traitMachine[data-ready="true"]', { timeout: 30000 });
     const start = Date.now();
     await choose(page, id);
     const elapsed = Date.now() - start;

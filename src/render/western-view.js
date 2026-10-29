@@ -487,11 +487,11 @@ export function renderWesternAstrologySection(ctx) {
     '<div class="w3d-loading"><span class="w3d-load-ring"></span><span>星空正在编译中...</span></div>' +
     '<div class="w3d-ov">' +
       '<div class="w3d-ov-chips">' +
-        '<span>☉ 太阳 ' + sun.name + '</span>' +
-        '<span>☽ 月亮 ' + moon.name + '</span>' +
-        '<span>ASC 上升 ' + asc.name + '</span>' +
+        '<span>☉ 太阳 <b data-report-value="sun">' + sun.name + '</b></span>' +
+        '<span>☽ 月亮 <b data-report-value="moon">' + moon.name + '</b></span>' +
+        '<span>ASC 上升 <b data-report-value="asc">' + asc.name + '</b></span>' +
       '</div>' +
-      '<div class="w3d-ov-take"><b>核心气质</b>' + sun.tag + '。主导能量为' + chart.dominantElem.name + '，在' + sun.career.slice(0, 24) + '等领域展现天赋优势。</div>' +
+      '<div class="w3d-ov-take">' + sun.tag + ' · 主要元素：' + chart.dominantElem.name + '</div>' +
     '</div>' +
   '</div>';
 

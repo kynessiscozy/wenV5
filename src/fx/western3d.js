@@ -597,6 +597,15 @@ function buildNum(THREE, container, data) {
 
 const BUILDERS = { astro: buildAstro, horo: buildHoro, num: buildNum };
 
+// Reduced motion avoids an animation loop, but an intentional drag, zoom or
+// reset must still update the displayed frame immediately.
+function redrawInteraction(s) {
+  if (!s || !reducedMotion()) return;
+  s._applyOrbit?.();
+  if (s.composer) s.composer.render();
+  else s.renderer.render(s.scene, s.camera);
+}
+
 /* —— 共享轨道拖拽:双轴球坐标 + 惯性 + 滚轮缩放 ——
    触控端 touch-action:pan-y —— 横向拖旋转、纵向留给你滚动页面 */
 function attachOrbit(s, container) {
@@ -620,12 +629,14 @@ function attachOrbit(s, container) {
     o.phi = Math.max(o.minPhi, Math.min(o.maxPhi, o.phi - dy * 0.003));
     o.vTheta = -dx * 0.0042 * 0.5;
     o.vPhi = -dy * 0.003 * 0.5;
+    redrawInteraction(s);
   };
   const onUp = () => { o.dragging = false; container.classList.remove('grabbing'); };
   const onWheel = e => {
     if (STATE.activeKey !== Object.keys(built).find(k => built[k] === s)) return;
     e.preventDefault();
     o.radius = Math.max(3.4, Math.min(8.5, o.radius + e.deltaY * 0.0032));
+    redrawInteraction(s);
   };
   container.addEventListener('pointerdown', onDown);
   container.addEventListener('pointermove', onMove);
@@ -648,8 +659,9 @@ const ORBIT_DEFAULTS = {
 };
 
 /* ---------- 生命周期 ---------- */
+const motionQuery = typeof window !== 'undefined' ? window.matchMedia?.('(prefers-reduced-motion: reduce)') : null;
 function reducedMotion() {
-  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return !!motionQuery?.matches;
 }
 
 async function ensure(key) {
@@ -684,6 +696,7 @@ async function ensure(key) {
       s.camera.aspect = w / h;
       s.camera.updateProjectionMatrix();
       if (s.composer) s.composer.setSize(w, h);
+      redrawInteraction(s);
     });
     s._ro.observe(container);
   }
@@ -717,7 +730,7 @@ function tick(key, t) {
 function start(key) {
   const s = built[key];
   if (!s || s.raf) return;
-  if (reducedMotion()) { s.anim(1000); s.renderer.render(s.scene, s.camera); return; }   // 降级：单帧
+  if (reducedMotion()) { s.anim(1000); if (s.composer) s.composer.render(); else s.renderer.render(s.scene, s.camera); return; }   // 降级：单帧
   // 立即渲染首帧（部分 headless/后台环境 RAF 不触发也不至于空屏）
   s.frames = 0;
   s.anim(800);
@@ -749,10 +762,19 @@ function stop(key) {
   s.frames = 0;
 }
 
+// Respect a changed system motion preference without requiring a reload.
+motionQuery?.addEventListener?.('change', () => {
+  const key = STATE.activeKey;
+  if (!key || !built[key] || STATE.disposed) return;
+  stop(key);
+  start(key);
+});
+
 function dispose(key) {
   stop(key);
   const s = built[key];
   if (!s) return;
+  s._ro?.disconnect();
   s.renderer.dispose();
   s.container.querySelector('canvas')?.remove();
   delete built[key];
@@ -800,6 +822,7 @@ function resetSceneView(key) {
     s.camera.position.setFromSphericalCoords(s.orbit.radius, s.orbit.phi, s.orbit.theta).add(s.orbit.target);
     s.camera.lookAt(s.orbit.target.x, s.orbit.target.y, s.orbit.target.z);
   }
+  redrawInteraction(s);
 }
 if (typeof window !== 'undefined') window._w3dReset = resetSceneView;
 

@@ -1,3 +1,4 @@
+import { spinFor } from './trait-picker-helper.mjs';
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 
@@ -23,8 +24,8 @@ async function newPage({ theme = 'wenwen', width = 390, height = 844, motion = '
   await page.setViewport({ width, height });
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: motion }]);
   await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 15000 });
-  await page.waitForSelector(`[data-trait="${theme}"]`);
-  await page.click(`[data-trait="${theme}"]`);
+  await page.waitForSelector('#traitMachine[data-ready="true"]');
+  await spinFor(page, theme);
   await page.waitForFunction((id, portrait) => {
     const image = document.querySelector('[data-character-asset="portrait"]');
     return window._tools2Ready === true && document.documentElement.dataset.homeReady === 'true' &&

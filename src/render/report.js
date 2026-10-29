@@ -810,15 +810,14 @@ export function renderQuickRead(secKey,d){
   const dg=d.dg,wx=d.wx,cDy=d.cDy,cLn=d.cLn,cLm=d.cLm;
   const items=[];
   if(secKey==='ming'){
-    items.push({l:'日主',v:dg+wx.dw,c:wx.dw});
+    items.push({l:'日主',v:dg+wx.dw,c:wx.dw,f:'day-master'});
     items.push({l:'强弱',v:wx.st?'身旺':'身弱'});
-    items.push({l:'用神',v:wx.ys,c:wx.ys});
+    items.push({l:'用神',v:wx.ys,c:wx.ys,f:'useful-element'});
     items.push({l:'格局',v:(d.pa&&d.pa[0])||'平和'});
-    // 将原命盘摘要直接并入「命盘一览」的说明行，不再生成独立摘要模块。
+    // Keep the calculated reading, but avoid repeating the four values above.
     const persona=getPersona(dg,wx,wx.st,d.ss||{});
-    const phase=(d.age||0)<28?'前期积累':(d.age||0)<38?'突破发力':(d.age||0)<48?'沉淀守成':'影响力期';
-    const direction=wx.st?'适合把判断转为行动，在关键节点主动争取':'适合先借助资源与协作，再稳步推进自己的计划';
-    const summary='命局以「<b>'+dg+wx.dw+'</b>」为本，'+(wx.st?'气场刚强宜主动':'气场柔顺宜借力')+'，关键在用神「<b style="color:'+WC[wx.ys]+'">'+wx.ys+'</b>」的把握。'+persona.思维+'；目前处于<b>'+phase+'</b>，'+direction+'，重点是保持稳定节奏，不必频繁改变方向。';
+    const direction=wx.st?'可以从主动推进与节奏平衡入手。':'可以从积累支持与保持节奏入手。';
+    const summary=persona.思维.replace(/（[^）]*）/g,'')+'。'+direction;
     return _qrCard('命盘速读',items,summary,[
       {k:'bazi',t:'查看四柱→'},{k:'wuxing',t:'五行结构→'},{k:'ziwei',t:'三式合参→'}
     ]);
@@ -849,7 +848,7 @@ export function renderQuickRead(secKey,d){
   return '';
 }
 export function _qrCard(title,items,summary,actions){
-  const itemsHtml=items.map(it=>`<div class="qr-item"><div class="qr-l">${it.l}</div><div class="qr-v"${it.c&&WC[it.c]?' style="color:'+WC[it.c]+'"':''}>${it.v}</div></div>`).join('');
+  const itemsHtml=items.map(it=>`<div class="qr-item"><div class="qr-l">${it.l}</div><div class="qr-v"${it.f?' data-report-value="'+it.f+'"':''}${it.c&&WC[it.c]?' style="color:'+WC[it.c]+'"':''}>${it.v}</div></div>`).join('');
   const actsHtml=(actions||[]).map(a=>`<button class="qr-act" onclick="jumpTo(null,'${a.k}')">${a.t}</button>`).join('');
   // 速读卡可折叠：头部整行可点，右侧箭头指示状态
   return `<div class="qr-card"><button type="button" class="qr-head" onclick="TJToggleQuickRead(this)" aria-expanded="true"><span class="qr-badge">速读</span><span class="qr-title">${title}</span><span class="qr-toggle" aria-hidden="true"></span></button><div class="qr-body"><div class="qr-body-inner"><div class="qr-grid">${itemsHtml}</div><div class="qr-summary">${summary}</div><div class="qr-acts">${actsHtml}</div></div></div></div>`;

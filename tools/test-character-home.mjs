@@ -1,3 +1,4 @@
+import { spinFor } from './trait-picker-helper.mjs';
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 import { WENWEN } from '../src/character/wenwen.js';
@@ -66,10 +67,10 @@ async function newPage(width, height, options = {}) {
     key: options.key, mode: options.mode, history: options.history, finePointer: !!options.finePointer,
   });
   await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 15000 });
-  await page.waitForSelector('#traitOptions button', { timeout: 15000 });
+  await page.waitForSelector('#traitMachine[data-ready="true"]', { timeout: 15000 });
   if (options.picker) return { page, context };
   const role = options.homeTheme || 'wenwen';
-  await page.click(`[data-trait="${role}"]`);
+  await spinFor(page, role);
   await page.waitForFunction(id => window._tools2Ready === true && document.documentElement.dataset.homeReady === 'true' && document.documentElement.dataset.homeTheme === id && document.getElementById('traitSelection').hidden, { timeout: 15000 }, role);
   await page.waitForFunction(() => {
     const images = [...document.querySelectorAll('.character-portrait img, .character-prop img')].filter(image => !image.hidden);
@@ -198,27 +199,31 @@ try {
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined, '旧存储不能绕过首次选择');
     assert.equal(await page.$eval('#page1', el => el.inert), true);
     assert.equal(await page.$eval('#traitSelection', el => el.getAttribute('aria-modal')), 'true');
-    assert.deepEqual(await page.$$eval('#traitOptions button', buttons => buttons.map(button => [button.dataset.trait, button.querySelector('.trait-name').textContent])), [
-      ['wenwen', '温柔'], ['moonfox', '神秘'], ['diyan', '威严'], ['yuchen', '从容'], ['qinglan', '洒脱'], ['xingling', '魅惑'],
-      ['luye', '好奇'], ['suyan', '自信'],
-    ]);
+    assert.equal(await page.$('#traitOptions'), null, '只能通过老虎机选择特质');
     assert.equal(await page.$$('.trait-role').then(els => els.length), 0);
-    assert.ok(!/问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言/.test(await page.$eval('#traitSelection', el => el.textContent)), '选择页不应暴露人物名称');
-    assert.equal(await page.$$eval('.trait-mark', marks => marks.every(mark => mark.getAttribute('aria-hidden') === 'true')), true);
+    const pickerText = await page.$eval('#traitSelection', el => el.textContent);
+    assert.ok(!/问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言/.test(pickerText), '选择页不应暴露人物名称');
+    assert.ok(!/让心意|转个方向|直接选择/.test(pickerText), '删除旧标题和直接选择文案');
     const choiceTree = await (await page.createCDPSession()).send('Accessibility.getFullAXTree');
-    const traits = ['温柔', '神秘', '威严', '从容', '洒脱', '魅惑', '好奇', '自信'];
-    const choiceNames = choiceTree.nodes.filter(node => !node.ignored && ['button', 'togglebutton'].includes(node.role?.value) && traits.includes(node.name?.value)).map(node => node.name?.value);
-    assert.deepEqual(choiceNames, traits, '屏幕阅读器也只应读出特质');
+    const choiceNames = choiceTree.nodes.filter(node => !node.ignored && ['button', 'togglebutton'].includes(node.role?.value)).map(node => node.name?.value);
+    assert.ok(choiceNames.some(name => name?.includes('转一转')), '屏幕阅读器可以操作随机转轮');
+    assert.ok(!choiceNames.some(name => /问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言/.test(name || '')), '屏幕阅读器也不暴露角色名');
     const fetched = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name));
     assert.ok(!fetched.some(name => /(?:wenwen-reimagined|moon-fox-reimagined|earthfire-sovereign|yuchen-empress|qinglan|xingling|luye|suyan)\.webp/.test(name)), '未选择前不应预加载任何主图');
     await page.keyboard.press('Tab');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'traitSpin', '老虎机可以用键盘操作');
-    await page.focus('[data-trait="wenwen"]');
-    await page.keyboard.press('ArrowRight');
-    assert.equal(await page.evaluate(() => document.activeElement.dataset.trait), 'moonfox');
-    assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined, '方向键只移动焦点，不应选择角色');
     await page.keyboard.press('Escape');
     assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
+    // Force a reproducible spin in the test, but use only the real keyboard controls.
+    await page.evaluate(() => {
+      window.__keyboardRandom = crypto.getRandomValues;
+      crypto.getRandomValues = value => { value[0] = 0x30000000; return value; };
+    });
+    await page.keyboard.press('Enter');
+    await page.evaluate(() => { crypto.getRandomValues = window.__keyboardRandom; delete window.__keyboardRandom; });
+    await page.waitForFunction(() => document.getElementById('traitConfirm').dataset.result === 'moonfox' && !document.getElementById('traitConfirm').hidden);
+    assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined, '转动后必须确认');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'traitConfirm');
     await page.keyboard.press('Enter');
     await page.waitForFunction(() => document.getElementById('traitSelection').hidden && document.documentElement.dataset.homeTheme === 'moonfox');
     assert.equal(await page.$eval('#page1', el => el.inert), false);
@@ -227,10 +232,10 @@ try {
     await page.evaluate(() => {
       localStorage.setItem('tj_home_character', 'yuchen');
       window.dispatchEvent(new StorageEvent('storage', { key: 'tj_home_character', newValue: 'yuchen' }));
-      document.querySelector('[data-trait="diyan"]').click();
+      document.getElementById('traitSpin').click();
     });
     await new Promise(resolve => setTimeout(resolve, 250));
-    assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'moonfox', '后台存储或隐藏选择项不能意外更改角色');
+    assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'moonfox', '后台存储或隐藏轮盘不能意外更改角色');
     await page.click('#homeTraitReset');
     assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
     assert.equal(await page.$eval('#page1', el => el.inert), true, '重选时应屏蔽背景');
@@ -239,15 +244,15 @@ try {
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'moonfox', '取消不能更改原角色');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'homeTraitReset', '取消后焦点返回入口');
     await page.click('#homeTraitReset');
-    await page.click('[data-trait="diyan"]');
+    await spinFor(page, 'diyan');
     await page.waitForFunction(() => document.documentElement.dataset.homeTheme === 'diyan' && document.getElementById('traitSelection').hidden);
     assert.equal(await page.$eval('#page1', el => el.inert), false);
     assert.equal(await page.evaluate(() => document.activeElement.id), 'homeTraitReset', '选择完成后焦点返回入口');
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-trait="yuchen"]');
+    await page.waitForSelector('#traitMachine[data-ready="true"]');
     assert.equal(await page.$eval('#traitSelection', el => el.hidden), false, '刷新后必须重新选择');
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined);
-    await page.click('[data-trait="yuchen"]');
+    await spinFor(page, 'yuchen');
     await page.waitForFunction(() => document.documentElement.dataset.homeTheme === 'yuchen' && document.getElementById('traitSelection').hidden);
     await context.close();
   }
@@ -261,16 +266,15 @@ try {
       const picker = document.getElementById('traitSelection');
       return { scrollWidth: picker.scrollWidth, width: picker.clientWidth,
         scrollHeight: picker.scrollHeight, height: picker.clientHeight,
-        rects: [...picker.querySelectorAll('.trait-choice')].map(button => button.getBoundingClientRect().toJSON()),
+        machine: picker.querySelector('#traitMachine').getBoundingClientRect().toJSON(),
         spin: picker.querySelector('#traitSpin').getBoundingClientRect().toJSON(),
         lever: picker.querySelector('#traitLever').getBoundingClientRect().toJSON() };
     });
-    assert.equal(layout.rects.length, 8);
     assert.equal(layout.scrollWidth, layout.width, '选择页不能横向溢出');
-    assert.ok([...layout.rects, layout.spin, layout.lever].every(rect => rect.left >= 0 && rect.right <= width && rect.top >= 0 && rect.bottom <= height), `${width}x${height}: 特质、转动与拉杆应完整可见`);
+    assert.ok([layout.machine, layout.spin, layout.lever].every(rect => rect.left >= 0 && rect.right <= width && rect.top >= 0 && rect.bottom <= height), `${width}x${height}: 特质、转动与拉杆应完整可见`);
     await context.close();
   }
-  console.log('✓ 八项特质在手机、横屏与桌面均完整可见');
+  console.log('✓ 轮盘、转动按钮与拉杆在手机、横屏与桌面均完整可见');
 
   // Different tabs choose independently and cannot switch each other's companion.
   {
@@ -278,14 +282,14 @@ try {
     const other = await context.newPage();
     await other.setViewport({ width: 390, height: 844 });
     await other.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await other.waitForSelector('[data-trait="diyan"]');
-    await other.click('[data-trait="diyan"]');
+    await other.waitForSelector('#traitMachine[data-ready="true"]');
+    await spinFor(other, 'diyan');
     await other.waitForFunction(() => document.documentElement.dataset.homeTheme === 'diyan' && document.getElementById('traitSelection').hidden);
     await other.evaluate(() => localStorage.setItem('tj_home_character', 'diyan'));
     await new Promise(resolve => setTimeout(resolve, 250));
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'wenwen');
     await page.click('#homeTraitReset');
-    await page.click('[data-trait="suyan"]');
+    await spinFor(page, 'suyan');
     await page.waitForFunction(() => document.documentElement.dataset.homeTheme === 'suyan' && document.getElementById('traitSelection').hidden);
     assert.equal(await other.$eval('html', el => el.dataset.homeTheme), 'diyan', '另一标签重选不能改变当前角色');
     await context.close();
@@ -302,11 +306,11 @@ try {
       if (request.url().endsWith('/yuchen-empress.webp')) held.push(request);
       else request.continue().catch(() => {});
     });
-    await page.click('[data-trait="yuchen"]');
+    await spinFor(page, 'yuchen');
     await page.waitForFunction(() => document.getElementById('traitSelection').getAttribute('aria-busy') === 'true');
-    assert.equal(await page.$$eval('#traitOptions button', buttons => buttons.every(button => button.disabled)), true);
+    assert.equal(await page.$$eval('#traitSpin, #traitLever, #traitConfirm', buttons => buttons.every(button => button.disabled)), true);
     assert.equal(await page.$eval('#traitStatus', el => el.textContent), '正在开启场景…', '加载状态也不能暴露人物名称');
-    await page.$eval('[data-trait="diyan"]', button => button.click());
+    await page.$eval('#traitSpin', button => button.click());
     await page.waitForFunction(() => document.getElementById('traitSelection').hidden, { timeout: 5000 });
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'yuchen');
     assert.equal(await page.$eval('[data-character-asset="portrait"]', el => el.getAttribute('src')), JADE_EMPRESS.assets.portrait.src);
@@ -523,12 +527,16 @@ try {
     await new Promise(resolve => setTimeout(resolve, 850)); // allow the initial composition to settle
     const rect = await page.$eval('#characterPortraitButton', el => el.getBoundingClientRect().toJSON());
     const x = rect.left + rect.width * .5, y = rect.top + rect.height * .45;
-    const before = await page.$eval('.character-camera-subject', el => getComputedStyle(el).transform);
+    // Compare the camera's target values rather than a potentially still
+    // interpolating CSS matrix on a busy/slow browser.
+    const cameraTarget = () => page.$eval('.character-camera-subject', el => {
+      const style = getComputedStyle(el);
+      return ['--camera-scale', '--camera-shift-x', '--camera-shift-y'].map(key => style.getPropertyValue(key));
+    });
+    const before = await cameraTarget();
     await page.mouse.move(x, y); await page.mouse.down(); await page.mouse.move(x + 45, y, { steps: 5 }); await page.mouse.up();
     assert.equal(await page.$eval('#characterScene', el => el.dataset.cameraShot), 'close');
-    const after = await page.$eval('.character-camera-subject', el => getComputedStyle(el).transform);
-    const values = matrix => matrix.match(/[-\d.]+/g).map(Number);
-    assert.ok(values(after).every((value, i) => Math.abs(value - values(before)[i]) < .05), '拖动不应改变近景，容许极小的动画取整误差');
+    assert.deepEqual(await cameraTarget(), before, '拖动不应改变近景的目标比例与位置');
     assert.equal(await page.$eval('#formModal', el => el.classList.contains('open')), false);
     await page.click('#characterPortraitButton');
     await page.waitForSelector('#formModal.open');
@@ -549,11 +557,11 @@ try {
     const { page, context } = await newPage(320, 568, { picker: true });
     const client = await page.createCDPSession();
     await client.send('Emulation.setEmulatedMedia', { features: [{ name: 'forced-colors', value: 'active' }] });
-    const colors = await page.$eval('[data-trait="wenwen"]', el => [getComputedStyle(el).color, getComputedStyle(el).backgroundColor]);
+    const colors = await page.$eval('#traitSpin', el => [getComputedStyle(el).color, getComputedStyle(el).backgroundColor]);
     assert.notEqual(colors[0], colors[1]);
     await page.keyboard.press('Tab');
     await page.keyboard.down('Shift'); await page.keyboard.press('Tab'); await page.keyboard.up('Shift');
-    assert.equal(await page.evaluate(() => document.activeElement.dataset.trait), 'suyan', '选择器应循环焦点');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'traitLever', '选择器应循环焦点');
     await page.keyboard.press('Escape');
     assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
     await context.close();

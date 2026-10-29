@@ -31,13 +31,10 @@
 }
 .trait-eyebrow { color: #d2b99d; font: 600 10px/1.4 var(--sf); letter-spacing: .3em; }
 .trait-eyebrow span { padding: 0 .5em; color: #e8ccaa; }
-.trait-selection #traitTitle {
-  margin: 12px 0 0; color: #fff6e7 !important;
-  font: 500 clamp(30px, 4vw, 43px)/1.3 var(--serif); letter-spacing: .1em !important;
-  text-shadow: 0 3px 25px rgba(0, 0, 0, .3);
+.trait-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
 }
-.trait-selection #traitTitle br { display: none; }
-.trait-intro { margin-top: 8px; color: #d8c8b9; font: 400 13px/1.6 var(--sf); letter-spacing: .07em; }
 
 /* The reel has one real outcome; the side drums are purely decorative. */
 .trait-machine {
@@ -144,20 +141,6 @@
 @keyframes trait-side-turn { from { transform: translateY(-12px); opacity: .6; } to { transform: translateY(12px); opacity: 1; } }
 
 .trait-confirm { margin-top: 12px; padding: 0 24px; }
-.trait-choice-label { margin: 17px 0 0; color: #d9c5b4; font: 500 11px/1.4 var(--sf); letter-spacing: .08em; }
-.trait-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: min(100%, 440px); margin: 9px auto 0; }
-.trait-choice {
-  --trait-color: #edc59d;
-  display: flex; align-items: center; justify-content: center; gap: 7px; min-width: 0; min-height: 40px; padding: 0 5px;
-  border: 1px solid rgba(241, 222, 193, .25); border-radius: 999px;
-  background: rgba(255, 250, 235, .055); color: #fff5e7; cursor: pointer; appearance: none;
-  transition: border-color .2s ease, background .2s ease, transform .2s ease !important;
-}
-.trait-choice:hover:not(:disabled), .trait-choice[aria-pressed="true"] { border-color: var(--trait-color); background: rgba(255, 250, 235, .12); }
-.trait-choice:disabled { cursor: wait; opacity: .65; }
-.trait-choice[data-pending="true"] { opacity: 1; border-color: var(--trait-color); }
-.trait-mark { width: 5px; height: 5px; flex: 0 0 5px; border-radius: 50%; background: var(--trait-color); box-shadow: 0 0 9px var(--trait-color); font-size: 0; }
-.trait-name { color: #fff5e8; font: 600 13px/1 var(--sf); white-space: nowrap; }
 .trait-status { min-height: 18px; margin-top: 10px; color: #f4debe; font: 12px/1.5 var(--sf); }
 .trait-hint { margin-top: 3px; color: #cfc0b3; font: 11px/1.5 var(--sf); }
 .trait-noscript { margin-top: 15px; color: #f7ddc1; font-size: 13px; }
@@ -166,37 +149,25 @@
 @media (max-width: 680px) {
   .trait-selection { padding-inline: 20px; }
   .trait-content { max-width: 410px; }
-  .trait-selection #traitTitle { font-size: 31px; }
-  .trait-choice { min-height: 42px; }
 }
 @media (max-height: 650px) and (orientation: portrait) {
-  .trait-selection { display: block; padding-block: 18px; }
+  .trait-selection { display: grid; place-items: safe center; padding-block: 18px; }
   .trait-content { margin: auto; }
-  .trait-selection #traitTitle { margin-top: 6px; font-size: 26px; }
-  .trait-intro { margin-top: 3px; }
   .trait-machine { --slot-row-height: 39px; margin-top: 10px; width: min(100% - 40px, 290px); }
   .trait-machine-crown { height: 24px; }
   .trait-machine-foot { height: 48px; }
   .trait-spin { min-height: 36px; }
-  .trait-choice-label { margin-top: 9px; }
-  .trait-options { gap: 6px; margin-top: 6px; }
-  .trait-choice { min-height: 36px; }
   .trait-status { margin-top: 6px; }
 }
 @media (max-height: 500px) and (orientation: landscape) {
-  .trait-selection { display: block; padding: 12px 22px; }
+  .trait-selection { display: grid; place-items: safe center; padding: 12px 22px; }
   .trait-content { display: grid; grid-template-columns: minmax(100px, .9fr) minmax(150px, 1.1fr); column-gap: 24px; align-items: center; max-width: 710px; margin: auto; }
   .trait-machine { --slot-row-height: 34px; grid-column: 1; grid-row: 1 / span 7; width: min(100% - 30px, 260px); margin: 0 auto; }
   .trait-machine-crown { height: 23px; }
   .trait-machine-foot { height: 45px; }
   .trait-spin { min-height: 34px; width: 130px; }
-  .trait-eyebrow, .trait-selection #traitTitle, .trait-intro, .trait-confirm, .trait-choice-label, .trait-options, .trait-status, .trait-hint, .trait-noscript { grid-column: 2; }
+  .trait-eyebrow, .trait-confirm, .trait-status, .trait-hint, .trait-noscript { grid-column: 2; }
   .trait-eyebrow { font-size: 9px; }
-  .trait-selection #traitTitle { margin-top: 4px; font-size: 25px; }
-  .trait-intro { margin-top: 3px; font-size: 11px; }
-  .trait-choice-label { margin-top: 7px; }
-  .trait-options { gap: 5px; margin-top: 5px; }
-  .trait-choice { min-height: 32px; }
   .trait-confirm { min-height: 32px; margin-top: 5px; }
   .trait-status { min-height: 12px; margin-top: 3px; }
   .trait-hint { margin-top: 1px; }
@@ -224,13 +195,7 @@
   .trait-lever { right: -25px; top: 31px; width: 31px; height: 88px; }
   .trait-lever-arm { left: 4px; bottom: 12px; width: 7px; height: 49px; }
   .trait-lever-knob { top: 10px; width: 20px; height: 20px; }
-  .trait-selection #traitTitle { font-size: 19px; }
   .trait-eyebrow { letter-spacing: .15em; font-size: 8px; }
-  .trait-intro { font-size: 10px; }
-  .trait-choice-label { font-size: 10px; }
-  .trait-name { font-size: 11px; }
-  .trait-choice { min-height: 27px; gap: 3px; }
-  .trait-mark { width: 3px; height: 3px; flex-basis: 3px; }
   /* The result is already shown on the reel and confirm button; keep the live
      announcement available to readers without crowding a very short screen. */
   .trait-status { position: absolute; width: 1px; height: 1px; min-height: 0; padding: 0; margin: 0; overflow: hidden; clip-path: inset(50%); }
@@ -239,19 +204,17 @@
 }
 @media (forced-colors: active) {
   .trait-selection { color: CanvasText; background: Canvas; }
-  .trait-selection #traitTitle, .trait-intro, .trait-eyebrow, .trait-hint, .trait-status, .trait-choice-label { color: CanvasText !important; text-shadow: none; }
+  .trait-eyebrow, .trait-hint, .trait-status { color: CanvasText !important; text-shadow: none; }
   .trait-machine-body, .trait-machine-window, .trait-side-reel, .trait-center-reel { background: Canvas; border-color: CanvasText; box-shadow: none; }
   .trait-reel-item, .trait-side-reel b, .trait-side-reel span, .trait-machine-crown, .trait-foot-ornament { color: CanvasText; text-shadow: none; }
   .trait-machine-window::before, .trait-machine-window::after, .trait-atmosphere, .trait-machine-aura { display: none; }
-  .trait-choice, .trait-spin, .trait-confirm, .trait-cancel { color: ButtonText; background: ButtonFace; border-color: ButtonText; box-shadow: none; }
+  .trait-spin, .trait-confirm, .trait-cancel { color: ButtonText; background: ButtonFace; border-color: ButtonText; box-shadow: none; }
   .trait-lever { border: 1px solid ButtonText; border-radius: 8px; background: ButtonFace; color: ButtonText; }
   .trait-lever::before { content: '转'; display: grid; place-items: center; height: 100%; }
   .trait-lever-arm, .trait-lever-knob { display: none; }
-  .trait-name { color: ButtonText; }
   .trait-selection button:focus-visible { outline-color: Highlight !important; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .trait-choice { transition: none !important; }
   .trait-machine[data-spinning="true"] .trait-lever-arm, .trait-machine[data-spinning="true"] .trait-lever-knob,
   .trait-machine[data-spinning="true"] .trait-machine-lights i, .trait-machine[data-spinning="true"] .trait-side-reel b { animation: none !important; }
 }
