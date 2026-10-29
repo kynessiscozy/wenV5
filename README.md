@@ -16,9 +16,11 @@ V5.0 是一次彻底的体系化升级：在东方命理之外引入完整的**�
 
 ### 2.5D 人物向导
 
-首页以完整、无框的 2.5D 向导「问问」陪伴探索：书斋里的书卷、天灯与柔和光芒呼应角色手中的心形星芒。「开启探索」和「日历」采用祥云轮廓，并复用角色流云的细节纹理。点击人物或「开启探索」进入出生信息表单。日历、指引、命盘报告、报告内 AI 问答、深浅主题和减少动态支持继续保留。
+每次打开或刷新页面，先选择一种特质：温柔、神秘、威严、从容、洒脱、魅惑、好奇或自信。选择界面只展示特质，不展示人物名称；八种特质各自对应一位古风或现代角色与独立场景，在本次页面中保持不变，刷新后可重新选择。首页以无框近景呈现角色，短横屏会维持清晰的人物近景，点击可见人物或「开启探索」进入出生信息表单；报告内 AI 助手仍由问问陪伴。
 
-角色名称、素材及可复用话题定义集中在 `src/character/wenwen.js`，`src/character/companion.js` 提供可挂载的选题与头像提示组件；首页、报告和问答复用同一角色。首页使用透明完整人物 `public/art/wenwen-divine.webp`、横竖屏书斋背景 `public/art/sacred-study-{wide,mobile}.webp`，以及可单独替换的天灯和流云素材。眨眼与说话是与新版人物对齐的可选透明表情层：眨眼为轻微待机动作，嘴型只在真实 AI 回复流入时变化；表情层需与人物尺寸一致，可用 `forPortrait` 绑定来源以防错叠。桌面场景跟随指针轻微产生景深，并遵循系统的减少动态设置。
+真实推演时播放角色专属的卷轴、狐尾、火焰符文、凤羽、剑风、星扇、唱机或相机对焦动画，四柱计算完成后显示实际结果，等待点击画面或「查看报告」继续。跳过动画与减少动态不会跳过结果确认。日历、报告、深浅主题、键盘操作与减少动态支持继续保留。
+
+各角色定义位于 `src/character/`，特质、角色、场景及其素材集中配置在 `src/ui/home-theme.js`；选择后只加载对应场景。要增加新角色，可新增角色定义及素材，再往 `HOME_THEMES` 添加带 `trait` 的配置；专属推演道具和动画分别在 `index.html` 与 `src/character-calculation.css` 扩展，并同步离线缓存和角色测试。人物点击轮廓可在 `src/character-theme.css` 中通过 `--character-hit-shape` 按素材调整；未指定时使用通用轮廓。眨眼与说话是可选透明表情层，须与人物尺寸一致，使用 `forPortrait` 绑定来源以防错叠。
 
 ### 双体系命理引擎
 
@@ -126,7 +128,10 @@ npm run preview      # 本地预览构建产物（默认 4173 端口）
 
 ```bash
 npm run test:unit    # 引擎单测(流日/合盘/塔罗/MBTI/西方星历/农历全量等)
-npm run test:character # 人物首页、对话框、报告与响应式交互
+npm run test:character # 特质选择、八角色近景及推演、响应式和键盘交互
+node tools/test-home-offline.mjs     # 生产子路径与离线缓存（先运行 npm run build）
+node tools/test-home-performance.mjs # 生产首屏与弱网加载（先运行 npm run build）
+npm run test:cache-upgrade # 旧缓存升级、预览资源与离线回退
 npm run test:e2e     # Puppeteer E2E 套件
 npm run test:a11y    # WCAG AA 对比度审计
 node tools/verify-bazi-v3.mjs     # 八字核心算法 123 项权威交叉验证

@@ -1,10 +1,13 @@
+import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 import puppeteer from 'puppeteer';
 const BASE=process.env.BASE_URL||'http://localhost:5173/';
 const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});
 const p=await b.newPage();await p.setViewport({width:430,height:932,deviceScaleFactor:2});
 const errs=[];p.on('pageerror',e=>errs.push(e.message));
 await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
-await p.evaluate(()=>window.calc(true));
+await selectHomeTrait(p);
+await p.waitForFunction(() => typeof window.calc === 'function', { timeout: 15000 });
+await openDemoReport(p);
 await new Promise(r=>setTimeout(r,4200));
 console.log('=== 新手首屏数据位 ===');
 console.log(await p.evaluate(()=>[...document.querySelectorAll('.beginner-basic > div')]

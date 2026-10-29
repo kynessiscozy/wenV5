@@ -42,11 +42,8 @@ import {
 } from './share/long-report.js';
 import { initTools3DRingCarousel } from './render/tools-ring.js';
 import { initLiquidOrb } from './fx/liquid-orb.js';
-import { initCharacterScene } from './ui/character-scene.js';
-import { initCharacterCamera } from './ui/character-camera.js';
-import { initCharacterCompanion } from './ui/character-companion.js';
-import { initHomeTheme } from './ui/home-theme.js';
-import { burstToArmillary } from './fx/burst.js';
+import { characterCompanion } from './home.js';
+import { beginCharacterCalculation, warmCharacterCalculation } from './ui/character-calculation.js';
 import { TJX } from './state/tjx.js';
 import { getResultStyle } from './state/result-style.js';
 
@@ -98,33 +95,32 @@ import {
   openAsk, closeAsk, newAskChat, aiToolRequest, doAsk, doAskCustom,
   aiSwitchCat, aiRefreshChips, aiOnInputSuggest, generateAnswer, getAiBasis, setAiBasis,
   getAISettings, getApiKey, toggleAISettings, initAISettings, buildAISettingsPanel,
-  initTheme, toggleTheme, applyThemePref, getThemePref
+  applyThemePref, getThemePref
 } from './ui/index.js';
 import { initFontSize } from './font-size.js';
 import { initWeather, getWxGeo } from './ui/weather.js';
 import { initOnboarding, openNoviceGuide, closeNoviceGuide, switchNoviceGuideTab, initGlobalNoviceGuide } from './onboarding.js';
 import { initEvolveUI } from './evolve/ui.js';
+
+// This module can arrive after DOMContentLoaded or load on a slow connection.
+function onDomReady(callback){
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',callback,{once:true});
+  else queueMicrotask(callback);
+}
+function onWindowLoad(callback){
+  if(document.readyState==='complete')queueMicrotask(callback);
+  else window.addEventListener('load',callback,{once:true});
+}
+
 /* tools2 改为动态 import（见文件末尾 bootstrap 处）：
    工具系统体积大且非首屏必需，独立成异步 chunk，缩小主包。 */
 
-initTheme();
 initWeather();
 initSectionTabs();
 initNavigationUI();
 initAISettings();
 initFontSize();
 initEvolveUI();
-initCharacterScene();
-initCharacterCamera();
-
-const characterCompanion = initCharacterCompanion({
-  openForm: () => window.TJOpenForm?.(),
-  // A report prompt should never toggle an already open assistant shut.
-  openAsk: () => {
-    if (!document.getElementById('aiSheet')?.classList.contains('open')) openAsk();
-  },
-});
-initHomeTheme({ setHomeCharacter: characterCompanion.setHomeCharacter });
 
 /* ============================================================
    全局函数暴露：index.html 和动态生成的 onclick 需要全局访问
@@ -314,7 +310,9 @@ initHomeTheme({ setHomeCharacter: characterCompanion.setHomeCharacter });
   };
 })();
 
+let calculationInProgress=false;
 async function calc(isDemoPreview=false){
+  if(calculationInProgress)return;
   const bd=document.getElementById('bDate').value;if(!bd)return showToast('请选择出生日期');
   const timeStr=document.getElementById('bTime').value||'09:00';const[hh,mm]=timeStr.split(':').map(Number);
   const bp=document.getElementById('bPlace').value||'beijing';const gen=document.getElementById('bGen').value;
@@ -351,73 +349,56 @@ async function calc(isDemoPreview=false){
     }
   }
 
-  // —— 新过渡：界面淡出，表单化为粒子缓慢汇入星环，浑天仪加速涌动 ——
-  if(fromForm){
-    try{doCompute();}catch(e){
-      console.error(e);
-      showToast('推演出错：'+e.message+'\n\n建议：请检查输入信息是否正确，或刷新页面重试。');
-      return; // 出错时留在表单里，方便修改后重试
+  // 日历录入只更新档案并留在日历；所有真正打开报告的入口共享同一推演场景。
+  const calModal=document.getElementById('toolModal');
+  const fromCalendar=fromForm&&!!(calModal&&calModal.classList.contains('cal-fullscreen'));
+  const previous={ctx:window._ctx,bazi:window._baziData,report:window._reportData,dirty:window._formDirty,
+    accent:window._accentRGB,yongShen:document.documentElement.getAttribute('data-yongshen')};
+  calculationInProgress=true;
+  let scene=null,completed=false;
+  try{
+    if(!fromCalendar){
+      scene=beginCharacterCalculation();
+      if(scene)await scene.paint(); // 让角色场景先绘制，再执行同步排盘
     }
-    // 日历场景下：录入八字后留在日历并重渲染，不跳转到报告页
-    const calModal=document.getElementById('toolModal');
-    if(calModal&&calModal.classList.contains('cal-fullscreen')){
+    doCompute();
+    if(fromCalendar){
       formModal.classList.remove('open');
       document.body.classList.remove('form-open');
-      const mb1=document.getElementById('homeMenuBtn');if(mb1)mb1.style.display='';
+      const mb=document.getElementById('homeMenuBtn');if(mb)mb.style.display='';
       window.dispatchEvent(new CustomEvent('tj:profile-ready'));
       // Calendar re-renders after receiving the profile, replacing its button.
       if(!formReturnFocus?.isConnected)formReturnFocus=calModal.querySelector('[data-fill]');
       restoreFormFocus();
+      completed=true;
       return;
     }
-    const sheet=formModal.querySelector('.form-modal-sheet');
-    const sheetRect=sheet?sheet.getBoundingClientRect():null;
-    formModal.classList.remove('open');
-    document.body.classList.remove('form-open');
-    const mb1=document.getElementById('homeMenuBtn');if(mb1)mb1.style.display='';
-    const page1=document.getElementById('page1');
-    if(page1)page1.classList.add('tj-fade'); // 过渡期间画面只留中央光球与粒子
-    const hint=document.getElementById('tjCalcHint');
-    if(hint)hint.classList.add('show');      // 仅底部一枚极简提示
-    const DUR=2400;
-    const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if(reduced){
-      await new Promise(r=>setTimeout(r,240));
-    }else{
-      burstToArmillary(sheetRect);
-      await new Promise(r=>setTimeout(r,DUR));
+    scene?.showResult(window._ctx?.b);
+    if(scene)await scene.wait();
+    scene?.close();
+    if(formModal&&formModal.classList.contains('open')){
+      formModal.classList.remove('open');
+      document.body.classList.remove('form-open');
+      const mb=document.getElementById('homeMenuBtn');if(mb)mb.style.display='';
     }
-    showPage2();
-    characterCompanion.onReportReady();
-    document.querySelectorAll('.tab-item')[0].click();
-    formReturnFocus=null;
-    document.getElementById('p2MenuBtn')?.focus({preventScroll:true});
-    if(hint)hint.classList.remove('show');
-    if(page1)page1.classList.remove('tj-fade'); // 恢复，供下次返回首页正常显示
-    return;
-  }
-
-  // —— 经典过渡：示例报告 / 从档案重新推演 ——
-  // 🔧 先关闭表单弹窗（position:fixed 独立于 page1，不关会浮在结果页上）
-  if(formModal&&formModal.classList.contains('open')){
-    formModal.classList.remove('open');
-    document.body.classList.remove('form-open');
-    const mb2=document.getElementById('homeMenuBtn');if(mb2)mb2.style.display='';
-  }
-  const ld=document.getElementById('ldov');if(ld)ld.classList.add('on');const btnGo2=document.getElementById('btnGo2');if(btnGo2)btnGo2.disabled=true;
-  const pb=document.getElementById('ldbf'),st=document.getElementById('ldst');
-  const steps=['排列四柱…','推算五行…','分析十神…','查神煞…','排大运…','安紫微盘…','起奇门盘…','梅花起卦…','排流月…','综合合参…','生成报告…'];
-  for(let i=0;i<steps.length;i++){st.textContent=steps[i];pb.style.width=(((i+1)/steps.length)*100)+'%';await new Promise(r=>setTimeout(r,220));}
-  try{
-    doCompute();
-    if(ld)ld.classList.remove('on');if(btnGo2)btnGo2.disabled=false;
     showPage2();
     characterCompanion.onReportReady({isDemo:isDemoPreview});
     document.querySelectorAll('.tab-item')[0].click();
+    formReturnFocus=null;
+    document.getElementById('p2MenuBtn')?.focus({preventScroll:true});
+    completed=true;
   }catch(e){
-    if(ld)ld.classList.remove('on');if(btnGo2)btnGo2.disabled=false;
+    // Keep the original form and last successful context available for retry.
+    window._ctx=previous.ctx;window._baziData=previous.bazi;window._reportData=previous.report;
+    window._formDirty=previous.dirty;window._accentRGB=previous.accent;
+    if(previous.yongShen===null)document.documentElement.removeAttribute('data-yongshen');
+    else document.documentElement.setAttribute('data-yongshen',previous.yongShen);
+    scene?.close({restoreFocus:true});
     console.error(e);
     showToast('推演出错：'+e.message+'\n\n建议：请检查输入信息是否正确，或刷新页面重试。');
+  }finally{
+    scene?.close({restoreFocus:!completed});
+    calculationInProgress=false;
   }
 }
 
@@ -439,6 +420,8 @@ window.TJOpenForm=function(){
   formReturnFocus=document.activeElement;
   m.classList.add('open');
   document.body.classList.add('form-open');
+  // Non-blocking: the chosen character's props can arrive while the form is filled.
+  if(!document.getElementById('toolModal')?.classList.contains('cal-fullscreen'))warmCharacterCalculation();
 
   // 自动填入天气地理位置
   const geo = getWxGeo();
@@ -993,7 +976,7 @@ window.closeGlobalSettings=closeGlobalSettings;
   }
 })();
 
-document.addEventListener('DOMContentLoaded',()=>{
+onDomReady(()=>{
   initOnboarding();
   initDB().then(()=>renderProfiles()).catch(e=>console.log('DB init',e));
   const ai=document.getElementById('askInput');
@@ -1063,7 +1046,7 @@ function toggleDensity(){
   // 还原上次设置
   try{if(localStorage.getItem('tj_density')==='1')document.body.classList.add('density-compact');}catch(e){}
   // 滚动监听显示返回顶部
-  window.addEventListener('load',()=>{
+  onWindowLoad(()=>{
     const sc=document.getElementById('p2Scroll');
     const btn=document.getElementById('backToTop');
     if(!sc||!btn)return;
@@ -1097,10 +1080,10 @@ function toggleDensity(){
     document.body.classList.toggle('home',onHome);
   }
   // 初始
-  document.addEventListener('DOMContentLoaded',applyHomeState);
+  onDomReady(applyHomeState);
   // 监听 page1/page2 class 改动
   const obs=new MutationObserver(()=>applyHomeState());
-  window.addEventListener('load',()=>{
+  onWindowLoad(()=>{
     const p1=document.getElementById('page1'),p2=document.getElementById('page2');
     if(p1)obs.observe(p1,{attributes:true,attributeFilter:['class']});
     if(p2)obs.observe(p2,{attributes:true,attributeFilter:['class']});
@@ -1323,7 +1306,7 @@ function toggleDensity(){
     document.querySelectorAll('.home-card:not([data-tilted])').forEach(el=>{bindTilt(el);el.setAttribute('data-tilted','1');});
     document.querySelectorAll('#page2 .glass:not(.tool-hub):not([data-tilted])').forEach(el=>{bindTilt(el);el.setAttribute('data-tilted','1');});
   }
-  window.addEventListener('load',bindAllTilt);
+  onWindowLoad(bindAllTilt);
   // 推算完成后 page2 内容会被重渲染，提供一个全局钩子
   window._rebindTilt=bindAllTilt;
 
@@ -1344,7 +1327,7 @@ function toggleDensity(){
 })();
 
 /* Keep report color settings, but do not animate the replaced home orb. */
-window.addEventListener('load', function(){
+onWindowLoad(function(){
   initLiquidOrb({animate:false});
   if (typeof buildP2OrbPalette === 'function') buildP2OrbPalette();
 });
@@ -1840,21 +1823,31 @@ function setSystemMode(mode){
 }
 function setUserMode(mode){setSystemMode(mode==='beginner'?'eastern':'western');}
 /* 顶部右侧圆形按钮：打开日历模式 */
-function openCalendarMode(){
+let calendarOpening = false;
+async function openCalendarMode(){
+  if(calendarOpening)return;
+  calendarOpening=true;
   const fab=document.getElementById('calFab');
+  const button=document.getElementById('homeCtaCal');
+  const label=button?.querySelector(':scope > span:last-child');
+  const original=label?.textContent;
   if(fab)fab.classList.add('active');
+  if(!window._tools2Ready){
+    button?.setAttribute('aria-busy','true');
+    if(label)label.textContent='加载中…';
+  }
   try{
-    if(window._tools2Ready){
-      window.openToolPage('calendar');
-    }else{
-      let tries=0;
-      const t=setInterval(()=>{
-        tries++;
-        if(window._tools2Ready){clearInterval(t);window.openToolPage('calendar');}
-        else if(tries>40){clearInterval(t);console.warn('[openCalendarMode] tools2 未就绪，日历不可用');}
-      },50);
-    }
-  }catch(e){console.error('[openCalendarMode]',e);}
+    await ensureTools2();
+    window.openToolPage('calendar');
+  }catch(e){
+    console.error('[openCalendarMode] 日历加载失败',e);
+    showToast('日历暂时无法加载，请检查网络后重试。');
+    fab?.classList.remove('active');
+  }finally{
+    button?.removeAttribute('aria-busy');
+    if(label)label.textContent=original;
+    calendarOpening=false;
+  }
 }
 function toggleUserMode(){
   const cur=document.body.getAttribute('data-system-mode')||'eastern';
@@ -1895,18 +1888,30 @@ function toggleUserMode(){
       },50);
     }
   };
-  document.addEventListener('DOMContentLoaded',mount);
+  onDomReady(mount);
   new MutationObserver(mount).observe(document.body,{childList:true,subtree:true});
 })();
 
 /* ============================================================
-   tools2 · 工具系统 v2 接管（必须位于所有旧 IIFE 之后）
-   动态 import：注册在模块加载时完成，加载后立即接管全局入口。
-   加载完成前若用户点击工具，仍由上方旧版 openToolPage 兜底。
+   tools2 · 非首屏功能在首页素材完成后加载；点日历时立即按需加载。
+   bootstrap 必须位于所有旧 IIFE 之后，避免旧入口覆盖新入口。
    ============================================================ */
-import('./tools2/index.js')
-  .then(m=>m.bootstrap())
-  .catch(e=>console.error('[tools2] 加载失败，继续使用旧版工具页',e));
+let tools2Promise;
+function ensureTools2(){
+  if(!tools2Promise){
+    tools2Promise=import('./tools2/index.js')
+      .then(m=>{m.bootstrap();})
+      .catch(e=>{tools2Promise=null;throw e;});
+  }
+  return tools2Promise;
+}
+function scheduleTools2(){
+  const start=()=>ensureTools2().catch(e=>console.error('[tools2] 加载失败，继续使用旧版工具页',e));
+  if('requestIdleCallback' in window)window.requestIdleCallback(start,{timeout:1500});
+  else setTimeout(start,100);
+}
+if(document.readyState==='complete')scheduleTools2();
+else window.addEventListener('load',scheduleTools2,{once:true});
 
 /* 术语解释：选中文字 → 右键/长按菜单（取消自动下划线标注） */
 installSelectionGloss();
@@ -2014,3 +2019,6 @@ installSelectionGloss();
     document.addEventListener('DOMContentLoaded',bind);
   }else{bind();}
 })();
+
+// Replay a home action made while the larger application modules were loading.
+queueMicrotask(()=>window.dispatchEvent(new Event('tj:app-ready')));

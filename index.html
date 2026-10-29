@@ -11,9 +11,8 @@
 <link rel="icon" type="image/svg+xml" href="./icon.svg?v=35">
 <link rel="apple-touch-icon" href="./icon-192.png">
 
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
 <script>
-  /* 首屏前置写入主题，避免明暗闪烁 */
+  /* 用系统字体及应用主题，选择特质后再加载对应角色。 */
   (function () {
     try {
       var p = localStorage.getItem('tj_theme') || 'system';
@@ -22,12 +21,35 @@
       document.documentElement.setAttribute('data-theme', m);
       document.documentElement.style.colorScheme = m;
     } catch (e) {}
-    try {
-      var homeTheme = localStorage.getItem('tj_home_character');
-      document.documentElement.dataset.homeTheme = (homeTheme === 'moonfox' || homeTheme === 'diyan') ? homeTheme : 'wenwen';
-    } catch (e) {}
-    // Fail open if the application script cannot start; the default scene remains available.
-    window.setTimeout(function () { document.documentElement.dataset.homeReady = 'true'; }, 4000);
+    // A worker from an older visit may still serve cached, incompatible scripts
+    // alongside the new HTML. Check for its update as soon as possible.
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      var previousController = navigator.serviceWorker.controller;
+      var reloadingForUpdate = false;
+      function reloadUpdatedSelection() {
+        var selection = document.getElementById('traitSelection');
+        // Never interrupt an in-progress character session or form.
+        if (!reloadingForUpdate && selection && !selection.hidden) {
+          reloadingForUpdate = true;
+          window.location.reload();
+        }
+      }
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (reloadingForUpdate || !navigator.serviceWorker.controller || navigator.serviceWorker.controller === previousController) return;
+        if (!document.getElementById('traitSelection') && document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', reloadUpdatedSelection, { once: true });
+        } else reloadUpdatedSelection();
+      });
+      navigator.serviceWorker.getRegistration().then(function (registration) {
+        if (registration) return registration.update();
+      }).catch(function () { /* Offline visits keep using their existing cache. */ });
+    }
+    // If the small entry module itself cannot load, don't leave a silent spinner.
+    window.setTimeout(function () {
+      var options = document.getElementById('traitOptions');
+      var status = document.getElementById('traitStatus');
+      if (options && status && !options.querySelector('button')) status.textContent = '加载较慢，请检查网络后刷新重试';
+    }, 12000);
   })();
 </script>
 
@@ -40,6 +62,8 @@
 <link rel="stylesheet" href="/src/evolve.css">
 <link rel="stylesheet" href="/src/liquid-glass.css">
 <link rel="stylesheet" href="/src/character-theme.css">
+<link rel="stylesheet" href="/src/character-calculation.css">
+<link rel="stylesheet" href="/src/trait-selection.css">
 <style>
 .result-style-heading{display:flex;align-items:baseline;gap:8px;margin-bottom:7px;min-width:0}
 .result-style-label{font-size:.72em;font-weight:500;color:var(--c-text-2);white-space:nowrap}
@@ -51,7 +75,27 @@
 @media(max-width:360px){.result-style-options{gap:3px}.result-style-option{font-size:.66em}}
 </style>
 </head>
-<body>
+<body class="home">
+
+<!-- A new visit begins with one deliberate, page-lifetime choice. -->
+<section class="trait-selection" id="traitSelection" role="dialog" aria-modal="true" aria-labelledby="traitTitle" aria-describedby="traitIntro traitHint" tabindex="-1">
+  <div class="trait-atmosphere" aria-hidden="true">
+    <span class="trait-orbit trait-orbit--outer"></span><span class="trait-orbit trait-orbit--inner"></span>
+    <svg class="trait-stars" viewBox="0 0 1000 680" preserveAspectRatio="xMidYMid slice" focusable="false">
+      <path d="M118 181l3 10 10 3-10 3-3 10-3-10-10-3 10-3zm730 60l2 7 7 2-7 2-2 7-2-7-7-2 7-2zM777 470l3 10 10 3-10 3-3 10-3-10-10-3 10-3zM239 515l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/>
+      <circle cx="284" cy="140" r="1.5"/><circle cx="675" cy="122" r="1.5"/><circle cx="90" cy="370" r="1.4"/><circle cx="909" cy="393" r="1.4"/>
+    </svg>
+  </div>
+  <div class="trait-content">
+    <p class="trait-eyebrow">心性相逢 <span aria-hidden="true">✦</span> 一念启程</p>
+    <h1 id="traitTitle">此刻，哪一种<br>更像你？</h1>
+    <p class="trait-intro" id="traitIntro">选择与你共鸣的一种特质</p>
+    <div class="trait-options" id="traitOptions" role="group" aria-label="选择一种特质"></div>
+    <p class="trait-status" id="traitStatus" role="status" aria-live="polite">正在准备…</p>
+    <p class="trait-hint" id="traitHint">选定后陪伴本次旅程 · 刷新可重新选择</p>
+    <noscript><p class="trait-noscript">请启用 JavaScript 后选择特质。</p></noscript>
+  </div>
+</section>
 
 <div class="mesh"></div>
 <canvas class="particles" id="tjParticles"></canvas>
@@ -60,15 +104,80 @@
 <div class="cursor-ring" id="tjCursorRing"></div>
 <div class="cursor-dot" id="tjCursorDot"></div>
 
-<div class="ld-ov" id="ldov">
-  <div class="ld-sp"></div>
-  <div class="ld-t">推演中</div>
-  <div class="ld-br"><div class="ld-bf" id="ldbf"></div></div>
-  <div class="ld-st" id="ldst">排列四柱…</div>
-</div>
-
-<!-- 推演过渡：页面淡出后，仅在底部显示极简提示 -->
-<div class="tj-calc-hint" id="tjCalcHint" aria-live="polite">推演中</div>
+<!-- This scene is shown only during a real calculation, never on the home screen. -->
+<section class="calculation-overlay" id="calculationOverlay" role="dialog" aria-modal="true" aria-labelledby="calculationTitle" aria-describedby="calculationStatus" tabindex="-1" hidden>
+  <div class="calculation-backdrop" aria-hidden="true"><img data-calculation-backdrop alt="" decoding="async"></div>
+  <div class="calculation-stage" aria-hidden="true">
+    <div class="calculation-artboard">
+      <div class="calculation-props calculation-props--wenwen">
+        <div class="calculation-scroll"><img data-calculation-src="./art/awakening-scroll.webp" alt="" width="1200" height="658" decoding="async"></div>
+        <svg class="calculation-ink" viewBox="0 0 400 520" fill="none" focusable="false">
+          <path d="M7 257C62 218 82 284 145 213S232 145 295 184"/>
+          <path d="M30 290C83 264 98 318 145 265"/>
+        </svg>
+      </div>
+      <div class="calculation-props calculation-props--moonfox">
+        <svg class="calculation-moon" viewBox="0 0 100 100" focusable="false"><path d="M76 18a36 36 0 1 0 8 59A31 31 0 0 1 76 18Z"/></svg>
+        <span class="calculation-tail calculation-tail--left"><img data-calculation-src="./art/awakening-fox-fan.webp" alt="" width="700" height="1050" decoding="async"></span>
+        <span class="calculation-tail calculation-tail--right"><img data-calculation-src="./art/awakening-fox-fan.webp" alt="" width="700" height="1050" decoding="async"></span>
+        <span class="calculation-tail calculation-tail--center"><img data-calculation-src="./art/awakening-fox-fan.webp" alt="" width="700" height="1050" decoding="async"></span>
+        <svg class="calculation-lunar-trace" viewBox="0 0 400 520" fill="none" focusable="false"><path d="M38 230C85 183 140 251 200 183S306 160 365 205"/><path d="M79 265C113 247 144 280 178 260"/></svg>
+      </div>
+      <div class="calculation-props calculation-props--diyan">
+        <img class="calculation-fire-seat" data-calculation-src="./art/earthfire-flame-seat.webp" alt="" width="1124" height="644" decoding="async">
+        <img class="calculation-fire-seal" data-calculation-src="./art/earthfire-rune-seal.webp" alt="" width="960" height="640" decoding="async">
+        <span class="calculation-rune calculation-rune--one"><img data-calculation-src="./art/earthfire-runes.webp" alt="" width="512" height="512" decoding="async"></span>
+        <span class="calculation-rune calculation-rune--two"><img data-calculation-src="./art/earthfire-runes.webp" alt="" width="512" height="512" decoding="async"></span>
+        <span class="calculation-rune calculation-rune--three"><img data-calculation-src="./art/earthfire-runes.webp" alt="" width="512" height="512" decoding="async"></span>
+        <span class="calculation-rune calculation-rune--four"><img data-calculation-src="./art/earthfire-runes.webp" alt="" width="512" height="512" decoding="async"></span>
+      </div>
+      <div class="calculation-props calculation-props--yuchen">
+        <span class="calculation-wing calculation-wing--left"><img data-calculation-src="./art/awakening-phoenix-wing.webp" alt="" width="640" height="960" decoding="async"></span>
+        <span class="calculation-wing calculation-wing--right"><img data-calculation-src="./art/awakening-phoenix-wing.webp" alt="" width="640" height="960" decoding="async"></span>
+        <svg class="calculation-jade-trace" viewBox="0 0 400 520" fill="none" focusable="false"><path d="M45 256C76 218 101 225 127 192S179 159 211 168"/><path d="M38 273C71 260 89 277 119 254"/></svg>
+      </div>
+      <div class="calculation-props calculation-props--qinglan">
+        <div class="calculation-sword"><img data-calculation-src="./art/qinglan-sword.webp" alt="" width="480" height="816" decoding="async"></div>
+        <svg class="calculation-wind-trace" viewBox="0 0 400 520" fill="none" focusable="false"><path d="M-36 365C14 280 85 267 157 258C229 249 286 198 342 132"/><path d="M-16 390C65 320 120 320 177 298"/><path d="M273 184C332 148 366 87 381 40"/></svg>
+      </div>
+      <div class="calculation-props calculation-props--xingling">
+        <div class="calculation-star-fan"><img data-calculation-src="./art/xingling-fan.webp" alt="" width="960" height="573" decoding="async"></div>
+        <svg class="calculation-star-chart" viewBox="0 0 400 520" fill="none" focusable="false"><circle cx="200" cy="210" r="151"/><path d="M42 242C103 165 163 146 233 170S336 219 368 158"/><path d="M82 125L151 165L203 111L272 137L318 91"/></svg>
+      </div>
+      <div class="calculation-props calculation-props--luye">
+        <div class="calculation-turntable">
+          <img data-calculation-src="./art/luye-turntable.svg" alt="" width="640" height="440" decoding="async">
+          <img class="calculation-vinyl" data-calculation-src="./art/luye-vinyl.svg" alt="" width="280" height="280" decoding="async">
+          <svg class="calculation-tonearm" viewBox="0 0 640 440" fill="none" focusable="false"><path d="M480 120L471 193L383 247" stroke="#b8c9c4" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><path d="M480 120L471 193L383 247" stroke="#e3e2c9" stroke-width="3" stroke-linecap="round"/><rect x="361" y="238" width="42" height="20" rx="5" transform="rotate(-31 361 238)" fill="#b18e69" stroke="#f2d7ad" stroke-width="2"/></svg>
+        </div>
+        <svg class="calculation-soundwave" viewBox="0 0 400 520" fill="none" focusable="false"><path d="M8 300h38l8-22 11 44 13-76 15 110 13-90 12 55 9-21h49"/><path d="M228 188h28l8-16 10 32 11-53 13 72 12-48 9 27 7-14h49"/></svg>
+      </div>
+      <div class="calculation-props calculation-props--suyan">
+        <div class="calculation-camera-prop">
+          <img data-calculation-src="./art/suyan-camera.svg" alt="" width="560" height="380" decoding="async">
+          <span class="calculation-camera-iris"></span>
+          <span class="calculation-camera-flash"></span>
+        </div>
+        <svg class="calculation-lens-trace" viewBox="0 0 400 520" fill="none" focusable="false"><circle cx="240" cy="230" r="158"/><path d="M44 297C97 246 150 237 192 211M285 158C321 142 354 116 378 83"/></svg>
+      </div>
+      <img class="calculation-portrait" data-calculation-portrait alt="" decoding="async">
+      <span class="calculation-focus-light"></span>
+    </div>
+  </div>
+  <div class="calculation-readout">
+    <p class="calculation-byline" id="calculationByline"></p>
+    <h2 id="calculationTitle">正在推演</h2>
+    <p id="calculationStatus" role="status" aria-live="polite">排定四柱，合参星位…</p>
+    <div class="calculation-pillars" role="group" aria-label="四柱结果">
+      <span><small>年</small><b data-calculation-pillar="Y">—</b></span>
+      <span><small>月</small><b data-calculation-pillar="M">—</b></span>
+      <span><small>日</small><b data-calculation-pillar="D">—</b></span>
+      <span><small>时</small><b data-calculation-pillar="H">—</b></span>
+    </div>
+    <button class="calculation-continue" id="calculationContinue" type="button" hidden>查看报告 <span aria-hidden="true">→</span></button>
+  </div>
+  <button class="calculation-skip" id="calculationSkip" type="button">跳过动画 <span aria-hidden="true">→</span></button>
+</section>
 
 <!-- 首页汉堡菜单抽屉 -->
 <div class="home-menu-overlay" id="homeMenuOverlay" onclick="toggleHomeMenu(false)"></div>
@@ -182,12 +291,12 @@
   </div>
 </aside>
 
-<div class="page" id="page1">
+<div class="page" id="page1" inert aria-hidden="true">
   <div class="p1-scroll">
     <div class="character-backdrop" aria-hidden="true">
-      <picture>
-        <source media="(max-aspect-ratio: 4/5)" srcset="./art/sacred-study-mobile.webp" width="768" height="1376">
-        <img src="./art/sacred-study-wide.webp" alt="" width="1536" height="1024" decoding="async">
+      <picture data-initial-picture>
+        <source media="(max-aspect-ratio: 4/5)" width="768" height="1376">
+        <img alt="" width="1536" height="1024" decoding="async" fetchpriority="high">
       </picture>
     </div>
     <div class="p1-inner">
@@ -195,18 +304,14 @@
         <button class="home-menu-btn" id="homeMenuBtn" type="button" onclick="toggleHomeMenu()" aria-label="打开菜单" aria-controls="homeMenuDrawer" aria-expanded="false" title="菜单">
           <span class="home-menu-bars"></span><span class="home-menu-bars"></span><span class="home-menu-bars"></span>
         </button>
-        <div class="character-theme-switcher" role="group" aria-label="首页角色主题">
-          <button type="button" data-home-character="wenwen" aria-pressed="true" aria-label="问问主题">问问</button>
-          <button type="button" data-home-character="moonfox" aria-pressed="false" aria-label="月白狐主题">月白狐</button>
-          <button type="button" data-home-character="diyan" aria-pressed="false" aria-label="地炎符文暴君主题">地炎君</button>
-        </div>
+        <span aria-hidden="true"></span>
         <div class="character-header-actions"></div>
       </header>
 
       <main class="character-home" aria-label="问问大师首页">
         <h1 class="character-visually-hidden">问问大师</h1>
         <section class="character-hero" aria-label="角色互动">
-          <figure class="character-scene" id="characterScene" data-camera-shot="mid">
+          <figure class="character-scene" id="characterScene" data-camera-shot="close">
             <div class="character-camera-viewport">
               <div class="character-camera">
                 <div class="character-scenery" aria-hidden="true">
@@ -222,7 +327,8 @@
                     <circle cx="65" cy="20" r="1.5"/><circle cx="55" cy="103" r="1.3"/><circle cx="139" cy="112" r="1.4"/>
                   </svg>
                   <div class="character-prop character-prop--cloud">
-                    <img src="./art/wenwen-cloud-trail.webp" data-character-asset="cloudTrail" data-character-scene-optional alt="" width="1000" height="319" decoding="async">
+                    <img data-character-asset="cloudTrail" data-character-scene-optional alt="" width="1000" height="319" decoding="async" fetchpriority="low">
+                    <noscript><img src="./art/wenwen-cloud-trail.webp" alt="" width="1000" height="319"></noscript>
                   </div>
                   <svg class="scene-heartlight" viewBox="0 0 80 80" aria-hidden="true" focusable="false">
                     <defs>
@@ -236,36 +342,40 @@
                   </svg>
                   <div class="character-lantern-anchor">
                     <div class="character-prop character-prop--lantern">
-                      <img src="./art/wenwen-lantern.webp" data-character-asset="lantern" data-character-scene-optional alt="" width="301" height="700" decoding="async">
+                      <img data-character-asset="lantern" data-character-scene-optional alt="" width="301" height="700" decoding="async" fetchpriority="low">
+                      <noscript><img src="./art/wenwen-lantern.webp" alt="" width="301" height="700"></noscript>
                     </div>
+                  </div>
+                  <div class="character-prop character-prop--rune-seal" hidden>
+                    <img data-character-asset="runeSeal" data-character-scene-optional fetchpriority="low" alt="" width="960" height="640" decoding="async" hidden>
                   </div>
                   <div class="character-flame-anchor">
                     <div class="character-prop character-prop--fire" hidden>
-                      <img class="character-fire-base" data-character-asset="fireThrone" data-character-scene-optional alt="" width="1124" height="644" decoding="async" hidden>
-                      <img class="character-fire-glow" data-character-asset="fireThrone" data-character-scene-optional alt="" width="1124" height="644" decoding="async" hidden>
+                      <img class="character-fire-base" data-character-asset="fireThrone" data-character-scene-optional fetchpriority="low" alt="" width="1124" height="644" decoding="async" hidden>
+                      <img class="character-fire-glow" data-character-asset="fireThrone" data-character-scene-optional fetchpriority="low" alt="" width="1124" height="644" decoding="async" hidden>
                     </div>
                   </div>
+                  <div class="character-rune-anchor">
+                    <span class="character-prop character-rune character-rune--one" hidden><img data-character-asset="runes" data-character-scene-optional fetchpriority="low" alt="" width="512" height="512" decoding="async" hidden></span>
+                    <span class="character-prop character-rune character-rune--two" hidden><img data-character-asset="runes" data-character-scene-optional fetchpriority="low" alt="" width="512" height="512" decoding="async" hidden></span>
+                    <span class="character-prop character-rune character-rune--three" hidden><img data-character-asset="runes" data-character-scene-optional fetchpriority="low" alt="" width="512" height="512" decoding="async" hidden></span>
+                    <span class="character-prop character-rune character-rune--four" hidden><img data-character-asset="runes" data-character-scene-optional fetchpriority="low" alt="" width="512" height="512" decoding="async" hidden></span>
+                  </div>
                 </div>
-                <button class="character-portrait" id="characterPortraitButton" type="button" aria-label="点击问问，开启探索" aria-describedby="characterCameraHint" aria-controls="formModal" aria-haspopup="dialog" title="开启探索">
+                <button class="character-portrait" id="characterPortraitButton" type="button" aria-label="点击问问，开启探索" aria-controls="formModal" aria-haspopup="dialog" title="开启探索">
                   <span class="character-camera-subject">
                     <span class="character-aura" aria-hidden="true"></span>
                     <span class="character-puppet">
-                      <img src="./art/wenwen-divine.webp" data-character-asset="portrait" alt="问问坐在云朵上，手捧泛着心形光芒的星盘" width="992" height="1299" fetchpriority="high">
-                      <img class="character-expression character-blink" src="./art/wenwen-divine-blink.webp" data-character-asset="blink" data-character-optional alt="" aria-hidden="true" width="992" height="1299">
-                      <img class="character-expression character-speak" src="./art/wenwen-divine-speak.webp" data-character-asset="speaking" data-character-optional alt="" aria-hidden="true" width="992" height="1299">
+                      <img data-initial-portrait data-character-asset="portrait" alt="问问坐在云朵上，手捧泛着心形光芒的星盘" width="992" height="1299" fetchpriority="high">
+                      <img class="character-expression character-blink" data-character-asset="blink" data-character-optional alt="" aria-hidden="true" width="992" height="1299" decoding="async" fetchpriority="low">
+                      <img class="character-expression character-speak" data-character-asset="speaking" data-character-optional alt="" aria-hidden="true" width="992" height="1299" decoding="async" fetchpriority="low">
                     </span>
                   </span>
                 </button>
               </div>
             </div>
           </figure>
-          <div class="character-camera-picker" role="group" aria-label="人物景别">
-            <span class="camera-gesture-hint" aria-hidden="true">↔ <span>拖动人物</span></span>
-            <button type="button" data-camera-shot="far" aria-pressed="false">远景</button>
-            <button type="button" data-camera-shot="mid" aria-pressed="true">中景</button>
-            <button type="button" data-camera-shot="close" aria-pressed="false">近景</button>
-          </div>
-          <p class="character-visually-hidden" id="characterCameraHint">左右拖动人物或使用景别按钮切换远景、中景和近景；轻点人物仍可开启探索。</p>
+          <p class="character-visually-hidden" id="homeLoadingStatus" role="status" aria-live="polite"></p>
 
           <div class="character-copy">
             <svg class="character-cloud-defs" aria-hidden="true" focusable="false" width="0" height="0">
@@ -290,13 +400,43 @@
                 <linearGradient id="homeCloudFireSecondary" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0" stop-color="#792f28"/><stop offset=".55" stop-color="#51201f"/><stop offset="1" stop-color="#321414"/>
                 </linearGradient>
+                <linearGradient id="homeCloudJadePrimary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#fff0c8"/><stop offset=".55" stop-color="#e8d098"/><stop offset="1" stop-color="#c7a76c"/>
+                </linearGradient>
+                <linearGradient id="homeCloudJadeSecondary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#335c4b"/><stop offset=".55" stop-color="#1d4235"/><stop offset="1" stop-color="#112b23"/>
+                </linearGradient>
+                <linearGradient id="homeCloudWindPrimary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#effff7"/><stop offset=".55" stop-color="#c4e8dd"/><stop offset="1" stop-color="#91c8bd"/>
+                </linearGradient>
+                <linearGradient id="homeCloudWindSecondary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#376b68"/><stop offset=".55" stop-color="#245351"/><stop offset="1" stop-color="#153b3c"/>
+                </linearGradient>
+                <linearGradient id="homeCloudStarPrimary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#fff3ff"/><stop offset=".55" stop-color="#dfcdf4"/><stop offset="1" stop-color="#bda3df"/>
+                </linearGradient>
+                <linearGradient id="homeCloudStarSecondary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#6b5283"/><stop offset=".55" stop-color="#4a3866"/><stop offset="1" stop-color="#312447"/>
+                </linearGradient>
+                <linearGradient id="homeCloudBeatPrimary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#fff2d8"/><stop offset=".55" stop-color="#eed0a8"/><stop offset="1" stop-color="#c99e6d"/>
+                </linearGradient>
+                <linearGradient id="homeCloudBeatSecondary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#415d5c"/><stop offset=".55" stop-color="#2b4748"/><stop offset="1" stop-color="#192e32"/>
+                </linearGradient>
+                <linearGradient id="homeCloudLensPrimary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#fff2f2"/><stop offset=".55" stop-color="#f1d2d9"/><stop offset="1" stop-color="#d7adb9"/>
+                </linearGradient>
+                <linearGradient id="homeCloudLensSecondary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#705061"/><stop offset=".55" stop-color="#513646"/><stop offset="1" stop-color="#332532"/>
+                </linearGradient>
               </defs>
             </svg>
             <div class="character-actions">
               <button class="character-btn character-btn-primary" id="homeCtaMain" type="button">
                 <svg class="character-btn-art" viewBox="0 0 180 64" preserveAspectRatio="none" aria-hidden="true" focusable="false">
                   <use class="character-btn-fill" href="#homeCloudShape"/>
-                  <image class="character-btn-texture" href="./art/wenwen-cloud-trail.webp" data-character-asset="cloudTrail" data-character-texture x="0" y="0" width="180" height="64" preserveAspectRatio="none" clip-path="url(#homeCloudClip)"/>
+                  <image class="character-btn-texture" data-character-asset="cloudTrail" data-character-texture x="0" y="0" width="180" height="64" preserveAspectRatio="none" clip-path="url(#homeCloudClip)"/>
                   <use class="character-btn-edge" href="#homeCloudShape"/>
                   <path class="character-btn-flourish" d="M12 38c0-5 5-8 9-6 4 2 3 6 0 6-2 0-3-2-1-3M168 38c0-5-5-8-9-6-4 2-3 6 0 6 2 0 3-2 1-3M20 47c5 3 10 3 14 1m126-1c-5 3-10 3-14 1"/>
                 </svg>
@@ -306,7 +446,7 @@
               <button class="character-btn character-btn-secondary" id="homeCtaCal" type="button" onclick="openCalendarMode()">
                 <svg class="character-btn-art" viewBox="0 0 180 64" preserveAspectRatio="none" aria-hidden="true" focusable="false">
                   <use class="character-btn-fill" href="#homeCloudShape"/>
-                  <image class="character-btn-texture" href="./art/wenwen-cloud-trail.webp" data-character-asset="cloudTrail" data-character-texture x="0" y="0" width="180" height="64" preserveAspectRatio="none" clip-path="url(#homeCloudClip)"/>
+                  <image class="character-btn-texture" data-character-asset="cloudTrail" data-character-texture x="0" y="0" width="180" height="64" preserveAspectRatio="none" clip-path="url(#homeCloudClip)"/>
                   <use class="character-btn-edge" href="#homeCloudShape"/>
                   <path class="character-btn-flourish" d="M12 38c0-5 5-8 9-6 4 2 3 6 0 6-2 0-3-2-1-3M168 38c0-5-5-8-9-6-4 2-3 6 0 6 2 0 3-2 1-3M20 47c5 3 10 3 14 1m126-1c-5 3-10 3-14 1"/>
                 </svg>
@@ -380,7 +520,7 @@
       <span class="ig-nav-label" id="tabLabelYun">运势</span>
     </div>
     <button class="ai-fab" id="aiFab" type="button" onclick="openAsk()" aria-label="打开问问大师" title="问问大师">
-      <span class="ai-fab-icon"><img class="character-dock-avatar" src="./art/wenwen-avatar.webp" data-character-asset="avatar" alt="" width="192" height="192"></span><span class="ai-fab-text">问问大师</span>
+      <span class="ai-fab-icon"><img class="character-dock-avatar" src="./art/wenwen-reimagined-avatar.webp" data-character-asset="avatar" alt="" width="192" height="192"></span><span class="ai-fab-text">问问大师</span>
     </button>
     <div class="tab-item" data-sec="s-rel" onclick="switchTab(this)" aria-label="关系 / 生命灵术">
       <svg class="ig-nav-icon ig-heart ig-nav-icon-eastern" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 8.4c0 4.7-8.2 9.9-8.2 9.9S3.8 13.1 3.8 8.4A4.3 4.3 0 0 1 12 6.2a4.3 4.3 0 0 1 8.2 2.2Z"/></svg>
@@ -843,6 +983,6 @@
   })();
 </script>
 
-<script type="module" src="/src/main.js"></script>
+<script type="module" src="/src/home.js"></script>
 </body>
 </html>

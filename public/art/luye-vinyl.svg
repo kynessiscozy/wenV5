@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" fill="none">
+  <defs><radialGradient id="record"><stop stop-color="#38504e"/><stop offset=".35" stop-color="#19282a"/><stop offset=".75" stop-color="#0b1215"/><stop offset="1" stop-color="#344849"/></radialGradient><linearGradient id="label" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e5bd88"/><stop offset="1" stop-color="#946c50"/></linearGradient></defs>
+  <circle cx="140" cy="140" r="137" fill="url(#record)" stroke="#718681" stroke-width="2"/>
+  <g stroke="#92aaa2" stroke-opacity=".22"><circle cx="140" cy="140" r="126"/><circle cx="140" cy="140" r="117"/><circle cx="140" cy="140" r="107"/><circle cx="140" cy="140" r="98"/><circle cx="140" cy="140" r="88"/><circle cx="140" cy="140" r="78"/></g>
+  <circle cx="140" cy="140" r="54" fill="url(#label)"/><circle cx="140" cy="140" r="45" stroke="#f4d3a8" stroke-opacity=".6"/>
+  <path d="M111 127c8-11 21-17 33-15M169 153c-8 11-19 17-32 17" stroke="#5b6255" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="140" cy="140" r="5" fill="#1a2627"/>
+</svg>

@@ -1,3 +1,4 @@
+import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 import puppeteer from 'puppeteer';
 const BASE=process.env.BASE_URL||'http://localhost:5173/';
 const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});
@@ -5,7 +6,9 @@ const p=await b.newPage();await p.setViewport({width:430,height:932,deviceScaleF
 const errs=[];p.on('pageerror',e=>errs.push(e.message));
 p.on('console',m=>{if(m.type()==='error'&&!/404/.test(m.text()))errs.push(m.text())});
 await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
-await p.evaluate(()=>window.calc(true));
+await selectHomeTrait(p);
+await p.waitForFunction(() => typeof window.calc === 'function', { timeout: 15000 });
+await openDemoReport(p);
 await new Promise(r=>setTimeout(r,4500));
 
 console.log('=== 1. 新手模式：解释入口数量 ===');

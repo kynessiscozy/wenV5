@@ -3,7 +3,7 @@ export const EARTHFIRE_SOVEREIGN = Object.freeze({
   id: 'diyan',
   name: '地炎君',
   // The sceptre is part of his silhouette and should remain visible in the close shot.
-  camera: Object.freeze({ closeScale: 1.55, safeX: .885, safeInset: .06 }),
+  camera: Object.freeze({ closeScale: 1.7, safeX: .885, safeInset: .06 }),
   assets: Object.freeze({
     portrait: Object.freeze({
       src: './art/earthfire-sovereign.webp',
@@ -14,6 +14,8 @@ export const EARTHFIRE_SOVEREIGN = Object.freeze({
     blink: Object.freeze({ src: './art/earthfire-sovereign-blink.webp', alt: '', width: 625, height: 1180, forPortrait: './art/earthfire-sovereign.webp' }),
     speaking: Object.freeze({ src: './art/earthfire-sovereign-speak.webp', alt: '', width: 625, height: 1180, forPortrait: './art/earthfire-sovereign.webp' }),
     fireThrone: Object.freeze({ src: './art/earthfire-flame-seat.webp', alt: '', width: 1124, height: 644 }),
+    runes: Object.freeze({ src: './art/earthfire-runes.webp', alt: '', width: 512, height: 512 }),
+    runeSeal: Object.freeze({ src: './art/earthfire-rune-seal.webp', alt: '', width: 960, height: 640 }),
     avatar: Object.freeze({ src: './art/earthfire-sovereign-avatar.webp', alt: '', width: 192, height: 192 }),
   }),
   greeting: '',

@@ -1,0 +1,296 @@
+/* A self-contained, unframed scene. It never changes the home camera or theme. */
+.calculation-overlay[hidden] { display: none !important; }
+.calculation-overlay {
+  --ritual-ink: #ffe3c5;
+  --ritual-muted: #f4d5c0;
+  --ritual-glow: rgba(244, 165, 100, .4);
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  overflow: hidden;
+  color: #fff9f0;
+  background: #1b1115;
+  cursor: default;
+  isolation: isolate;
+}
+.calculation-overlay[data-calculation-theme="moonfox"] { --ritual-ink: #e2f6ff; --ritual-muted: #d1eaf6; --ritual-glow: rgba(129, 207, 255, .37); background: #101e2a; }
+.calculation-overlay[data-calculation-theme="diyan"] { --ritual-ink: #ffdac3; --ritual-muted: #f5c4b2; --ritual-glow: rgba(255, 81, 33, .4); background: #1c0909; }
+.calculation-overlay[data-calculation-theme="yuchen"] { --ritual-ink: #fff1cd; --ritual-muted: #eee2cb; --ritual-glow: rgba(227, 202, 136, .35); background: #151d19; }
+.calculation-overlay[data-calculation-theme="qinglan"] { --ritual-ink: #d9fff0; --ritual-muted: #cbe7df; --ritual-glow: rgba(140, 223, 196, .36); background: #0b1d20; }
+.calculation-overlay[data-calculation-theme="xingling"] { --ritual-ink: #f0dfff; --ritual-muted: #e5d3f4; --ritual-glow: rgba(200, 151, 248, .38); background: #171028; }
+.calculation-overlay[data-calculation-theme="luye"] { --ritual-ink: #ffe4bb; --ritual-muted: #eedac0; --ritual-glow: rgba(236, 184, 117, .35); background: #111a1c; }
+.calculation-overlay[data-calculation-theme="suyan"] { --ritual-ink: #ffe3eb; --ritual-muted: #f2d7de; --ritual-glow: rgba(225, 165, 188, .35); background: #211722; }
+.calculation-backdrop { position: absolute; inset: 0; overflow: hidden; }
+.calculation-backdrop img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: .56; }
+.calculation-backdrop::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(7,8,14,.39), rgba(9,8,14,.18) 42%, rgba(8,8,12,.84) 76%, rgba(8,8,12,.97)),
+    radial-gradient(ellipse at 50% 34%, transparent 0%, rgba(6,7,10,.22) 70%, rgba(6,7,10,.48) 100%);
+}
+.calculation-stage {
+  position: absolute; top: 2.5%; left: 50%; height: min(64%, 680px); aspect-ratio: 400 / 520;
+  transform: translateX(-50%); pointer-events: none;
+}
+.calculation-artboard { position: absolute; inset: 0; }
+.calculation-artboard::before {
+  content: ''; position: absolute; inset: 3% -20%;
+  background: radial-gradient(ellipse at 50% 42%, var(--ritual-glow), transparent 67%);
+  animation: calculation-glow 2.1s ease-out both;
+}
+.calculation-props { display: none; position: absolute; inset: 0; }
+.calculation-overlay[data-calculation-theme="wenwen"] .calculation-props--wenwen,
+.calculation-overlay[data-calculation-theme="moonfox"] .calculation-props--moonfox,
+.calculation-overlay[data-calculation-theme="diyan"] .calculation-props--diyan,
+.calculation-overlay[data-calculation-theme="yuchen"] .calculation-props--yuchen,
+.calculation-overlay[data-calculation-theme="qinglan"] .calculation-props--qinglan,
+.calculation-overlay[data-calculation-theme="xingling"] .calculation-props--xingling,
+.calculation-overlay[data-calculation-theme="luye"] .calculation-props--luye,
+.calculation-overlay[data-calculation-theme="suyan"] .calculation-props--suyan { display: block; }
+.calculation-props img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.calculation-portrait {
+  position: absolute; z-index: 2; left: 0; bottom: 0; width: 100%; height: 100%;
+  object-fit: contain; object-position: center bottom; transform-origin: 50% 80%;
+  filter: drop-shadow(0 10px 24px rgba(0,0,0,.3));
+  animation: calculation-subject 2.1s cubic-bezier(.2,.7,.2,1) both;
+}
+.calculation-overlay[data-calculation-theme="diyan"] .calculation-portrait { height: 104%; bottom: 0; }
+.calculation-overlay[data-calculation-theme="moonfox"] .calculation-portrait { animation-name: calculation-fox-subject; }
+.calculation-overlay[data-calculation-theme="diyan"] .calculation-portrait { animation-name: calculation-fire-subject; }
+.calculation-overlay[data-calculation-theme="yuchen"] .calculation-portrait { animation-name: calculation-jade-subject; }
+.calculation-overlay[data-calculation-theme="qinglan"] .calculation-portrait { animation-name: calculation-wind-subject; }
+.calculation-overlay[data-calculation-theme="xingling"] .calculation-portrait { animation-name: calculation-star-subject; }
+.calculation-overlay[data-calculation-theme="luye"] .calculation-portrait { animation-name: calculation-beat-subject; }
+.calculation-overlay[data-calculation-theme="suyan"] .calculation-portrait { animation-name: calculation-lens-subject; }
+.calculation-focus-light {
+  position: absolute; z-index: 3; left: 36%; top: 27%; width: 28%; aspect-ratio: 1;
+  background: radial-gradient(circle, var(--ritual-glow), transparent 68%); mix-blend-mode: screen;
+  animation: calculation-focus 2.1s ease-out both;
+}
+.calculation-overlay[data-calculation-theme="moonfox"] .calculation-focus-light { left: 13%; top: 13%; width: 26%; }
+.calculation-overlay[data-calculation-theme="diyan"] .calculation-focus-light { left: 72%; top: -3%; width: 27%; }
+.calculation-overlay[data-calculation-theme="yuchen"] .calculation-focus-light { left: 11%; top: 37%; width: 30%; }
+.calculation-overlay[data-calculation-theme="qinglan"] .calculation-focus-light { left: 65%; top: 20%; width: 24%; }
+.calculation-overlay[data-calculation-theme="xingling"] .calculation-focus-light { left: 16%; top: 31%; width: 27%; }
+.calculation-overlay[data-calculation-theme="luye"] .calculation-focus-light { left: 39%; top: 57%; width: 22%; }
+.calculation-overlay[data-calculation-theme="suyan"] .calculation-focus-light { left: 13%; top: 42%; width: 22%; }
+
+/* 问问：从心芒牵引星图，书卷在人物身后展开。 */
+.calculation-scroll {
+  position: absolute; left: -37%; top: 30%; width: 112%; aspect-ratio: 1200 / 658;
+  filter: sepia(.12) brightness(.9) drop-shadow(0 0 13px rgba(255,192,115,.32));
+  animation: calculation-scroll 1.65s cubic-bezier(.18,.75,.2,1) both;
+}
+.calculation-ink, .calculation-lunar-trace, .calculation-jade-trace,
+.calculation-wind-trace, .calculation-star-chart {
+  position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+  stroke: var(--ritual-ink); stroke-width: 1.5; stroke-linecap: round; opacity: .6;
+  filter: drop-shadow(0 0 5px var(--ritual-glow));
+}
+.calculation-ink path, .calculation-lunar-trace path, .calculation-jade-trace path,
+.calculation-wind-trace path, .calculation-star-chart path, .calculation-star-chart circle {
+  stroke-dasharray: 500; animation: calculation-draw 1.8s ease-out both;
+}
+
+/* 月白：月相升起，三尾次第舒展，狐火牵出流光。 */
+.calculation-moon { position: absolute; right: 5%; top: 2%; width: 16%; fill: #e3f7ff; filter: drop-shadow(0 0 15px #9bdfff); animation: calculation-moon 1.7s ease-out both; }
+.calculation-tail { position: absolute; left: -10%; bottom: 6%; width: 120%; height: 91%; }
+.calculation-tail img { object-fit: fill; transform-origin: 50% 96%; filter: saturate(.8) drop-shadow(0 0 12px rgba(136,210,255,.42)); }
+.calculation-tail--left img { clip-path: polygon(0 0,34% 0,34% 36%,40% 54%,50% 75%,50% 100%,0 100%); animation: calculation-tail-left 1.8s cubic-bezier(.2,.7,.2,1) both; }
+.calculation-tail--right img { clip-path: polygon(66% 0,100% 0,100% 100%,50% 100%,50% 75%,60% 54%,66% 36%); animation: calculation-tail-right 1.8s cubic-bezier(.2,.7,.2,1) both; }
+.calculation-tail--center img { clip-path: polygon(34% 0,66% 0,66% 36%,60% 54%,50% 75%,50% 100%,50% 75%,40% 54%,34% 36%); animation: calculation-tail-center 1.8s ease-out both; }
+
+/* 地炎君：火座升起、符印次第燃亮，人物始终在前层。 */
+.calculation-fire-seat { position: absolute; left: -19%; bottom: 8%; width: 138% !important; height: 58% !important; filter: drop-shadow(0 0 22px rgba(255,62,17,.35)); animation: calculation-fire-seat 1.75s ease-out both; }
+.calculation-fire-seal { position: absolute; left: -15%; bottom: -7%; width: 130% !important; height: 48% !important; filter: drop-shadow(0 0 12px #e94d1b); animation: calculation-fire-seal 1.8s ease-out both; }
+.calculation-rune { position: absolute; overflow: hidden; width: 18%; aspect-ratio: 1; filter: drop-shadow(0 0 10px #fa5d25); animation: calculation-rune 1.7s ease-out both; }
+.calculation-rune img { position: absolute; width: 200%; height: 200%; max-width: none; object-fit: fill; }
+.calculation-rune--one { left: 1%; top: 25%; }
+.calculation-rune--two { right: -1%; top: 31%; animation-delay: .12s; }
+.calculation-rune--two img { left: -100%; }
+.calculation-rune--three { left: 3%; top: 52%; animation-delay: .23s; }
+.calculation-rune--three img { top: -100%; }
+.calculation-rune--four { right: 1%; top: 57%; animation-delay: .34s; }
+.calculation-rune--four img { top: -100%; left: -100%; }
+
+/* 玉宸：凤羽从肩后舒展，玉印牵出金玉光纹。 */
+.calculation-wing { position: absolute; top: 8%; width: 58%; height: 73%; }
+.calculation-wing img { filter: brightness(.91) drop-shadow(0 0 16px rgba(240,209,132,.34)); }
+.calculation-wing--right { left: 47%; transform-origin: 5% 92%; animation: calculation-wing-right 1.8s cubic-bezier(.2,.7,.2,1) both; }
+.calculation-wing--left { right: 47%; transform-origin: 95% 92%; animation: calculation-wing-left 1.8s cubic-bezier(.2,.7,.2,1) both; }
+.calculation-wing--left img { transform: scaleX(-1); }
+
+/* 青岚：剑从袖后掠出，顺着风痕回落，不遮挡人物。 */
+.calculation-sword {
+  position: absolute; left: 55%; top: -9%; width: 58%; height: 91%;
+  transform-origin: 40% 82%; filter: drop-shadow(0 0 16px rgba(151, 241, 215, .38));
+  animation: calculation-sword-draw 1.8s cubic-bezier(.2,.7,.2,1) both;
+}
+.calculation-wind-trace { opacity: .5; }
+.calculation-wind-trace path:nth-child(2) { animation-delay: .12s; }
+.calculation-wind-trace path:nth-child(3) { animation-delay: .24s; }
+
+/* 星绫：星扇自身后展开，星轨沿扇面延伸。 */
+.calculation-star-fan {
+  position: absolute; left: -25%; top: 13%; width: 150%; height: 69%;
+  transform-origin: 50% 91%; filter: drop-shadow(0 0 18px rgba(206, 161, 255, .38));
+  animation: calculation-fan-unfold 1.85s cubic-bezier(.2,.7,.2,1) both;
+}
+.calculation-star-chart { opacity: .48; }
+.calculation-star-chart circle { stroke-width: .7; animation-delay: .12s; }
+.calculation-star-chart path:last-child { animation-delay: .25s; }
+
+/* 陆野：唱机升起、唱片转动，唱臂落下并牵出声波。 */
+.calculation-turntable {
+  position: absolute; left: -10%; top: 40%; width: 68%; aspect-ratio: 640 / 440;
+  filter: drop-shadow(0 7px 16px rgba(0, 0, 0, .5));
+  transform-origin: 50% 70%; animation: calculation-turntable-enter 1.8s cubic-bezier(.2,.7,.2,1) both;
+}
+.calculation-turntable > img:first-child { position: absolute; inset: 0; }
+.calculation-turntable .calculation-vinyl {
+  position: absolute; left: 17.2%; top: 18.2%; width: 43.75%; height: 63.6%;
+  animation: calculation-vinyl-spin 2.1s ease-out both;
+}
+.calculation-tonearm {
+  position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+  transform-origin: 75% 27%; animation: calculation-tonearm-cue 1.9s ease-out both;
+}
+.calculation-soundwave, .calculation-lens-trace {
+  position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+  stroke: var(--ritual-ink); stroke-width: 1.5; stroke-linecap: round;
+  filter: drop-shadow(0 0 5px var(--ritual-glow)); opacity: .55;
+}
+.calculation-soundwave path, .calculation-lens-trace path, .calculation-lens-trace circle {
+  stroke-dasharray: 500; animation: calculation-draw 1.8s ease-out both;
+}
+.calculation-soundwave path:last-child { animation-delay: .2s; }
+
+/* 苏言：相机从景深中对焦，镜头叶片转动并轻闪。 */
+.calculation-camera-prop {
+  position: absolute; right: -7%; top: 38%; width: 68%; aspect-ratio: 560 / 380;
+  filter: drop-shadow(0 7px 16px rgba(0, 0, 0, .52));
+  transform-origin: 50% 55%; animation: calculation-camera-focus 1.9s cubic-bezier(.2,.7,.2,1) both;
+}
+.calculation-camera-prop > img { position: absolute; inset: 0; }
+.calculation-camera-iris {
+  position: absolute; left: 40.7%; top: 42.9%; width: 17.9%; aspect-ratio: 1;
+  border-radius: 50%; border: 2px solid rgba(196, 219, 221, .45);
+  background: repeating-conic-gradient(from 10deg, #172633 0deg 27deg, #577181 28deg 34deg, #24394a 35deg 60deg);
+  box-shadow: inset 0 0 15px #08111a; animation: calculation-iris-focus 1.9s ease-out both;
+}
+.calculation-camera-flash {
+  position: absolute; left: 35%; top: 35%; width: 30%; aspect-ratio: 1; opacity: 0;
+  background: radial-gradient(circle, rgba(255, 246, 236, .95), rgba(236, 192, 211, .28) 28%, transparent 68%);
+  mix-blend-mode: screen; animation: calculation-shutter-flash 1.9s ease-out both;
+}
+.calculation-lens-trace { opacity: .38; stroke-width: 1; }
+.calculation-lens-trace circle { animation-delay: .1s; }
+
+.calculation-readout {
+  position: absolute; left: 50%; bottom: max(5%, env(safe-area-inset-bottom)); transform: translateX(-50%);
+  width: min(92vw, 460px); text-align: center; text-shadow: 0 2px 14px #000, 0 1px 3px #000;
+}
+.calculation-readout p, .calculation-readout h2 { margin: 0; }
+.calculation-byline { color: var(--ritual-muted); font: 600 11px/1.3 var(--sf); letter-spacing: .2em; }
+.calculation-readout h2 { margin-top: 8px; color: #fff9ef !important; font: 600 clamp(22px, 3.2vh, 30px)/1.25 var(--serif); font-weight: 600 !important; letter-spacing: .12em !important; text-shadow: 0 2px 14px #000, 0 1px 3px #000; }
+.calculation-readout #calculationStatus { margin-top: 7px; color: #f2eae2; font: 400 12px/1.5 var(--sf); letter-spacing: .08em; }
+.calculation-pillars { display: flex; align-items: center; justify-content: center; gap: clamp(19px, 6vw, 36px); margin-top: 15px; }
+.calculation-pillars span { display: grid; justify-items: center; gap: 5px; min-width: 32px; }
+.calculation-pillars small { color: var(--ritual-muted); font: 500 10px/1 var(--sf); letter-spacing: .1em; }
+.calculation-pillars b { color: var(--ritual-ink); font: 600 17px/1.2 var(--serif); white-space: nowrap; }
+.calculation-overlay[data-calculation-state="ready"] .calculation-pillars b { animation: calculation-pillar .55s ease-out both; }
+.calculation-overlay[data-calculation-state="ready"] .calculation-pillars span:nth-child(2) b { animation-delay: .15s; }
+.calculation-overlay[data-calculation-state="ready"] .calculation-pillars span:nth-child(3) b { animation-delay: .3s; }
+.calculation-overlay[data-calculation-state="ready"] .calculation-pillars span:nth-child(4) b { animation-delay: .45s; }
+.calculation-overlay[data-calculation-state="computing"] .calculation-pillars { visibility: hidden; }
+.calculation-overlay[data-calculation-state="ready"] { cursor: pointer; }
+.calculation-continue[hidden] { display: none !important; }
+.calculation-continue {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; margin-top: 19px; padding: 0 23px; border: 1px solid rgba(255, 240, 220, .56); border-radius: 999px;
+  background: rgba(24, 20, 25, .68); color: #fff5e9; font: 600 12px/1 var(--sf); letter-spacing: .08em;
+  cursor: pointer; box-shadow: 0 5px 24px rgba(0, 0, 0, .2);
+}
+.calculation-continue:hover { background: rgba(45, 35, 38, .92); }
+.calculation-continue:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.calculation-overlay[data-animation-skipped="true"] *,
+.calculation-overlay[data-animation-skipped="true"] *::before,
+.calculation-overlay[data-animation-skipped="true"] *::after { animation: none !important; transition: none !important; }
+.calculation-skip {
+  position: absolute; z-index: 4; right: max(18px, env(safe-area-inset-right)); top: max(16px, env(safe-area-inset-top));
+  min-height: 44px; padding: 0 14px; border: 1px solid rgba(255,255,255,.54); border-radius: 999px;
+  color: #fff; background: rgba(8,9,15,.68); font: 600 12px/1 var(--sf); letter-spacing: .05em; cursor: pointer;
+}
+.calculation-skip:hover { background: rgba(8,9,15,.9); }
+.calculation-skip:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.calculation-skip span { padding-left: 3px; }
+/* The sovereign's staff occupies the upper right of his portrait. */
+.calculation-overlay[data-calculation-theme="diyan"] .calculation-skip { left: max(18px, env(safe-area-inset-left)); right: auto; }
+
+@media (min-width: 800px) and (min-height: 550px) {
+  .calculation-backdrop::after { background: linear-gradient(90deg, rgba(7,8,14,.18), rgba(8,8,12,.4) 46%, rgba(8,8,12,.88) 100%), linear-gradient(0deg, rgba(8,8,12,.65), transparent 65%); }
+  .calculation-stage { top: 5%; left: 35%; height: min(87%, 780px); }
+  .calculation-readout { left: 62%; top: 44%; bottom: auto; transform: translateY(-34%); width: min(32vw, 390px); text-align: left; }
+  .calculation-readout h2 { margin-top: 13px; font-size: clamp(28px, 3vw, 40px); }
+  .calculation-readout #calculationStatus { margin-top: 11px; font-size: 14px; }
+  .calculation-pillars { justify-content: flex-start; gap: clamp(22px, 3vw, 42px); margin-top: 26px; }
+  .calculation-pillars b { font-size: 21px; }
+}
+@media (max-width: 799px) {
+  /* Keep the scroll's painted edges in view on a narrow screen, behind the figure. */
+  .calculation-scroll { left: -3%; top: 21%; width: 78%; }
+  .calculation-overlay[data-calculation-theme="diyan"] .calculation-stage { top: 4%; }
+}
+@media (max-height: 600px) and (max-width: 799px) {
+  .calculation-stage { top: 1%; height: 60%; }
+  .calculation-readout { bottom: max(3%, env(safe-area-inset-bottom)); }
+  .calculation-readout h2 { margin-top: 4px; font-size: 20px; }
+  .calculation-readout #calculationStatus { margin-top: 3px; }
+  .calculation-pillars { margin-top: 9px; }
+  .calculation-continue { margin-top: 10px; }
+}
+@media (orientation: landscape) and (min-width: 500px) and (max-height: 549px) {
+  .calculation-stage { left: 30%; top: 3%; height: 92%; }
+  .calculation-overlay[data-calculation-theme="diyan"] .calculation-portrait { height: 100%; }
+  .calculation-readout { left: 55%; top: 50%; bottom: auto; transform: translateY(-50%); width: 40vw; text-align: left; }
+  .calculation-pillars { justify-content: flex-start; gap: clamp(15px, 3vw, 30px); }
+}
+@media (forced-colors: active) {
+  .calculation-overlay { color: CanvasText; background: Canvas; }
+  .calculation-readout h2, .calculation-readout p, .calculation-pillars b, .calculation-pillars small { color: CanvasText; text-shadow: none; }
+  .calculation-readout h2 { color: CanvasText !important; }
+  .calculation-skip, .calculation-continue { color: ButtonText; background: ButtonFace; border-color: ButtonText; }
+  .calculation-skip:focus-visible, .calculation-continue:focus-visible { outline-color: Highlight; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .calculation-overlay *, .calculation-overlay *::before, .calculation-overlay *::after { animation: none !important; transition: none !important; }
+}
+@keyframes calculation-glow { from { opacity: .1; transform: scale(.8); } to { opacity: .8; transform: scale(1); } }
+@keyframes calculation-subject { from { opacity: .1; transform: translateY(16px) scale(.96); } 70% { opacity: 1; transform: translateY(-3px) scale(1.01); } to { opacity: 1; transform: none; } }
+@keyframes calculation-fox-subject { from { opacity: .1; transform: translateY(12px) rotate(1.2deg) scale(.97); } 70% { opacity: 1; transform: translateY(-4px) rotate(-.6deg) scale(1.01); } to { opacity: 1; transform: none; } }
+@keyframes calculation-fire-subject { from { opacity: .1; transform: translateY(14px) scale(.97); } 65% { opacity: 1; transform: translateY(-4px) scale(1.02); } to { opacity: 1; transform: none; } }
+@keyframes calculation-jade-subject { from { opacity: .1; transform: translateY(15px) scale(.97); } 70% { opacity: 1; transform: translateY(-3px) scale(1.01); } to { opacity: 1; transform: none; } }
+@keyframes calculation-wind-subject { from { opacity: .1; transform: translate(-10px, 12px) rotate(-1deg) scale(.97); } 70% { opacity: 1; transform: translate(3px, -3px) rotate(.4deg) scale(1.01); } to { opacity: 1; transform: none; } }
+@keyframes calculation-star-subject { from { opacity: .1; transform: translateY(13px) rotate(.8deg) scale(.97); } 70% { opacity: 1; transform: translateY(-3px) rotate(-.4deg) scale(1.01); } to { opacity: 1; transform: none; } }
+@keyframes calculation-beat-subject { from { opacity: .1; transform: translateY(15px) scale(.97); } 70% { opacity: 1; transform: translateY(-3px) scale(1.01); } to { opacity: 1; transform: none; } }
+@keyframes calculation-lens-subject { from { opacity: .1; transform: translateY(13px) scale(.97); } 70% { opacity: 1; transform: translateY(-2px) scale(1.01); } to { opacity: 1; transform: none; } }
+@keyframes calculation-turntable-enter { 0%, 8% { opacity: 0; transform: translate(-24px, 24px) rotate(-8deg) scale(.8); } 70% { opacity: .94; transform: translate(2px, -3px) rotate(2deg) scale(1.02); } 100% { opacity: .88; transform: rotate(0) scale(1); } }
+@keyframes calculation-vinyl-spin { from { transform: rotate(-110deg); } to { transform: rotate(250deg); } }
+@keyframes calculation-tonearm-cue { 0%, 20% { transform: rotate(-19deg); } 72%, 100% { transform: rotate(0); } }
+@keyframes calculation-camera-focus { 0%, 10% { opacity: 0; transform: translate(25px, 20px) rotate(9deg) scale(.8); } 68% { opacity: .95; transform: translate(-3px, -3px) rotate(-2deg) scale(1.04); } 100% { opacity: .88; transform: rotate(0) scale(1); } }
+@keyframes calculation-iris-focus { 0%, 20% { transform: rotate(-40deg) scale(.55); opacity: .3; } 68%, 100% { transform: rotate(45deg) scale(1); opacity: .88; } }
+@keyframes calculation-shutter-flash { 0%, 54%, 72%, 100% { opacity: 0; } 62% { opacity: .9; } }
+@keyframes calculation-sword-draw { 0%, 8% { opacity: 0; transform: translate(-35px, 38px) rotate(-58deg) scale(.68); } 64% { opacity: .95; transform: translate(4px, -7px) rotate(9deg) scale(1.04); } 100% { opacity: .88; transform: translate(0, 0) rotate(-5deg) scale(1); } }
+@keyframes calculation-fan-unfold { 0%, 8% { opacity: 0; transform: translateY(28px) rotate(-12deg) scaleX(.08) scaleY(.75); } 75% { opacity: .85; transform: translateY(-4px) rotate(2deg) scaleX(1.05); } 100% { opacity: .78; transform: translateY(0) rotate(0) scale(1); } }
+@keyframes calculation-focus { 0% { opacity: 0; transform: scale(.65); } 55% { opacity: .9; transform: scale(1.35); } 100% { opacity: .6; transform: scale(1); } }
+@keyframes calculation-scroll { 0%, 8% { clip-path: inset(0 48%); opacity: 0; transform: translateY(15px) rotate(-14deg) scale(.86); } 100% { clip-path: inset(0); opacity: .86; transform: translateY(0) rotate(-8deg) scale(1); } }
+@keyframes calculation-draw { 0%, 17% { stroke-dashoffset: 500; opacity: 0; } 75%, 100% { stroke-dashoffset: 0; opacity: .8; } }
+@keyframes calculation-moon { from { opacity: 0; transform: translateY(20px) scale(.75); } to { opacity: .65; transform: translateY(0) scale(1); } }
+@keyframes calculation-tail-left { 0%, 10% { opacity: 0; transform: rotate(10deg) scaleX(.25) scaleY(.8); } 100% { opacity: .63; transform: rotate(-5deg) scale(1); } }
+@keyframes calculation-tail-right { 0%, 14% { opacity: 0; transform: rotate(-10deg) scaleX(.25) scaleY(.8); } 100% { opacity: .63; transform: rotate(4deg) scale(1); } }
+@keyframes calculation-tail-center { 0%, 16% { opacity: 0; transform: scaleX(.4) scaleY(.75); } 100% { opacity: .3; transform: scale(1); } }
+@keyframes calculation-fire-seat { from { opacity: .1; transform: scale(.94,.77) translateY(20px); } 70% { opacity: 1; transform: scale(1.04,1.12); } to { opacity: .95; transform: scale(1); } }
+@keyframes calculation-fire-seal { from { opacity: 0; transform: scale(.72) rotate(-8deg); } to { opacity: .9; transform: scale(1) rotate(0); } }
+@keyframes calculation-rune { 0%, 12% { opacity: 0; transform: translateY(13px) scale(.7); } 70% { opacity: 1; transform: translateY(-5px) scale(1.12); } to { opacity: .8; transform: none; } }
+@keyframes calculation-wing-right { from { opacity: 0; transform: rotate(20deg) scaleX(.15) scaleY(.8); } to { opacity: .75; transform: rotate(-4deg) scale(1); } }
+@keyframes calculation-wing-left { from { opacity: 0; transform: rotate(-20deg) scaleX(.15) scaleY(.8); } to { opacity: .75; transform: rotate(4deg) scale(1); } }
+@keyframes calculation-pillar { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }

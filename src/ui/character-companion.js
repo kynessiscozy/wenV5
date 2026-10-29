@@ -6,6 +6,7 @@ export function initCharacterCompanion({
   character = WENWEN,
   openForm = () => {},
   openAsk = () => {},
+  deferHomeAssets = false,
 } = {}) {
   const scene = document.getElementById('characterScene');
   const portrait = document.getElementById('characterPortraitButton');
@@ -44,8 +45,16 @@ export function initCharacterCompanion({
     portrait?.setAttribute('aria-label', `点击${nextCharacter.name}，开启探索`);
   }
 
-  // Initial assets elsewhere (e.g. the report assistant) keep their own identity.
-  applyToScene(character, document);
+  // The report keeps its own identity. The home waits for an explicit trait
+  // choice, so do not fetch or apply the default portrait and scenery first.
+  const home = document.getElementById('page1');
+  if (deferHomeAssets && home) {
+    applyCharacterAssets({
+      querySelectorAll: selector => [...document.querySelectorAll(selector)].filter(element => !home.contains(element)),
+    }, character);
+  } else {
+    applyToScene(character, document);
+  }
 
   // The portrait and the primary action lead to the same real exploration flow.
   portrait?.addEventListener('click', openForm);
