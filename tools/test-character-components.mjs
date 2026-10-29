@@ -2,9 +2,14 @@ import assert from 'node:assert/strict';
 import { WENWEN, characterAvatarMarkup, applyCharacterAssets } from '../src/character/wenwen.js';
 import { MOON_FOX } from '../src/character/moon-fox.js';
 import { EARTHFIRE_SOVEREIGN } from '../src/character/earthfire-sovereign.js';
+import { JADE_EMPRESS } from '../src/character/jade-empress.js';
+import { QINGLAN } from '../src/character/qinglan.js';
+import { XINGLING } from '../src/character/xingling.js';
+import { LUYE } from '../src/character/luye.js';
+import { SUYAN } from '../src/character/suyan.js';
 import { mountCharacterCompanion, mountCharacterPrompt } from '../src/character/companion.js';
 import { initCharacterCompanion } from '../src/ui/character-companion.js';
-import { cameraValues } from '../src/ui/character-camera.js';
+import { HOME_THEMES } from '../src/ui/home-theme.js';
 import { formatStandardAnswer } from '../src/render/ai.js';
 
 // Exercise the reusable UI contract without a browser or the application's global functions.
@@ -56,12 +61,16 @@ assert.doesNotMatch(unsafeReply, /<img/);
 assert.match(unsafeReply, /&lt;img/);
 assert.match(unsafeReply, /&amp;/, '结构化 AI 回复也必须转义 HTML');
 
-assert.deepEqual(cameraValues(-2), { scale: .82, shiftY: 12, roomScale: 1.015 });
-assert.deepEqual(cameraValues(1), { scale: 1, shiftY: 0, roomScale: 1.04 });
-assert.deepEqual(cameraValues(3), { scale: 1.7, shiftY: 12, roomScale: 1.105 });
-assert.ok(Math.abs(cameraValues(1.5).scale - 1.35) < .00001, '拖动时景别必须连续插值');
-assert.ok(Math.abs(cameraValues(1.5, 1.55).scale - 1.275) < .00001, '每个角色可指定适合自身的近景比例');
-assert.equal(cameraValues(NaN).scale, 1, '非法进度安全回退中景');
+assert.deepEqual(Object.values(HOME_THEMES).map(theme => theme.trait.label), ['温柔', '神秘', '威严', '从容', '洒脱', '魅惑', '好奇', '自信']);
+assert.equal(new Set(Object.values(HOME_THEMES).map(theme => theme.trait.label)).size, Object.keys(HOME_THEMES).length, '每个角色应有可扩展的代表特质');
+for (const theme of Object.values(HOME_THEMES)) {
+  assert.ok(theme.trait.mark && theme.trait.color && theme.character.assets.portrait && theme.backdrop.mobile && theme.backdrop.wide);
+  for (const expression of ['blink', 'speaking']) {
+    assert.equal(theme.character.assets[expression].forPortrait, theme.character.assets.portrait.src, '表情必须来自对应重绘人物');
+    assert.equal(theme.character.assets[expression].width, theme.character.assets.portrait.width);
+    assert.equal(theme.character.assets[expression].height, theme.character.assets.portrait.height);
+  }
+}
 
 assert.equal(new Set(WENWEN.topics.map(topic => topic.id)).size, WENWEN.topics.length, '话题 ID 必须唯一');
 assert.ok(WENWEN.topics.every(topic => topic.response && topic.prompt), '每个话题都应有回应与可编辑问题');
@@ -146,6 +155,11 @@ assert.equal(blink.hidden, true, '尺寸相同但不是同一画面时也不能�
 applyCharacterAssets({ querySelectorAll: () => [blink] }, WENWEN);
 assert.equal(blink.hidden, false, '匹配人物时应恢复可选表情');
 assert.equal(blink.src, WENWEN.assets.blink.src);
+applyCharacterAssets({ querySelectorAll: () => [blink] }, JADE_EMPRESS);
+assert.equal(blink.hidden, false);
+assert.equal(blink.src, JADE_EMPRESS.assets.blink.src, '神后使用自己的同源眨眼素材');
+assert.equal(JADE_EMPRESS.assets.blink.forPortrait, JADE_EMPRESS.assets.portrait.src);
+assert.equal(JADE_EMPRESS.assets.speaking.forPortrait, JADE_EMPRESS.assets.portrait.src);
 applyCharacterAssets({ querySelectorAll: () => [blink] }, { ...custom, assets: { portrait: custom.assets.portrait } });
 assert.equal(blink.hidden, true, '没有表情素材的角色应保持静止');
 
@@ -178,6 +192,18 @@ assert.equal(fire.src, EARTHFIRE_SOVEREIGN.assets.fireThrone.src, '火焰王座�
 applyCharacterAssets({ querySelectorAll: () => [fire] }, MOON_FOX);
 assert.equal(fire.hidden, true);
 assert.equal(fireHolder.hidden, true, '其他角色不能继承火焰王座');
+const rune = new Element('img');
+const runeHolder = new Element('div');
+rune.dataset.characterAsset = 'runes';
+rune.dataset.characterSceneOptional = '';
+rune.closest = () => runeHolder;
+applyCharacterAssets({ querySelectorAll: () => [rune] }, EARTHFIRE_SOVEREIGN);
+assert.equal(rune.hidden, false);
+assert.equal(runeHolder.hidden, false);
+assert.equal(rune.src, EARTHFIRE_SOVEREIGN.assets.runes.src, '地炎符文应是角色独立的可选配景');
+applyCharacterAssets({ querySelectorAll: () => [rune] }, WENWEN);
+assert.equal(rune.hidden, true);
+assert.equal(runeHolder.hidden, true, '切回问问时不得继承地炎符文');
 
 // The cloud buttons reuse the character's optional scenery without leaking the old asset.
 const buttonTexture = new Element('image');
@@ -247,8 +273,8 @@ assert.equal(MOON_FOX.assets.blink.forPortrait, MOON_FOX.assets.portrait.src);
 assert.equal(MOON_FOX.assets.speaking.forPortrait, MOON_FOX.assets.portrait.src);
 assert.equal(homeName.textContent, '月白');
 assert.equal(nodes.get('characterPortraitButton').getAttribute('aria-label'), '点击月白，开启探索');
-assert.equal(nodes.get('characterPortraitButton').style.getPropertyValue('--character-ratio'), '770 / 973');
-assert.equal(nodes.get('characterScene').dataset.cameraSafeX, '0.18');
+assert.equal(nodes.get('characterPortraitButton').style.getPropertyValue('--character-ratio'), '848 / 1264');
+assert.equal(nodes.get('characterScene').dataset.cameraSafeX, '0.23');
 assert.equal(nodes.get('characterScene').dataset.cameraSafeInset, '0.05');
 adapter.setHomeCharacter(EARTHFIRE_SOVEREIGN);
 assert.equal(homePortrait.src, EARTHFIRE_SOVEREIGN.assets.portrait.src);
@@ -258,10 +284,19 @@ assert.equal(EARTHFIRE_SOVEREIGN.assets.speaking.forPortrait, EARTHFIRE_SOVEREIG
 assert.equal(homeName.textContent, '地炎君');
 assert.equal(nodes.get('characterPortraitButton').getAttribute('aria-label'), '点击地炎君，开启探索');
 assert.equal(nodes.get('characterPortraitButton').style.getPropertyValue('--character-ratio'), '625 / 1180');
-assert.equal(nodes.get('characterScene').dataset.cameraCloseScale, '1.55');
+assert.equal(nodes.get('characterScene').dataset.cameraCloseScale, '1.7');
 assert.equal(nodes.get('characterScene').dataset.cameraSafeX, '0.885');
+for (const character of [QINGLAN, XINGLING, LUYE, SUYAN]) {
+  adapter.setHomeCharacter(character);
+  assert.equal(homePortrait.src, character.assets.portrait.src);
+  assert.equal(homeBlink.src, character.assets.blink.src);
+  assert.equal(homeBlink.hidden, false, '新角色应使用自己的同源表情');
+  assert.equal(character.assets.blink.forPortrait, character.assets.portrait.src);
+  assert.equal(character.assets.speaking.forPortrait, character.assets.portrait.src);
+  assert.equal(nodes.get('characterPortraitButton').getAttribute('aria-label'), `点击${character.name}，开启探索`);
+}
 adapter.setHomeCharacter(WENWEN);
-assert.equal(nodes.get('characterScene').dataset.cameraCloseScale, undefined, '切换角色后不能沿用旧的构图参数');
+assert.equal(nodes.get('characterScene').dataset.cameraCloseScale, '1.45', '新角色应采用自己的近景比例');
 assert.equal(nodes.get('characterScene').dataset.cameraSafeX, undefined);
 assert.ok(names.every(el => el.textContent === '小星'), '切换首页角色不应更改报告角色');
 nodes.get('characterPortraitButton').click();

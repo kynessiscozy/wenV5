@@ -1,0 +1,120 @@
+/* A single, unframed threshold to the character scenes. */
+.trait-selection[hidden] { display: none !important; }
+.trait-selection {
+  position: fixed;
+  inset: 0;
+  z-index: 13000;
+  overflow: auto;
+  overscroll-behavior: contain;
+  display: grid;
+  place-items: center;
+  padding: max(34px, env(safe-area-inset-top)) 24px max(30px, env(safe-area-inset-bottom));
+  color: #f8eede;
+  background: radial-gradient(ellipse at 50% 45%, #302631 0, #191923 46%, #0c111a 100%);
+  isolation: isolate;
+}
+.trait-atmosphere { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.trait-atmosphere::before, .trait-atmosphere::after {
+  content: ''; position: absolute; width: min(75vw, 720px); aspect-ratio: 1; border-radius: 50%; filter: blur(2px);
+}
+.trait-atmosphere::before { left: -20%; top: -26%; background: radial-gradient(circle, rgba(191, 119, 114, .13), transparent 66%); }
+.trait-atmosphere::after { right: -21%; bottom: -35%; background: radial-gradient(circle, rgba(102, 156, 171, .17), transparent 67%); }
+.trait-orbit { position: absolute; left: 50%; top: 47%; aspect-ratio: 1; border: 1px solid rgba(235, 211, 178, .075); border-radius: 50%; transform: translate(-50%, -50%); }
+.trait-orbit--outer { width: min(116vw, 970px); }
+.trait-orbit--inner { width: min(90vw, 760px); border-color: rgba(235, 211, 178, .055); }
+.trait-stars { position: absolute; inset: 0; width: 100%; height: 100%; fill: #e6c79f; opacity: .43; }
+.trait-content { width: min(100%, 900px); text-align: center; }
+.trait-eyebrow { color: #d2b99d; font: 600 10px/1.4 var(--sf); letter-spacing: .32em; }
+.trait-eyebrow span { padding: 0 .5em; color: #e8ccaa; }
+.trait-selection #traitTitle {
+  margin: 19px 0 0;
+  color: #fff6e7 !important;
+  font: 500 clamp(30px, 4.2vw, 47px)/1.35 var(--serif);
+  letter-spacing: .12em !important;
+  text-shadow: 0 3px 25px rgba(0, 0, 0, .3);
+}
+.trait-selection #traitTitle br { display: none; }
+.trait-intro { margin-top: 15px; color: #d5c9bb; font: 400 13px/1.7 var(--sf); letter-spacing: .1em; }
+.trait-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; width: min(100%, 760px); margin: 26px auto 0; }
+.trait-choice {
+  --trait-color: #edc59d;
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 120px; padding: 14px 10px; border: 1px solid rgba(241, 222, 193, .14); border-radius: 80px 80px 18px 18px;
+  background: linear-gradient(180deg, rgba(255, 250, 235, .035), rgba(255, 250, 235, .015));
+  color: #fff5e7; cursor: pointer; appearance: none;
+  transition: border-color .25s ease, background .25s ease, transform .25s ease !important;
+}
+.trait-choice::before { content: ''; position: absolute; inset: 12% 5% 30%; background: radial-gradient(ellipse, var(--trait-color), transparent 68%); opacity: .1; filter: blur(17px); pointer-events: none; }
+.trait-choice:hover:not(:disabled) { transform: translateY(-4px); border-color: var(--trait-color); background: rgba(255, 250, 235, .06); }
+.trait-choice:focus-visible { outline: 2px solid #fff1d6; outline-offset: 4px; border-color: var(--trait-color); }
+.trait-choice:disabled { cursor: wait; opacity: .62; }
+.trait-choice[data-pending="true"] { opacity: 1; border-color: var(--trait-color); }
+.trait-mark { position: relative; display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 10px; border: 1px solid var(--trait-color); border-radius: 50%; color: var(--trait-color); font: 500 22px/1 var(--serif); box-shadow: 0 0 26px rgba(255, 236, 210, .07), inset 0 0 24px rgba(255, 236, 210, .04); }
+.trait-mark::after { content: '✦'; position: absolute; bottom: -7px; left: 50%; padding: 0 5px; transform: translateX(-50%); background: #24212a; color: var(--trait-color); font: 9px/1 var(--sf); }
+.trait-name { position: relative; color: #fff5e8; font: 600 18px/1.25 var(--serif); letter-spacing: .13em; }
+.trait-status { min-height: 18px; margin-top: 18px; color: #ead4b8; font: 12px/1.5 var(--sf); letter-spacing: .05em; }
+.trait-hint { margin-top: 4px; color: #c4b5aa; font: 11px/1.6 var(--sf); letter-spacing: .04em; }
+.trait-noscript { margin-top: 15px; color: #f7ddc1; font-size: 13px; }
+@media (min-width: 681px) and (max-width: 950px) and (min-height: 601px) {
+  .trait-content { max-width: 640px; }
+  .trait-options { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .trait-choice { min-height: 120px; }
+}
+@media (max-width: 680px) {
+  .trait-selection { padding-inline: 25px; }
+  .trait-content { max-width: 400px; }
+  .trait-selection #traitTitle { margin-top: 18px; font-size: 31px; }
+  .trait-selection #traitTitle br { display: block; }
+  .trait-intro { margin-top: 13px; font-size: 12px; }
+  .trait-options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 24px; }
+  .trait-choice { min-height: 112px; padding: 10px 8px; border-radius: 75px 75px 16px 16px; }
+  .trait-mark { width: 42px; height: 42px; margin-bottom: 9px; font-size: 20px; }
+  .trait-name { font-size: 16px; }
+  .trait-status { margin-top: 11px; }
+}
+@media (max-height: 650px) and (orientation: portrait) {
+  .trait-selection { display: block; padding-block: 23px; }
+  .trait-content { margin: auto; }
+  .trait-selection #traitTitle { margin-top: 10px; font-size: 27px; }
+  .trait-intro { margin-top: 8px; }
+  .trait-options { gap: 9px; margin-top: 16px; }
+  .trait-choice { min-height: 82px; padding: 6px; }
+  .trait-mark { width: 32px; height: 32px; margin-bottom: 6px; font-size: 16px; }
+  .trait-status { min-height: 12px; margin-top: 6px; }
+}
+@media (max-height: 600px) and (orientation: landscape) {
+  .trait-selection { display: block; padding-block: 22px; }
+  .trait-content { margin: auto; }
+  .trait-selection #traitTitle { margin-top: 7px; font-size: 27px; }
+  .trait-selection #traitTitle br { display: none; }
+  .trait-intro { margin-top: 4px; }
+  .trait-options { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+  .trait-choice { min-height: 98px; padding: 6px 3px; }
+  .trait-mark { width: 36px; height: 36px; margin-bottom: 8px; font-size: 17px; }
+  .trait-name { font-size: 14px; letter-spacing: 0; }
+  .trait-status { margin-top: 4px; }
+}
+@media (max-width: 480px) and (max-height: 300px) and (orientation: landscape) {
+  .trait-selection { padding-block: 10px; }
+  .trait-selection #traitTitle { margin-top: 3px; font-size: 21px; }
+  .trait-intro { margin-top: 2px; font-size: 11px; }
+  .trait-options { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin-top: 6px; }
+  .trait-choice { min-height: 57px; padding: 4px 2px; }
+  .trait-mark { width: 25px; height: 25px; margin-bottom: 4px; font-size: 13px; }
+  .trait-name { font-size: 11px; }
+  .trait-status { min-height: 10px; margin-top: 2px; }
+  .trait-hint { margin-top: 1px; font-size: 10px; }
+}
+@media (forced-colors: active) {
+  .trait-selection { color: CanvasText; background: Canvas; }
+  .trait-selection #traitTitle, .trait-intro, .trait-eyebrow, .trait-hint, .trait-status { color: CanvasText !important; text-shadow: none; }
+  .trait-choice { color: ButtonText; background: ButtonFace; border-color: ButtonText; }
+  .trait-choice:focus-visible { outline-color: Highlight; }
+  .trait-mark, .trait-name, .trait-mark::after { color: ButtonText; border-color: ButtonText; background: ButtonFace; }
+  .trait-atmosphere { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trait-choice { transition: none !important; }
+  .trait-choice:hover:not(:disabled) { transform: none; }
+}

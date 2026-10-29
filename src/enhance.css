@@ -630,19 +630,6 @@ body.home .brand3d{display:block}
   animation:ctaPulse 2.4s ease-in-out infinite;
 }
 @keyframes ctaPulse{0%,100%{box-shadow:0 6px 22px color-mix(in srgb,var(--c-accent) 40%,transparent)}50%{box-shadow:0 8px 30px color-mix(in srgb,var(--c-accent) 55%,transparent)}}
-/* 推演过渡：整个首页淡出，画面只留星环与粒子 */
-#page1.tj-fade{opacity:0;pointer-events:none;transition:opacity .4s ease}
-/* 过渡期间极简提示，上移至屏幕中下部 */
-.tj-calc-hint{
-  position:fixed;left:50%;bottom:calc(30vh + 14px);
-  transform:translateX(-50%) translateY(10px);
-  z-index:1300;
-  font:500 .82em var(--sf);letter-spacing:7px;text-indent:7px;color:var(--c-text-3);
-  opacity:0;pointer-events:none;white-space:nowrap;
-  transition:opacity .55s ease,transform .55s ease;
-}
-.tj-calc-hint.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
 /* ---- 出生信息表单：悬浮面板，浮于按钮上方，不模糊底部 ---- */
 .form-modal{
   position:fixed;left:50%;bottom:170px;z-index:550;

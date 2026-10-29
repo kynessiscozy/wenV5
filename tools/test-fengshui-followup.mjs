@@ -1,3 +1,4 @@
+import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 import puppeteer from 'puppeteer';
 const BASE = process.env.BASE_URL || 'http://localhost:5173/';
 const b = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
@@ -7,8 +8,9 @@ const errs = [];
 p.on('pageerror', e => errs.push(e.message));
 p.on('console', m => { if (m.type() === 'error') errs.push('[console] ' + m.text()); });
 await p.goto(BASE, { waitUntil: 'networkidle0', timeout: 20000 });
+await selectHomeTrait(p);
 for (let i = 0; i < 40 && !(await p.evaluate(() => window._tools2Ready)); i++) await new Promise(r => setTimeout(r, 50));
-await p.evaluate(() => window.calc(true));
+await openDemoReport(p);
 await new Promise(r => setTimeout(r, 2500));
 
 // 打开风水工具并生成结果

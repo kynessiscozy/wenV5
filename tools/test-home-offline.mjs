@@ -29,73 +29,117 @@ const base = `http://127.0.0.1:${server.address().port}/demo/`;
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 const errors = [];
 
+async function offlineCalculation(page, id, assetName = '') {
+  await page.click('#homeCtaMain');
+  await page.waitForSelector('#formModal.open');
+  await page.click('.character-form-submit');
+  await page.waitForFunction((theme, asset) => {
+    const scene = document.getElementById('calculationOverlay');
+    const images = [...scene.querySelectorAll(`.calculation-props--${theme} img`)];
+    const pillars = [...scene.querySelectorAll('[data-calculation-pillar]')];
+    return !scene.hidden && scene.dataset.calculationState === 'ready' && scene.dataset.calculationTheme === theme &&
+      images.length > 0 && images.every(image => image.complete && image.naturalWidth > 0) &&
+      (!asset || images.some(image => image.currentSrc.endsWith('/' + asset))) &&
+      pillars.every(item => item.textContent === window._ctx.b[item.dataset.calculationPillar].g + window._ctx.b[item.dataset.calculationPillar].z);
+  }, { timeout: 10000 }, id, assetName);
+  await page.click('#calculationContinue');
+  await page.waitForFunction(() => document.body.classList.contains('report-active'));
+  await page.evaluate(() => window.goBack());
+  await page.waitForFunction(() => !document.body.classList.contains('report-active'));
+  await new Promise(resolve => setTimeout(resolve, 550)); // Let the home page finish sliding back.
+}
+
+async function choose(page, id, width, room) {
+  await page.waitForSelector(`[data-trait="${id}"]`, { timeout: 15000 });
+  assert.equal(await page.$eval('#traitSelection', el => el.hidden), false, '离线刷新也应重新选择');
+  await page.click(`[data-trait="${id}"]`);
+  await page.waitForFunction((theme, size, backdrop) => {
+    const portrait = document.querySelector('[data-character-asset="portrait"]');
+    const images = [...document.querySelectorAll('.character-expression')];
+    return window._tools2Ready === true && document.documentElement.dataset.homeTheme === theme &&
+      document.getElementById('traitSelection').hidden && portrait.complete && portrait.naturalWidth === size &&
+      images.every(image => !image.hidden && image.complete && image.naturalWidth === size) &&
+      document.querySelector('.character-backdrop img').currentSrc.endsWith('/' + backdrop);
+  }, { timeout: 15000 }, id, width, room);
+  assert.equal(await page.$eval('#characterScene', el => el.dataset.cameraShot), 'close');
+}
+
 try {
   const page = await browser.newPage();
   page.on('pageerror', error => errors.push(error.message));
   await page.setViewport({ width: 390, height: 844 });
   await page.goto(base, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window._tools2Ready === true && document.documentElement.dataset.homeReady === 'true');
+  await page.waitForFunction(() => window._tools2Ready === true && document.querySelectorAll('#traitOptions button').length === 8);
+  // None of the roles are chosen online; all scenes must still work offline.
   await page.evaluate(async () => {
-    // A stale cache from a previous release should be removed on activation.
-    await caches.open('wenda-cache-v16');
+    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26]) await caches.open(`wenda-cache-v${version}`);
+    await caches.open('unrelated-app-cache');
     await navigator.serviceWorker.register('./sw.js');
     await navigator.serviceWorker.ready;
   });
-  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v17') && !(await caches.keys()).includes('wenda-cache-v16'));
+  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v27') && !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26)$/.test(key)));
+  assert.ok(await page.evaluate(async () => (await caches.keys()).includes('unrelated-app-cache')), '更新不能删除其他应用的缓存');
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => navigator.serviceWorker.controller && window._tools2Ready === true && document.documentElement.dataset.homeReady === 'true');
+  await page.waitForFunction(() => navigator.serviceWorker.controller && window._tools2Ready === true && document.querySelectorAll('#traitOptions button').length === 8);
 
   const required = [
-    './art/wenwen-divine.webp', './art/sacred-study-wide.webp', './art/sacred-study-mobile.webp',
-    './art/moon-fox.webp', './art/moon-fox-avatar.webp', './art/moon-fox-blink.webp', './art/moon-fox-speak.webp',
+    './art/wenwen-reimagined.webp', './art/wenwen-reimagined-avatar.webp', './art/wenwen-reimagined-blink.webp', './art/wenwen-reimagined-speak.webp',
+    './art/sacred-study-wide.webp', './art/sacred-study-mobile.webp',
+    './art/moon-fox-reimagined.webp', './art/moon-fox-reimagined-avatar.webp', './art/moon-fox-reimagined-blink.webp', './art/moon-fox-reimagined-speak.webp',
     './art/moon-fox-cloud-trail.webp', './art/moon-fox-study-wide.webp', './art/moon-fox-study-mobile.webp',
     './art/earthfire-sovereign.webp', './art/earthfire-sovereign-avatar.webp', './art/earthfire-sovereign-blink.webp', './art/earthfire-sovereign-speak.webp',
-    './art/earthfire-flame-seat.webp', './art/earthfire-hall-wide.webp', './art/earthfire-hall-mobile.webp',
+    './art/earthfire-flame-seat.webp', './art/earthfire-hall-wide.webp', './art/earthfire-hall-mobile.webp', './art/earthfire-runes.webp', './art/earthfire-rune-seal.webp',
+    './art/yuchen-empress.webp', './art/yuchen-empress-avatar.webp', './art/yuchen-empress-blink.webp', './art/yuchen-empress-speak.webp',
+    './art/yuchen-hall-wide.webp', './art/yuchen-hall-mobile.webp',
+    './art/qinglan.webp', './art/qinglan-avatar.webp', './art/qinglan-blink.webp', './art/qinglan-speak.webp',
+    './art/qinglan-room-wide.webp', './art/qinglan-room-mobile.webp', './art/qinglan-sword.webp',
+    './art/xingling.webp', './art/xingling-avatar.webp', './art/xingling-blink.webp', './art/xingling-speak.webp',
+    './art/xingling-room-wide.webp', './art/xingling-room-mobile.webp', './art/xingling-fan.webp',
+    './art/luye.webp', './art/luye-avatar.webp', './art/luye-blink.webp', './art/luye-speak.webp',
+    './art/luye-room-wide.webp', './art/luye-room-mobile.webp', './art/luye-turntable.svg', './art/luye-vinyl.svg',
+    './art/suyan.webp', './art/suyan-avatar.webp', './art/suyan-blink.webp', './art/suyan-speak.webp',
+    './art/suyan-room-wide.webp', './art/suyan-room-mobile.webp', './art/suyan-camera.svg',
+    './art/awakening-scroll.webp', './art/awakening-fox-fan.webp', './art/awakening-phoenix-wing.webp',
   ];
-  const resources = await page.evaluate(() => performance.getEntriesByType('resource')
-    .map(entry => entry.name).filter(url => url.startsWith(location.origin + '/demo/')));
+  const resources = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name).filter(url => url.startsWith(location.origin + '/demo/')));
   await page.waitForFunction(async urls => (await Promise.all(urls.map(url => caches.match(url)))).every(Boolean), { timeout: 15000 }, [...required, ...resources]);
-  assert.equal(await page.evaluate(() => document.documentElement.dataset.homeTheme), 'wenwen');
-
-  // These assets must be available offline even before the fox theme was ever selected online.
   await page.setOfflineMode(true);
-  await page.click('[data-home-character="moonfox"]');
-  await page.waitForFunction(() => document.documentElement.dataset.homeTheme === 'moonfox' &&
-    document.querySelector('[data-character-asset="portrait"]').naturalWidth === 770 &&
-    document.querySelector('.character-backdrop img').currentSrc.endsWith('/moon-fox-study-mobile.webp'));
-  await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window._tools2Ready === true && document.documentElement.dataset.homeReady === 'true' &&
-    document.documentElement.dataset.homeTheme === 'moonfox' && document.querySelector('[data-character-asset="portrait"]').naturalWidth === 770);
-  // The third scene also has to work when never selected while online.
-  await page.click('[data-home-character="diyan"]');
-  await page.waitForFunction(() => document.documentElement.dataset.homeTheme === 'diyan' &&
-    document.querySelector('[data-character-asset="portrait"]').naturalWidth === 625 &&
-    document.querySelector('.character-fire-base').naturalWidth === 1124 &&
-    document.querySelector('.character-backdrop img').currentSrc.endsWith('/earthfire-hall-mobile.webp'));
-  await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window._tools2Ready === true && document.documentElement.dataset.homeReady === 'true' &&
-    document.documentElement.dataset.homeTheme === 'diyan' && document.querySelector('[data-character-asset="portrait"]').naturalWidth === 625 &&
-    document.querySelector('.character-fire-base').naturalWidth === 1124);
-  await page.click('.character-camera-picker [data-camera-shot="close"]');
-  await page.waitForFunction(() => document.getElementById('characterScene').dataset.cameraShot === 'close' &&
-    document.querySelector('.character-camera').style.getPropertyValue('--camera-scale') === '1.5500');
+
+  const roles = [
+    ['wenwen', 848, 'sacred-study-mobile.webp', 'awakening-scroll.webp'],
+    ['moonfox', 848, 'moon-fox-study-mobile.webp', 'awakening-fox-fan.webp'],
+    ['diyan', 625, 'earthfire-hall-mobile.webp', 'earthfire-flame-seat.webp'],
+    ['yuchen', 1024, 'yuchen-hall-mobile.webp', 'awakening-phoenix-wing.webp'],
+    ['qinglan', 848, 'qinglan-room-mobile.webp', 'qinglan-sword.webp'],
+    ['xingling', 848, 'xingling-room-mobile.webp', 'xingling-fan.webp'],
+    ['luye', 848, 'luye-room-mobile.webp', 'luye-turntable.svg'],
+    ['suyan', 848, 'suyan-room-mobile.webp', 'suyan-camera.svg'],
+  ];
+  for (const [id, width, room, asset] of roles) {
+    await choose(page, id, width, room);
+    if (id === 'diyan') {
+      await page.waitForFunction(() => document.querySelector('.character-fire-base').naturalWidth === 1124 &&
+        [...document.querySelectorAll('.character-rune img')].every(image => !image.hidden && image.naturalWidth === 512) &&
+        document.querySelector('.character-prop--rune-seal img').naturalWidth === 960);
+    } else assert.ok(await page.$$eval('.character-rune, .character-prop--rune-seal', props => props.every(prop => prop.hidden)));
+    await offlineCalculation(page, id, asset);
+    assert.equal(await page.$eval('html', el => el.dataset.homeTheme), id);
+    if (id !== roles.at(-1)[0]) await page.reload({ waitUntil: 'domcontentloaded' });
+  }
   await page.setViewport({ width: 1280, height: 720 });
   await page.waitForFunction(() => document.querySelector('.character-backdrop img').complete &&
-    document.querySelector('.character-backdrop img').naturalWidth > 0 && document.querySelector('.character-backdrop img').currentSrc.endsWith('/earthfire-hall-wide.webp'));
+    document.querySelector('.character-backdrop img').naturalWidth > 0 && document.querySelector('.character-backdrop img').currentSrc.endsWith('/suyan-room-wide.webp'));
   await page.click('#characterPortraitButton');
   await page.waitForSelector('#formModal.open');
   await page.keyboard.press('Escape');
   await page.click('#homeCtaCal');
   await page.waitForSelector('#toolModal.open.cal-fullscreen');
   await page.evaluate(() => window.closeToolPage());
-  await page.click('[data-home-character="wenwen"]');
-  await page.waitForFunction(() => document.documentElement.dataset.homeTheme === 'wenwen' &&
-    document.querySelector('[data-character-asset="portrait"]').naturalWidth === 992 && !document.querySelector('.character-prop--lantern').hidden);
-  assert.equal(await page.$eval('#characterScene', el => el.dataset.cameraShot), 'close', '离线切换角色仍应保留景别');
-  await page.click('.character-camera-picker [data-camera-shot="far"]');
-  assert.equal(await page.$eval('#characterScene', el => el.dataset.cameraShot), 'far');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
+  assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined);
   assert.deepEqual(errors, [], '离线页面不应产生未捕获的 JavaScript 错误');
-  console.log('✓ /demo/ 生产构建：v16 缓存清理、三主题离线切换/刷新、运镜、横竖屏、探索和日历');
+  console.log('✓ /demo/ 生产构建：缓存更新、八角色离线选择/刷新、真实结果、固定近景与探索日历');
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));

@@ -13,6 +13,9 @@ export default defineConfig({
            Vite 8 用 codeSplitting 替代废弃的 manualChunks。 */
         codeSplitting: {
           groups: [
+            // Keep Vite's dynamic-import helper out of the engine chunk so the
+            // small home entry does not have to download every report engine.
+            { name: 'preload-helper', test: /\0vite\/preload-helper\.js$/, priority: 100 },
             { name: 'engines', test: /\/src\/engines\//, priority: 10 },
             { name: 'ai', test: /\/src\/ai\//, priority: 10 },
             { name: 'evolve', test: /\/src\/evolve\//, priority: 10 },

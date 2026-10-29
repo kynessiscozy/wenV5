@@ -1,3 +1,4 @@
+import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 /* 验证三项改动：
    1. 命盘/运势/关系 三分区统一为「速读 + 吸顶标签栏 + 一次一张卡」的排列形式
    2. 问问大师面板位于 Dock 之上，不遮蔽 Dock
@@ -16,7 +17,9 @@ const b = await puppeteer.launch({ headless: 'shell', args: ['--no-sandbox'] });
   const p = await b.newPage();
   await p.setViewport({ width: 430, height: 932 });
   await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
-  await p.evaluate(() => window.calc(true));
+  await selectHomeTrait(p);
+  await p.waitForFunction(() => typeof window.calc === 'function', { timeout: 15000 });
+  await openDemoReport(p);
   await new Promise(r => setTimeout(r, 4500));
 
   const bgBySec = {};
@@ -116,7 +119,9 @@ for (const [w, h] of [[360, 740], [430, 932], [768, 1024], [1440, 900]]) {
   const p = await b.newPage();
   await p.setViewport({ width: w, height: h });
   await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
-  await p.evaluate(() => window.calc(true));
+  await selectHomeTrait(p);
+  await p.waitForFunction(() => typeof window.calc === 'function', { timeout: 15000 });
+  await openDemoReport(p);
   await new Promise(r => setTimeout(r, 4000));
   await p.evaluate(() => window.openAsk && window.openAsk());
   await new Promise(r => setTimeout(r, 900));

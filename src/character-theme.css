@@ -99,11 +99,124 @@ html[data-home-theme="diyan"] #page1 {
   --backdrop-lower-middle: rgba(15, 4, 7, .04);
   --backdrop-bottom: rgba(10, 3, 5, .72);
 }
-/* Remembered scenes wait for their artwork rather than flashing the default portrait. */
-html[data-home-theme="moonfox"]:not([data-home-ready]) .character-backdrop,
-html[data-home-theme="moonfox"]:not([data-home-ready]) .character-scene,
-html[data-home-theme="diyan"]:not([data-home-ready]) .character-backdrop,
-html[data-home-theme="diyan"]:not([data-home-ready]) .character-scene { visibility: hidden; }
+/* An imperial jade-and-gold palace gives the empress a distinct scene of her own. */
+html[data-home-theme="yuchen"] #page1 {
+  --home-bg: #0c1712;
+  --home-text: #fff7df;
+  --home-muted: #e8dbb8;
+  --home-card: #264438;
+  --home-card-hover: #355849;
+  --home-accent: #e4ce96;
+  --home-accent-dark: #fff0bd;
+  --home-purple: #e7dcb9;
+  --home-icon-bg: #264438;
+  --home-button: #e8d39c;
+  --home-button-text: #283023;
+  --home-control-border: rgba(238, 217, 159, .38);
+  --home-control-sheen: linear-gradient(145deg, rgba(249, 232, 185, .13), rgba(143, 179, 137, .02) 70%);
+  --home-control-shadow: inset 0 1px rgba(249, 230, 180, .15), 0 5px 18px rgba(0, 0, 0, .3);
+  --home-focus: #fce5a8;
+  --camera-shade: 8, 22, 16;
+  --backdrop-opacity: .95;
+  --backdrop-top: rgba(7, 17, 13, .25);
+  --backdrop-middle: rgba(7, 17, 13, .04);
+  --backdrop-lower-middle: rgba(7, 17, 13, .09);
+  --backdrop-bottom: rgba(5, 15, 11, .72);
+}
+/* The wandering swordsman's pavilion and the star oracle's observatory. */
+html[data-home-theme="qinglan"] #page1 {
+  --home-bg: #0c2026;
+  --home-text: #edfaf7;
+  --home-muted: #c2e4dc;
+  --home-card: #274b50;
+  --home-card-hover: #376369;
+  --home-accent: #b9e0d5;
+  --home-accent-dark: #e2fff3;
+  --home-purple: #c2e2dc;
+  --home-icon-bg: #294e52;
+  --home-button: #c4e6dc;
+  --home-button-text: #153d3a;
+  --home-control-border: rgba(181, 228, 217, .36);
+  --home-control-sheen: linear-gradient(145deg, rgba(224, 255, 245, .15), rgba(165, 220, 214, .025) 70%);
+  --home-control-shadow: inset 0 1px rgba(224, 255, 245, .16), 0 5px 18px rgba(1, 19, 25, .26);
+  --home-focus: #d2fff0;
+  --camera-shade: 5, 23, 27;
+  --backdrop-opacity: .97;
+  --backdrop-top: rgba(4, 18, 23, .2);
+  --backdrop-middle: rgba(5, 21, 25, .03);
+  --backdrop-lower-middle: rgba(5, 20, 23, .08);
+  --backdrop-bottom: rgba(4, 17, 22, .68);
+}
+html[data-home-theme="xingling"] #page1 {
+  --home-bg: #18132c;
+  --home-text: #fbf3ff;
+  --home-muted: #e6d5f4;
+  --home-card: #453760;
+  --home-card-hover: #594a79;
+  --home-accent: #dcc7f6;
+  --home-accent-dark: #f5eaff;
+  --home-purple: #d9c7ef;
+  --home-icon-bg: #493b63;
+  --home-button: #dfcff5;
+  --home-button-text: #35264e;
+  --home-control-border: rgba(228, 207, 250, .35);
+  --home-control-sheen: linear-gradient(145deg, rgba(248, 233, 255, .14), rgba(178, 143, 220, .025) 70%);
+  --home-control-shadow: inset 0 1px rgba(248, 233, 255, .16), 0 5px 18px rgba(15, 5, 28, .28);
+  --home-focus: #f4e1ff;
+  --camera-shade: 18, 9, 31;
+  --backdrop-opacity: .97;
+  --backdrop-top: rgba(14, 8, 31, .2);
+  --backdrop-middle: rgba(17, 10, 33, .03);
+  --backdrop-lower-middle: rgba(17, 10, 33, .08);
+  --backdrop-bottom: rgba(11, 6, 25, .7);
+}
+/* Two contemporary rooms retain the same unframed scene and control contract. */
+html[data-home-theme="luye"] #page1 {
+  --home-bg: #111c1d;
+  --home-text: #fff5e8;
+  --home-muted: #dfd1bd;
+  --home-card: #334447;
+  --home-card-hover: #43595a;
+  --home-accent: #e9cba1;
+  --home-accent-dark: #ffebc9;
+  --home-purple: #d6ded7;
+  --home-icon-bg: #304346;
+  --home-button: #f0d5af;
+  --home-button-text: #30291f;
+  --home-control-border: rgba(232, 206, 168, .4);
+  --home-control-sheen: linear-gradient(145deg, rgba(255, 233, 196, .14), rgba(145, 193, 189, .03) 70%);
+  --home-control-shadow: inset 0 1px rgba(255, 233, 196, .16), 0 5px 18px rgba(1, 10, 14, .3);
+  --home-focus: #ffdfae;
+  --camera-shade: 11, 17, 18;
+  --backdrop-opacity: .98;
+  --backdrop-top: rgba(8, 13, 17, .14);
+  --backdrop-middle: rgba(8, 14, 16, .02);
+  --backdrop-lower-middle: rgba(8, 14, 16, .06);
+  --backdrop-bottom: rgba(7, 12, 14, .66);
+}
+html[data-home-theme="suyan"] #page1 {
+  --home-bg: #211721;
+  --home-text: #fff3f5;
+  --home-muted: #ecd3dc;
+  --home-card: #4b3341;
+  --home-card-hover: #654553;
+  --home-accent: #efc9d2;
+  --home-accent-dark: #ffedf0;
+  --home-purple: #e3c3d1;
+  --home-icon-bg: #4e3443;
+  --home-button: #f1d5da;
+  --home-button-text: #3a232f;
+  --home-control-border: rgba(244, 204, 217, .38);
+  --home-control-sheen: linear-gradient(145deg, rgba(255, 230, 235, .14), rgba(194, 153, 180, .03) 70%);
+  --home-control-shadow: inset 0 1px rgba(255, 230, 235, .16), 0 5px 18px rgba(18, 7, 18, .3);
+  --home-focus: #ffe2e9;
+  --camera-shade: 24, 13, 25;
+  --backdrop-opacity: .98;
+  --backdrop-top: rgba(17, 10, 20, .16);
+  --backdrop-middle: rgba(18, 10, 21, .02);
+  --backdrop-lower-middle: rgba(18, 10, 21, .06);
+  --backdrop-bottom: rgba(14, 7, 16, .68);
+}
 #page1 .p1-scroll {
   position: relative;
   display: block;
@@ -119,6 +232,9 @@ html[data-home-theme="diyan"]:not([data-home-ready]) .character-scene { visibili
   pointer-events: none;
 }
 .character-backdrop picture { display: block; width: 100%; height: 100%; }
+/* Slow theme swaps must not expose the previous portrait or room. */
+.character-backdrop img.is-scene-image-loading,
+.character-portrait img.is-scene-image-loading { visibility: hidden; }
 .character-backdrop img {
   width: 100%;
   height: 100%;
@@ -156,45 +272,6 @@ html[data-home-theme="diyan"]:not([data-home-ready]) .character-scene { visibili
 }
 .character-visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .character-header-actions { display: flex; align-items: center; justify-content: flex-end; }
-/* A quiet but discoverable theme switch, without putting a frame around the scene. */
-.character-theme-switcher {
-  justify-self: center;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid rgba(255, 226, 207, .24);
-  border-radius: 999px;
-  background: rgba(33, 22, 36, .88);
-  box-shadow: 0 4px 18px rgba(14, 8, 19, .18);
-}
-.character-theme-switcher button {
-  appearance: none;
-  min-width: 64px;
-  min-height: 44px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: #f5e5de;
-  font: 650 12px/1 var(--sf);
-  letter-spacing: .05em;
-  cursor: pointer;
-  transition: none !important;
-}
-.character-theme-switcher button[aria-pressed="true"] {
-  background: #f3dfcf;
-  color: #49303e;
-  box-shadow: 0 2px 8px rgba(9, 7, 14, .2);
-}
-.character-theme-switcher button:not([aria-pressed="true"]):hover { background: rgba(255, 255, 255, .1); }
-.character-theme-switcher button:focus-visible { outline: 2px solid var(--home-focus); outline-offset: 2px; }
-html[data-home-theme="moonfox"] .character-theme-switcher { border-color: rgba(183, 224, 251, .28); background: rgba(8, 27, 48, .9); }
-html[data-home-theme="moonfox"] .character-theme-switcher button { color: #dbedf9; }
-html[data-home-theme="moonfox"] .character-theme-switcher button[aria-pressed="true"] { background: #d7effb; color: #153a55; }
-html[data-home-theme="diyan"] .character-theme-switcher { border-color: rgba(250, 159, 123, .3); background: rgba(35, 10, 12, .92); }
-html[data-home-theme="diyan"] .character-theme-switcher button { color: #ffe1d1; }
-html[data-home-theme="diyan"] .character-theme-switcher button[aria-pressed="true"] { background: #f4c4a2; color: #481813; }
 /* These controls originally floated over the orb. They now live in the header. */
 html[data-theme] body .character-header .home-menu-btn,
 html[data-theme] body .character-header .theme-toggle-home {
@@ -229,9 +306,6 @@ html[data-theme] body .home-menu-drawer .home-menu-empty { color: var(--c-text-2
   gap: 8px;
   padding: 14px 0 0;
 }
-html[data-home-theme="diyan"] .character-header { min-height: 64px; }
-html[data-home-theme="diyan"] .character-hero { gap: 4px; padding-top: 4px; }
-html[data-home-theme="diyan"] .character-actions { margin-top: 4px; }
 .character-copy { position: relative; z-index: 1; width: 100%; max-width: 440px; text-align: center; }
 /* The character's cloud trail lends its texture to both actions. */
 .character-cloud-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
@@ -303,6 +377,40 @@ html[data-home-theme="diyan"] .character-btn-flourish { stroke: rgba(143, 52, 35
 html[data-home-theme="diyan"] .character-btn-secondary .character-btn-flourish { stroke: rgba(255, 201, 169, .72); }
 html[data-home-theme="diyan"] .character-btn-primary .character-btn-art { filter: drop-shadow(0 5px 14px rgba(212, 72, 39, .3)); }
 html[data-home-theme="diyan"] .character-btn-primary:hover .character-btn-art { filter: drop-shadow(0 7px 18px rgba(246, 100, 53, .45)); }
+html[data-home-theme="yuchen"] .character-btn-primary .character-btn-fill { fill: url(#homeCloudJadePrimary); }
+html[data-home-theme="yuchen"] .character-btn-secondary .character-btn-fill { fill: url(#homeCloudJadeSecondary); }
+html[data-home-theme="yuchen"] .character-btn-edge { stroke: rgba(255, 239, 189, .85); }
+html[data-home-theme="yuchen"] .character-btn-secondary .character-btn-edge { stroke: rgba(232, 213, 161, .7); }
+html[data-home-theme="yuchen"] .character-btn-flourish { stroke: rgba(123, 97, 49, .58); }
+html[data-home-theme="yuchen"] .character-btn-secondary .character-btn-flourish { stroke: rgba(239, 220, 168, .72); }
+html[data-home-theme="yuchen"] .character-btn-primary .character-btn-art { filter: drop-shadow(0 5px 14px rgba(210, 181, 112, .25)); }
+html[data-home-theme="yuchen"] .character-btn-primary:hover .character-btn-art { filter: drop-shadow(0 7px 18px rgba(239, 209, 139, .42)); }
+html[data-home-theme="qinglan"] .character-btn-primary .character-btn-fill { fill: url(#homeCloudWindPrimary); }
+html[data-home-theme="qinglan"] .character-btn-secondary .character-btn-fill { fill: url(#homeCloudWindSecondary); }
+html[data-home-theme="qinglan"] .character-btn-edge { stroke: rgba(219, 255, 243, .84); }
+html[data-home-theme="qinglan"] .character-btn-secondary .character-btn-edge { stroke: rgba(181, 230, 218, .76); }
+html[data-home-theme="qinglan"] .character-btn-flourish { stroke: rgba(44, 109, 103, .58); }
+html[data-home-theme="qinglan"] .character-btn-secondary .character-btn-flourish { stroke: rgba(206, 244, 231, .76); }
+html[data-home-theme="qinglan"] .character-btn-primary .character-btn-art { filter: drop-shadow(0 5px 14px rgba(103, 192, 180, .28)); }
+html[data-home-theme="xingling"] .character-btn-primary .character-btn-fill { fill: url(#homeCloudStarPrimary); }
+html[data-home-theme="xingling"] .character-btn-secondary .character-btn-fill { fill: url(#homeCloudStarSecondary); }
+html[data-home-theme="xingling"] .character-btn-edge { stroke: rgba(252, 231, 255, .88); }
+html[data-home-theme="xingling"] .character-btn-secondary .character-btn-edge { stroke: rgba(219, 193, 244, .76); }
+html[data-home-theme="xingling"] .character-btn-flourish { stroke: rgba(112, 75, 145, .6); }
+html[data-home-theme="xingling"] .character-btn-secondary .character-btn-flourish { stroke: rgba(239, 218, 255, .76); }
+html[data-home-theme="xingling"] .character-btn-primary .character-btn-art { filter: drop-shadow(0 5px 14px rgba(179, 131, 227, .3)); }
+html[data-home-theme="luye"] .character-btn-primary .character-btn-fill { fill: url(#homeCloudBeatPrimary); }
+html[data-home-theme="luye"] .character-btn-secondary .character-btn-fill { fill: url(#homeCloudBeatSecondary); }
+html[data-home-theme="luye"] .character-btn-edge { stroke: rgba(255, 235, 201, .86); }
+html[data-home-theme="luye"] .character-btn-secondary .character-btn-edge { stroke: rgba(203, 229, 220, .72); }
+html[data-home-theme="luye"] .character-btn-flourish { stroke: rgba(118, 87, 59, .58); }
+html[data-home-theme="luye"] .character-btn-secondary .character-btn-flourish { stroke: rgba(228, 238, 221, .72); }
+html[data-home-theme="suyan"] .character-btn-primary .character-btn-fill { fill: url(#homeCloudLensPrimary); }
+html[data-home-theme="suyan"] .character-btn-secondary .character-btn-fill { fill: url(#homeCloudLensSecondary); }
+html[data-home-theme="suyan"] .character-btn-edge { stroke: rgba(255, 231, 235, .88); }
+html[data-home-theme="suyan"] .character-btn-secondary .character-btn-edge { stroke: rgba(237, 205, 219, .76); }
+html[data-home-theme="suyan"] .character-btn-flourish { stroke: rgba(128, 80, 96, .58); }
+html[data-home-theme="suyan"] .character-btn-secondary .character-btn-flourish { stroke: rgba(255, 225, 232, .75); }
 .character-btn-icon, .character-btn > span { position: relative; z-index: 1; }
 .character-btn-icon {
   width: 17px;
@@ -329,10 +437,6 @@ html[data-home-theme="diyan"] .character-btn-primary:hover .character-btn-art { 
   margin: 0;
   touch-action: pan-y pinch-zoom;
 }
-/* Give the sovereign more of the screen while leaving the main actions in reach. */
-html[data-home-theme="diyan"] .character-scene {
-  height: min(clamp(280px, calc(100vh - 202px), 780px), calc(var(--character-mobile-vw, 188.8vw) - var(--character-mobile-inset-compact, 30.208px)));
-}
 /* The camera crops softly into the surrounding room, never into a visible frame. */
 .character-camera-viewport {
   position: absolute;
@@ -357,12 +461,47 @@ html[data-home-theme="diyan"] .character-scene {
   transition: transform .78s cubic-bezier(.2, .75, .2, 1);
   will-change: transform;
 }
+/* Keep the button itself untransformed for reliable keyboard focus. A shaped
+   hit surface follows the enlarged artwork without making its transparent
+   rectangular corners (and the room behind them) clickable. New characters
+   can override this generous fallback silhouette with their own polygon. */
 .character-camera-subject { position: absolute; inset: 0; display: block; pointer-events: none; }
-.character-scene[data-camera-dragging="true"] .character-camera-subject,
-.character-scene[data-camera-dragging="true"] .character-scenery,
-body.camera-dragging .character-backdrop img { transition: none; }
-.character-scene[data-camera-dragging="true"] { cursor: grabbing; user-select: none; }
-.character-scene[data-camera-dragging="true"] .character-portrait { cursor: grabbing; }
+.character-camera-subject::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: block;
+  background: transparent;
+  pointer-events: auto;
+  clip-path: var(--character-hit-shape, polygon(28% 3%, 72% 3%, 90% 30%, 100% 55%, 100% 100%, 0 100%, 0 55%, 10% 30%));
+}
+html[data-home-theme="wenwen"] .character-camera-subject {
+  --character-hit-shape: polygon(40% 5%, 64% 5%, 68% 25%, 78% 40%, 80% 53%, 100% 60%, 100% 78%, 90% 90%, 30% 92%, 5% 80%, 0% 60%, 19% 48%, 32% 40%);
+}
+html[data-home-theme="moonfox"] .character-camera-subject {
+  --character-hit-shape: polygon(28% 1%, 50% 1%, 56% 8%, 72% 8%, 92% 20%, 94% 37%, 100% 50%, 96% 65%, 85% 80%, 60% 92%, 30% 100%, 8% 90%, 4% 60%, 4% 40%, 15% 30%, 15% 17%);
+}
+html[data-home-theme="diyan"] .character-camera-subject {
+  --character-hit-shape: polygon(34% 7%, 50% 7%, 55% 15%, 75% 22%, 83% 5%, 98% 0%, 98% 40%, 90% 55%, 92% 95%, 5% 95%, 0% 40%, 16% 25%);
+}
+html[data-home-theme="yuchen"] .character-camera-subject {
+  --character-hit-shape: polygon(44% 3%, 55% 3%, 62% 15%, 64% 23%, 69% 28%, 70% 40%, 79% 45%, 77% 70%, 100% 90%, 100% 100%, 0% 100%, 0% 90%, 20% 70%, 24% 40%, 23% 30%, 32% 28%, 34% 23%, 39% 15%);
+}
+html[data-home-theme="qinglan"] .character-camera-subject {
+  --character-hit-shape: polygon(33% 6%, 54% 6%, 78% 13%, 82% 25%, 82% 40%, 100% 48%, 100% 68%, 90% 85%, 53% 98%, 20% 98%, 0% 80%, 0% 70%, 8% 48%, 15% 38%, 25% 25%);
+}
+html[data-home-theme="xingling"] .character-camera-subject {
+  --character-hit-shape: polygon(38% 7%, 64% 7%, 70% 22%, 85% 30%, 90% 40%, 80% 55%, 100% 60%, 100% 78%, 90% 90%, 30% 92%, 0% 80%, 0% 43%, 22% 43%, 27% 30%, 38% 25%);
+}
+html[data-home-theme="luye"] .character-camera-subject {
+  --character-hit-shape: polygon(33% 6%, 58% 6%, 60% 20%, 76% 25%, 86% 40%, 85% 55%, 81% 75%, 80% 100%, 25% 100%, 14% 65%, 12% 55%, 20% 40%, 28% 27%, 34% 20%);
+}
+html[data-home-theme="suyan"] .character-camera-subject {
+  --character-hit-shape: polygon(40% 5%, 65% 5%, 69% 20%, 78% 25%, 83% 40%, 84% 55%, 80% 80%, 65% 100%, 8% 100%, 15% 80%, 18% 60%, 16% 45%, 32% 40%, 35% 27%, 39% 20%);
+}
+/* Let the detailed crown re-rasterize sharply in its final close-up. */
+html[data-home-theme="yuchen"] .character-camera-subject { will-change: auto; }
 /* In close-up the portrait's outer outline may be off-screen; keep keyboard focus visible without framing the artwork. */
 .character-scene:focus-within::after {
   content: '↵ 开启探索';
@@ -381,71 +520,39 @@ body.camera-dragging .character-backdrop img { transition: none; }
 @supports selector(:has(:focus-visible)) {
   .character-scene:focus-within:not(:has(.character-portrait:focus-visible))::after { content: none; }
 }
-.character-camera-picker {
-  position: relative;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  gap: 2px;
-  isolation: isolate;
-  color: var(--home-text);
-}
-/* A local feathered shadow protects small labels over a moving illustrated background. */
-.character-camera-picker::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  top: 50%;
-  width: min(100vw, 390px);
-  height: 96px;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  background: radial-gradient(ellipse 50% 50% at center, rgba(var(--camera-shade), .88) 0 45%, rgba(var(--camera-shade), .74) 65%, transparent 100%);
-}
-.camera-gesture-hint {
-  margin-right: 7px;
-  color: var(--home-text);
-  font-size: 11px;
-  letter-spacing: .02em;
-  text-shadow: 0 1px 5px #190f17, 0 1px 10px #190f17;
-}
-.character-camera-picker button {
-  position: relative;
-  min-width: 48px;
-  min-height: 44px;
-  padding: 0 6px;
-  border: 0;
-  background: transparent;
-  color: var(--home-text);
-  font: 600 11px/1 var(--sf);
-  letter-spacing: .05em;
-  text-shadow: 0 1px 5px #190f17, 0 1px 10px #190f17;
-  cursor: pointer;
-  transition: none !important;
-}
-.character-camera-picker button::after {
-  content: '';
-  position: absolute;
-  left: 30%;
-  right: 30%;
-  bottom: 7px;
-  height: 2px;
-  border-radius: 2px;
-  background: currentColor;
-  opacity: 0;
-}
-.character-camera-picker button[aria-pressed="true"]::after { opacity: .95; }
-.character-camera-picker button:focus-visible { outline: 2px solid var(--home-focus); outline-offset: -2px; border-radius: 8px; }
 .character-scenery { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 /* Flames may bleed naturally to the screen edge, but must not create horizontal scrolling. */
 html[data-home-theme="diyan"] .character-scenery { overflow: hidden; overflow: clip; }
+/* A soft contact shadow grounds the empress's long train on the palace floor. */
+html[data-home-theme="yuchen"] .character-scenery::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 1.5%;
+  width: min(80%, 500px);
+  height: clamp(18px, 5%, 36px);
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: radial-gradient(ellipse, rgba(1, 10, 6, .78) 0, rgba(1, 12, 7, .42) 42%, transparent 72%);
+  filter: blur(4px);
+}
 .character-prop { position: absolute; }
 .character-prop[hidden] { display: none; }
 .character-prop img { display: block; width: 100%; height: auto; }
 .character-prop img[hidden] { display: none; }
+/* The rune seal sits on the floor, not on top of the person or the interface. */
+.character-prop--rune-seal {
+  left: 50%;
+  bottom: -10%;
+  width: min(96%, 620px);
+  opacity: .62;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  transform: translateX(-50%) perspective(700px) rotateX(66deg);
+  transform-origin: 50% 70%;
+}
+.character-prop--rune-seal img { animation: rune-seal-glow 6s ease-in-out infinite; }
+@keyframes rune-seal-glow { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
 /* A softly flickering, translucent fire throne stays wholly behind the figure. */
 .character-flame-anchor {
   position: absolute;
@@ -481,6 +588,46 @@ html[data-home-theme="diyan"] .character-scenery { overflow: hidden; overflow: c
 @keyframes fire-seat-lift {
   0%, 100% { opacity: .1; transform: translateY(0) scale(1); }
   50% { opacity: .28; transform: translateY(-3px) scale(1.015, 1.04); }
+}
+/* Four molten sigils emerge from the throne's fire, behind the sovereign rather than framing him. */
+.character-rune-anchor {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: auto;
+  max-width: 100%;
+  height: 100%;
+  aspect-ratio: var(--character-ratio, 625 / 1180);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.character-rune {
+  width: 27%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  opacity: .82;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 5px rgba(255, 73, 29, .35));
+  animation: rune-ember 7s ease-in-out infinite;
+}
+.character-rune img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 200%;
+  max-width: none;
+}
+.character-rune--one { left: 11.5%; top: 9%; }
+.character-rune--two { right: 11.5%; top: 7%; animation-delay: -2.8s; }
+.character-rune--three { left: -2%; top: 66%; width: 24%; animation-delay: -4.6s; }
+.character-rune--four { right: -2%; top: 70%; width: 22%; animation-delay: -1.5s; }
+.character-rune--two img, .character-rune--four img { left: -100%; }
+.character-rune--three img, .character-rune--four img { top: -100%; }
+@keyframes rune-ember {
+  0%, 100% { opacity: .68; transform: translateY(1px) rotate(-2deg); }
+  50% { opacity: .96; transform: translateY(-4px) rotate(2deg); }
 }
 /* The lantern shares the portrait's dimensions, so its placement follows the character. */
 .character-lantern-anchor {
@@ -573,7 +720,17 @@ html[data-home-theme="moonfox"] .heartlight-trail { stroke: #b4e4ff; }
 html[data-home-theme="moonfox"] .heartlight-heart { stroke: #e2f6ff; }
 html[data-home-theme="moonfox"] .heartlight-star,
 html[data-home-theme="moonfox"] .scene-heartlight circle[fill="#ffe1bc"] { fill: #d5f3ff; }
-html[data-home-theme="diyan"] .scene-heartlight { display: none; }
+html[data-home-theme="diyan"] .scene-heartlight,
+html[data-home-theme="yuchen"] .scene-heartlight,
+html[data-home-theme="qinglan"] .scene-heartlight,
+html[data-home-theme="xingling"] .scene-heartlight,
+html[data-home-theme="luye"] .scene-heartlight,
+html[data-home-theme="suyan"] .scene-heartlight { display: none; }
+html[data-home-theme="yuchen"] .scene-sparkles,
+html[data-home-theme="luye"] .scene-sparkles,
+html[data-home-theme="suyan"] .scene-sparkles { display: none; }
+html[data-home-theme="qinglan"] .scene-sparkles { fill: #c9f2df; opacity: .3; }
+html[data-home-theme="xingling"] .scene-sparkles { fill: #e8c7ff; opacity: .4; }
 @keyframes heartlight-breathe { 0%, 100% { opacity: .66; transform: translateY(0); } 50% { opacity: .92; transform: translateY(-2px); } }
 @media (max-aspect-ratio: 4/5) { .scene-heartlight { display: block; } }
 /* Expressions remain optional and are aligned to the portrait, not the scenery. */
@@ -587,7 +744,9 @@ html[data-home-theme="diyan"] .scene-heartlight { display: none; }
   overflow: visible;
   padding: 0;
   cursor: pointer;
-  pointer-events: auto;
+  /* The shaped visual child handles pointer hits; the button retains its
+     normal keyboard focus and accessible name. */
+  pointer-events: none;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -605,6 +764,21 @@ html[data-home-theme="moonfox"] .character-aura {
 }
 html[data-home-theme="diyan"] .character-aura {
   background: radial-gradient(ellipse at 50% 43%, rgba(221, 69, 35, .2), rgba(139, 27, 19, .08) 38%, transparent 72%);
+}
+html[data-home-theme="yuchen"] .character-aura {
+  background: radial-gradient(ellipse at 50% 37%, rgba(224, 200, 140, .17), rgba(113, 154, 114, .06) 40%, transparent 72%);
+}
+html[data-home-theme="qinglan"] .character-aura {
+  background: radial-gradient(ellipse at 50% 40%, rgba(160, 228, 205, .18), rgba(100, 173, 161, .05) 40%, transparent 72%);
+}
+html[data-home-theme="xingling"] .character-aura {
+  background: radial-gradient(ellipse at 50% 38%, rgba(224, 184, 255, .2), rgba(151, 107, 201, .07) 40%, transparent 72%);
+}
+html[data-home-theme="luye"] .character-aura {
+  background: radial-gradient(ellipse 38% 32% at 50% 40%, rgba(241, 187, 125, .18), rgba(120, 162, 153, .06) 65%, transparent 100%);
+}
+html[data-home-theme="suyan"] .character-aura {
+  background: radial-gradient(ellipse 38% 32% at 50% 40%, rgba(244, 190, 206, .18), rgba(150, 115, 158, .06) 65%, transparent 100%);
 }
 .character-puppet {
   position: relative;
@@ -631,6 +805,57 @@ html[data-home-theme="moonfox"] .character-puppet::after {
   animation: foxfire-breathe 4.8s ease-in-out infinite;
 }
 @keyframes foxfire-breathe { 0%, 100% { opacity: .55; transform: scale(.95); } 50% { opacity: 1; transform: scale(1.09); } }
+/* A restrained glint is attached to her jade seal, rather than a separate floating ornament. */
+html[data-home-theme="yuchen"] .character-puppet::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  left: 22%;
+  top: 27%;
+  width: 17%;
+  aspect-ratio: 1;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 224, 151, .25), rgba(207, 190, 110, .09) 38%, transparent 70%);
+  mix-blend-mode: screen;
+  animation: jade-seal-breathe 5.8s ease-in-out infinite;
+}
+@keyframes jade-seal-breathe { 0%, 100% { opacity: .5; transform: scale(.95); } 50% { opacity: .9; transform: scale(1.08); } }
+/* The new companions' light belongs to their own sword and star fan. */
+html[data-home-theme="qinglan"] .character-puppet::after,
+html[data-home-theme="xingling"] .character-puppet::after,
+html[data-home-theme="luye"] .character-puppet::after,
+html[data-home-theme="suyan"] .character-puppet::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  width: 14%;
+  aspect-ratio: 1;
+  pointer-events: none;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  animation: companion-prop-glint 6s ease-in-out infinite;
+}
+html[data-home-theme="qinglan"] .character-puppet::after {
+  left: 59%; top: 44%;
+  background: radial-gradient(circle, rgba(187, 255, 230, .2), rgba(140, 225, 213, .06) 35%, transparent 70%);
+}
+html[data-home-theme="xingling"] .character-puppet::after {
+  left: 6%; top: 45%;
+  background: radial-gradient(circle, rgba(242, 221, 255, .22), rgba(201, 163, 255, .06) 35%, transparent 70%);
+  animation-delay: -2s;
+}
+html[data-home-theme="luye"] .character-puppet::after {
+  left: 41%; top: 62%;
+  background: radial-gradient(circle, rgba(255, 222, 174, .16), rgba(175, 215, 205, .04) 35%, transparent 70%);
+  animation-delay: -1s;
+}
+html[data-home-theme="suyan"] .character-puppet::after {
+  left: 16%; top: 45%;
+  background: radial-gradient(circle, rgba(236, 244, 255, .17), rgba(221, 177, 206, .05) 35%, transparent 70%);
+  animation-delay: -3s;
+}
+@keyframes companion-prop-glint { 0%, 100% { opacity: .4; transform: scale(.9); } 50% { opacity: .85; transform: scale(1.1); } }
 .character-portrait img {
   display: block;
   width: 100%;
@@ -875,15 +1100,10 @@ html[data-theme] body[data-glass] #formModal .form-modal-sheet {
   .character-btn { min-height: 56px; gap: 6px; padding: 0 12px; font-size: 13px; }
   .character-scene {
     width: calc(100% + 40px);
-    height: min(clamp(270px, 54vh, 450px), calc(var(--character-mobile-vw, 130.9476vw) - var(--character-mobile-inset, 52.379px)));
+    height: min(clamp(300px, 62vh, 540px), calc(150vw - 24px));
     max-width: 420px;
   }
-  html[data-home-theme="moonfox"] .character-scene {
-    height: min(clamp(290px, 59vh, 500px), calc(var(--character-mobile-vw, 126.3636vw) - var(--character-mobile-inset-compact, 20.2182px)));
-  }
-  .character-portrait, .character-lantern-anchor { max-width: calc(100% - 40px); }
-  html[data-home-theme="moonfox"] .character-portrait,
-  html[data-home-theme="diyan"] .character-portrait,
+  .character-portrait, .character-lantern-anchor,
   html[data-home-theme="diyan"] .character-flame-anchor { max-width: calc(100% - 16px); }
   .character-prop--lantern { top: -24px; width: clamp(56px, 18vw, 74px); }
   .character-prop--cloud { width: 76%; right: 0; bottom: 17%; opacity: .22; }
@@ -894,33 +1114,38 @@ html[data-theme] body[data-glass] #formModal .form-modal-sheet {
 }
 @media (max-width: 360px) {
   #page1 .p1-inner { padding-right: 16px; padding-left: 16px; }
-  .character-scene {
-    width: calc(100% + 32px);
-    height: min(clamp(255px, 52vh, 310px), calc(var(--character-mobile-vw, 130.9476vw) - var(--character-mobile-inset, 52.379px)));
-  }
-  html[data-home-theme="moonfox"] .character-scene {
-    height: min(clamp(265px, 59vh, 370px), calc(var(--character-mobile-vw, 126.3636vw) - var(--character-mobile-inset-compact, 20.2182px)));
-  }
-  .character-theme-switcher button { min-width: 52px; padding-inline: 7px; }
+  .character-scene { width: calc(100% + 32px); height: min(clamp(280px, 62vh, 500px), calc(150vw - 24px)); }
+}
+@media (orientation: landscape) and (max-height: 550px) {
+  .character-header { min-height: 54px; }
+  .character-hero { gap: 3px; padding-top: 0; }
+  .character-scene { height: clamp(160px, calc(100vh - 145px), 300px); }
+  .character-actions { margin-top: 0; }
+  /* Rasterize the final enlarged close-up sharply instead of stretching a
+     pre-composited thumbnail. Pointer parallax still moves the inner puppet. */
+  .character-camera-subject, .character-scenery { will-change: auto; transition: none; }
+  /* Keep the aligned lantern subordinate to the person in the short crop. */
+  .character-prop--lantern { width: clamp(32px, 14vh, 62px); }
+}
+@media (orientation: landscape) and (max-height: 300px) {
+  /* Leave the full action row in view even on very short screens. */
+  .character-scene { height: clamp(110px, calc(100vh - 145px), 160px); }
 }
 @media (forced-colors: active) {
   .character-btn { color: ButtonText; background: ButtonFace; border: 1px solid ButtonText; }
   .character-btn-art { display: none; }
   .character-btn:focus-visible { outline: 2px solid Highlight; outline-offset: 3px; }
-  html[data-home-theme] .character-theme-switcher { border-color: ButtonText; background: ButtonFace; }
-  html[data-home-theme] .character-theme-switcher button { color: ButtonText; }
-  html[data-home-theme] .character-theme-switcher button[aria-pressed="true"] { color: HighlightText; background: Highlight; }
-  html[data-home-theme] .character-theme-switcher button:focus-visible { outline-color: Highlight; }
   .character-scene:focus-within::after { color: CanvasText; background: Canvas; border-color: Highlight; }
-  .character-camera-picker button { color: ButtonText; background: ButtonFace; border: 1px solid ButtonText; text-shadow: none; }
-  .character-camera-picker button[aria-pressed="true"] { color: HighlightText; background: Highlight; }
-  .character-camera-picker button:focus-visible { outline-color: Highlight; }
-  .camera-gesture-hint { color: CanvasText; text-shadow: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .character-expression { animation: none !important; opacity: 0 !important; }
   .scene-heartlight, html[data-home-theme="moonfox"] .character-puppet::after,
-  .character-aura, .character-prop--fire img, html[data-home-theme="diyan"] .character-scenery::before,
+  html[data-home-theme="yuchen"] .character-puppet::after,
+  html[data-home-theme="qinglan"] .character-puppet::after,
+  html[data-home-theme="xingling"] .character-puppet::after,
+  html[data-home-theme="luye"] .character-puppet::after,
+  html[data-home-theme="suyan"] .character-puppet::after,
+  .character-aura, .character-prop--fire img, .character-prop--rune-seal img, .character-rune, html[data-home-theme="diyan"] .character-scenery::before,
   html[data-home-theme="diyan"] .character-scenery::after { animation: none !important; }
   .character-camera-subject, .character-scenery, .character-puppet, .character-prop, .character-backdrop img, .character-btn, .character-btn-art, .character-companion-option, .character-companion-response, .character-hero { transition: none !important; }
   .character-portrait:hover .character-puppet, .character-portrait:focus-visible .character-puppet,

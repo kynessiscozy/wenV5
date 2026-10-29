@@ -2,21 +2,22 @@
 export const WENWEN = Object.freeze({
   id: 'wenwen',
   name: '问问',
+  camera: Object.freeze({ closeScale: 1.45 }),
   assets: Object.freeze({
     portrait: Object.freeze({
-      src: './art/wenwen-divine.webp',
+      src: './art/wenwen-reimagined.webp',
       alt: '问问坐在云朵上，手捧泛着心形光芒的星盘',
-      width: 992,
-      height: 1299,
+      width: 848,
+      height: 1264,
     }),
     // Transparent expression layers are aligned to the portrait and may be omitted by other characters.
-    blink: Object.freeze({ src: './art/wenwen-divine-blink.webp', alt: '', width: 992, height: 1299, forPortrait: './art/wenwen-divine.webp' }),
-    speaking: Object.freeze({ src: './art/wenwen-divine-speak.webp', alt: '', width: 992, height: 1299, forPortrait: './art/wenwen-divine.webp' }),
+    blink: Object.freeze({ src: './art/wenwen-reimagined-blink.webp', alt: '', width: 848, height: 1264, forPortrait: './art/wenwen-reimagined.webp' }),
+    speaking: Object.freeze({ src: './art/wenwen-reimagined-speak.webp', alt: '', width: 848, height: 1264, forPortrait: './art/wenwen-reimagined.webp' }),
     // Optional scene props belong to this character and may be swapped independently.
     // The hanging cord meets the illustrated cord at this horizontal percentage.
     lantern: Object.freeze({ src: './art/wenwen-lantern.webp', alt: '', width: 301, height: 700, cordAnchorX: 49.67 }),
     cloudTrail: Object.freeze({ src: './art/wenwen-cloud-trail.webp', alt: '', width: 1000, height: 319 }),
-    avatar: Object.freeze({ src: './art/wenwen-divine-avatar.webp', alt: '', width: 192, height: 192 }),
+    avatar: Object.freeze({ src: './art/wenwen-reimagined-avatar.webp', alt: '', width: 192, height: 192 }),
   }),
   greeting: '今天想聊什么？',
   topics: Object.freeze([
@@ -75,6 +76,9 @@ export function applyCharacterAssets(root = document, character = WENWEN) {
     const expression = 'characterOptional' in image.dataset;
     const sceneProp = 'characterSceneOptional' in image.dataset;
     const optional = expression || sceneProp;
+    // A previous character's expression must never reappear when a later image
+    // finishes loading (including after switching to a character without one).
+    const expressionRequest = expression ? (image.__expressionRequest = (image.__expressionRequest || 0) + 1) : 0;
     const holder = sceneProp ? image.closest?.('.character-prop') : null;
     const portrait = character.assets?.portrait;
     const aligned = !expression || (asset && portrait && asset.width === portrait.width && asset.height === portrait.height
@@ -85,7 +89,10 @@ export function applyCharacterAssets(root = document, character = WENWEN) {
       if (holder) holder.hidden = true;
       return;
     }
-    if (optional) image.hidden = false;
+    // Expressions are small but nonessential. Reveal each one only once its
+    // own image is ready, so a slow network cannot flash another character's face.
+    if (sceneProp) image.hidden = false;
+    if (expression) image.hidden = true;
     if (holder) {
       holder.hidden = false;
       const anchorX = Number(asset.cordAnchorX);
@@ -99,5 +106,16 @@ export function applyCharacterAssets(root = document, character = WENWEN) {
     image.alt = asset.alt;
     image.width = asset.width;
     image.height = asset.height;
+    if (expression) {
+      const reveal = () => {
+        if (image.__expressionRequest !== expressionRequest) return;
+        if (image.complete && image.naturalWidth > 0 && image.currentSrc === image.src) image.hidden = false;
+      };
+      if (!('complete' in image)) image.hidden = false; // Non-DOM adapters used by reusable components.
+      else {
+        reveal();
+        if (image.hidden) image.addEventListener('load', reveal, { once: true });
+      }
+    }
   });
 }

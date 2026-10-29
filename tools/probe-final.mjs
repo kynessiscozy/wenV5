@@ -1,10 +1,12 @@
+import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 import puppeteer from 'puppeteer';
 const b = await puppeteer.launch({ headless: 'shell', protocolTimeout: 420000, args: ['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'] });
 const p = await b.newPage();
 p.on('pageerror', e => console.log('  [pageerror]', e.message.slice(0, 180)));
 await p.setViewport({ width: 430, height: 932, deviceScaleFactor: 1 });
 await p.goto('http://localhost:5173/', { waitUntil: 'networkidle0', timeout: 45000 }).catch(()=>{});
-await p.evaluate(() => window.calc(true));
+await selectHomeTrait(p);
+await openDemoReport(p);
 await new Promise(r => setTimeout(r, 6000));
 await p.evaluate(() => { window.setUserMode('western'); document.querySelector('.tab-item[data-sec="s-ming"]')?.click(); });
 await new Promise(r => setTimeout(r, 6000));

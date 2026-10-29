@@ -1,3 +1,4 @@
+import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 import puppeteer from 'puppeteer';
 const BASE=process.env.BASE_URL||'http://localhost:5173/';
 const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});
@@ -5,13 +6,15 @@ const p=await b.newPage();await p.setViewport({width:430,height:932,deviceScaleF
 const errs=[];p.on('pageerror',e=>errs.push(e.message));
 p.on('console',m=>{if(m.type()==='error'&&!/404/.test(m.text()))errs.push(m.text())});
 await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
+await selectHomeTrait(p);
+await p.waitForFunction(() => typeof window.calc === 'function', { timeout: 15000 });
 await new Promise(r=>setTimeout(r,900));
 
 console.log('=== 1. 无档案时不显示今日卡 ===');
 console.log('display =', await p.evaluate(()=>document.getElementById('todayCard')?.style.display));
 
 console.log('\n=== 2. 保存档案 ===');
-await p.evaluate(()=>window.calc(true));await new Promise(r=>setTimeout(r,3600));
+await openDemoReport(p);await new Promise(r=>setTimeout(r,3600));
 await p.evaluate(()=>window.openSaveModal());await new Promise(r=>setTimeout(r,300));
 await p.evaluate(()=>{document.getElementById('saveName').value='我';});
 await p.evaluate(()=>window.confirmSaveProfile());await new Promise(r=>setTimeout(r,700));
@@ -43,6 +46,7 @@ await p.screenshot({path:'/tmp/today-card.png'});
 
 console.log('\n=== 6. 刷新后今日卡自动出现（回访场景）===');
 await p.reload({waitUntil:'domcontentloaded',timeout:15000});
+await selectHomeTrait(p);
 await new Promise(r=>setTimeout(r,1600));
 console.log('display =', await p.evaluate(()=>document.getElementById('todayCard')?.style.display));
 

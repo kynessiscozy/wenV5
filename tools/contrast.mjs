@@ -1,12 +1,15 @@
+import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 import puppeteer from 'puppeteer';
 const BASE=process.env.BASE_URL||'http://localhost:5173/';
 const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});
 const p=await b.newPage();await p.setViewport({width:430,height:932});
 for(const theme of ['light','dark']){
   await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
+  await selectHomeTrait(p);
   await p.evaluate(t=>localStorage.setItem('tj_theme',t),theme);
   await p.reload({waitUntil:'domcontentloaded',timeout:15000});
-  await p.evaluate(()=>window.calc(true));
+  await selectHomeTrait(p);
+  await openDemoReport(p);
   await new Promise(r=>setTimeout(r,3500));
   await p.evaluate(()=>window.setUserMode('master'));
   await new Promise(r=>setTimeout(r,1200));

@@ -1,3 +1,4 @@
+import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 import puppeteer from 'puppeteer';
 const BASE=process.env.BASE_URL||'http://localhost:5173/';
 const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});
@@ -7,7 +8,9 @@ p.on('console',m=>{if(m.type()==='error'&&!/404/.test(m.text()))errs.push(m.text
 // 授予剪贴板权限，便于测试分享降级路径
 await b.defaultBrowserContext().overridePermissions(new URL(BASE).origin,['clipboard-read','clipboard-write']);
 await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
-await p.evaluate(()=>window.calc(true));
+await selectHomeTrait(p);
+await p.waitForFunction(() => typeof window.calc === 'function', { timeout: 15000 });
+await openDemoReport(p);
 await new Promise(r=>setTimeout(r,3600));
 
 const openForm=async()=>{
@@ -54,7 +57,8 @@ console.log(await p.evaluate(()=>'pname='+document.getElementById('v3_pname').va
 
 console.log('\n=== 6. 刷新后仍在 ===');
 await p.reload({waitUntil:'domcontentloaded',timeout:15000});
-await p.evaluate(()=>window.calc(true));
+await selectHomeTrait(p);
+await openDemoReport(p);
 await new Promise(r=>setTimeout(r,3600));
 await openForm();
 console.log('刷新后 chips =', await p.evaluate(()=>document.querySelectorAll('.tj-partner-chip').length));
