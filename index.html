@@ -47,9 +47,9 @@
     }
     // If the small entry module itself cannot load, don't leave a silent spinner.
     window.setTimeout(function () {
-      var options = document.getElementById('traitOptions');
+      var machine = document.getElementById('traitMachine');
       var status = document.getElementById('traitStatus');
-      if (options && status && !options.querySelector('button')) status.textContent = '加载较慢，请检查网络后刷新重试';
+      if (machine && status && machine.dataset.ready !== 'true') status.textContent = '加载较慢，请检查网络后刷新重试';
     }, 12000);
   })();
 </script>
@@ -66,6 +66,7 @@
 <link rel="stylesheet" href="/src/character-calculation.css">
 <link rel="stylesheet" href="/src/trait-selection.css">
 <link rel="stylesheet" href="/src/character-report.css">
+<link rel="stylesheet" href="/src/guide.css">
 <style>
 .result-style-heading{display:flex;align-items:baseline;gap:8px;margin-bottom:7px;min-width:0}
 .result-style-label{font-size:.72em;font-weight:500;color:var(--c-text-2);white-space:nowrap}
@@ -80,7 +81,7 @@
 <body class="home">
 
 <!-- Choose a trait before entering; the same selector can be reopened later. -->
-<section class="trait-selection" id="traitSelection" role="dialog" aria-modal="true" aria-labelledby="traitTitle" aria-describedby="traitIntro traitHint" tabindex="-1">
+<section class="trait-selection" id="traitSelection" role="dialog" aria-modal="true" aria-labelledby="traitTitle" aria-describedby="traitHint" tabindex="-1">
   <div class="trait-atmosphere" aria-hidden="true">
     <span class="trait-orbit trait-orbit--outer"></span><span class="trait-orbit trait-orbit--inner"></span>
     <svg class="trait-stars" viewBox="0 0 1000 680" preserveAspectRatio="xMidYMid slice" focusable="false">
@@ -91,8 +92,7 @@
   <div class="trait-content">
     <button class="trait-cancel" id="traitCancel" type="button" hidden>返回</button>
     <p class="trait-eyebrow">心性相逢 <span aria-hidden="true">✦</span> 一念启程</p>
-    <h1 id="traitTitle">让心意，<br>转个方向</h1>
-    <p class="trait-intro" id="traitIntro">转一转，或直接选择一种特质</p>
+    <h1 class="trait-sr-only" id="traitTitle">选择同行特质</h1>
     <div class="trait-machine" id="traitMachine">
       <div class="trait-machine-aura" aria-hidden="true"></div>
       <div class="trait-machine-body">
@@ -105,17 +105,15 @@
         </div>
         <div class="trait-machine-foot">
           <span class="trait-foot-ornament" aria-hidden="true">✧</span>
-          <button class="trait-spin" id="traitSpin" type="button"><span>转一转</span><span aria-hidden="true">↻</span></button>
+          <button class="trait-spin" id="traitSpin" type="button" disabled><span>转一转</span><span aria-hidden="true">↻</span></button>
           <span class="trait-foot-ornament" aria-hidden="true">✧</span>
         </div>
       </div>
-      <button class="trait-lever" id="traitLever" type="button" aria-label="随机转动特质"><span class="trait-lever-arm" aria-hidden="true"></span><span class="trait-lever-knob" aria-hidden="true"></span></button>
+      <button class="trait-lever" id="traitLever" type="button" disabled aria-label="随机转动特质"><span class="trait-lever-arm" aria-hidden="true"></span><span class="trait-lever-knob" aria-hidden="true"></span></button>
     </div>
     <button class="trait-confirm" id="traitConfirm" type="button" hidden>选择这个特质</button>
-    <p class="trait-choice-label">或选择你喜欢的</p>
-    <div class="trait-options" id="traitOptions" role="group" aria-label="直接选择一种特质"></div>
     <p class="trait-status" id="traitStatus" role="status" aria-live="polite">正在准备…</p>
-    <p class="trait-hint" id="traitHint">只展示特质，人物将在选择后出现</p>
+    <p class="trait-hint" id="traitHint">转动后确认，或再转一次</p>
     <noscript><p class="trait-noscript">请启用 JavaScript 后选择特质。</p></noscript>
   </div>
 </section>
@@ -886,61 +884,23 @@
   </svg>
 </div>
 
-<!-- 关于问问大师 弹窗 -->
+<!-- 关于问问大师 -->
 <div class="modal" id="aboutModal">
   <div class="modal-bg" onclick="closeAboutModal()"></div>
-  <div class="modal-sheet glass" style="max-width:440px;max-height:80vh;overflow-y:auto;text-align:left">
-    <div class="modal-close" onclick="closeAboutModal()">×</div>
-    <div class="modal-title" style="text-align:center;margin-bottom:16px">关于问问大师<span style="display:block;font-size:.5em;font-weight:400;opacity:.6;letter-spacing:.1em;margin-top:6px">VERSION V5.0 BETA 1</span></div>
-
-    <div style="font-size:.82em;line-height:1.85;color:var(--c-text)">
-      <p style="margin-bottom:14px">问问大师是一款融汇<b>东方命理</b>与<b>西方星象</b>两大体系的智能推演工具。输入出生日期、时辰与地点，即可生成专属命盘与星盘，并获得多维度的分析、3D 星象可视化与可执行的行动建议。</p>
-
-      <div style="font-weight:700;font-size:1.05em;margin:18px 0 8px;color:var(--c-text-hi)">一、双体系命理引擎</div>
-      <p style="margin-bottom:10px"><b>东方命理</b>：四柱八字排盘、五行旺衰、十神格局、大运流年，融合紫微斗数、奇门遁甲与梅花易数三式参判，每项结论均标注判读依据。<b>西方星象</b>：太阳/月亮/上升三核本我、十大星曜十二宫位、几何相位织网与毕达哥拉斯生命灵数，两套体系可随时一键切换。</p>
-
-      <div style="font-weight:700;font-size:1.05em;margin:18px 0 8px;color:var(--c-text-hi)">二、3D 星象剧场（V5.0 新增）</div>
-      <p style="margin-bottom:10px">基于 Three.js 的实时 3D 场景：命盘页是可拖拽旋转、滚轮缩放的金色占星罗盘，十大行星按真实落座经度排布，相位以光线织网；运势页是十二星座黄道天球；关系页的灵数粒子云会把你的生命灵数从星尘中汇聚成形。十二星座配图采用真实星座星表绘制。场景懒加载、按需渲染，并针对移动端与低性能设备自动降级。</p>
-
-      <div style="font-weight:700;font-size:1.05em;margin:18px 0 8px;color:var(--c-text-hi)">三、运势追踪</div>
-      <p style="margin-bottom:10px">自动计算大运流转与流年流月走势，提供当年运势总览、本周运势、今日日签与每日宜忌。日签基于「当日干支 × 个人命盘」实时推演，每日更新，可生成分享卡片。</p>
-
-      <div style="font-weight:700;font-size:1.05em;margin:18px 0 8px;color:var(--c-text-hi)">四、关系合盘</div>
-      <p style="margin-bottom:10px">支持双人八字合盘，逐柱比对日主、五行互补与干支刑冲合害。覆盖亲密关系、朋友合作、家人沟通三大场景，用于理解性格差异与相处方式，而非预测关系结局。</p>
-
-      <div style="font-weight:700;font-size:1.05em;margin:18px 0 8px;color:var(--c-text-hi)">五、决策工具箱</div>
-      <p style="margin-bottom:6px">提供 13 款实用工具，将命理与星象洞察转化为可执行的行动方案：</p>
-      <ul style="padding-left:18px;margin-bottom:10px">
-        <li style="margin-bottom:4px"><b>塔罗大师</b> — 22 张大阿卡纳、5 大实战牌阵与 3D 翻牌</li>
-        <li style="margin-bottom:4px"><b>人格大师（MBTI）</b> — 16 型人格、八维认知与成熟度评定</li>
-        <li style="margin-bottom:4px"><b>事业大师</b> — 转行副业测评与裁员风险预案</li>
-        <li style="margin-bottom:4px"><b>择日助手</b> — 重要事项择日与沟通提醒</li>
-        <li style="margin-bottom:4px"><b>智能起名 / 摇签问卜 / 答案之书</b> — 灵感与自我反思工具</li>
-        <li style="margin-bottom:4px"><b>生肖合冲 / 双色球大乐透</b> — 相处提醒与娱乐选号</li>
-      </ul>
-
-      <div style="font-weight:600;margin:12px 0 4px;color:var(--c-text-hi)">六、AI 智能问答与自进化</div>
-      <p style="margin-bottom:10px">内置 AI 助手，支持东方命理 / 西方星相双依据切换、多轮追问与工具调用。开启自进化后，问问会根据你的「有用 / 不准」反馈在本地记住偏好，并在设置里显示当前代数；记忆只存在这台设备，可随时导出或清空。</p>
-
-      <div style="font-weight:600;margin:12px 0 4px;color:var(--c-text-hi)">七、命盘档案管理</div>
-      <p style="margin-bottom:10px">支持保存多个命盘档案并随时加载重新推演；支持 JSON 导出与导入，方便备份迁移。首页菜单提供「最近推演」与全部档案列表。</p>
-
-      <div style="font-weight:700;font-size:1.05em;margin:18px 0 8px;color:var(--c-text-hi)">技术特性</div>
-      <ul style="padding-left:18px;margin-bottom:10px">
-        <li style="margin-bottom:4px">真太阳时换算，按出生地经度精确校正时辰</li>
-        <li style="margin-bottom:4px">内置全国城市数据库，自动匹配出生地经纬度</li>
-        <li style="margin-bottom:4px">Three.js 3D 星象场景懒加载、按需渲染，低性能设备自动降级</li>
-        <li style="margin-bottom:4px">所有数据本地存储，不上传服务器；支持 PWA 安装到主屏幕</li>
-        <li style="margin-bottom:4px">术语点击解释、报告与日签分享卡一键生成</li>
-      </ul>
-
-      <div style="font-weight:700;font-size:1.05em;margin:18px 0 8px;color:var(--c-text-hi)">关于开发</div>
-      <p style="margin-bottom:10px">问问大师是一款基于 AI 自主开发的应用。从命理引擎、3D 星象渲染、交互设计到 AI 问答系统，均由 AI 编程助手完成开发与迭代。项目探索「AI 驱动全栈开发」的实践路径——AI 不仅是辅助工具，更是核心开发者，负责架构设计、功能实现、调试优化与持续演进。</p>
-
-      <div style="margin-top:18px;padding:12px 14px;border-radius:12px;background:var(--c-surface-3);border:1px solid var(--c-border);font-size:.9em;color:var(--c-text-2);line-height:1.7">
-        <b style="color:var(--c-text-hi)">温馨提示：</b>本应用基于传统文化与占星体系推演，内容仅供文化体验与自我反思参考，不构成任何专业建议。人生选择请结合实际情况理性判断。
-      </div>
+  <div class="modal-sheet glass about-sheet" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" tabindex="0">
+    <button class="modal-close" type="button" onclick="closeAboutModal()" aria-label="关闭关于">×</button>
+    <p class="about-kicker">ABOUT · 问问大师</p>
+    <h2 id="aboutTitle">关于问问大师</h2>
+    <p class="about-lead">用不同的视角，给自己一点思考的空间。</p>
+    <div class="about-section">
+      <h3>在这里，你可以</h3>
+      <p>选择一位同行形象，填写出生信息，探索东方命盘、西方星盘和其他主题工具。报告中的图形与文字来自各自的计算和解读框架。</p>
     </div>
+    <div class="about-section">
+      <h3>关于问问与数据</h3>
+      <p>同行特质只改变角色与演出，不改变计算。档案和部分偏好可保存在本机浏览器；使用外部 AI 服务时，问题及相关上下文可能发送给所选服务商，请留意其隐私政策。</p>
+    </div>
+    <div class="about-note"><b>请理性看待</b><p>内容仅供文化体验与自我反思，不保证准确，也不能替代医疗、法律、财务等专业建议。重要选择请结合实际情况独立判断。</p></div>
   </div>
 </div>
 

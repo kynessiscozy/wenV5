@@ -7,7 +7,7 @@ import { XINGLING } from '../character/xingling.js';
 import { LUYE } from '../character/luye.js';
 import { SUYAN } from '../character/suyan.js';
 
-// One registry supplies the reel, direct choices, scenes and report styling.
+// One registry supplies the reel, scenes and report styling.
 // New characters need only add another entry; choices remain page-local.
 export const HOME_THEMES = Object.freeze({
   wenwen: Object.freeze({
@@ -64,7 +64,6 @@ export const HOME_THEMES = Object.freeze({
 export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
   const home = document.getElementById('page1');
   const selection = document.getElementById('traitSelection');
-  const options = document.getElementById('traitOptions');
   const status = document.getElementById('traitStatus');
   const track = document.getElementById('traitReelTrack');
   const machine = document.getElementById('traitMachine');
@@ -73,7 +72,7 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
   const confirm = document.getElementById('traitConfirm');
   const cancel = document.getElementById('traitCancel');
   const reselect = document.getElementById('homeTraitReset');
-  if (!home || !selection || !options || !track || !machine || !spin || !lever || !confirm || !cancel) return null;
+  if (!home || !selection || !track || !machine || !spin || !lever || !confirm || !cancel) return null;
 
   const entries = Object.entries(HOME_THEMES);
   const source = home.querySelector('.character-backdrop source');
@@ -259,7 +258,6 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
   function setState(next) {
     state = next;
     const busy = next !== 'idle';
-    options.querySelectorAll('button').forEach(option => { option.disabled = busy; });
     spin.disabled = busy;
     lever.disabled = busy;
     confirm.disabled = busy;
@@ -271,27 +269,20 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     machine.dataset.spinning = String(next === 'spinning' || next === 'loading');
   }
 
-  function updateOptions() {
-    options.querySelectorAll('button').forEach(option => {
-      option.setAttribute('aria-pressed', String(option.dataset.trait === draft));
-      delete option.dataset.pending;
-    });
-  }
-
-  async function choose(id, button, shouldTurn = true) {
-    if (selection.hidden || state !== 'idle' || !Object.hasOwn(HOME_THEMES, id)) return;
+  async function choose() {
+    // Only a completed spin can be confirmed; the picker has no direct path.
+    const id = draft;
+    if (selection.hidden || state !== 'idle' || confirm.hidden ||
+        confirm.dataset.result !== id || !Object.hasOwn(HOME_THEMES, id)) return;
     const ticket = ++generation;
     const initialChoice = !selected;
     setState('loading');
     selection.focus({ preventScroll: true });
-    if (button) button.dataset.pending = 'true';
     if (status) status.textContent = '正在开启场景…';
     try {
-      await Promise.all([prepareTheme(id), shouldTurn ? turnReel(id, 700) : Promise.resolve()]);
+      await prepareTheme(id);
       if (ticket !== generation) return;
       apply(id);
-      draft = id;
-      updateOptions();
       setState('idle');
       selection.hidden = true;
       delete selection.dataset.reselect;
@@ -321,7 +312,6 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     await turnReel(id, 1250);
     if (ticket !== generation) return;
     draft = id;
-    updateOptions();
     confirm.textContent = `选择「${theme.trait.label}」`;
     confirm.dataset.result = id;
     confirm.hidden = false;
@@ -349,8 +339,8 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     returnFocus = trigger;
     draft = selected;
     renderReel(selected);
-    updateOptions();
     confirm.hidden = true;
+    delete confirm.dataset.result;
     spin.querySelector('span').textContent = '转一转';
     if (status) status.textContent = '';
     cancel.hidden = false;
@@ -362,31 +352,12 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     return true;
   }
 
-  entries.forEach(([id, theme]) => {
-    const button = document.createElement('button');
-    button.className = 'trait-choice';
-    button.type = 'button';
-    button.dataset.trait = id;
-    button.setAttribute('aria-pressed', 'false');
-    button.style.setProperty('--trait-color', theme.trait.color);
-    const mark = document.createElement('span');
-    mark.className = 'trait-mark';
-    mark.setAttribute('aria-hidden', 'true');
-    mark.textContent = theme.trait.mark;
-    const label = document.createElement('span');
-    label.className = 'trait-name';
-    label.textContent = theme.trait.label;
-    // A trait is intentionally a surprise: don't reveal the character's name.
-    button.append(mark, label);
-    button.addEventListener('click', () => choose(id, button));
-    options.append(button);
-  });
   motion.addEventListener?.('change', event => {
     if (event.matches && animation) animation.finish();
   });
   spin.addEventListener('click', randomSpin);
   lever.addEventListener('click', randomSpin);
-  confirm.addEventListener('click', () => choose(draft, null, false));
+  confirm.addEventListener('click', choose);
   cancel.addEventListener('click', closePicker);
   reselect?.addEventListener('click', event => openPicker(event.currentTarget));
 
@@ -402,12 +373,6 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
         event.preventDefault();
         buttons[event.shiftKey ? buttons.length - 1 : 0].focus({ preventScroll: true });
       }
-    } else if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) && event.target.matches('.trait-choice')) {
-      const choices = [...options.querySelectorAll('button:not(:disabled)')];
-      if (!choices.length) return;
-      event.preventDefault();
-      const delta = ['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1;
-      choices[(choices.indexOf(event.target) + delta + choices.length) % choices.length].focus();
     }
   });
 
@@ -415,5 +380,8 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
   if (status) status.textContent = '';
   selection.focus({ preventScroll: true });
   shieldBackground();
+  machine.dataset.ready = 'true';
+  spin.disabled = false;
+  lever.disabled = false;
   return { getSelected: () => selected, open: openPicker };
 }

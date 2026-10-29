@@ -128,6 +128,7 @@ initEvolveUI();
    ES module 内的函数默认不挂载到 window，
    但 inline onclick="fn()" 只能调用 window.fn。
    ============================================================ */
+let aboutReturnFocus=null;
 (function(){
   // 1. 已存在但未暴露的函数（来自 import 或本模块定义）
   window.setGlassMode=setGlassMode;
@@ -166,7 +167,7 @@ initEvolveUI();
   window.runRelationTool=runRelationTool;
 
   // 3. 之前已暴露的函数（保持不变）
-  window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.openArchiveModal=openArchiveModal;window.closeArchiveModal=closeArchiveModal;window.loadProfileFromArchive=loadProfileFromArchive;window.deleteProfileFromArchive=deleteProfileFromArchive;window.confirmSaveProfile=confirmSaveProfile;window.quickSaveName=quickSaveName;window.updateSaveNameCount=updateSaveNameCount;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){document.getElementById('aboutModal').classList.add('open');};window.closeAboutModal=function(){document.getElementById('aboutModal').classList.remove('open');};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};
+  window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.openArchiveModal=openArchiveModal;window.closeArchiveModal=closeArchiveModal;window.loadProfileFromArchive=loadProfileFromArchive;window.deleteProfileFromArchive=deleteProfileFromArchive;window.confirmSaveProfile=confirmSaveProfile;window.quickSaveName=quickSaveName;window.updateSaveNameCount=updateSaveNameCount;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){const m=document.getElementById('aboutModal');if(!m)return;aboutReturnFocus=document.activeElement;m.classList.add('open');m.querySelector('.modal-close')?.focus({preventScroll:true});};window.closeAboutModal=function(){const m=document.getElementById('aboutModal');if(!m?.classList.contains('open'))return;m.classList.remove('open');if(aboutReturnFocus?.isConnected&&aboutReturnFocus.getClientRects().length)aboutReturnFocus.focus({preventScroll:true});aboutReturnFocus=null;};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};
 
   // 4. 缺失函数：分享卡片（报告卡片右上角分享按钮）
   window.TJShareReport=function(){
@@ -997,6 +998,16 @@ window.closeGlobalSettings=closeGlobalSettings;
 
 onDomReady(()=>{
   initOnboarding();
+  const about=document.getElementById('aboutModal');
+  about?.addEventListener('keydown',e=>{
+    e.stopPropagation();
+    if(e.key==='Escape'){e.preventDefault();window.closeAboutModal();return;}
+    if(e.key==='Tab'){
+      const controls=[...about.querySelectorAll('button:not(:disabled), [tabindex="0"]')].filter(el=>el.getClientRects().length);
+      const i=controls.indexOf(document.activeElement);
+      if(controls.length&&(i<0||(!e.shiftKey&&i===controls.length-1)||(e.shiftKey&&i===0))){e.preventDefault();controls[e.shiftKey?controls.length-1:0].focus();}
+    }
+  });
   initDB().then(()=>renderProfiles()).catch(e=>console.log('DB init',e));
   const ai=document.getElementById('askInput');
   if(ai){
@@ -1775,6 +1786,7 @@ document.addEventListener('click',function(e){
   if(pop&&pop.classList.contains('open')&&!e.target.closest('.glossary-term,.gloss-ctx,.gloss-chip,.gloss-bar,.dock-gloss')){pop.classList.remove('open');}
 });
 
+let proWrapCounter=0;
 function wrapProCollapsibles(root){
   if(!root)return;
   root.querySelectorAll('.pls, .qr-grid, table').forEach(el=>{
@@ -1782,13 +1794,18 @@ function wrapProCollapsibles(root){
     el.dataset.proWrapped='1';
     const wrap=document.createElement('div');
     wrap.className='pro-wrap collapsed';
+    wrap.id=`tj-pro-wrap-${++proWrapCounter}`;
     el.parentNode.insertBefore(wrap,el);
     wrap.appendChild(el);
-    const btn=document.createElement('div');
+    const btn=document.createElement('button');
+    btn.type='button';
     btn.className='pro-toggle';
+    btn.setAttribute('aria-controls',wrap.id);
+    btn.setAttribute('aria-expanded','false');
     btn.textContent='查看专业数值 ▾';
     btn.addEventListener('click',()=>{
       const collapsed=wrap.classList.toggle('collapsed');
+      btn.setAttribute('aria-expanded',String(!collapsed));
       btn.textContent=collapsed?'查看专业数值 ▾':'收起专业数值 ▴';
     });
     if(wrap.parentNode)wrap.parentNode.insertBefore(btn,wrap);

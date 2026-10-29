@@ -1,3 +1,4 @@
+import { spinFor } from './trait-picker-helper.mjs';
 import assert from 'node:assert/strict';
 import { createServer, request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
@@ -65,7 +66,7 @@ try {
   page.on('framenavigated', frame => { if (frame === page.mainFrame()) navigations++; });
 
   await page.goto(base, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('#traitOptions button');
+  await page.waitForSelector('#traitMachine[data-ready="true"]');
   assert.equal(await page.evaluate(() => !!navigator.serviceWorker.controller), false, '没有旧注册时不自动安装 worker');
   assert.ok(homeModule, '应观察到首页角色模块');
 
@@ -91,7 +92,7 @@ try {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(async name => {
     return (await caches.keys()).includes(name) && !document.documentElement.dataset.staleHome &&
-      document.querySelectorAll('#traitOptions button').length === 8;
+      document.getElementById('traitMachine')?.dataset.ready === 'true';
   }, { timeout: 15000 }, cacheName);
   assert.ok(staleResponses.length, '测试应先命中旧 worker 的损坏缓存');
   assert.ok(navigations >= 3, '新 worker 接管后应自动重载选择页面');
@@ -116,7 +117,7 @@ try {
     }));
   }, { url: homeModule, name: cacheName });
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('#traitOptions button');
+  await page.waitForSelector('#traitMachine[data-ready="true"]');
   await page.waitForFunction(() => window._tools2Ready === true, { timeout: 15000 });
   assert.equal(await page.evaluate(() => document.documentElement.dataset.staleHome), undefined);
   assert.equal(await page.$eval('#traitSelection', element => getComputedStyle(element).position), 'fixed');
@@ -152,7 +153,7 @@ try {
     window.__oldTimeout = window.setTimeout;
     window.setTimeout = (fn, ms, ...args) => window.__oldTimeout(fn, ms === 2500 ? 15000 : ms, ...args);
   });
-  await page.click('[data-trait="wenwen"]');
+  await spinFor(page, 'wenwen');
   await page.waitForFunction(() => document.getElementById('traitSelection').getAttribute('aria-busy') === 'true' && window.__releaseBusyDecode);
   const beforeBusy = navigations;
   phase = 'busy';
@@ -199,7 +200,7 @@ try {
   assert.equal(navigations, before, '重选打开时不能因更新重载');
   assert.equal(await page.$eval('#traitSelection', element => element.hidden), false);
   assert.equal(await page.$eval('#cInp', input => input.value), '尚未完成的输入');
-  await page.click('[data-trait="moonfox"]');
+  await spinFor(page, 'moonfox');
   await page.waitForFunction(() => document.getElementById('traitSelection').hidden && document.documentElement.dataset.homeTheme === 'moonfox');
   assert.equal(await page.$eval('#cInp', input => input.value), '尚未完成的输入');
   console.log('✓ 重选特质期间更新不会丢失输入或打断选择');
@@ -223,7 +224,7 @@ try {
   assert.equal(navigations, before, '失败的更新不能中断当前会话');
   const fallbackPage = await browser.newPage();
   await fallbackPage.goto(base, { waitUntil: 'domcontentloaded' });
-  await fallbackPage.waitForSelector('#traitOptions button', { timeout: 15000 });
+  await fallbackPage.waitForSelector('#traitMachine[data-ready="true"]', { timeout: 15000 });
   assert.equal(await fallbackPage.$eval('#traitSelection', element => element.hidden), false, '服务错误时应回落到已缓存的页面');
   await fallbackPage.close();
   console.log('✓ 更新或页面请求异常时，旧缓存及当前会话仍可用');

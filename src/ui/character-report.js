@@ -75,42 +75,22 @@ function revealHint(hint) {
   });
 }
 
-function valuePair(label, value, field) {
-  const item = element('div', 'result-character-stat');
-  const term = element('dt', '', label);
-  const detail = element('dd', '', value || '—');
-  detail.dataset.reportValue = field;
-  item.append(term, detail);
-  return item;
+function makeTheatre(container) {
+  if (!container) return null;
+  const theatre = element('div', 'result-western-theatre sys-western');
+  theatre.append(container); // Keep the existing canvas, controls and 3D state.
+  return theatre;
 }
 
-function makeReading(mode, title, description, values) {
-  const reading = element('div', `result-character-reading sys-${mode}`);
-  reading.append(element('h1', 'result-character-title', title));
-  reading.append(element('p', 'result-character-description', description));
-  const stats = element('dl', 'result-character-stats');
-  values.forEach(([label, value, field]) => stats.append(valuePair(label, value, field)));
-  reading.append(stats);
-  return reading;
-}
-
-function scrollToReading() {
-  const western = document.documentElement.dataset.systemMode === 'western';
-  const target = document.querySelector(western ? '#w3d-astro' : '#s-ming .sys-eastern .qr-card');
-  if (!target) return;
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  target.setAttribute('tabindex', '-1');
-  target.focus({ preventScroll: true });
-  target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-}
-
-function makeHero(id, theme, ctx, western, isDemo, onReselect) {
+function makeHero(id, theme, ctx, western, isDemo, onReselect, overview, astro) {
   const hero = element('section', 'result-character-hero');
   hero.id = 'characterResultHero';
   hero.dataset.reportCharacter = id;
   hero.dataset.reportDemo = String(isDemo);
   hero.style.setProperty('--result-character-accent', theme.trait.color);
-  hero.setAttribute('aria-label', isDemo ? '示例推演导览' : '推演结果导览');
+  hero.setAttribute('aria-label', isDemo ? '示例命盘与星盘一览' : '命盘与星盘一览');
+  const theatre = makeTheatre(astro);
+  if (theatre) hero.append(theatre);
 
   const scene = element('div', 'result-character-scene');
   scene.setAttribute('aria-hidden', 'true');
@@ -130,7 +110,7 @@ function makeHero(id, theme, ctx, western, isDemo, onReselect) {
   const copy = element('div', 'result-character-copy');
   const kicker = element('p', 'result-character-kicker');
   kicker.append(element('span', 'result-character-mark', theme.trait.mark),
-    element('span', '', `${theme.trait.label} · 同行解读`));
+    element('span', '', `${theme.trait.label} · 同行`));
   if (isDemo) kicker.append(element('span', 'result-character-demo', '示例'));
   if (typeof onReselect === 'function') {
     const change = element('button', 'result-character-reselect', '换特质 ↻');
@@ -145,22 +125,12 @@ function makeHero(id, theme, ctx, western, isDemo, onReselect) {
   copy.append(kicker);
 
   const dayMaster = [ctx?.dg, ctx?.dw].filter(Boolean).join('');
-  copy.append(makeReading('eastern', isDemo ? '示例命盘\n从这里展开' : '你的命盘\n从这里展开',
-    isDemo ? '从示例四柱出发，体验命盘解读。' : '从四柱出发，看见自己的底色与节奏。', [
-      ['日主', dayMaster, 'day-master'],
-      ['用神', ctx?.wx?.ys, 'useful-element'],
-    ]));
-  copy.append(makeReading('western', isDemo ? '示例星盘\n从这里展开' : '你的星盘\n从这里展开',
-    isDemo ? '从示例星体位置出发，体验星盘解读。' : '从星体的位置出发，探索不同的自己。', [
-      ['太阳', western?.astro?.sun?.name, 'sun'],
-      ['月亮', western?.astro?.moon?.name, 'moon'],
-    ]));
+  const westernHeading = element('div', 'result-character-reading sys-western');
+  westernHeading.append(element('h1', 'result-character-title', isDemo ? '示例星盘' : '星盘一览'));
+  westernHeading.append(element('p', 'result-character-description', '拖动星盘，探索星体位置。'));
+  copy.append(westernHeading);
 
   const controls = element('div', 'result-character-controls');
-  const action = element('button', 'result-character-action');
-  action.type = 'button';
-  action.append(element('span', '', '开始阅读'), element('span', 'result-character-arrow', '↘'));
-  action.addEventListener('click', scrollToReading);
 
   // A short, character-specific reading cue uses only facts already calculated
   // in the report. It is not an AI response or a second prediction.
@@ -188,6 +158,7 @@ function makeHero(id, theme, ctx, western, isDemo, onReselect) {
   hintButton.addEventListener('click', () => {
     const opening = hint.hidden;
     hint.hidden = !opening;
+    hero.classList.toggle('has-hint', opening);
     hintButton.setAttribute('aria-expanded', String(opening));
     hintButton.textContent = opening ? '收起提示' : '看一条提示';
     if (opening) {
@@ -195,9 +166,16 @@ function makeHero(id, theme, ctx, western, isDemo, onReselect) {
       revealHint(hint);
     }
   });
-  controls.append(action, hintButton);
+  controls.append(hintButton);
   copy.append(controls, hint);
   hero.append(copy);
+  if (overview) {
+    const eastern = element('div', 'result-character-overview sys-eastern');
+    // The visible title remains the existing fold button; expose a proper
+    // report heading as well, without nesting a heading inside that button.
+    eastern.append(element('h1', 'result-overview-heading', '命盘一览'), overview);
+    hero.append(eastern);
+  }
   return hero;
 }
 
@@ -230,12 +208,14 @@ function accompanySummary(section, id, theme, isDemo) {
   insight.append(figure, body);
 }
 
-function makeChapter(id, theme, section, easternText, westernText) {
+function makeChapter(id, theme, section, easternText, westernText, theatreContainer) {
   const aside = element('aside', 'result-character-chapter');
   aside.dataset.reportCharacter = id;
   aside.dataset.reportChapter = section;
   aside.style.setProperty('--result-character-accent', theme.trait.color);
   aside.setAttribute('aria-label', `${theme.trait.label}同行解读`);
+  const theatre = makeTheatre(theatreContainer);
+  if (theatre) aside.append(theatre);
   aside.append(makePortrait(theme.character, 'result-chapter-figure'));
 
   const copy = element('div', 'result-chapter-copy');
@@ -259,21 +239,37 @@ export function mountCharacterReport({ ctx, western = {}, isDemo = false, onRese
   const rel = document.getElementById('s-rel');
   if (!ming || !yun || !rel) return;
 
-  // renderAll normally replaces these nodes; removing any existing ones also
-  // makes the function safe to call again without duplicating the guide.
-  [ming, yun, rel].forEach(section => section.querySelector(':scope > .result-character-hero, :scope > .result-character-chapter')?.remove());
-  ming.prepend(makeHero(id, theme, ctx, western, isDemo, onReselect));
-  [ming, yun, rel].forEach(section => accompanySummary(section, id, theme, isDemo));
-
+  // Build the new character surfaces around the existing overview and 3D
+  // containers. They are moved, not recreated, so fold and orbit state survive.
+  const overview = ming.querySelector('.sys-eastern .qr-card');
+  const astro = ming.querySelector('#w3d-astro');
+  const horo = yun.querySelector('#w3d-horo');
+  const num = rel.querySelector('#w3d-num');
+  const originals = [overview, astro, horo, num].filter(Boolean).map(node => ({
+    node, parent: node.parentNode, next: node.nextSibling,
+  }));
   const luck = [pillar(ctx.cDy) && `${pillar(ctx.cDy)}大运`, pillar(ctx.cLn) && `${pillar(ctx.cLn)}流年`].filter(Boolean).join(' · ');
-  const sun = western?.horo?.sunName || western?.astro?.sun?.name;
-  yun.prepend(makeChapter(id, theme, 'yun',
-    ['从时间里看节奏', luck ? `以${isDemo ? '示例的' : ''}${luck}为线索，看看当下的变化。` : '从大运与流年出发，看看当下的变化。'],
-    ['从星象里看节奏', sun ? `以${isDemo ? '示例的' : ''}太阳${sun}为线索，看看此刻的星象。` : '从太阳星座出发，看看此刻的星象。']));
-
   const dayPillar = pillar(ctx.b?.D);
-  const lifePath = western?.num?.lifePath;
-  rel.prepend(makeChapter(id, theme, 'rel',
-    [isDemo ? '看看示例中的关系' : '看见关系里的你', dayPillar ? `以${isDemo ? '示例的' : ''}日柱${dayPillar}为线索，看看关系中的互动。` : '从命盘出发，看看关系中的互动。'],
-    [isDemo ? '看看示例中的数字' : '看见数字里的你', lifePath != null ? `从${isDemo ? '示例的' : ''}主命数${lifePath}出发，探索生命灵数。` : '从生命灵数出发，探索数字里的线索。']));
+  let hero, luckChapter, relationChapter;
+  try {
+    hero = makeHero(id, theme, ctx, western, isDemo, onReselect, overview, astro);
+    luckChapter = makeChapter(id, theme, 'yun',
+      ['从时间里看节奏', luck ? `以${isDemo ? '示例的' : ''}${luck}为线索，看看当下的变化。` : '从大运与流年出发，看看当下的变化。'],
+      [isDemo ? '示例星象' : '星象一览', '拖动星象，看看此刻的变化。'], horo);
+    relationChapter = makeChapter(id, theme, 'rel',
+      [isDemo ? '看看示例中的关系' : '看见关系里的你', dayPillar ? `以${isDemo ? '示例的' : ''}日柱${dayPillar}为线索，看看关系中的互动。` : '从命盘出发，看看关系中的互动。'],
+      [isDemo ? '示例灵数' : '灵数一览', '从主命数出发，探索数字线索。'], num);
+  } catch (error) {
+    // A bad optional character definition must never remove calculated report
+    // data or a working canvas. The previous surfaces are still connected here.
+    originals.forEach(({ node, parent, next }) => {
+      if (parent) parent.insertBefore(node, next?.parentNode === parent ? next : null);
+    });
+    throw error;
+  }
+  [ming, yun, rel].forEach(section => section.querySelector(':scope > .result-character-hero, :scope > .result-character-chapter')?.remove());
+  ming.prepend(hero);
+  yun.prepend(luckChapter);
+  rel.prepend(relationChapter);
+  [yun, rel].forEach(section => accompanySummary(section, id, theme, isDemo));
 }

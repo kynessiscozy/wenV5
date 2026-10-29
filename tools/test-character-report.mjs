@@ -1,3 +1,4 @@
+import { spinFor } from './trait-picker-helper.mjs';
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 
@@ -16,19 +17,25 @@ const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', 
 const errors = [];
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-async function openHome(id, { width = 390, height = 844, mode = 'light', reduced = false } = {}) {
+async function openHome(id, { width = 390, height = 844, mode = 'light', reduced = false, disableWebGL = false } = {}) {
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
   page.on('pageerror', error => errors.push(`${id}: ${error.message}`));
   await page.setViewport({ width, height });
   if (reduced) await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  if (disableWebGL) await page.evaluateOnNewDocument(() => {
+    const getContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+      return /^(webgl2?|experimental-webgl)$/.test(type) ? null : getContext.call(this, type, ...args);
+    };
+  });
   await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 15000 });
   await page.evaluate(theme => {
     localStorage.setItem('tj_theme', theme);
     document.documentElement.dataset.theme = theme;
   }, mode);
-  await page.waitForSelector(`[data-trait="${id}"]`);
-  await page.click(`[data-trait="${id}"]`);
+  await page.waitForSelector('#traitMachine[data-ready="true"]');
+  await spinFor(page, id);
   await page.waitForFunction(theme => window._tools2Ready === true &&
     document.documentElement.dataset.homeTheme === theme && document.getElementById('traitSelection').hidden,
   { timeout: 15000 }, id);
@@ -84,7 +91,7 @@ try {
         const insight = section.querySelector('.result-character-insight');
         return { id: visual?.dataset.reportCharacter, portrait: visual?.querySelector('.result-character-portrait')?.getAttribute('src'),
           insight: insight?.dataset.reportCharacter, label: insight?.querySelector('.result-insight-label')?.textContent,
-          summary: insight?.querySelector('.qr-summary')?.textContent.trim() };
+          summary: section.querySelector('.qr-summary')?.textContent.trim() };
       });
       return { selected: document.documentElement.dataset.homeTheme, demo: hero?.dataset.reportDemo,
         day: hero?.querySelector('[data-report-value="day-master"]')?.textContent, actualDay: ctx.dg + ctx.dw,
@@ -101,14 +108,17 @@ try {
     assert.equal(result.useful, result.actualUseful);
     assert.equal(result.sun, result.actualSun);
     assert.equal(result.moon, result.actualMoon);
-    for (const section of result.sections) {
+    for (const [index, section] of result.sections.entries()) {
       assert.equal(section.id, id, `${id} 应出现在三个报告分区`);
       assert.ok(section.portrait.endsWith('/' + config.portrait), `${id} 应使用对应人物素材`);
-      assert.equal(section.insight, id, `${id} 应陪伴真实速读内容`);
-      assert.equal(section.label, `${config.trait} · 解读`);
+      if (index === 0) assert.equal(section.insight, undefined, '命盘一览不再重复放置小人物');
+      else {
+        assert.equal(section.insight, id, `${id} 应陪伴其他分区的真实速读内容`);
+        assert.equal(section.label, `${config.trait} · 解读`);
+      }
       assert.ok(section.summary.length > 10, '原有真实摘要应保留');
     }
-    assert.ok(result.sections[0].summary.includes(result.actualDay), '摘要仍为实际命盘数据');
+    assert.equal(await page.$eval('#characterResultHero', hero => hero.querySelectorAll('.qr-card').length), 1, '命盘与角色合为一处');
     assert.ok(result.sections[1].summary.includes(result.year), '运势摘要仍为实际流年');
     assert.equal(result.guide, '和问问聊聊', '报告 AI 身份不随主页角色改变');
     assert.equal(result.westernGuide, '和问问聊聊');
@@ -146,7 +156,7 @@ try {
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'wenwen');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'reportTraitReselect');
     await page.click('#reportTraitReselect');
-    await page.click('[data-trait="suyan"]');
+    await spinFor(page, 'suyan');
     await page.waitForFunction(() => document.getElementById('traitSelection').hidden && document.querySelector('#characterResultHero')?.dataset.reportCharacter === 'suyan');
     const after = await page.evaluate(() => ({ sameContext: window._ctx === window.__savedTraitCtx,
       report: document.body.classList.contains('report-active'), inert: document.getElementById('page2').inert,
@@ -167,11 +177,65 @@ try {
     assert.equal(after.guide, before.guide, '问问对话身份不变');
     assert.equal(after.focus, 'reportTraitReselect', '重建报告后焦点返回新的重选按钮');
     await page.click('#modeWestern');
+    await page.waitForFunction(() => window._w3d?.built?.astro?.container === document.getElementById('w3d-astro') && document.querySelector('#w3d-astro canvas'), { timeout: 15000 });
+    await page.$eval('#w3d-astro', el => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
+    const scene = await page.evaluate(() => {
+      const built = window._w3d.built.astro;
+      window.__savedAstro = built;
+      window.__savedCanvas = built.container.querySelector('canvas');
+      const rect = built.container.getBoundingClientRect();
+      return { x: rect.left + rect.width * .2, y: rect.top + rect.height * .52,
+        theta: built.orbit.theta, position: built.camera.position.toArray(), radius: built.orbit.radius };
+    });
+    await page.mouse.move(scene.x, scene.y);
+    await page.mouse.down();
+    await page.mouse.move(scene.x + 65, scene.y + 8, { steps: 5 });
+    await page.mouse.up();
+    const moved = await page.evaluate(() => ({ theta: window._w3d.built.astro.orbit.theta,
+      position: window._w3d.built.astro.camera.position.toArray() }));
+    assert.notEqual(moved.theta, scene.theta, '合并后的星盘仍可拖拽');
+    assert.notDeepEqual(moved.position, scene.position, '减少动态时主动拖拽仍应重绘视角');
+    await page.mouse.wheel({ deltaY: 120 });
+    assert.notEqual(await page.evaluate(() => window._w3d.built.astro.orbit.radius), scene.radius, '滚轮缩放仍可用');
+    await page.click('#w3d-astro .w3d-reset');
+    assert.equal(await page.evaluate(() => window._w3d.built.astro.orbit.theta), 0, '复位仍可用');
+    const resizeFrame = await page.evaluate(() => ({ frame: window._w3d.built.astro.renderer.info.render.frame,
+      width: document.querySelector('#w3d-astro canvas').width }));
+    await page.setViewport({ width: 568, height: 320 });
+    await page.waitForFunction(before => window._w3d.built.astro.renderer.info.render.frame > before.frame &&
+      document.querySelector('#w3d-astro canvas').width !== before.width, { timeout: 5000 }, resizeFrame);
+    await page.setViewport({ width: 390, height: 844 });
+    await page.waitForFunction(before => document.querySelector('#w3d-astro canvas').width === before.width,
+      { timeout: 5000 }, resizeFrame);
+    await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
+    await page.waitForFunction(() => !!window._w3d.built.astro.raf, { timeout: 5000 });
+    await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+    await page.waitForFunction(() => !window._w3d.built.astro.raf && !window._w3d.built.astro.timer, { timeout: 5000 });
+    const recovered = await page.evaluate(() => {
+      const create = document.createElement;
+      const originalOverview = document.querySelector('#characterResultHero .qr-card');
+      document.createElement = function (tag, ...args) {
+        if (tag === 'picture') throw new Error('simulated optional character failure');
+        return create.call(this, tag, ...args);
+      };
+      try { window.dispatchEvent(new CustomEvent('tj:trait-change')); }
+      finally { document.createElement = create; }
+      return { overview: document.querySelector('#characterResultHero .qr-card') === originalOverview,
+        canvas: document.querySelector('#w3d-astro canvas') === window.__savedCanvas,
+        connected: window.__savedCanvas.isConnected };
+    });
+    assert.deepEqual(recovered, { overview: true, canvas: true, connected: true }, '可选人物构建失败也不能丢失真实一览或星盘');
     await page.click('#reportTraitReselect');
-    await page.click('[data-trait="moonfox"]');
+    await spinFor(page, 'moonfox');
     await page.waitForFunction(() => document.getElementById('traitSelection').hidden && document.querySelector('#characterResultHero')?.dataset.reportCharacter === 'moonfox');
     assert.equal(await page.$eval('html', el => el.dataset.systemMode), 'western');
     assert.equal(await page.evaluate(() => window._ctx === window.__savedTraitCtx), true);
+    assert.deepEqual(await page.evaluate(() => ({
+      scene: window._w3d.built.astro === window.__savedAstro,
+      canvas: document.querySelector('#w3d-astro canvas') === window.__savedCanvas,
+      lost: window.__savedCanvas.getContext('webgl2')?.isContextLost(),
+      connected: window.__savedCanvas.isConnected,
+    })), { scene: true, canvas: true, lost: false, connected: true }, '重选应保留同一个可用的 WebGL 场景');
     assert.notEqual(await page.$eval('#characterResultHero .sys-western', el => getComputedStyle(el).display), 'none');
     await assertNoHorizontalOverflow(page, '重选后西方报告');
     await context.close();
@@ -183,8 +247,7 @@ try {
   {
     const { page, context } = await openRealReport('suyan', { width: 390, height: 844, reduced: true });
     assert.equal(await page.$eval('#characterResultHero .result-character-blink', el => getComputedStyle(el).animationName), 'none', '减少动态时不能眨眼');
-    await page.click('#characterResultHero .result-character-action');
-    assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('qr-card')), true, '开始阅读应聚焦命盘速读');
+    assert.equal(await page.$eval('#characterResultHero .qr-title', el => el.textContent), '命盘一览');
     const head = '#s-ming .qr-card .qr-head';
     await page.click(head);
     assert.equal(await page.$eval(head, el => el.getAttribute('aria-expanded')), 'false');
@@ -204,7 +267,7 @@ try {
     for (const section of ['s-yun', 's-rel', 's-ming']) {
       await showSection(page, section);
       assert.equal(await page.$eval(`#${section} [data-report-character]`, el => el.dataset.reportCharacter), 'suyan');
-      assert.ok(await page.$eval(`#${section} .result-character-insight .qr-summary`, el => el.innerText.length > 10));
+      assert.ok(await page.$eval(`#${section} .qr-summary`, el => el.innerText.length > 10));
       await assertNoHorizontalOverflow(page, section);
     }
 
@@ -222,8 +285,7 @@ try {
     assert.equal(await page.$eval('#characterResultHero .sys-eastern', el => getComputedStyle(el).display), 'none');
     assert.notEqual(await page.$eval('#characterResultHero .sys-western', el => getComputedStyle(el).display), 'none');
     assert.equal(await page.$eval('#characterReportGuideWestern', el => !!el.getClientRects().length), true, '西方体系也保留问问对话入口');
-    await page.click('#characterResultHero .result-character-action');
-    assert.equal(await page.evaluate(() => document.activeElement?.id), 'w3d-astro', '西方阅读按钮应定位星盘');
+    assert.equal(await page.$eval('#w3d-astro', el => el.closest('#characterResultHero')?.id), 'characterResultHero', '西方星盘与人物应处于同一场景');
     for (const section of ['s-yun', 's-rel', 's-ming']) {
       await showSection(page, section);
       const visual = await page.$eval(`#${section} [data-report-character]`, el => ({ id: el.dataset.reportCharacter,
@@ -232,6 +294,10 @@ try {
       assert.equal(visual.id, 'suyan');
       assert.notEqual(visual.western, 'none');
       assert.equal(visual.eastern, 'none');
+      const key = { 's-yun': 'horo', 's-rel': 'num', 's-ming': 'astro' }[section];
+      await page.waitForFunction(id => window._w3d?.built?.[id]?.container === document.getElementById(`w3d-${id}`) &&
+        !!document.querySelector(`#w3d-${id} canvas`), { timeout: 15000 }, key);
+      assert.equal(await page.$eval(`#w3d-${key}`, el => !!el.closest('[data-report-character]')), true, '三个西方场景均与人物同屏');
       await assertNoHorizontalOverflow(page, `西方 ${section}`);
     }
     await page.click('#characterReportGuideWestern .character-prompt-dismiss');
@@ -243,6 +309,14 @@ try {
     await delay(100);
     assert.equal(await page.$eval('#characterResultHero', el => !!el.getClientRects().length), true, '新手模式保留角色导览');
     assert.ok(await page.$eval('#s-ming .qr-card .qr-summary', el => el.textContent.trim().length > 10));
+    const proToggle = '#characterResultHero .pro-toggle';
+    assert.equal(await page.$eval(proToggle, el => el.tagName), 'BUTTON');
+    assert.equal(await page.$eval(proToggle, el => el.getAttribute('aria-expanded')), 'false');
+    await page.focus(proToggle);
+    await page.keyboard.press('Enter');
+    assert.equal(await page.$eval(proToggle, el => el.getAttribute('aria-expanded')), 'true', '新手数值可用键盘展开');
+    await page.keyboard.press('Enter');
+    assert.equal(await page.$eval(proToggle, el => el.getAttribute('aria-expanded')), 'false');
     await page.evaluate(() => { document.body.classList.remove('beginner-mode'); window.TJBuildSectionTabs(); });
     assert.ok(await page.$('#s-ming .qr-card .qr-summary'));
 
@@ -253,7 +327,7 @@ try {
     const forced = await page.evaluate(() => ({
       scene: getComputedStyle(document.querySelector('.result-character-scene')).display,
       background: getComputedStyle(document.getElementById('characterResultHero')).backgroundColor,
-      title: getComputedStyle(document.querySelector('#characterResultHero .sys-eastern h1')).color,
+      title: getComputedStyle(document.querySelector('#characterResultHero .sys-eastern .qr-title')).color,
       action: !!document.querySelector('.result-character-hint-button').getClientRects().length,
     }));
     assert.equal(forced.scene, 'none', '强制颜色下不依赖背景图');
@@ -279,8 +353,12 @@ try {
     assert.equal(updated.displayed, updated.actual);
     assert.notEqual(updated.actual, previousDay, '日期修改应产生新的实际数据');
     assert.equal(updated.count, 1);
-    assert.equal(updated.scenes, 1);
+    assert.equal(updated.scenes, 0, '合并后一览不再重复人物');
     assert.equal(updated.overlayHidden, true);
+    await page.click('#modeWestern');
+    await page.waitForFunction(() => window._w3d?.built?.astro?.container === document.getElementById('w3d-astro') &&
+      !!document.querySelector('#characterResultHero #w3d-astro canvas'), { timeout: 15000 });
+    assert.equal(await page.$eval('#w3d-astro [data-report-value="sun"]', el => el.textContent), await page.evaluate(() => window.__w3dData.astro.sun.name), '后台重算后应重建新星盘而非沿用旧画布');
     await context.close();
     console.log('✓ 阅读、折叠、跳转、两种体系、问问对话、新手模式与后台重算');
   }
@@ -301,7 +379,7 @@ try {
     assert.equal(await page.$eval('#characterResultHero', el => el.dataset.reportDemo), 'true');
     assert.ok(await page.$eval('#characterResultHero', el => el.innerText.includes('示例')));
     assert.ok(await page.$('.demo-report-note'));
-    assert.ok(await page.$$eval('.result-insight-label', labels => labels.length === 3 && labels.every(label => label.textContent.includes('示例'))), '滚动后的摘要仍应标注示例');
+    assert.ok(await page.$$eval('.result-insight-label', labels => labels.length === 2 && labels.every(label => label.textContent.includes('示例'))), '滚动后的摘要仍应标注示例');
     assert.equal(await page.$('#characterReportGuide'), null, '示例不应出现个人报告提示');
     await page.click('.result-character-hint-button');
     assert.ok(await page.$eval('#characterResultHint .sys-eastern', el => el.innerText.includes('示例命盘')));
@@ -315,7 +393,10 @@ try {
       for (const section of ['s-ming', 's-yun', 's-rel']) {
         await showSection(page, section);
         assert.equal(await page.$eval(`#${section} [data-report-character]`, el => el.dataset.reportCharacter), id);
-        const style = await page.$eval(`#${section} [data-report-character] .sys-${system}`, el => ({
+        const target = section === 's-ming'
+          ? (system === 'eastern' ? '.result-character-overview' : '.result-character-reading.sys-western')
+          : `.result-chapter-reading.sys-${system}`;
+        const style = await page.$eval(`#${section} [data-report-character] ${target}`, el => ({
           visible: !!el.getClientRects().length && getComputedStyle(el).display !== 'none', text: el.innerText,
         }));
         assert.ok(style.visible && style.text.trim(), `${id} ${system} ${section} 应有可见内容`);
@@ -326,6 +407,27 @@ try {
     await context.close();
   }
   console.log('✓ 示例标记、小屏与横屏、浅深主题及减少动态');
+
+  // Lack of WebGL must not cover the figure or the actual chart values.
+  {
+    const { page, context } = await openHome('wenwen', { reduced: true, disableWebGL: true });
+    await page.evaluate(() => { void window.calc(true); });
+    await finishCalculation(page);
+    await page.click('#modeWestern');
+    await page.waitForFunction(() => document.querySelector('#w3d-astro .w3d-loading')?.innerText.includes('暂不支持'), { timeout: 15000 });
+    const fallback = await page.evaluate(() => {
+      const root = document.getElementById('characterResultHero');
+      const values = [...root.querySelectorAll('#w3d-astro [data-report-value]')];
+      return { values: values.map(el => el.innerText), visible: values.every(el => !!el.getClientRects().length),
+        loadingLayer: Number(getComputedStyle(root.querySelector('.w3d-loading')).zIndex),
+        portrait: !!root.querySelector('.result-character-figure').getClientRects().length };
+    });
+    assert.equal(fallback.values.length, 3);
+    assert.ok(fallback.values.every(Boolean) && fallback.visible && fallback.portrait && fallback.loadingLayer < 2,
+      '设备不支持 3D 时仍应显示人物与太阳/月亮/上升');
+    await context.close();
+    console.log('✓ 无 WebGL 时保留人物、真实数据与降级提示');
+  }
   assert.deepEqual(errors, [], '报告页面不应发生未捕获的脚本错误');
 } finally {
   await browser.close();

@@ -1,3 +1,4 @@
+import { spinFor } from './trait-picker-helper.mjs';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -47,9 +48,9 @@ async function offlineCalculation(page, id, assetName = '') {
     const hero = document.getElementById('characterResultHero');
     const portrait = hero?.querySelector('.result-character-portrait');
     const chapter = document.querySelector('#s-yun .result-character-chapter');
-    const summary = document.querySelector('#s-ming .result-character-insight');
+    const summary = hero?.querySelector('.qr-card .qr-summary');
     return document.body.classList.contains('report-active') && hero?.dataset.reportCharacter === theme &&
-      chapter?.dataset.reportCharacter === theme && summary?.dataset.reportCharacter === theme &&
+      chapter?.dataset.reportCharacter === theme && !!summary?.textContent.trim() &&
       portrait?.complete && portrait.naturalWidth > 0 &&
       hero.querySelector('[data-report-value="day-master"]').textContent === window._ctx.dg + window._ctx.dw;
   }, { timeout: 10000 }, id);
@@ -62,15 +63,15 @@ async function offlineCalculation(page, id, assetName = '') {
       speaking?.complete && speaking.naturalWidth > 0;
   }, { timeout: 10000 });
   if (id === 'wenwen') {
-    const day = await page.evaluate(() => window._ctx.dg + window._ctx.dw);
+    const { day, summary } = await page.evaluate(() => ({ day: window._ctx.dg + window._ctx.dw, summary: document.querySelector('#s-ming .qr-summary').textContent }));
     await page.click('#reportTraitReselect');
-    await page.click('[data-trait="moonfox"]');
+    await spinFor(page, 'moonfox');
     await page.waitForFunction(() => document.getElementById('traitSelection').hidden &&
       document.querySelector('#characterResultHero')?.dataset.reportCharacter === 'moonfox');
     assert.equal(await page.evaluate(() => window._ctx.dg + window._ctx.dw), day, '离线重选不能重算或丢失结果');
-    assert.equal(await page.$eval('#s-ming .result-character-insight', el => el.dataset.reportCharacter), 'moonfox');
+    assert.equal(await page.$eval('#characterResultHero .qr-summary', el => el.textContent), summary, '离线重选保留一览的实际摘要');
     await page.click('#reportTraitReselect');
-    await page.click('[data-trait="wenwen"]');
+    await spinFor(page, 'wenwen');
     await page.waitForFunction(() => document.getElementById('traitSelection').hidden &&
       document.querySelector('#characterResultHero')?.dataset.reportCharacter === 'wenwen');
   }
@@ -80,9 +81,9 @@ async function offlineCalculation(page, id, assetName = '') {
 }
 
 async function choose(page, id, width, room) {
-  await page.waitForSelector(`[data-trait="${id}"]`, { timeout: 15000 });
+  await page.waitForSelector('#traitMachine[data-ready="true"]', { timeout: 15000 });
   assert.equal(await page.$eval('#traitSelection', el => el.hidden), false, '离线刷新也应重新选择');
-  await page.click(`[data-trait="${id}"]`);
+  await spinFor(page, id);
   await page.waitForFunction((theme, size, backdrop) => {
     const portrait = document.querySelector('[data-character-asset="portrait"]');
     const images = [...document.querySelectorAll('.character-expression')];
@@ -99,18 +100,18 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   await page.setViewport({ width: 390, height: 844 });
   await page.goto(base, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window._tools2Ready === true && document.querySelectorAll('#traitOptions button').length === 8);
+  await page.waitForFunction(() => window._tools2Ready === true && document.getElementById('traitMachine')?.dataset.ready === 'true');
   // None of the roles are chosen online; all scenes must still work offline.
   await page.evaluate(async () => {
-    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]) await caches.open(`wenda-cache-v${version}`);
+    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]) await caches.open(`wenda-cache-v${version}`);
     await caches.open('unrelated-app-cache');
     await navigator.serviceWorker.register('./sw.js');
     await navigator.serviceWorker.ready;
   });
-  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v29') && !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28)$/.test(key)));
+  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v30') && !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28|29)$/.test(key)));
   assert.ok(await page.evaluate(async () => (await caches.keys()).includes('unrelated-app-cache')), '更新不能删除其他应用的缓存');
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => navigator.serviceWorker.controller && window._tools2Ready === true && document.querySelectorAll('#traitOptions button').length === 8);
+  await page.waitForFunction(() => navigator.serviceWorker.controller && window._tools2Ready === true && document.getElementById('traitMachine')?.dataset.ready === 'true');
 
   const required = [
     './art/wenwen-reimagined.webp', './art/wenwen-reimagined-avatar.webp', './art/wenwen-reimagined-blink.webp', './art/wenwen-reimagined-speak.webp',

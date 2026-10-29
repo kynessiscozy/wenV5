@@ -1,3 +1,4 @@
+import { spinFor } from './trait-picker-helper.mjs';
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 
@@ -15,7 +16,7 @@ async function openPage(motion = 'no-preference') {
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: motion }]);
   await page.goto(BASE, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#traitSpin');
-  await page.waitForFunction(() => document.querySelectorAll('#traitOptions button').length === 8);
+  await page.waitForFunction(() => document.getElementById('traitMachine')?.dataset.ready === 'true');
   return { page, context };
 }
 
@@ -31,7 +32,8 @@ try {
     await page.click('#traitSpin');
     await page.waitForFunction(() => document.getElementById('traitMachine').dataset.spinning === 'true');
     assert.equal(await page.$eval('#traitSpin', el => el.disabled), true);
-    assert.equal(await page.$$eval('#traitOptions button', buttons => buttons.every(button => button.disabled)), true);
+    assert.equal(await page.$eval('#traitLever', button => button.disabled), true);
+    assert.equal(await page.$('#traitOptions'), null, '不能提供直接选择列表');
     await delay(150);
     const moving = await page.$eval('#traitReelTrack', el => ({ animations: el.getAnimations().length, transform: getComputedStyle(el).transform }));
     assert.ok(moving.animations > 0 && moving.transform !== 'none', '转轮应实际运动，而非静态装饰');
@@ -43,7 +45,7 @@ try {
     assert.match(outcome.text, /^选择「.+」$/);
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined, '随机结果在确认前不能自动应用');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'traitConfirm');
-    assert.equal(await page.$eval(`[data-trait="${outcome.id}"]`, el => el.getAttribute('aria-pressed')), 'true');
+    assert.ok((await page.$eval('#traitReelTrack', el => el.textContent)).includes(outcome.text.slice(3, -1)), '转轮展示实际结果');
     assert.ok((await page.$eval('#traitStatus', el => el.textContent)).includes('转到了'));
     await page.click('#traitLever');
     await page.waitForFunction(() => document.getElementById('traitMachine').dataset.spinning === 'true');
@@ -78,7 +80,7 @@ try {
     assert.equal(await page.evaluate(() => document.activeElement.id), 'homeTraitReset');
     const next = outcome.id === 'suyan' ? 'diyan' : 'suyan';
     await page.click('#homeTraitReset');
-    await page.click(`[data-trait="${next}"]`);
+    await spinFor(page, next);
     await waitForChoice(page, next);
     await delay(1700); // A cancelled spin must not finish into the new selection.
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), next);
@@ -112,7 +114,7 @@ try {
   // Two very slow successive portraits must not unmask or restore an old one.
   {
     const { page, context } = await openPage('reduce');
-    await page.click('[data-trait="wenwen"]');
+    await spinFor(page, 'wenwen');
     await waitForChoice(page, 'wenwen');
     await page.setRequestInterception(true);
     const held = { yuchen: [], suyan: [] };
@@ -124,11 +126,11 @@ try {
       else request.continue().catch(() => {});
     });
     await page.click('#homeTraitReset');
-    await page.click('[data-trait="yuchen"]');
+    await spinFor(page, 'yuchen');
     await waitForChoice(page, 'yuchen');
     assert.ok(held.yuchen.length, '第一张慢图应被拦截');
     await page.click('#homeTraitReset');
-    await page.click('[data-trait="suyan"]');
+    await spinFor(page, 'suyan');
     await waitForChoice(page, 'suyan');
     assert.ok(held.suyan.length, '第二张慢图应被拦截');
     assert.equal(await page.$eval('[data-character-asset="portrait"]', el => el.classList.contains('is-scene-image-loading')), true);
@@ -145,11 +147,11 @@ try {
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'suyan');
     failMoon = true;
     await page.click('#homeTraitReset');
-    await page.click('[data-trait="moonfox"]');
+    await spinFor(page, 'moonfox');
     await waitForChoice(page, 'moonfox');
     await page.waitForFunction(() => document.getElementById('homeLoadingStatus').textContent.includes('无法加载'), { timeout: 5000 });
     await page.click('#homeTraitReset');
-    await page.click('[data-trait="wenwen"]');
+    await spinFor(page, 'wenwen');
     await waitForChoice(page, 'wenwen');
     assert.equal(await page.$eval('#homeLoadingStatus', el => el.textContent), '', '换回正常素材后不应保留旧错误提示');
     await context.close();

@@ -1,0 +1,62 @@
+/* A short, legible guide and about sheet, using the current light/dark palette. */
+.ng-sheet { max-width: 620px; }
+.ng-header { padding: 20px 24px 16px; }
+.ng-header-title { font-size: 20px; }
+.ng-header-sub { font-size: 12px; }
+.ng-close-btn { width: 40px; height: 40px; flex: 0 0 40px; }
+.ng-tabs-bar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  padding: 10px 16px;
+  overflow: visible;
+}
+.ng-tab-btn { justify-content: center; min-width: 0; min-height: 40px; padding: 7px 4px; font-size: 12px; }
+.ng-body { min-height: 0; padding: 22px 24px 26px; }
+.ng-section-hero { margin-bottom: 16px; padding-bottom: 15px; }
+.ng-kicker { color: var(--c-accent-text, var(--ac-text)); font-size: 12px; }
+.ng-title { font-size: 19px; line-height: 1.35; }
+.ng-desc { font-size: 13px; line-height: 1.7; }
+.ng-steps-flow, .ng-faq-list { gap: 9px; }
+.ng-step-card, .ng-faq-item { padding: 14px 16px; }
+.step-num { min-width: 24px; color: var(--c-accent-text, var(--ac-text)); font-size: 16px; }
+.step-content h4, .faq-q, .term-name { font-size: 14px; line-height: 1.45; }
+.step-content p, .faq-a, .term-desc { font-size: 13px; line-height: 1.7; }
+.ng-footer { padding-top: 12px; }
+.ng-act-btn { min-height: 44px; }
+.ng-tab-btn:focus-visible, .ng-close-btn:focus-visible, .ng-act-btn:focus-visible, .ng-body:focus-visible {
+  outline: 2px solid var(--c-accent) !important;
+  outline-offset: -2px !important;
+}
+
+#aboutModal .about-sheet {
+  max-width: 500px;
+  text-align: left;
+  background: var(--c-surface) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.about-kicker { margin: 0 0 7px; color: var(--c-accent-text, var(--ac-text)); font-size: 11px; font-weight: 700; letter-spacing: .12em; }
+#aboutTitle { margin: 0 44px 8px 0; color: var(--c-text-hi); font: 650 24px/1.3 var(--serif); }
+.about-lead { margin: 0 0 22px; color: var(--c-text-2); font-size: 14px; line-height: 1.6; }
+.about-section { padding: 16px 0; border-top: 1px solid var(--c-border); }
+.about-section h3 { margin: 0 0 7px; color: var(--c-text-hi); font-size: 15px; }
+.about-section p, .about-note p { margin: 0; color: var(--c-text-2); font-size: 13px; line-height: 1.8; }
+.about-note { margin-top: 5px; padding: 14px 16px; border: 1px solid var(--c-border); border-radius: 12px; background: var(--c-surface-2); }
+.about-note b { display: block; margin-bottom: 5px; color: var(--c-text-hi); font-size: 13px; }
+#aboutModal .modal-close { width: 40px; height: 40px; }
+#aboutModal .modal-close:focus-visible { outline: 2px solid var(--c-accent) !important; outline-offset: 2px !important; }
+#aboutModal .about-sheet:focus-visible { outline: 2px solid var(--c-accent) !important; outline-offset: -2px !important; }
+@media (max-width: 560px) {
+  .ng-header { padding-inline: 20px; }
+  .ng-tabs-bar { padding-inline: 10px; gap: 3px; }
+  .ng-tab-btn { gap: 3px; }
+  .ng-body { padding-inline: 20px; }
+  .ng-footer { padding-inline: 20px; }
+  #aboutModal .about-sheet { max-width: none; }
+}
+@media (max-width: 340px) { .ng-tab-btn svg { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .ng-sheet, .ng-backdrop { animation: none; }
+  .ng-tab-btn, .ng-close-btn, .ng-act-btn { transition: none !important; }
+}
