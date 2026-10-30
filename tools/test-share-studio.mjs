@@ -159,8 +159,8 @@ try {
     colors.add(got.pixel);
     await page.click('#shareStudio .share-studio-close');
   }
-  assert.ok(colors.size >= 7, '八种人物的海报底色和场景应各有区别');
-  console.log('✓ 八种真实特质的角色海报、真实数据及角色重选');
+  assert.ok(colors.size >= 7, '各人物的海报底色和场景应有区别');
+  console.log('✓ 十种真实特质的角色海报、真实数据及角色重选');
 
   // Contextual entries should use the already-rendered daily/week data.
   for (const [kind, expected] of [['today', ['宜', '忌']], ['week', ['相对顺利', '多留余量']], ['year', ['事业', '财运']]]) {

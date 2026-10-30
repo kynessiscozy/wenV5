@@ -193,6 +193,7 @@ html[data-theme] body #aiSheet .ai-actions button:hover {
   min-height: 150px;
   padding: 0 18px 0 24px;
 }
+#aiSheet .ai-hero[hidden], #aiSheet .ai-context[hidden] { display: none !important; }
 #aiSheet .ai-hero-copy { position: relative; z-index: 2; flex: 0 0 43%; min-width: 0; padding: 6px 0; }
 #aiSheet .ai-hero-kicker {
   display: block;
@@ -313,8 +314,40 @@ html[data-theme] body #aiSheet .ai-context {
 }
 #aiSheet .ai-context span { margin-right: 6px; color: var(--chat-muted) !important; }
 #aiSheet .ai-context b { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; color: var(--chat-ink); font-weight: 500; }
+#aiSheet .ai-status-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+#aiSheet .ai-header-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 3px;
+  min-height: 34px;
+  padding: 5px 9px;
+  border: 1px solid var(--chat-line);
+  border-radius: 999px;
+  background: var(--chat-card);
+  color: var(--chat-ink);
+  font: 600 calc(11px * var(--font-scale, 1))/1.3 var(--sf);
+  white-space: nowrap;
+  cursor: pointer;
+}
+#aiSheet .ai-header-toggle:hover { border-color: var(--c-accent-text); }
+#aiSheet .ai-header-toggle svg {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#aiSheet.ai-header-collapsed .ai-header-toggle svg { transform: rotate(180deg); }
 html[data-theme] body #aiSheet .ai-conn-bar {
   display: flex;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  min-width: 0;
   align-items: center;
   gap: 6px;
   margin: 0 !important;
@@ -326,6 +359,7 @@ html[data-theme] body #aiSheet .ai-conn-bar {
   line-height: 1.3;
 }
 #aiSheet .ai-conn-dot { width: 6px; height: 6px; }
+#aiSheet .ai-conn-text { white-space: nowrap; }
 #aiSheet .ai-conn-model { color: var(--chat-muted); }
 body.character-chat-open:not(.character-chat-has-chart) #aiSheet .ai-basis-row { display: none !important; }
 body.character-chat-open #aiSheet .ai-context { display: none !important; }
@@ -576,12 +610,82 @@ body .ig-dock .ai-fab .ai-fab-icon svg { width: 22px; height: 22px; fill: curren
   #aiSheet .ai-hero { position: absolute; top: 3px; left: 14px; width: 68px; min-height: 0; height: 45px; padding: 0; }
   #aiSheet .ai-hero-copy { display: none; }
   #aiSheet .ai-master-twins { width: 68px; height: 45px; }
-  html[data-theme] body #aiSheet .ai-head { padding: 0 18px 7px !important; }
+  html[data-theme] body #aiSheet .ai-head { padding: 0 18px 5px !important; }
+  #aiSheet.ai-header-collapsed .ai-identity-mark { display: grid; }
+  #aiSheet .ai-header-toggle { min-height: 30px; padding-top: 3px; padding-bottom: 3px; }
   #aiSheet .ai-basis-row { margin-bottom: 4px; }
-  html[data-theme] body #aiSheet #askResult { padding: 10px 18px !important; }
-  #aiSheet .chat-home-intro, #aiSheet .chat-home-error { padding: 10px 12px; }
+  html[data-theme] body #aiSheet #askResult { padding: 6px 18px !important; }
+  #aiSheet .chat-home-intro, #aiSheet .chat-home-error { padding: 8px 12px; }
   #aiSheet .chat-home-actions { margin-top: 6px; }
   #aiSheet .ai-composer-note { padding-top: 5px; padding-bottom: 7px; }
+}
+/* In a short landscape viewport the expanded portraits already sit beside the
+   title. Once collapsed, combine status and actions into one compact row so
+   the conversation still gains room. Basis controls keep their own row. */
+@media (max-height: 450px) and (min-width: 520px) {
+  #aiSheet.ai-header-collapsed .ai-masthead {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 4px 8px;
+    padding: 5px 16px 5px 20px;
+  }
+  #aiSheet.ai-header-collapsed .ai-topline,
+  html[data-theme] body #aiSheet.ai-header-collapsed .ai-head,
+  #aiSheet.ai-header-collapsed .ai-status-row { display: contents !important; }
+  #aiSheet.ai-header-collapsed .ai-identity { grid-area: 1 / 1; }
+  #aiSheet.ai-header-collapsed .ai-conn-bar { grid-area: 1 / 2; }
+  #aiSheet.ai-header-collapsed .ai-actions { grid-area: 1 / 3; }
+  #aiSheet.ai-header-collapsed .ai-header-toggle { grid-area: 1 / 4; }
+  #aiSheet.ai-header-collapsed .ai-basis-row { grid-area: 2 / 1 / 3 / -1; margin: 0; }
+}
+@media (max-height: 450px) and (max-width: 519px) {
+  #aiSheet.ai-header-collapsed .ai-masthead {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 3px 6px;
+    padding: 5px 10px 5px 14px;
+  }
+  #aiSheet.ai-header-collapsed .ai-topline,
+  html[data-theme] body #aiSheet.ai-header-collapsed .ai-head,
+  #aiSheet.ai-header-collapsed .ai-status-row { display: contents !important; }
+  #aiSheet.ai-header-collapsed .ai-identity { grid-area: 1 / 1; }
+  #aiSheet.ai-header-collapsed .ai-actions { grid-area: 1 / 2; }
+  html[data-theme] body #aiSheet.ai-header-collapsed .ai-actions button {
+    width: 32px !important; min-width: 32px !important; max-width: 32px !important;
+  }
+  #aiSheet.ai-header-collapsed .ai-header-toggle {
+    grid-area: 1 / 3;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+  }
+  #aiSheet.ai-header-collapsed .ai-header-toggle span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  #aiSheet.ai-header-collapsed .ai-conn-bar { grid-area: 2 / 1 / 3 / -1; }
+  #aiSheet.ai-header-collapsed .ai-basis-row { grid-area: 3 / 1 / 4 / -1; margin: 0; }
+}
+@media (max-height: 450px) and (min-width: 410px) and (max-width: 519px) {
+  #aiSheet.ai-header-collapsed .ai-header-toggle {
+    width: auto;
+    height: auto;
+    min-height: 34px;
+    padding: 3px 9px;
+  }
+  #aiSheet.ai-header-collapsed .ai-header-toggle span {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
 }
 @media (max-height: 360px) {
   body:not(.character-chat-open) #aiSheet .ai-context { display: none !important; }
@@ -618,7 +722,7 @@ body .ig-dock .ai-fab .ai-fab-icon svg { width: 22px; height: 22px; fill: curren
 }
 @media (forced-colors: active) {
   html[data-theme] body #aiSheet { border: 1px solid CanvasText !important; }
-  #aiSheet .chat-bubble, #aiSheet .chat-home-intro, #aiSheet .chat-starters-list button,
+  #aiSheet .chat-bubble, #aiSheet .chat-home-intro, #aiSheet .chat-starters-list button, #aiSheet .ai-header-toggle,
   html[data-theme] body #aiSheet .ai-input-row, html[data-theme] body #aiSheet .ai-basis-pill { border: 1px solid CanvasText !important; }
   html[data-theme] body #aiSheet .chat-bubble-user,
   html[data-theme] body #aiSheet .ai-basis-pill.active,

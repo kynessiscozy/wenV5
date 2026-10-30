@@ -297,3 +297,41 @@
 @keyframes calculation-wing-right { from { opacity: 0; transform: rotate(20deg) scaleX(.15) scaleY(.8); } to { opacity: .75; transform: rotate(-4deg) scale(1); } }
 @keyframes calculation-wing-left { from { opacity: 0; transform: rotate(-20deg) scaleX(.15) scaleY(.8); } to { opacity: .75; transform: rotate(4deg) scale(1); } }
 @keyframes calculation-pillar { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* The red-panda's paw bell swings in; the messenger's own paper crane glides
+   on a wind trace. Both props are reusable cutouts from their portraits. */
+.calculation-overlay[data-calculation-theme="rongrong"] { --ritual-ink: #ffe4cc; --ritual-muted: #f5d3bb; --ritual-glow: rgba(249, 160, 105, .4); background: #24130e; }
+.calculation-overlay[data-calculation-theme="zhiya"] { --ritual-ink: #fff4cf; --ritual-muted: #ece6d4; --ritual-glow: rgba(243, 215, 143, .38); background: #1d2e3a; }
+.calculation-overlay[data-calculation-theme="rongrong"] .calculation-props--rongrong,
+.calculation-overlay[data-calculation-theme="zhiya"] .calculation-props--zhiya { display: block; }
+.calculation-overlay[data-calculation-theme="rongrong"] .calculation-portrait { animation-name: calculation-panda-subject; }
+.calculation-overlay[data-calculation-theme="zhiya"] .calculation-portrait { animation-name: calculation-crane-subject; }
+.calculation-pawbell {
+  position: absolute; left: 8%; top: 23%; width: 24%; height: 27%;
+  transform-origin: 50% 4%; filter: drop-shadow(0 4px 12px rgba(255, 177, 100, .35));
+  animation: calculation-pawbell-swing 1.95s cubic-bezier(.25,.7,.25,1) both;
+}
+.calculation-pawbell-rope {
+  position: absolute; left: 49%; top: -36%; width: 2px; height: 39%;
+  background: linear-gradient(transparent, #d99c61); transform-origin: bottom;
+}
+.calculation-pawbell img:not([src]) + .calculation-pawbell-rope,
+.calculation-pawbell img.is-calculation-image-loading + .calculation-pawbell-rope { visibility: hidden; }
+.calculation-crane {
+  position: absolute; left: 8%; top: 13%; width: 32%; height: 28%;
+  filter: drop-shadow(0 6px 14px rgba(255, 238, 190, .3));
+  animation: calculation-crane-flight 1.95s cubic-bezier(.2,.7,.2,1) both;
+}
+.calculation-bell-rings, .calculation-crane-wind {
+  position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+  stroke: var(--ritual-ink); stroke-width: 1.5; stroke-linecap: round; opacity: .42;
+  filter: drop-shadow(0 0 5px var(--ritual-glow));
+}
+.calculation-bell-rings path, .calculation-crane-wind path {
+  stroke-dasharray: 500; animation: calculation-draw 1.8s ease-out both;
+}
+.calculation-crane-wind path:last-child, .calculation-bell-rings path:last-child { animation-delay: .18s; }
+@keyframes calculation-panda-subject { from { opacity: .1; transform: translateY(15px) rotate(-1.5deg) scale(.96); } 65% { opacity: 1; transform: translateY(-4px) rotate(.7deg) scale(1.01); } to { opacity: 1; transform: none; } }
+@keyframes calculation-crane-subject { from { opacity: .1; transform: translate(-10px, 16px) rotate(-2deg) scale(.96); } 70% { opacity: 1; transform: translate(3px, -5px) rotate(.5deg) scale(1.01); } to { opacity: 1; transform: none; } }
+@keyframes calculation-pawbell-swing { 0%, 8% { opacity: 0; transform: translateY(-18px) rotate(-35deg) scale(.8); } 35% { opacity: .95; transform: rotate(17deg) scale(1.05); } 62% { transform: rotate(-9deg); } 82% { transform: rotate(4deg); } 100% { opacity: .9; transform: rotate(0); } }
+@keyframes calculation-crane-flight { 0%, 5% { opacity: 0; transform: translate(-45px, 65px) rotate(-22deg) scale(.62); } 55% { opacity: .95; transform: translate(20px, -20px) rotate(10deg) scale(1.06); } 100% { opacity: .88; transform: translate(0, 0) rotate(-3deg) scale(1); } }

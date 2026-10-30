@@ -9,6 +9,8 @@ import { QINGLAN } from '../src/character/qinglan.js';
 import { XINGLING } from '../src/character/xingling.js';
 import { LUYE } from '../src/character/luye.js';
 import { SUYAN } from '../src/character/suyan.js';
+import { RONGRONG } from '../src/character/rongrong.js';
+import { ZHIYA } from '../src/character/zhiya.js';
 import { HOME_THEMES } from '../src/ui/home-theme.js';
 import { CHAT_MASTER } from '../src/character/chat-master.js';
 
@@ -204,14 +206,14 @@ try {
     assert.equal(await page.$('#traitOptions'), null, '只能通过老虎机选择特质');
     assert.equal(await page.$$('.trait-role').then(els => els.length), 0);
     const pickerText = await page.$eval('#traitSelection', el => el.textContent);
-    assert.ok(!/姜姜|问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言/.test(pickerText), '选择页不应暴露人物名称');
+    assert.ok(!/姜姜|问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言|绒绒|纸鸢/.test(pickerText), '选择页不应暴露人物名称');
     assert.ok(!/让心意|转个方向|直接选择/.test(pickerText), '删除旧标题和直接选择文案');
     const choiceTree = await (await page.createCDPSession()).send('Accessibility.getFullAXTree');
     const choiceNames = choiceTree.nodes.filter(node => !node.ignored && ['button', 'togglebutton'].includes(node.role?.value)).map(node => node.name?.value);
     assert.ok(choiceNames.some(name => name?.includes('转一转')), '屏幕阅读器可以操作随机转轮');
-    assert.ok(!choiceNames.some(name => /姜姜|问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言/.test(name || '')), '屏幕阅读器也不暴露角色名');
+    assert.ok(!choiceNames.some(name => /姜姜|问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言|绒绒|纸鸢/.test(name || '')), '屏幕阅读器也不暴露角色名');
     const fetched = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name));
-    assert.ok(!fetched.some(name => /(?:wenwen-reimagined|moon-fox-reimagined|earthfire-sovereign|yuchen-empress|qinglan(?:-renewed)?|xingling(?:-renewed)?|luye|suyan)\.webp/.test(name)), '未选择前不应预加载任何主图');
+    assert.ok(!fetched.some(name => /(?:wenwen-reimagined|moon-fox-reimagined|earthfire-sovereign|yuchen-empress|qinglan(?:-renewed)?|xingling(?:-renewed)?|luye|suyan|rongrong|zhiya)\.webp/.test(name)), '未选择前不应预加载任何主图');
     await page.keyboard.press('Tab');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'traitSpin', '老虎机可以用键盘操作');
     await page.keyboard.press('Escape');
@@ -323,7 +325,7 @@ try {
   }
   console.log('✓ 慢素材下立即锁定选择，不闪现其他角色');
 
-  // One close-up composition and the same canvas height for all eight roles.
+  // One close-up composition and the same canvas height for all roles.
   const roles = {
     // Opaque illustrated details which extend beyond the untransformed button
     // in compact landscape, rather than empty background.
@@ -335,6 +337,8 @@ try {
     xingling: { character: XINGLING, room: 'xingling-room', prop: null, hit: [.20, .48] },
     luye: { character: LUYE, room: 'luye-room', prop: null, hit: [.24, .48] },
     suyan: { character: SUYAN, room: 'suyan-room', prop: null, hit: [.22, .48] },
+    rongrong: { character: RONGRONG, room: 'rongrong-room', prop: null, hit: [.18, .45] },
+    zhiya: { character: ZHIYA, room: 'zhiya-room', prop: null, hit: [.20, .45] },
   };
   for (const [width, height] of [[320, 568], [390, 844], [568, 320], [844, 390], [1280, 720]]) {
     let reference;
@@ -397,7 +401,7 @@ try {
       assert.ok(!state.labels[0].includes(config.character.name), `${id}: 读屏不应显示角色名`);
       assert.ok(state.alt.includes(state.labels[1]) && !state.alt.includes(config.character.name), `${id}: 图像备用文案只显示特质`);
       if (reference) {
-        assert.ok(Math.abs(state.hero.height - reference.height) < 1 && Math.abs(state.hero.y - reference.y) < 1, '八角色使用同一近景画幅');
+        assert.ok(Math.abs(state.hero.height - reference.height) < 1 && Math.abs(state.hero.y - reference.y) < 1, '十角色使用同一近景画幅');
       } else reference = state.hero;
       if (config.prop) assert.ok(state.props.includes(config.prop), `${id}: 角色专属道具不可丢失`);
       if (id !== 'diyan') assert.ok(!state.props.includes('fireThrone') && !state.props.includes('runes'));
@@ -420,7 +424,7 @@ try {
       await context.close();
     }
   }
-  console.log('✓ 八角色相同近景画幅、透明人物、专属道具与五种视口');
+  console.log('✓ 十角色相同近景画幅、透明人物、专属道具与五种视口');
 
   // Extremely short landscape screens must still show both complete actions.
   for (const [width, height] of [[320, 240], [480, 270]]) {
@@ -472,6 +476,8 @@ try {
     xingling: { blink: [382, 207, 463, 244], speak: [394, 250, 441, 282] },
     luye: { blink: [340, 199, 446, 250], speak: [359, 244, 456, 316] },
     suyan: { blink: [395, 160, 496, 208], speak: [413, 201, 496, 264] },
+    rongrong: { blink: [375, 140, 490, 215], speak: [380, 190, 450, 240] },
+    zhiya: { blink: [305, 285, 410, 375], speak: [340, 325, 415, 390] },
   })) {
     const { page, context } = await newPage(390, 844, { homeTheme: id });
     const bounds = await page.evaluate(() => Object.fromEntries(['blink', 'speak'].map(kind => {
@@ -559,11 +565,11 @@ try {
     }
     await context.close();
   }
-  console.log('✓ 八角色的眨眼与嘴型对齐且实际可见');
+  console.log('✓ 十角色的眨眼与嘴型对齐且实际可见');
 
   // The new and redrawn silhouettes must cover the actual portrait without
   // turning a large transparent area of the room into an invisible target.
-  for (const id of ['qinglan', 'xingling', 'luye', 'suyan']) {
+  for (const id of ['qinglan', 'xingling', 'luye', 'suyan', 'rongrong', 'zhiya']) {
     const { page, context } = await newPage(390, 844, { homeTheme: id });
     const coverage = await page.evaluate(async () => {
       const img = document.querySelector('[data-character-asset="portrait"]');
@@ -690,7 +696,26 @@ try {
     assert.equal(await page.$eval('.character-puppet', el => getComputedStyle(el, '::after').animationName), 'none');
     await context.close();
   }
-  console.log('✓ 新角色祥云对比度和动态偏好');
+  // The two new roles have their own actual portrait movements, not just
+  // particles, while both cloud actions retain readable text.
+  for (const [id, motion] of [['rongrong', 'panda-invite'], ['zhiya', 'paper-messenger-float']]) {
+    const { page, context } = await newPage(390, 844, { homeTheme: id, motion: 'no-preference' });
+    const contrast = await renderedButtonContrast(page, ['#homeCtaMain', '#homeCtaCal']);
+    assert.ok(contrast.every(item => item.ratio >= 4.5), `${id}: 祥云按钮应有足够对比度 ${JSON.stringify(contrast)}`);
+    const frames = await page.$eval('.character-idle-motion', (element, name) => {
+      const animation = element.getAnimations().find(item => item.animationName === name);
+      if (!animation) return null;
+      animation.pause();
+      animation.currentTime = 0; const start = getComputedStyle(element).transform;
+      animation.currentTime = animation.effect.getTiming().duration / 2; const middle = getComputedStyle(element).transform;
+      return [start, middle];
+    }, motion);
+    assert.ok(frames && frames[0] !== frames[1], `${id}: 角色本身应有可见的专属动作`);
+    await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+    assert.equal(await page.$eval('.character-idle-motion', el => getComputedStyle(el).animationName), 'none');
+    await context.close();
+  }
+  console.log('✓ 十种角色的祥云对比度和动态偏好');
 
   // The character is an actual exploration action, not a chat entrance.
   {
@@ -897,7 +922,8 @@ try {
 
   // Check actual rendered text and gradient contrast for both light and dark
   // trait palettes, including the persistent composer and sending control.
-  for (const [id, theme] of [['wenwen', 'light'], ['xingling', 'dark']]) {
+  for (const [id, theme] of [['wenwen', 'light'], ['xingling', 'dark'],
+    ['rongrong', 'light'], ['rongrong', 'dark'], ['zhiya', 'light'], ['zhiya', 'dark']]) {
     const { page, context } = await newPage(390, 844, { homeTheme: id, theme });
     await openToolAssistant(page);
     await page.waitForFunction(() => [...document.querySelectorAll('#aiSheet [data-master-portrait]')].every(image => image.complete && image.naturalWidth));

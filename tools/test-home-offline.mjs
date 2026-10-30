@@ -150,12 +150,12 @@ try {
   await page.waitForFunction(() => window._tools2Ready === true && document.getElementById('traitMachine')?.dataset.ready === 'true');
   // None of the roles are chosen online; all scenes must still work offline.
   await page.evaluate(async () => {
-    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]) await caches.open(`wenda-cache-v${version}`);
+    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37]) await caches.open(`wenda-cache-v${version}`);
     await caches.open('unrelated-app-cache');
     await navigator.serviceWorker.register('./sw.js');
     await navigator.serviceWorker.ready;
   });
-  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v36') && !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35)$/.test(key)));
+  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v38') && !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37)$/.test(key)));
   assert.ok(await page.evaluate(async () => (await caches.keys()).includes('unrelated-app-cache')), '更新不能删除其他应用的缓存');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => navigator.serviceWorker.controller && window._tools2Ready === true && document.getElementById('traitMachine')?.dataset.ready === 'true');
@@ -179,6 +179,10 @@ try {
     './art/luye-room-wide.webp', './art/luye-room-mobile.webp', './art/luye-turntable.svg', './art/luye-vinyl.svg',
     './art/suyan.webp', './art/suyan-avatar.webp', './art/suyan-blink.webp', './art/suyan-speak.webp',
     './art/suyan-room-wide.webp', './art/suyan-room-mobile.webp', './art/suyan-camera.svg',
+    './art/rongrong.webp', './art/rongrong-avatar.webp', './art/rongrong-blink.webp', './art/rongrong-speak.webp',
+    './art/rongrong-room-wide.webp', './art/rongrong-room-mobile.webp', './art/rongrong-pawbell.webp',
+    './art/zhiya.webp', './art/zhiya-avatar.webp', './art/zhiya-blink.webp', './art/zhiya-speak.webp',
+    './art/zhiya-room-wide.webp', './art/zhiya-room-mobile.webp', './art/zhiya-crane.webp',
     './art/awakening-scroll.webp', './art/awakening-fox-fan.webp', './art/awakening-phoenix-wing.webp',
   ];
   const resources = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name).filter(url => url.startsWith(location.origin + '/demo/')));
@@ -194,6 +198,8 @@ try {
     ['xingling', 848, 'xingling-room-mobile.webp', 'xingling-fan.webp'],
     ['luye', 848, 'luye-room-mobile.webp', 'luye-turntable.svg'],
     ['suyan', 848, 'suyan-room-mobile.webp', 'suyan-camera.svg'],
+    ['rongrong', 848, 'rongrong-room-mobile.webp', 'rongrong-pawbell.webp'],
+    ['zhiya', 848, 'zhiya-room-mobile.webp', 'zhiya-crane.webp'],
   ];
   for (const [id, width, room, asset] of roles) {
     await choose(page, id, width, room);
@@ -209,12 +215,12 @@ try {
   await page.click('#homeTraitReset');
   await page.click('#traitLever');
   await page.waitForFunction(() => !document.getElementById('traitConfirm').hidden, { timeout: 5000 });
-  assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'suyan', '离线转动结果在确认前不能改变角色');
+  assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'zhiya', '离线转动结果在确认前不能改变角色');
   await page.keyboard.press('Escape');
-  assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'suyan');
+  assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'zhiya');
   await page.setViewport({ width: 1280, height: 720 });
   await page.waitForFunction(() => document.querySelector('.character-backdrop img').complete &&
-    document.querySelector('.character-backdrop img').naturalWidth > 0 && document.querySelector('.character-backdrop img').currentSrc.endsWith('/suyan-room-wide.webp'));
+    document.querySelector('.character-backdrop img').naturalWidth > 0 && document.querySelector('.character-backdrop img').currentSrc.endsWith('/zhiya-room-wide.webp'));
   await page.click('#characterPortraitButton');
   await page.waitForSelector('#formModal.open');
   await page.keyboard.press('Escape');
@@ -225,7 +231,7 @@ try {
   assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
   assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined);
   assert.deepEqual(errors, [], '离线页面不应产生未捕获的 JavaScript 错误');
-  console.log('✓ /demo/ 生产构建：缓存更新、八角色离线选择/重选、真实结果、西方信息回退、固定近景与探索日历');
+  console.log('✓ /demo/ 生产构建：缓存更新、十角色离线选择/重选、真实结果、西方信息回退、固定近景与探索日历');
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));
