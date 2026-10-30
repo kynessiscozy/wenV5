@@ -70,7 +70,9 @@ assert.equal(HOME_THEMES.wenwen.character, JIANGJIANG);
 assert.equal(CHAT_MASTER.name, '问问');
 assert.equal(CHAT_MASTER.twins.length, 2);
 assert.ok(CHAT_MASTER.twins.every(twin => masterAvatarMarkup().includes(twin.avatar)));
-assert.deepEqual(Object.values(HOME_THEMES).map(theme => theme.trait.label), ['温柔', '神秘', '威严', '从容', '洒脱', '魅惑', '好奇', '自信']);
+assert.deepEqual(Object.values(HOME_THEMES).map(theme => theme.trait.label), ['温柔', '神秘', '威严', '从容', '洒脱', '魅惑', '好奇', '自信', '可爱', '天真']);
+assert.equal(HOME_THEMES.rongrong.character.assets.pawbell.src, './art/rongrong-pawbell.webp');
+assert.equal(HOME_THEMES.zhiya.character.assets.crane.src, './art/zhiya-crane.webp');
 assert.equal(new Set(Object.values(HOME_THEMES).map(theme => theme.trait.label)).size, Object.keys(HOME_THEMES).length, '每个角色应有可扩展的代表特质');
 for (const theme of Object.values(HOME_THEMES)) {
   assert.ok(theme.trait.mark && theme.trait.color && theme.character.assets.portrait && theme.backdrop.mobile && theme.backdrop.wide);

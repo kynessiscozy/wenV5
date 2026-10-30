@@ -6,7 +6,7 @@ const BASE = process.env.BASE_URL || 'http://localhost:5173/';
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 const errors = [];
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-const ids = ['wenwen', 'moonfox', 'diyan', 'yuchen', 'qinglan', 'xingling', 'luye', 'suyan'];
+const ids = ['wenwen', 'moonfox', 'diyan', 'yuchen', 'qinglan', 'xingling', 'luye', 'suyan', 'rongrong', 'zhiya'];
 
 async function openPage(motion = 'no-preference') {
   const context = await browser.createBrowserContext();
@@ -109,6 +109,25 @@ try {
     assert.equal(await changing.page.$eval('#traitReelTrack', el => el.getAnimations().length), 0, '运行中启用减少动态应立即停止转轮');
     await changing.context.close();
     console.log('✓ 减少动态及运行中切换均可直接显示随机结果');
+  }
+
+  // Each new outcome is reachable only through the real random reel and the
+  // public result and accessible name never reveal its internal character name.
+  {
+    const { page, context } = await openPage('reduce');
+    for (const [id, label, internalName] of [['rongrong', '可爱', '绒绒'], ['zhiya', '天真', '纸鸢']]) {
+      await spinFor(page, id, { confirm: false });
+      assert.equal(await page.$eval('#traitConfirm', button => button.textContent), `选择「${label}」`);
+      assert.ok(!(await page.$eval('#traitSelection', el => el.textContent)).includes(internalName));
+      const tree = await (await page.createCDPSession()).send('Accessibility.getFullAXTree');
+      assert.ok(!tree.nodes.some(node => !node.ignored && String(node.name?.value || '').includes(internalName)));
+      await page.click('#traitConfirm');
+      await waitForChoice(page, id);
+      assert.ok((await page.$eval('#characterPortraitButton', button => button.getAttribute('aria-label'))).includes(label));
+      if (id === 'rongrong') await page.click('#homeTraitReset');
+    }
+    await context.close();
+    console.log('✓ 可爱、天真均可随机抽取，界面和读屏只暴露特质');
   }
 
   // Two very slow successive portraits must not unmask or restore an old one.

@@ -331,7 +331,7 @@ try {
     console.log(`  ${id} 慢网选择到实际人物/背景 ${elapsed}ms`);
     await context.close();
   }
-  console.log('✓ 八角色慢网下只加载所选场景');
+  console.log('✓ 十角色慢网下只加载所选场景');
 } finally {
   await browser.close();
   await new Promise(done => server.close(done));

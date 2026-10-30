@@ -49,8 +49,8 @@ function _updateConnUI(state) {
 
 function _ensureConnBar() {
   if (document.getElementById('aiConnBar')) return;
-  const head = document.querySelector('#aiSheet .ai-head');
-  if (!head) return;
+  const statusRow = document.querySelector('#aiSheet .ai-status-row');
+  if (!statusRow) return;
   const bar = document.createElement('div');
   bar.id = 'aiConnBar';
   bar.className = 'ai-conn-bar conn-unknown';
@@ -58,11 +58,47 @@ function _ensureConnBar() {
     '<span class="ai-conn-dot"></span>' +
     '<span class="ai-conn-text">未检测</span>' +
     '<span class="ai-conn-model" id="aiConnModel"></span>';
-  head.appendChild(bar);
+  statusRow.prepend(bar);
   // 订阅状态变化
   onConnChange(_updateConnUI);
   // 立即显示当前状态
   _updateConnUI(getConnState());
+}
+
+// The illustration and chart summary are optional while the controls remain
+// available. Keep the choice across openings, without interrupting a draft.
+const LS_AI_HEADER_COLLAPSED = 'tj_ai_header_collapsed';
+
+function _setHeaderCollapsed(collapsed) {
+  const sheet = document.getElementById('aiSheet');
+  const hero = document.getElementById('aiHero');
+  const context = document.getElementById('aiContext');
+  const toggle = document.getElementById('aiHeaderToggle');
+  if (!sheet || !hero || !context || !toggle) return;
+
+  const body = document.getElementById('askResult');
+  const wasAtBottom = body && body.scrollHeight - body.scrollTop - body.clientHeight < 24;
+  hero.hidden = collapsed;
+  context.hidden = collapsed;
+  sheet.classList.toggle('ai-header-collapsed', collapsed);
+  toggle.setAttribute('aria-expanded', String(!collapsed));
+  const label = collapsed ? '展开顶部' : '收起顶部';
+  toggle.querySelector('span').textContent = label;
+  toggle.title = label;
+  if (!collapsed && sheet.classList.contains('open')) loadMasterPortraits(sheet);
+  if (wasAtBottom && sheet.classList.contains('open')) body.scrollTop = body.scrollHeight;
+}
+
+const headerToggle = document.getElementById('aiHeaderToggle');
+if (headerToggle) {
+  let collapsed = false;
+  try { collapsed = localStorage.getItem(LS_AI_HEADER_COLLAPSED) === '1'; } catch (e) {}
+  _setHeaderCollapsed(collapsed);
+  headerToggle.addEventListener('click', () => {
+    const next = headerToggle.getAttribute('aria-expanded') === 'true';
+    _setHeaderCollapsed(next);
+    try { localStorage.setItem(LS_AI_HEADER_COLLAPSED, next ? '1' : '0'); } catch (e) {}
+  });
 }
 
 function _setModelLabel(modelId) {
@@ -559,7 +595,7 @@ export function openAsk() {
   const sheet = document.getElementById('aiSheet');
   if (sheet?.classList.contains('open')) { closeAsk(); return; }
   if (!sheet) return;
-  loadMasterPortraits(sheet);
+  if (!sheet.classList.contains('ai-header-collapsed')) loadMasterPortraits(sheet);
 
   const page = document.getElementById('page1');
   _homeChat = !!page && !page.classList.contains('hidden');

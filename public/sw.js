@@ -1,6 +1,6 @@
 /* 问问大师 PWA：离线可用 + 秒开的缓存策略。
    静态资源带 hash，可长期缓存；HTML 走 network-first 保证更新及时。 */
-const CACHE = 'wenda-cache-v36';
+const CACHE = 'wenda-cache-v38';
 const BASE = './';
 
 const OPTIONAL_ASSETS = [
@@ -23,6 +23,10 @@ const OPTIONAL_ASSETS = [
   'art/luye-room-wide.webp', 'art/luye-room-mobile.webp', 'art/luye-turntable.svg', 'art/luye-vinyl.svg',
   'art/suyan.webp', 'art/suyan-avatar.webp', 'art/suyan-blink.webp', 'art/suyan-speak.webp',
   'art/suyan-room-wide.webp', 'art/suyan-room-mobile.webp', 'art/suyan-camera.svg',
+  'art/rongrong.webp', 'art/rongrong-avatar.webp', 'art/rongrong-blink.webp', 'art/rongrong-speak.webp',
+  'art/rongrong-room-wide.webp', 'art/rongrong-room-mobile.webp', 'art/rongrong-pawbell.webp',
+  'art/zhiya.webp', 'art/zhiya-avatar.webp', 'art/zhiya-blink.webp', 'art/zhiya-speak.webp',
+  'art/zhiya-room-wide.webp', 'art/zhiya-room-mobile.webp', 'art/zhiya-crane.webp',
   'art/awakening-scroll.webp', 'art/awakening-fox-fan.webp', 'art/awakening-phoenix-wing.webp',
 ];
 

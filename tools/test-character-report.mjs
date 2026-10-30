@@ -13,6 +13,8 @@ const THEMES = {
   xingling: { trait: '魅惑', portrait: 'xingling-renewed.webp', lead: '细看，线索藏在这里。' },
   luye: { trait: '好奇', portrait: 'luye.webp', lead: '发现一个有趣的起点。' },
   suyan: { trait: '自信', portrait: 'suyan.webp', lead: '先把重点抓出来。' },
+  rongrong: { trait: '可爱', portrait: 'rongrong.webp', lead: '把复杂的事拆小，也给自己一点暖意。' },
+  zhiya: { trait: '天真', portrait: 'zhiya.webp', lead: '带着好奇出发，答案会慢慢展开。' },
 };
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 const errors = [];
@@ -108,6 +110,7 @@ async function themeColors(page) {
     };
     const result = {
       trait: root.getPropertyValue('--trait-color').trim(),
+      graphLight: root.getPropertyValue('--trait-graph-light').trim(),
       accent: read('--c-accent'), text: read('--c-accent-text'), on: read('--c-on-accent'),
       bg: read('--c-bg'), bg2: read('--c-bg-2'), surface: read('--c-surface'), surface3: read('--c-surface-3'),
       foreground: read('--c-text'), muted: read('--c-text-3'),
@@ -191,6 +194,7 @@ try {
       .filter(text => document.getElementById('p2Inner').textContent.includes(text))), [], '报告不再出现被移除的字样');
     const light = await themeColors(page);
     assert.equal(light.trait, HOME_THEMES[id].trait.color, `${id} 全站配色源自特质专属色`);
+    assert.deepEqual(light.graphLight.split(',').map(Number), light.accent.match(/\d+/g).slice(0, 3).map(Number), `${id} 图表与可读的强调色应一致`);
     assert.equal(light.submit, light.accent, '表单主按钮也跟随特质色');
     assert.ok(light.saveGradient.includes(light.accent), '保存按钮的渐变也跟随特质色');
     assert.ok(contrast(light.on, light.accent) >= 4.5 && contrast(light.text, light.bg) >= 4.5 && contrast(light.text, light.surface) >= 4.5 &&
@@ -242,16 +246,16 @@ try {
     await assertNoHorizontalOverflow(page, `${id} 命盘`);
     await context.close();
   }
-  assert.equal(accents.size, Object.keys(THEMES).length, '八种特质各有独立的全站强调色');
-  assert.equal(new Set(backgrounds.values()).size, Object.keys(THEMES).length, '八种特质的浅色页面底色各不相同');
-  assert.equal(darkBackgrounds.size, Object.keys(THEMES).length, '八种特质的深色页面底色各不相同');
+  assert.equal(accents.size, Object.keys(THEMES).length, '十种特质各有独立的全站强调色');
+  assert.equal(new Set(backgrounds.values()).size, Object.keys(THEMES).length, '十种特质的浅色页面底色各不相同');
+  assert.equal(darkBackgrounds.size, Object.keys(THEMES).length, '十种特质的深色页面底色各不相同');
   assert.equal(chapterBackgrounds.size, Object.keys(THEMES).length, '同行场景背景也跟随各自的特质色');
   assert.equal(headerBackgrounds.size, Object.keys(THEMES).length, '报告顶栏的实际背景跟随特质色');
   assert.equal(formBackgrounds.size, Object.keys(THEMES).length, '输入表单的实际背景跟随特质色');
   assert.ok(colorDistance(backgrounds.get('moonfox'), backgrounds.get('diyan')) >= 28 &&
     colorDistance(backgrounds.get('moonfox'), backgrounds.get('xingling')) >= 18,
     '蓝、红、紫主题的实际大面积背景应有明显区别');
-  console.log('✓ 八种特质的实际页面/场景底色、浅深对比与三处合并阅读；数据及问问 AI 身份不变');
+  console.log('✓ 十种特质的实际页面/场景底色、浅深对比与三处合并阅读；数据及问问 AI 身份不变');
 
   // Reselecting inside an existing real report changes only the companion.
   {

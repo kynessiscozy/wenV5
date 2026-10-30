@@ -181,6 +181,14 @@
         </div>
         <svg class="calculation-lens-trace" viewBox="0 0 400 520" fill="none" focusable="false"><circle cx="240" cy="230" r="158"/><path d="M44 297C97 246 150 237 192 211M285 158C321 142 354 116 378 83"/></svg>
       </div>
+      <div class="calculation-props calculation-props--rongrong">
+        <div class="calculation-pawbell"><img data-calculation-asset="pawbell" alt="" width="108" height="165" decoding="async"><span class="calculation-pawbell-rope"></span></div>
+        <svg class="calculation-bell-rings" viewBox="0 0 400 520" fill="none" focusable="false"><path d="M49 199c-16 18-18 39-7 58M72 208c-8 12-9 25-4 37"/><path d="M332 192c14 13 20 30 17 47"/></svg>
+      </div>
+      <div class="calculation-props calculation-props--zhiya">
+        <div class="calculation-crane"><img data-calculation-asset="crane" alt="" width="260" height="218" decoding="async"></div>
+        <svg class="calculation-crane-wind" viewBox="0 0 400 520" fill="none" focusable="false"><path d="M-20 320C50 253 95 282 159 218S290 117 381 147"/><path d="M23 345c43-33 78-31 117-49"/></svg>
+      </div>
       <img class="calculation-portrait" data-calculation-portrait alt="" decoding="async">
       <span class="calculation-focus-light"></span>
     </div>
@@ -387,9 +395,11 @@
                   <span class="character-camera-subject">
                     <span class="character-aura" aria-hidden="true"></span>
                     <span class="character-puppet">
-                      <img data-initial-portrait data-character-asset="portrait" alt="同行形象" width="992" height="1299" fetchpriority="high">
-                      <img class="character-expression character-blink" data-character-asset="blink" data-character-optional alt="" aria-hidden="true" width="992" height="1299" decoding="async" fetchpriority="low">
-                      <img class="character-expression character-speak" data-character-asset="speaking" data-character-optional alt="" aria-hidden="true" width="992" height="1299" decoding="async" fetchpriority="low">
+                      <span class="character-idle-motion">
+                        <img data-initial-portrait data-character-asset="portrait" alt="同行形象" width="992" height="1299" fetchpriority="high">
+                        <img class="character-expression character-blink" data-character-asset="blink" data-character-optional alt="" aria-hidden="true" width="992" height="1299" decoding="async" fetchpriority="low">
+                        <img class="character-expression character-speak" data-character-asset="speaking" data-character-optional alt="" aria-hidden="true" width="992" height="1299" decoding="async" fetchpriority="low">
+                      </span>
                     </span>
                   </span>
                 </button>
@@ -450,6 +460,18 @@
                 </linearGradient>
                 <linearGradient id="homeCloudLensSecondary" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0" stop-color="#705061"/><stop offset=".55" stop-color="#513646"/><stop offset="1" stop-color="#332532"/>
+                </linearGradient>
+                <linearGradient id="homeCloudPandaPrimary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#fff2dd"/><stop offset=".55" stop-color="#f9bd90"/><stop offset="1" stop-color="#db805b"/>
+                </linearGradient>
+                <linearGradient id="homeCloudPandaSecondary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#805242"/><stop offset=".55" stop-color="#59382f"/><stop offset="1" stop-color="#372622"/>
+                </linearGradient>
+                <linearGradient id="homeCloudCranePrimary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#fffbe1"/><stop offset=".55" stop-color="#f7e2a1"/><stop offset="1" stop-color="#dcb96f"/>
+                </linearGradient>
+                <linearGradient id="homeCloudCraneSecondary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#647483"/><stop offset=".55" stop-color="#445363"/><stop offset="1" stop-color="#293b4b"/>
                 </linearGradient>
               </defs>
             </svg>
@@ -708,7 +730,7 @@
         <button class="ai-close" type="button" onclick="closeAsk()" title="关闭" aria-label="关闭"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
       </div>
     </div>
-    <div class="ai-hero">
+    <div class="ai-hero" id="aiHero">
       <div class="ai-hero-copy">
         <span class="ai-hero-kicker">一束星光 · 一段对话</span>
         <p class="ai-hero-heading">把心事，<br>慢慢说。</p>
@@ -730,6 +752,11 @@
         </div>
       </div>
       <div class="ai-context" id="aiContext"><span>智能定位</span><b>输入你的问题，获取结合命盘的具体建议</b></div>
+      <div class="ai-status-row">
+        <button class="ai-header-toggle" id="aiHeaderToggle" type="button" aria-controls="aiHero aiContext" aria-expanded="true" title="收起顶部">
+          <span>收起顶部</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 14 6-6 6 6"/></svg>
+        </button>
+      </div>
     </div>
   </div>
   <div class="ai-body" id="askResult"></div>

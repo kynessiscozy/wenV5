@@ -32,7 +32,9 @@ function setImage(image, src) {
   image.classList.toggle('is-calculation-image-loading', !image.complete || !image.naturalWidth);
 }
 function requestRoleProps(overlay, themeId) {
-  overlay.querySelectorAll(`.calculation-props--${themeId} [data-calculation-src]`).forEach((image) => setImage(image, image.dataset.calculationSrc));
+  const assets = HOME_THEMES[themeId]?.character.assets;
+  overlay.querySelectorAll(`.calculation-props--${themeId} [data-calculation-src], .calculation-props--${themeId} [data-calculation-asset]`)
+    .forEach((image) => setImage(image, image.dataset.calculationSrc || assets?.[image.dataset.calculationAsset]?.src));
 }
 
 /** Start fetching the chosen role's optional props while the user fills the form. */

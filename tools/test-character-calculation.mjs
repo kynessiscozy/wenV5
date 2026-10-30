@@ -12,6 +12,8 @@ const THEMES = {
   xingling: { trait: '魅惑', portrait: 'xingling-renewed.webp', art: 'xingling-fan.webp', selector: '.calculation-star-fan', animation: 'calculation-fan-unfold' },
   luye: { trait: '好奇', portrait: 'luye.webp', art: 'luye-turntable.svg', selector: '.calculation-turntable', animation: 'calculation-turntable-enter', detail: '.calculation-vinyl', detailAnimation: 'calculation-vinyl-spin' },
   suyan: { trait: '自信', portrait: 'suyan.webp', art: 'suyan-camera.svg', selector: '.calculation-camera-prop', animation: 'calculation-camera-focus', detail: '.calculation-camera-iris', detailAnimation: 'calculation-iris-focus' },
+  rongrong: { trait: '可爱', portrait: 'rongrong.webp', art: 'rongrong-pawbell.webp', selector: '.calculation-pawbell', animation: 'calculation-pawbell-swing' },
+  zhiya: { trait: '天真', portrait: 'zhiya.webp', art: 'zhiya-crane.webp', selector: '.calculation-crane', animation: 'calculation-crane-flight' },
 };
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 const errors = [];
@@ -169,7 +171,7 @@ try {
       await context.close();
     }
   }
-  console.log('✓ 八角色真实表单推演：专属动作、真实四柱、景别保留、键盘及五种横竖屏幕');
+  console.log('✓ 十角色真实表单推演：专属动作、真实四柱、景别保留、键盘及五种横竖屏幕');
 
   // Another tab can change the home theme while computation is running;
   // this performance must stay on the character selected when it began.
@@ -389,6 +391,27 @@ try {
     assert.equal(await page.evaluate(() => document.activeElement.id), 'p2MenuBtn');
     await context.close();
   }
+  // The bell's hanging cord is tied to its real image: it cannot remain as
+  // a stray line when the optional image is not requested, loading or failed.
+  {
+    const { page, context } = await newPage({ theme: 'rongrong', motion: 'reduce' });
+    await openForm(page);
+    await page.click('.character-form-submit');
+    await waitForResultScene(page, 'rongrong');
+    assert.equal(await page.$eval('.calculation-pawbell-rope', el => getComputedStyle(el).visibility), 'hidden');
+    await continueToReport(page);
+    await context.close();
+  }
+  {
+    const { page, context } = await newPage({ theme: 'rongrong' });
+    await openForm(page);
+    await page.waitForFunction(() => document.querySelector('.calculation-pawbell img')?.naturalWidth > 0);
+    assert.equal(await page.$eval('.calculation-pawbell-rope', el => getComputedStyle(el).visibility), 'visible');
+    await page.$eval('.calculation-pawbell img', el => el.classList.add('is-calculation-image-loading'));
+    assert.equal(await page.$eval('.calculation-pawbell-rope', el => getComputedStyle(el).visibility), 'hidden');
+    await context.close();
+  }
+
   // A live preference change skips the animation, never the result.
   {
     const { page, context } = await newPage({ theme: 'diyan' });

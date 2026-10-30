@@ -8,6 +8,8 @@ import { QINGLAN } from '../character/qinglan.js';
 import { XINGLING } from '../character/xingling.js';
 import { LUYE } from '../character/luye.js';
 import { SUYAN } from '../character/suyan.js';
+import { RONGRONG } from '../character/rongrong.js';
+import { ZHIYA } from '../character/zhiya.js';
 
 // One registry supplies the reel, scenes and report styling.
 // New characters need only add another entry; choices remain page-local.
@@ -60,6 +62,18 @@ export const HOME_THEMES = Object.freeze({
     character: SUYAN,
     backdrop: Object.freeze({ wide: './art/suyan-room-wide.webp', mobile: './art/suyan-room-mobile.webp' }),
   }),
+  rongrong: Object.freeze({
+    trait: Object.freeze({ label: '可爱', mark: '萌', color: '#f0ad78' }),
+    reportLead: '把复杂的事拆小，也给自己一点暖意。',
+    character: RONGRONG,
+    backdrop: Object.freeze({ wide: './art/rongrong-room-wide.webp', mobile: './art/rongrong-room-mobile.webp' }),
+  }),
+  zhiya: Object.freeze({
+    trait: Object.freeze({ label: '天真', mark: '真', color: '#f0dc90' }),
+    reportLead: '带着好奇出发，答案会慢慢展开。',
+    character: ZHIYA,
+    backdrop: Object.freeze({ wide: './art/zhiya-room-wide.webp', mobile: './art/zhiya-room-mobile.webp' }),
+  }),
 });
 
 // Derive readable UI shades from the registry's single character color. The
@@ -81,17 +95,29 @@ function applyTraitAccent(color) {
   const saturation = delta ? delta / (1 - Math.abs(2 * lightness - 1)) : 0;
   const h = Math.round(hue);
   const s = Math.max(45, Math.min(75, Math.round(saturation * 100)));
-  // Match --c-accent at 34% for the canvas chart on a light surface.
-  const l = .34, a = s / 100 * Math.min(l, 1 - l);
-  const channel = n => {
+  // Bright yellow and green swatches can be too luminous even at 34% HSL.
+  // Preserve their hue and saturation, but darken the solid until white text
+  // meets WCAG AA. Keep the chart's RGB exactly in step with that solid.
+  const channelsAt = l => [0, 8, 4].map(n => {
+    const a = s / 100 * Math.min(l, 1 - l);
     const k = (n + h / 30) % 12;
     return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))));
+  });
+  const whiteContrast = channels => {
+    const luminance = channels.map(value => {
+      const v = value / 255;
+      return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
+    }).reduce((sum, value, index) => sum + value * [.2126, .7152, .0722][index], 0);
+    return 1.05 / (luminance + .05);
   };
+  let accentLightness = 34;
+  while (accentLightness > 20 && whiteContrast(channelsAt(accentLightness / 100)) < 4.6) accentLightness -= .5;
   const root = document.documentElement;
   root.style.setProperty('--trait-color', color);
   root.style.setProperty('--trait-h', String(h));
   root.style.setProperty('--trait-s', `${s}%`);
-  root.style.setProperty('--trait-graph-light', [channel(0), channel(8), channel(4)].join(','));
+  root.style.setProperty('--trait-accent-l', `${accentLightness}%`);
+  root.style.setProperty('--trait-graph-light', channelsAt(accentLightness / 100).join(','));
   root.style.setProperty('--trait-graph-dark', rgb.join(','));
   syncBrowserThemeColor();
 }
