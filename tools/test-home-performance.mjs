@@ -8,6 +8,9 @@ import { HOME_THEMES } from '../src/ui/home-theme.js';
 
 // Production build, including the non-root deployment used by the offline test.
 const root = resolve('dist');
+const builtHtml = await readFile(resolve(root, 'index.html'), 'utf8');
+const eagerModules = builtHtml.match(/<link\b[^>]*rel=["']modulepreload["'][^>]*>/g) || [];
+assert.ok(eagerModules.every(link => !/\/engines-[^/]+\.js/.test(link)), '首屏不能预加载完整推演引擎');
 const types = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.webp': 'image/webp', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json',
@@ -124,6 +127,7 @@ try {
     assert.ok(!gate.seen.some(url => portraits.some(file => url.endsWith('/' + file))), '选择之前不应下载人物主图');
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined, '旧存储不能使角色预先选定');
     await choose(page, id);
+    assert.ok(!gate.seen.some(url => url.includes('/master-twin-')), '首页选择完成前不应下载双子对话素材');
     const loaded = await page.evaluate(() => ({
       src: document.querySelector('[data-character-asset="portrait"]').getAttribute('src'),
       alt: document.querySelector('[data-character-asset="portrait"]').alt,
@@ -140,6 +144,14 @@ try {
     assert.ok(!gate.seen.some(url => portraits.filter(file => file !== theme.character.assets.portrait.src.split('/').at(-1)).some(file => url.endsWith('/' + file))), '不应下载未选择的角色主图');
     assert.equal(gate.seen.some(url => /awakening-(scroll|fox-fan|phoenix-wing)\.webp/.test(url)), false, '推演道具不参与首屏');
     assert.ok(!gate.external.some(url => /font|woff|\.ttf/i.test(url)), '首屏不能依赖外部字体');
+    if (id === 'wenwen') {
+      await page.evaluate(() => window.openAsk());
+      await page.waitForSelector('#aiSheet.open');
+      await page.waitForFunction(() => [...document.querySelectorAll('#aiSheet [data-master-portrait]')].every(image => image.complete && image.naturalWidth > 0));
+      assert.deepEqual(await page.$$eval('#aiSheet [data-master-portrait]', images => images.map(image => new URL(image.currentSrc).pathname)),
+        ['/demo/art/master-twin-indigo.webp', '/demo/art/master-twin-rose.webp'], '生产子路径中首次打开对话才加载双子');
+      assert.equal(await page.$eval('#aiSheet .ai-master-twin', el => getComputedStyle(el).display), 'block');
+    }
     assert.deepEqual(errors, []);
     await context.close();
   }

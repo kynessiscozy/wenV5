@@ -1237,101 +1237,14 @@ html[data-theme] body[data-glass] #formModal .form-modal-sheet {
   html[data-theme] body .character-header .home-menu-btn:active { transform: none !important; }
 }
 
-/* Carry the same character into the report's assistant and chat. */
-body .ig-dock .ai-fab .ai-fab-icon {
-  width: 36px !important;
-  height: 36px !important;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .75);
-  border-radius: 50%;
-  background: #fcebd7;
-}
-body .ig-dock .character-dock-avatar,
+/* Shared sizing for legacy chat messages; the assistant is styled separately. */
 #aiSheet .chat-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
 #aiSheet .chat-avatar { overflow: hidden; padding: 0 !important; background: #fcebd7 !important; }
 
 /* Home chat is a real, self-contained dialog, not anchored to the report dock. */
 body.character-chat-open .character-hero { transition: transform .45s ease; }
-html[data-theme] body.character-chat-open #aiOverlay.open {
-  background: rgba(25, 16, 28, .2) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-html[data-theme] body.character-chat-open #aiSheet {
-  top: auto !important;
-  left: 50% !important;
-  right: auto !important;
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
-  width: min(410px, calc(100vw - 24px)) !important;
-  height: min(58dvh, 480px) !important;
-  min-height: 0 !important;
-  max-height: calc(100dvh - 24px - env(safe-area-inset-bottom, 0px)) !important;
-  padding: 14px !important;
-  overflow: hidden !important;
-  border: 1px solid var(--c-border-2) !important;
-  border-radius: 20px !important;
-  background: #faf7f2 !important;
-  box-shadow: 0 18px 60px rgba(24, 13, 26, .24) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  transform: translate(-50%, 0) !important;
-  transition: opacity .2s ease !important;
-}
-html[data-theme="dark"] body.character-chat-open #aiSheet { background: #29252e !important; }
-body.character-chat-open #aiSheet::after { display: none !important; }
-body.character-chat-open #aiSheet .ai-head { flex: 0 0 auto !important; margin: 0 0 6px !important; padding: 0 0 6px !important; }
-body.character-chat-open #aiSheet .ai-title {
-  box-sizing: border-box !important;
-  width: 100% !important;
-  min-height: 42px !important;
-  margin: 0 0 3px !important;
-  padding: 0 136px 0 0 !important;
-  font-family: var(--sf) !important;
-  font-weight: 700 !important;
-  font-size: calc(16px * var(--font-scale, 1)) !important;
-}
 #evolveGenBadge[hidden], body.character-chat-open #evolveGenBadge { display: none !important; }
 body.character-chat-open #aiTitleText { white-space: nowrap; }
-body.character-chat-open #aiSheet .ai-actions { top: 10px !important; right: 10px !important; gap: 2px !important; }
-body.character-chat-open #aiSheet .ai-actions button {
-  display: grid !important;
-  width: 40px !important;
-  height: 40px !important;
-  min-width: 40px !important;
-  min-height: 40px !important;
-  max-width: 40px !important;
-  max-height: 40px !important;
-}
-body.character-chat-open #aiSheet .ai-context { display: none !important; }
-body.character-chat-open:not(.character-chat-has-chart) #aiSheet .ai-basis-row { display: none !important; }
-body.character-chat-open #aiSheet .ai-conn-bar { margin: 0 !important; padding: 0 2px !important; background: transparent !important; }
-body.character-chat-open #aiSheet .ai-body { flex: 1 1 auto !important; min-height: 0 !important; max-height: none !important; padding: 8px 2px !important; }
-body.character-chat-open #aiSheet .ai-input-row { flex: 0 0 auto !important; margin: 5px 0 0 !important; }
-.chat-home-intro, .chat-home-error {
-  padding: 12px 13px;
-  border-radius: 14px;
-  background: var(--c-surface-2);
-  color: var(--c-text-hi);
-  font-size: calc(13px * var(--font-scale, 1));
-  line-height: 1.65;
-}
-.chat-home-error { margin-top: 12px; border: 1px solid var(--c-border-2); }
-.chat-home-actions { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 5px; }
-.chat-home-actions:empty { display: none; }
-.chat-home-actions button {
-  min-height: 36px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--c-accent-text);
-  font: 700 calc(13px * var(--font-scale, 1))/1.4 var(--sf);
-  cursor: pointer;
-}
-.chat-home-actions button:hover { text-decoration: underline; }
-.chat-home-actions button:focus-visible, body.character-chat-open #aiSheet button:focus-visible {
-  outline: 2px solid var(--c-accent-text);
-  outline-offset: 2px;
-}
 #aiSettingsModal .modal-close { border: 0; cursor: pointer; }
 html[data-theme="light"] #aiSettingsModal .ai-settings-sheet { background: #faf7f2 !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 html[data-theme="dark"] #aiSettingsModal .ai-settings-sheet { background: #29252e !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
@@ -1339,19 +1252,8 @@ html[data-theme="dark"] body.character-chat-open .chat-home-actions button,
 html[data-theme="dark"] #aiSettingsModal .ai-key-note a { color: #ffb79b !important; }
 html[data-theme="light"] #aiSettingsModal :is(.ai-setting-hint, .ai-key-note, .ai-key-hint, .ai-settings-note) { color: #685e5b !important; font-size: 12px; }
 html[data-theme="dark"] #aiSettingsModal :is(.ai-setting-hint, .ai-key-note, .ai-key-hint, .ai-settings-note) { color: #c8bbc2 !important; font-size: 12px; }
-html[data-theme] body.character-chat-open #aiSheet .ai-send { background: #b94c2d !important; color: #fff !important; transition: transform .2s ease !important; }
 @media (min-width: 901px) {
   body.character-chat-open .character-hero { transform: translateX(-10vw); }
-  html[data-theme] body.character-chat-open #aiSheet {
-    top: 50% !important;
-    right: 5vw !important;
-    bottom: auto !important;
-    left: auto !important;
-    width: min(390px, 33vw) !important;
-    height: min(600px, calc(100dvh - 100px)) !important;
-    max-height: calc(100dvh - 40px) !important;
-    transform: translate(0, -50%) !important;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   body.character-chat-open .character-hero { transition: none !important; }

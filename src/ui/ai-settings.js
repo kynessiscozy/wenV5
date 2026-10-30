@@ -1,6 +1,7 @@
 import { probeConnection, getProvider, setProvider } from '../ai/index.js';
 import { mountEvolveSettings } from '../evolve/ui.js';
 import { applyFontSize, getFontSizeKey } from '../font-size.js';
+import { focusSafely } from './focus.js';
 
 const defaults = { natural: true, context: true, length: 'short' };
 
@@ -62,7 +63,7 @@ export function openAISettingsModal() {
   const dock = document.querySelector('.ig-dock.tab-bar');
   if (dock) dock.style.display = 'none';
   document.querySelector('.ai-settings')?.setAttribute('aria-expanded', 'true');
-  modal.querySelector('.modal-close')?.focus({ preventScroll: true });
+  focusSafely(modal.querySelector('.modal-close'));
 }
 
 export function closeAISettingsModal() {
@@ -79,8 +80,8 @@ export function closeAISettingsModal() {
   window.dispatchEvent(new CustomEvent('tj:ai-settings-changed'));
   const target = settingsReturnFocus;
   settingsReturnFocus = null;
-  if (target?.isConnected && target.getClientRects().length) target.focus({ preventScroll: true });
-  else if (sheet?.classList.contains('open')) sheet.querySelector('.ai-settings')?.focus({ preventScroll: true });
+  if (target?.isConnected && target.getClientRects().length) focusSafely(target);
+  else if (sheet?.classList.contains('open')) focusSafely(sheet.querySelector('.ai-settings'));
 }
 
 if (typeof window !== 'undefined') {

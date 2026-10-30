@@ -1,9 +1,10 @@
-import { WENWEN, applyCharacterAssets } from '../character/wenwen.js';
+import { JIANGJIANG, applyCharacterAssets } from '../character/wenwen.js';
+import { CHAT_MASTER } from '../character/chat-master.js';
 import { mountCharacterPrompt } from '../character/companion.js';
 
 /** Connect a reusable character to exploration and the report's assistant. */
 export function initCharacterCompanion({
-  character = WENWEN,
+  character = JIANGJIANG,
   openForm = () => {},
   openAsk = () => {},
   deferHomeAssets = false,
@@ -70,11 +71,6 @@ export function initCharacterCompanion({
   portrait?.addEventListener('click', openForm);
   document.getElementById('homeCtaMain')?.addEventListener('click', openForm);
 
-  // Only actual incoming AI text drives the speaking layer; waiting and errors do not.
-  window.addEventListener('tj:ai-stream', event => {
-    if (scene) scene.dataset.speaking = String(!!event.detail?.active);
-  });
-
   return {
     setHomeCharacter(nextCharacter, traitLabel = '') {
       // Do not change the report/chat identity when only the home theme changes.
@@ -99,18 +95,19 @@ export function initCharacterCompanion({
           slot = document.createElement('aside');
           slot.id = id;
           slot.className = 'character-report-guide';
-          slot.setAttribute('aria-label', `${character.name}的提示`);
+          slot.setAttribute('aria-label', `${CHAT_MASTER.name}的提示`);
           const content = root.querySelector(anchor);
           if (content) content.insertAdjacentElement('afterend', slot);
           else root.prepend(slot);
         }
         mountCharacterPrompt(slot, {
-          character,
+          character: CHAT_MASTER,
+          showAvatar: false,
           variant: 'report',
           message: id === 'characterReportGuideWestern' ? '星盘好了，想一起聊聊吗？' : '命盘好了，想一起聊聊吗？',
-          actionLabel: `和${character.name}聊聊`,
+          actionLabel: `和${CHAT_MASTER.name}聊聊`,
           onAction: openAsk,
-          dismissLabel: `收起${character.name}的提示`,
+          dismissLabel: `收起${CHAT_MASTER.name}的提示`,
           onDismiss: () => {
             section.querySelectorAll('.character-report-guide').forEach(guide => guide.remove());
             document.getElementById('aiFab')?.focus({ preventScroll: true });

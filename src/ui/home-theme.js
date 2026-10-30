@@ -1,6 +1,6 @@
 import { focusSafely } from './focus.js';
 import { syncBrowserThemeColor } from './theme-color.js';
-import { WENWEN } from '../character/wenwen.js';
+import { JIANGJIANG } from '../character/wenwen.js';
 import { MOON_FOX } from '../character/moon-fox.js';
 import { EARTHFIRE_SOVEREIGN } from '../character/earthfire-sovereign.js';
 import { JADE_EMPRESS } from '../character/jade-empress.js';
@@ -15,7 +15,7 @@ export const HOME_THEMES = Object.freeze({
   wenwen: Object.freeze({
     trait: Object.freeze({ label: '温柔', mark: '柔', color: '#ecc1ae' }),
     reportLead: '别急，我们慢慢看。',
-    character: WENWEN,
+    character: JIANGJIANG,
     backdrop: Object.freeze({ wide: './art/sacred-study-wide.webp', mobile: './art/sacred-study-mobile.webp' }),
   }),
   moonfox: Object.freeze({

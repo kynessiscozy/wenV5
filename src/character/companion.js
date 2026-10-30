@@ -1,8 +1,8 @@
-import { WENWEN, createCharacterAvatar } from './wenwen.js';
+import { JIANGJIANG, createCharacterAvatar } from './wenwen.js';
 
 /** A small, reusable choice-based conversation; hosts provide their own navigation actions. */
 export function mountCharacterCompanion(host, {
-  character = WENWEN,
+  character = JIANGJIANG,
   hasReport = () => false,
   actionButton = null,
   showGreeting = true,
@@ -92,8 +92,9 @@ export function mountCharacterCompanion(host, {
 
 /** Reusable avatar + message + optional actions, for forms, reports, or future surfaces. */
 export function mountCharacterPrompt(host, {
-  character = WENWEN,
+  character = JIANGJIANG,
   message = '',
+  showAvatar = true,
   actionLabel = '',
   onAction = () => {},
   dismissLabel = '',
@@ -106,7 +107,11 @@ export function mountCharacterPrompt(host, {
   const avatar = document.createElement('span');
   avatar.className = 'character-prompt-avatar';
   avatar.setAttribute('aria-hidden', 'true');
-  avatar.appendChild(createCharacterAvatar(character));
+  if (showAvatar) avatar.appendChild(createCharacterAvatar(character));
+  else {
+    avatar.classList.add('character-prompt-avatar--symbol');
+    avatar.innerHTML = '<svg viewBox="0 0 24 24" focusable="false"><path d="M12 2.2 14.3 9l6.9 2.3-6.9 2.4L12 20.5l-2.3-6.8-6.9-2.4L9.7 9 12 2.2Z"/></svg>';
+  }
   const text = document.createElement('p');
   text.className = 'character-prompt-text';
   text.textContent = message;

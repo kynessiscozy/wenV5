@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { WENWEN, characterAvatarMarkup, applyCharacterAssets } from '../src/character/wenwen.js';
+import { JIANGJIANG, WENWEN, characterAvatarMarkup, applyCharacterAssets } from '../src/character/wenwen.js';
 import { MOON_FOX } from '../src/character/moon-fox.js';
 import { EARTHFIRE_SOVEREIGN } from '../src/character/earthfire-sovereign.js';
 import { JADE_EMPRESS } from '../src/character/jade-empress.js';
@@ -11,6 +11,7 @@ import { mountCharacterCompanion, mountCharacterPrompt } from '../src/character/
 import { initCharacterCompanion } from '../src/ui/character-companion.js';
 import { HOME_THEMES } from '../src/ui/home-theme.js';
 import { formatStandardAnswer } from '../src/render/ai.js';
+import { CHAT_MASTER, masterAvatarMarkup } from '../src/character/chat-master.js';
 
 // Exercise the reusable UI contract without a browser or the application's global functions.
 class Element {
@@ -28,6 +29,7 @@ class Element {
     };
     const classes = new Set();
     this.classList = {
+      add: name => classes.add(name),
       toggle: (name, force) => force ? classes.add(name) : classes.delete(name),
       contains: name => classes.has(name),
     };
@@ -61,6 +63,13 @@ assert.doesNotMatch(unsafeReply, /<img/);
 assert.match(unsafeReply, /&lt;img/);
 assert.match(unsafeReply, /&amp;/, '结构化 AI 回复也必须转义 HTML');
 
+assert.equal(JIANGJIANG.name, '姜姜');
+assert.equal(JIANGJIANG.id, 'wenwen');
+assert.equal(JIANGJIANG, WENWEN, '旧导出必须保持兼容');
+assert.equal(HOME_THEMES.wenwen.character, JIANGJIANG);
+assert.equal(CHAT_MASTER.name, '问问');
+assert.equal(CHAT_MASTER.twins.length, 2);
+assert.ok(CHAT_MASTER.twins.every(twin => masterAvatarMarkup().includes(twin.avatar)));
 assert.deepEqual(Object.values(HOME_THEMES).map(theme => theme.trait.label), ['温柔', '神秘', '威严', '从容', '洒脱', '魅惑', '好奇', '自信']);
 assert.equal(new Set(Object.values(HOME_THEMES).map(theme => theme.trait.label)).size, Object.keys(HOME_THEMES).length, '每个角色应有可扩展的代表特质');
 for (const theme of Object.values(HOME_THEMES)) {
@@ -203,7 +212,7 @@ assert.equal(runeHolder.hidden, false);
 assert.equal(rune.src, EARTHFIRE_SOVEREIGN.assets.runes.src, '地炎符文应是角色独立的可选配景');
 applyCharacterAssets({ querySelectorAll: () => [rune] }, WENWEN);
 assert.equal(rune.hidden, true);
-assert.equal(runeHolder.hidden, true, '切回问问时不得继承地炎符文');
+assert.equal(runeHolder.hidden, true, '切回姜姜时不得继承地炎符文');
 
 // The cloud buttons reuse the character's optional scenery without leaking the old asset.
 const buttonTexture = new Element('image');
@@ -246,10 +255,8 @@ nodes.get('characterPortraitButton').click();
 nodes.get('homeCtaMain').click();
 assert.equal(chatOpened, 0, '首页人物不能打开聊天');
 assert.equal(formOpened, 2, '人物与开启探索都应打开真实表单');
-windowEvents.get('tj:ai-stream')({ detail: { active: true } });
-assert.equal(nodes.get('characterScene').dataset.speaking, 'true');
-windowEvents.get('tj:ai-stream')({ detail: { active: false } });
-assert.equal(nodes.get('characterScene').dataset.speaking, 'false');
+assert.equal(windowEvents.has('tj:ai-stream'), false, 'AI 回答不能驱动首页角色的嘴型');
+assert.equal(nodes.get('characterScene').dataset.speaking, undefined);
 
 const homePortrait = new Element('img');
 homePortrait.dataset.characterAsset = 'portrait';
@@ -318,8 +325,10 @@ adapter.onReportReady();
 const reportPrompt = easternReport.children[0].children[0];
 const westernPrompt = westernReport.children[0].children[0];
 for (const prompt of [reportPrompt, westernPrompt]) {
-  assert.equal(prompt.children[2].textContent, '和小星聊聊');
-  assert.equal(prompt.children[3].getAttribute('aria-label'), '收起小星的提示');
+  assert.equal(prompt.children[2].textContent, '和问问聊聊');
+  assert.ok(prompt.children[0].classList.contains('character-prompt-avatar--symbol'), '报告入口应是中性符号而不是首页角色头像');
+  assert.equal(prompt.children[0].children.length, 0);
+  assert.equal(prompt.children[3].getAttribute('aria-label'), '收起问问的提示');
 }
 assert.equal(westernPrompt.children[1].textContent, '星盘好了，想一起聊聊吗？');
 reportPrompt.children[2].click();

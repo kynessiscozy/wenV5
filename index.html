@@ -63,6 +63,7 @@
 <link rel="stylesheet" href="/src/evolve.css">
 <link rel="stylesheet" href="/src/liquid-glass.css">
 <link rel="stylesheet" href="/src/character-theme.css">
+<link rel="stylesheet" href="/src/chat-master.css">
 <link rel="stylesheet" href="/src/character-calculation.css">
 <link rel="stylesheet" href="/src/trait-selection.css">
 <link rel="stylesheet" href="/src/character-report.css">
@@ -382,11 +383,11 @@
                     <span class="character-prop character-rune character-rune--four" hidden><img data-character-asset="runes" data-character-scene-optional fetchpriority="low" alt="" width="512" height="512" decoding="async" hidden></span>
                   </div>
                 </div>
-                <button class="character-portrait" id="characterPortraitButton" type="button" aria-label="点击问问，开启探索" aria-controls="formModal" aria-haspopup="dialog" title="开启探索">
+                <button class="character-portrait" id="characterPortraitButton" type="button" aria-label="点击同行形象，开启探索" aria-controls="formModal" aria-haspopup="dialog" title="开启探索">
                   <span class="character-camera-subject">
                     <span class="character-aura" aria-hidden="true"></span>
                     <span class="character-puppet">
-                      <img data-initial-portrait data-character-asset="portrait" alt="问问坐在云朵上，手捧泛着心形光芒的星盘" width="992" height="1299" fetchpriority="high">
+                      <img data-initial-portrait data-character-asset="portrait" alt="同行形象" width="992" height="1299" fetchpriority="high">
                       <img class="character-expression character-blink" data-character-asset="blink" data-character-optional alt="" aria-hidden="true" width="992" height="1299" decoding="async" fetchpriority="low">
                       <img class="character-expression character-speak" data-character-asset="speaking" data-character-optional alt="" aria-hidden="true" width="992" height="1299" decoding="async" fetchpriority="low">
                     </span>
@@ -495,7 +496,7 @@
     <div class="home-card" id="formCard">
       <div class="form-modal-kicker">A LITTLE ABOUT YOU &nbsp; ✦</div>
       <h2 class="form-modal-tt" id="formModalTitle" tabindex="-1">让我们从认识你开始</h2>
-      <p class="form-modal-intro">填写出生信息，问问会为你准备一份专属命盘。</p>
+      <p class="form-modal-intro">填写出生信息，生成一份专属命盘。</p>
       <div class="form-grid">
         <div class="fd"><label for="bDate">出生日期</label><input type="date" id="bDate" value="1990-06-15" aria-describedby="formError"></div>
         <div class="fd"><label for="bTime">出生时间</label><input type="time" id="bTime" value="09:00" aria-describedby="formError" style="font-family:var(--sf)"></div>
@@ -544,7 +545,7 @@
       <span class="ig-nav-label" id="tabLabelYun">运势</span>
     </div>
     <button class="ai-fab" id="aiFab" type="button" onclick="openAsk()" aria-label="打开问问大师" title="问问大师">
-      <span class="ai-fab-icon"><img class="character-dock-avatar" src="./art/wenwen-reimagined-avatar.webp" data-character-asset="avatar" alt="" width="192" height="192"></span><span class="ai-fab-text">问问大师</span>
+      <span class="ai-fab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 2.2 14.3 9l6.9 2.3-6.9 2.4L12 20.5l-2.3-6.8-6.9-2.4L9.7 9 12 2.2Zm7.5 13.2.8 2.3 2.3.8-2.3.8-.8 2.3-.8-2.3-2.3-.8 2.3-.8.8-2.3Z"/></svg></span><span class="ai-fab-text">问问大师</span>
     </button>
     <div class="tab-item" data-sec="s-rel" onclick="switchTab(this)" aria-label="关系 / 生命灵术">
       <svg class="ig-nav-icon ig-heart ig-nav-icon-eastern" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 8.4c0 4.7-8.2 9.9-8.2 9.9S3.8 13.1 3.8 8.4A4.3 4.3 0 0 1 12 6.2a4.3 4.3 0 0 1 8.2 2.2Z"/></svg>
@@ -692,21 +693,44 @@
 
 <div class="ai-overlay" id="aiOverlay" onclick="closeAsk()"></div>
 <div class="ai-sheet" id="aiSheet" role="dialog" aria-labelledby="aiTitleText" aria-hidden="true" inert>
-  <div class="ai-actions">
-    <button class="ai-new" type="button" onclick="newAskChat()" title="新对话" aria-label="新对话">＋</button>
-    <button class="ai-settings" type="button" onclick="toggleAISettings()" title="AI 设置" aria-label="AI 设置"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg></button>
-    <button class="ai-close" type="button" onclick="closeAsk()" title="关闭" aria-label="关闭">×</button>
-  </div>
-  <div class="ai-head">
-    <div class="ai-title"><span id="aiTitleText" tabindex="-1">问问大师</span> <span class="ai-subtitle">命盘解读 · 行动建议</span></div>
-    <div class="ai-basis-row">
-      <span class="ai-basis-label">分析依据：</span>
-      <div class="ai-basis-pills" role="radiogroup" aria-label="分析依据体系">
-        <button type="button" class="ai-basis-pill active" id="aiBasisEastern" role="radio" aria-checked="true" onclick="setAiBasis('eastern')">✦ 东方命理</button>
-        <button type="button" class="ai-basis-pill" id="aiBasisWestern" role="radio" aria-checked="false" onclick="setAiBasis('western')">✦ 西方星相</button>
+  <div class="ai-masthead">
+    <div class="ai-topline">
+      <div class="ai-identity">
+        <span class="ai-identity-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 2.5 14.1 9l6.4 2.1-6.4 2.2L12 19.8l-2.2-6.5-6.4-2.2L9.8 9 12 2.5Zm6.6 13.1.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2Z"/></svg></span>
+        <div class="ai-identity-text">
+          <div class="ai-title"><span id="aiTitleText" tabindex="-1">问问大师</span></div>
+          <div class="ai-identity-detail"><span class="ai-identity-subtitle">双星 · 同行</span><span class="evolve-gen" id="evolveGenBadge" hidden></span></div>
+        </div>
+      </div>
+      <div class="ai-actions">
+        <button class="ai-new" type="button" onclick="newAskChat()" title="新对话" aria-label="新对话"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button class="ai-settings" type="button" onclick="toggleAISettings()" title="AI 设置" aria-label="AI 设置" aria-haspopup="dialog" aria-expanded="false" aria-controls="aiSettingsModal"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg></button>
+        <button class="ai-close" type="button" onclick="closeAsk()" title="关闭" aria-label="关闭"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
       </div>
     </div>
-    <div class="ai-context" id="aiContext"><span>✦ 智能定位</span><b>输入你的问题，获取结合命盘的具体建议</b></div>
+    <div class="ai-hero">
+      <div class="ai-hero-copy">
+        <span class="ai-hero-kicker">一束星光 · 一段对话</span>
+        <p class="ai-hero-heading">把心事，<br>慢慢说。</p>
+        <p class="ai-hero-caption">有问题，我们一起想。</p>
+      </div>
+      <div class="ai-master-twins" aria-hidden="true">
+        <svg class="ai-twin-orbit" viewBox="0 0 240 150" preserveAspectRatio="none" focusable="false"><ellipse cx="120" cy="77" rx="101" ry="46" transform="rotate(-15 120 77)"/><circle cx="26" cy="95" r="2"/><circle cx="217" cy="48" r="2.5"/><path d="m35 35 2 5 5 2-5 2-2 5-2-5-5-2 5-2zm166 63 1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/></svg>
+        <span class="ai-master-twins-glow"></span>
+        <span class="ai-master-twin ai-master-twin--indigo"><img data-master-portrait="indigo" alt="" width="600" height="800" decoding="async"></span>
+        <span class="ai-master-twin ai-master-twin--rose"><img data-master-portrait="rose" alt="" width="600" height="800" decoding="async"></span>
+      </div>
+    </div>
+    <div class="ai-head">
+      <div class="ai-basis-row">
+        <span class="ai-basis-label">分析依据</span>
+        <div class="ai-basis-pills" role="radiogroup" aria-label="分析依据体系">
+          <button type="button" class="ai-basis-pill active" id="aiBasisEastern" role="radio" aria-checked="true" tabindex="0" onclick="setAiBasis('eastern')">东方命理</button>
+          <button type="button" class="ai-basis-pill" id="aiBasisWestern" role="radio" aria-checked="false" tabindex="-1" onclick="setAiBasis('western')">西方星相</button>
+        </div>
+      </div>
+      <div class="ai-context" id="aiContext"><span>智能定位</span><b>输入你的问题，获取结合命盘的具体建议</b></div>
+    </div>
   </div>
   <div class="ai-body" id="askResult"></div>
   <div class="character-visually-hidden" id="aiLiveStatus" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -718,6 +742,7 @@
     </div>
     <button class="ai-send" type="button" onclick="doAskCustom()" title="发送" aria-label="发送"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
   </div>
+  <p class="ai-composer-note">回答仅供参考，重要决定请结合实际</p>
 </div>
 
 <div class="modal" id="saveModal">

@@ -1,12 +1,13 @@
 /** Shared character definition. Swap the assets or add topics here, not in each view. */
-export const WENWEN = Object.freeze({
+// Keep the historical id and export so saved selections and integrations remain compatible.
+export const JIANGJIANG = Object.freeze({
   id: 'wenwen',
-  name: '问问',
+  name: '姜姜',
   camera: Object.freeze({ closeScale: 1.45 }),
   assets: Object.freeze({
     portrait: Object.freeze({
       src: './art/wenwen-reimagined.webp',
-      alt: '问问坐在云朵上，手捧泛着心形光芒的星盘',
+      alt: '姜姜坐在云朵上，手捧泛着心形光芒的星盘',
       width: 848,
       height: 1264,
     }),
@@ -36,18 +37,21 @@ export const WENWEN = Object.freeze({
   ]),
 });
 
+// Backwards-compatible export for existing imports and persisted `wenwen` ids.
+export const WENWEN = JIANGJIANG;
+
 const escapeAttribute = value => String(value).replace(/[&"<>]/g, char => ({
   '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;',
 }[char]));
 
-/** String form is useful to the existing chat renderer; the asset still comes from one definition. */
-export function characterAvatarMarkup(character = WENWEN) {
+/** String form for reusable components; the asset still comes from one definition. */
+export function characterAvatarMarkup(character = JIANGJIANG) {
   const { src, width, height } = character.assets.avatar;
   return `<img class="character-avatar-image" src="${escapeAttribute(src)}" alt="" width="${escapeAttribute(width)}" height="${escapeAttribute(height)}">`;
 }
 
 /** DOM form is useful to new components without HTML interpolation. */
-export function createCharacterAvatar(character = WENWEN) {
+export function createCharacterAvatar(character = JIANGJIANG) {
   const { src, width, height } = character.assets.avatar;
   const image = document.createElement('img');
   image.className = 'character-avatar-image';
@@ -59,7 +63,7 @@ export function createCharacterAvatar(character = WENWEN) {
 }
 
 /** Keep static HTML as a fast fallback while resolving all views from the same definition. */
-export function applyCharacterAssets(root = document, character = WENWEN) {
+export function applyCharacterAssets(root = document, character = JIANGJIANG) {
   root.querySelectorAll('[data-character-asset]').forEach(image => {
     const asset = character.assets?.[image.dataset.characterAsset];
     // SVG button textures reuse the same optional cloud as the scene.

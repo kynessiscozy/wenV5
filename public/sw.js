@@ -1,10 +1,12 @@
 /* 问问大师 PWA：离线可用 + 秒开的缓存策略。
    静态资源带 hash，可长期缓存；HTML 走 network-first 保证更新及时。 */
-const CACHE = 'wenda-cache-v34';
+const CACHE = 'wenda-cache-v36';
 const BASE = './';
 
 const OPTIONAL_ASSETS = [
   'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png',
+  'art/master-twin-indigo.webp', 'art/master-twin-rose.webp',
+  'art/master-twin-indigo-avatar.webp', 'art/master-twin-rose-avatar.webp',
   'art/wenwen-reimagined.webp', 'art/wenwen-reimagined-avatar.webp', 'art/wenwen-reimagined-blink.webp', 'art/wenwen-reimagined-speak.webp',
   'art/wenwen-lantern.webp', 'art/wenwen-cloud-trail.webp', 'art/sacred-study-wide.webp', 'art/sacred-study-mobile.webp',
   'art/moon-fox-reimagined.webp', 'art/moon-fox-reimagined-avatar.webp', 'art/moon-fox-reimagined-blink.webp', 'art/moon-fox-reimagined-speak.webp',
