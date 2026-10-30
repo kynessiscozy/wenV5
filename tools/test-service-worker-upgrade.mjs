@@ -161,7 +161,7 @@ try {
     navigator.serviceWorker.addEventListener('controllerchange', () => { window.__controllerChanges++; });
     window.__oldDecode = HTMLImageElement.prototype.decode;
     HTMLImageElement.prototype.decode = function () {
-      if (this.src.endsWith('/wenwen-reimagined.webp')) return new Promise(resolve => { window.__releaseBusyDecode = resolve; });
+      if (this.src.endsWith('/wenwen-cinema3d.webp')) return new Promise(resolve => { window.__releaseBusyDecode = resolve; });
       return window.__oldDecode.call(this);
     };
     window.__oldTimeout = window.setTimeout;

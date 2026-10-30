@@ -213,7 +213,7 @@ try {
     assert.ok(choiceNames.some(name => name?.includes('转一转')), '屏幕阅读器可以操作随机转轮');
     assert.ok(!choiceNames.some(name => /姜姜|问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言|绒绒|纸鸢/.test(name || '')), '屏幕阅读器也不暴露角色名');
     const fetched = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name));
-    assert.ok(!fetched.some(name => /(?:wenwen-reimagined|moon-fox-reimagined|earthfire-sovereign|yuchen-empress|qinglan(?:-renewed)?|xingling(?:-renewed)?|luye|suyan|rongrong|zhiya)\.webp/.test(name)), '未选择前不应预加载任何主图');
+    assert.ok(!fetched.some(name => /(?:wenwen|moonfox|diyan|yuchen|qinglan|xingling|luye|suyan|rongrong|zhiya)-cinema3d\.webp/.test(name)), '未选择前不应预加载任何主图');
     await page.keyboard.press('Tab');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'traitSpin', '老虎机可以用键盘操作');
     await page.keyboard.press('Escape');
@@ -307,7 +307,7 @@ try {
     await page.setRequestInterception(true);
     const held = [];
     page.on('request', request => {
-      if (request.url().endsWith('/yuchen-empress.webp')) held.push(request);
+      if (request.url().endsWith('/yuchen-cinema3d.webp')) held.push(request);
       else request.continue().catch(() => {});
     });
     await spinFor(page, 'yuchen');
@@ -332,11 +332,11 @@ try {
     wenwen: { character: WENWEN, room: 'sacred-study', prop: 'lantern', hit: [.24, .50] },
     moonfox: { character: MOON_FOX, room: 'moon-fox-study', prop: null, hit: [.20, .38] },
     diyan: { character: EARTHFIRE_SOVEREIGN, room: 'earthfire-hall', prop: 'fireThrone', hit: [.20, .40] },
-    yuchen: { character: JADE_EMPRESS, room: 'yuchen-hall', prop: null, hit: [.30, .34] },
+    yuchen: { character: JADE_EMPRESS, room: 'yuchen-hall', prop: null, hit: [.32, .40] },
     qinglan: { character: QINGLAN, room: 'qinglan-room', prop: null, hit: [.16, .43] },
-    xingling: { character: XINGLING, room: 'xingling-room', prop: null, hit: [.20, .48] },
+    xingling: { character: XINGLING, room: 'xingling-room', prop: null, hit: [.24, .40] },
     luye: { character: LUYE, room: 'luye-room', prop: null, hit: [.24, .48] },
-    suyan: { character: SUYAN, room: 'suyan-room', prop: null, hit: [.22, .48] },
+    suyan: { character: SUYAN, room: 'suyan-room', prop: null, hit: [.24, .32] },
     rongrong: { character: RONGRONG, room: 'rongrong-room', prop: null, hit: [.18, .45] },
     zhiya: { character: ZHIYA, room: 'zhiya-room', prop: null, hit: [.20, .45] },
   };
@@ -390,7 +390,7 @@ try {
       assert.ok(Math.abs(state.scale - config.character.camera.closeScale * landscapeBoost) < .01, `${id}: 横屏与竖屏都应使用角色自己的近景比例`);
       assert.deepEqual(state.controls, ['homeMenuBtn', 'homeCtaMain', 'homeCtaCal'], `${id}: 放大人物不能遮挡菜单或操作按钮`);
       if (landscapeBoost > 1) {
-        assert.ok(state.visualHit.alpha > 128 && state.visualHit.outsideButton && state.visualHit.belongsToPortrait, `${id}: 放大后的可见人物应仍可点击`);
+        assert.ok(state.visualHit.alpha > 128 && state.visualHit.outsideButton && state.visualHit.belongsToPortrait, `${id}: 放大后的可见人物应仍可点击 ${JSON.stringify(state.visualHit)}`);
         assert.equal(state.backgroundHit.belongsToPortrait, false, `${id}: 透明角落不能把房间当作人物点击`);
       }
       assert.equal(state.corner, 0, '人物应保持透明、无框');
@@ -468,16 +468,16 @@ try {
   // Every expression sprite should only cover its own eyes or mouth, never
   // a whole face or a mismatched portrait, and must actually be painted.
   for (const [id, limits] of Object.entries({
-    wenwen: { blink: [365, 190, 477, 261], speak: [410, 248, 472, 293] },
-    moonfox: { blink: [313, 137, 400, 194], speak: [343, 184, 395, 229] },
-    diyan: { blink: [256, 209, 320, 243], speak: [275, 245, 315, 273] },
-    yuchen: { blink: [443, 259, 531, 298], speak: [468, 297, 511, 332] },
-    qinglan: { blink: [330, 234, 408, 267], speak: [340, 270, 386, 301] },
-    xingling: { blink: [382, 207, 463, 244], speak: [394, 250, 441, 282] },
-    luye: { blink: [340, 199, 446, 250], speak: [359, 244, 456, 316] },
-    suyan: { blink: [395, 160, 496, 208], speak: [413, 201, 496, 264] },
-    rongrong: { blink: [375, 140, 490, 215], speak: [380, 190, 450, 240] },
-    zhiya: { blink: [305, 285, 410, 375], speak: [340, 325, 415, 390] },
+    wenwen: { blink: [370, 185, 485, 250], speak: [380, 230, 468, 276] },
+    moonfox: { blink: [310, 158, 416, 223], speak: [328, 195, 404, 245] },
+    diyan: { blink: [365, 201, 483, 267], speak: [385, 243, 468, 291] },
+    yuchen: { blink: [404, 191, 492, 244], speak: [417, 220, 479, 261] },
+    qinglan: { blink: [310, 239, 412, 300], speak: [325, 272, 398, 315] },
+    xingling: { blink: [345, 231, 444, 296], speak: [364, 273, 430, 319] },
+    luye: { blink: [321, 198, 498, 286], speak: [370, 275, 482, 328] },
+    suyan: { blink: [304, 168, 447, 246], speak: [331, 221, 426, 274] },
+    rongrong: { blink: [366, 133, 475, 200], speak: [384, 178, 457, 221] },
+    zhiya: { blink: [324, 268, 440, 335], speak: [350, 312, 434, 361] },
   })) {
     const { page, context } = await newPage(390, 844, { homeTheme: id });
     const bounds = await page.evaluate(() => Object.fromEntries(['blink', 'speak'].map(kind => {
@@ -517,10 +517,13 @@ try {
       for (const kind of ['blink', 'speak']) {
         const region = await page.$eval(`.character-${kind}`, (image, box) => {
           const rect = image.getBoundingClientRect();
-          return { left: rect.left + box.left * rect.width / image.naturalWidth,
-            top: rect.top + box.top * rect.height / image.naturalHeight,
-            right: rect.left + box.right * rect.width / image.naturalWidth,
-            bottom: rect.top + box.bottom * rect.height / image.naturalHeight };
+          // The portrait can be letterboxed by object-fit: contain, especially
+          // for assets with a wider aspect ratio than the narrow viewport.
+          const scale = Math.min(rect.width / image.naturalWidth, rect.height / image.naturalHeight);
+          const left = rect.left + (rect.width - image.naturalWidth * scale) / 2;
+          const top = rect.bottom - image.naturalHeight * scale;
+          return { left: left + box.left * scale, top: top + box.top * scale,
+            right: left + box.right * scale, bottom: top + box.bottom * scale };
         }, bounds[kind]);
         await page.evaluate(kind => {
           if (kind === 'blink') {

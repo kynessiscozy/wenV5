@@ -59,8 +59,8 @@
   })();
 </script>
 
-<link rel="stylesheet" href="/src/theme-claude.css">
 <link rel="stylesheet" href="/src/styles.css">
+<link rel="stylesheet" href="/src/theme-claude.css">
 <link rel="stylesheet" href="/src/ig-dock.css">
 <link rel="stylesheet" href="/src/claude-ui.css">
 <link rel="stylesheet" href="/src/claude-refine.css">
@@ -338,7 +338,10 @@
         <button class="home-menu-btn" id="homeMenuBtn" type="button" onclick="toggleHomeMenu()" aria-label="打开菜单" aria-controls="homeMenuDrawer" aria-expanded="false" title="菜单">
           <span class="home-menu-bars"></span><span class="home-menu-bars"></span><span class="home-menu-bars"></span>
         </button>
-        <span aria-hidden="true"></span>
+        <div class="home-trait-summary" id="homeTraitSummary" aria-live="polite" aria-atomic="true" hidden>
+          <span class="home-trait-label" id="homeTraitLabel"></span>
+          <span class="home-trait-description" id="homeTraitDescription"></span>
+        </div>
         <div class="character-header-actions"></div>
       </header>
 

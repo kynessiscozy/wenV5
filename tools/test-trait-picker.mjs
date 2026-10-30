@@ -141,9 +141,9 @@ try {
     const held = { yuchen: [], suyan: [] };
     let failMoon = false;
     page.on('request', request => {
-      if (failMoon && request.url().endsWith('/moon-fox-reimagined.webp')) request.abort('failed').catch(() => {});
-      else if (request.url().endsWith('/yuchen-empress.webp')) held.yuchen.push(request);
-      else if (request.url().endsWith('/suyan.webp')) held.suyan.push(request);
+      if (failMoon && request.url().endsWith('/moonfox-cinema3d.webp')) request.abort('failed').catch(() => {});
+      else if (request.url().endsWith('/yuchen-cinema3d.webp')) held.yuchen.push(request);
+      else if (request.url().endsWith('/suyan-cinema3d.webp')) held.suyan.push(request);
       else request.continue().catch(() => {});
     });
     await page.click('#homeTraitReset');
@@ -163,7 +163,7 @@ try {
     await Promise.all(held.suyan.map(request => request.continue().catch(() => {})));
     await page.waitForFunction(() => {
       const image = document.querySelector('[data-character-asset="portrait"]');
-      return image.complete && image.naturalWidth > 0 && image.currentSrc.endsWith('/suyan.webp') && !image.classList.contains('is-scene-image-loading');
+      return image.complete && image.naturalWidth > 0 && image.currentSrc.endsWith('/suyan-cinema3d.webp') && !image.classList.contains('is-scene-image-loading');
     }, { timeout: 6000 });
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'suyan');
     failMoon = true;

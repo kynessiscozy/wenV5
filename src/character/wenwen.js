@@ -6,19 +6,19 @@ export const JIANGJIANG = Object.freeze({
   camera: Object.freeze({ closeScale: 1.45 }),
   assets: Object.freeze({
     portrait: Object.freeze({
-      src: './art/wenwen-reimagined.webp',
+      src: './art/wenwen-cinema3d.webp',
       alt: '姜姜坐在云朵上，手捧泛着心形光芒的星盘',
       width: 848,
       height: 1264,
     }),
     // Transparent expression layers are aligned to the portrait and may be omitted by other characters.
-    blink: Object.freeze({ src: './art/wenwen-reimagined-blink.webp', alt: '', width: 848, height: 1264, forPortrait: './art/wenwen-reimagined.webp' }),
-    speaking: Object.freeze({ src: './art/wenwen-reimagined-speak.webp', alt: '', width: 848, height: 1264, forPortrait: './art/wenwen-reimagined.webp' }),
+    blink: Object.freeze({ src: './art/wenwen-cinema3d-blink.webp', alt: '', width: 848, height: 1264, forPortrait: './art/wenwen-cinema3d.webp' }),
+    speaking: Object.freeze({ src: './art/wenwen-cinema3d-speak.webp', alt: '', width: 848, height: 1264, forPortrait: './art/wenwen-cinema3d.webp' }),
     // Optional scene props belong to this character and may be swapped independently.
     // The hanging cord meets the illustrated cord at this horizontal percentage.
     lantern: Object.freeze({ src: './art/wenwen-lantern.webp', alt: '', width: 301, height: 700, cordAnchorX: 49.67 }),
     cloudTrail: Object.freeze({ src: './art/wenwen-cloud-trail.webp', alt: '', width: 1000, height: 319 }),
-    avatar: Object.freeze({ src: './art/wenwen-reimagined-avatar.webp', alt: '', width: 192, height: 192 }),
+    avatar: Object.freeze({ src: './art/wenwen-cinema3d-avatar.webp', alt: '', width: 192, height: 192 }),
   }),
   greeting: '今天想聊什么？',
   topics: Object.freeze([

@@ -179,7 +179,7 @@ try {
   // None of the roles are chosen online; all scenes must still work offline.
   // A clean visitor must install the worker without a test-side register call.
   await page.waitForFunction(async () => (await navigator.serviceWorker.getRegistrations()).length === 1 &&
-    !!navigator.serviceWorker.controller && (await caches.keys()).includes('wenda-cache-v40') &&
+    !!navigator.serviceWorker.controller && (await caches.keys()).includes('wenda-cache-v42') &&
     !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39)$/.test(key)), { timeout: 30000 });
   assert.ok(await page.evaluate(async () => (await caches.keys()).includes('unrelated-app-cache')), '更新不能删除其他应用的缓存');
   await page.reload({ waitUntil: 'domcontentloaded' });
@@ -190,6 +190,16 @@ try {
     './icon-twins-192.png', './icon-twins-512.png', './icon-twins-maskable-192.png', './icon-twins-maskable-512.png',
     './art/master-twin-indigo.webp', './art/master-twin-rose.webp',
     './art/master-twin-indigo-avatar.webp', './art/master-twin-rose-avatar.webp',
+    './art/wenwen-cinema3d.webp', './art/wenwen-cinema3d-avatar.webp', './art/wenwen-cinema3d-blink.webp', './art/wenwen-cinema3d-speak.webp',
+    './art/moonfox-cinema3d.webp', './art/moonfox-cinema3d-avatar.webp', './art/moonfox-cinema3d-blink.webp', './art/moonfox-cinema3d-speak.webp',
+    './art/diyan-cinema3d.webp', './art/diyan-cinema3d-avatar.webp', './art/diyan-cinema3d-blink.webp', './art/diyan-cinema3d-speak.webp',
+    './art/yuchen-cinema3d.webp', './art/yuchen-cinema3d-avatar.webp', './art/yuchen-cinema3d-blink.webp', './art/yuchen-cinema3d-speak.webp',
+    './art/qinglan-cinema3d.webp', './art/qinglan-cinema3d-avatar.webp', './art/qinglan-cinema3d-blink.webp', './art/qinglan-cinema3d-speak.webp',
+    './art/xingling-cinema3d.webp', './art/xingling-cinema3d-avatar.webp', './art/xingling-cinema3d-blink.webp', './art/xingling-cinema3d-speak.webp',
+    './art/luye-cinema3d.webp', './art/luye-cinema3d-avatar.webp', './art/luye-cinema3d-blink.webp', './art/luye-cinema3d-speak.webp',
+    './art/suyan-cinema3d.webp', './art/suyan-cinema3d-avatar.webp', './art/suyan-cinema3d-blink.webp', './art/suyan-cinema3d-speak.webp',
+    './art/rongrong-cinema3d.webp', './art/rongrong-cinema3d-avatar.webp', './art/rongrong-cinema3d-blink.webp', './art/rongrong-cinema3d-speak.webp',
+    './art/zhiya-cinema3d.webp', './art/zhiya-cinema3d-avatar.webp', './art/zhiya-cinema3d-blink.webp', './art/zhiya-cinema3d-speak.webp',
     './art/wenwen-reimagined.webp', './art/wenwen-reimagined-avatar.webp', './art/wenwen-reimagined-blink.webp', './art/wenwen-reimagined-speak.webp',
     './art/sacred-study-wide.webp', './art/sacred-study-mobile.webp',
     './art/moon-fox-reimagined.webp', './art/moon-fox-reimagined-avatar.webp', './art/moon-fox-reimagined-blink.webp', './art/moon-fox-reimagined-speak.webp',
@@ -202,8 +212,10 @@ try {
     './art/qinglan-room-wide.webp', './art/qinglan-room-mobile.webp', './art/qinglan-sword.webp',
     './art/xingling-renewed.webp', './art/xingling-renewed-avatar.webp', './art/xingling-renewed-blink.webp', './art/xingling-renewed-speak.webp',
     './art/xingling-room-wide.webp', './art/xingling-room-mobile.webp', './art/xingling-fan.webp',
+    './art/luye-3d.webp', './art/luye-3d-avatar.webp', './art/luye-3d-blink.webp', './art/luye-3d-speak.webp',
     './art/luye.webp', './art/luye-avatar.webp', './art/luye-blink.webp', './art/luye-speak.webp',
     './art/luye-room-wide.webp', './art/luye-room-mobile.webp', './art/luye-turntable.svg', './art/luye-vinyl.svg',
+    './art/suyan-3d.webp', './art/suyan-3d-avatar.webp', './art/suyan-3d-blink.webp', './art/suyan-3d-speak.webp',
     './art/suyan.webp', './art/suyan-avatar.webp', './art/suyan-blink.webp', './art/suyan-speak.webp',
     './art/suyan-room-wide.webp', './art/suyan-room-mobile.webp', './art/suyan-camera.svg',
     './art/rongrong.webp', './art/rongrong-avatar.webp', './art/rongrong-blink.webp', './art/rongrong-speak.webp',
@@ -270,11 +282,11 @@ try {
 
   const roles = [
     ['wenwen', 848, 'sacred-study-mobile.webp', 'awakening-scroll.webp'],
-    ['moonfox', 848, 'moon-fox-study-mobile.webp', 'awakening-fox-fan.webp'],
-    ['diyan', 625, 'earthfire-hall-mobile.webp', 'earthfire-flame-seat.webp'],
-    ['yuchen', 1024, 'yuchen-hall-mobile.webp', 'awakening-phoenix-wing.webp'],
+    ['moonfox', 768, 'moon-fox-study-mobile.webp', 'awakening-fox-fan.webp'],
+    ['diyan', 848, 'earthfire-hall-mobile.webp', 'earthfire-flame-seat.webp'],
+    ['yuchen', 896, 'yuchen-hall-mobile.webp', 'awakening-phoenix-wing.webp'],
     ['qinglan', 848, 'qinglan-room-mobile.webp', 'qinglan-sword.webp'],
-    ['xingling', 848, 'xingling-room-mobile.webp', 'xingling-fan.webp'],
+    ['xingling', 768, 'xingling-room-mobile.webp', 'xingling-fan.webp'],
     ['luye', 848, 'luye-room-mobile.webp', 'luye-turntable.svg'],
     ['suyan', 848, 'suyan-room-mobile.webp', 'suyan-camera.svg'],
     ['rongrong', 848, 'rongrong-room-mobile.webp', 'rongrong-pawbell.webp'],

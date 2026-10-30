@@ -35,7 +35,8 @@
     "test:guide": "node tools/test-guide-dialog.mjs",
     "test:mobile-calculation": "node tools/test-mobile-calculation.mjs",
     "test:share": "node tools/test-share-studio.mjs",
-    "test:security": "node tools/test-security-fixes.mjs"
+    "test:security": "node tools/test-security-fixes.mjs",
+    "test:theme": "node tools/test-theme-cascade.mjs"
   },
   "devDependencies": {
     "astronomy-engine": "^2.1.19",

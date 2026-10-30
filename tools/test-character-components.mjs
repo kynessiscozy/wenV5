@@ -282,7 +282,7 @@ assert.equal(MOON_FOX.assets.blink.forPortrait, MOON_FOX.assets.portrait.src);
 assert.equal(MOON_FOX.assets.speaking.forPortrait, MOON_FOX.assets.portrait.src);
 assert.equal(homeName.textContent, '月白');
 assert.equal(nodes.get('characterPortraitButton').getAttribute('aria-label'), '点击月白，开启探索');
-assert.equal(nodes.get('characterPortraitButton').style.getPropertyValue('--character-ratio'), '848 / 1264');
+assert.equal(nodes.get('characterPortraitButton').style.getPropertyValue('--character-ratio'), `${MOON_FOX.assets.portrait.width} / ${MOON_FOX.assets.portrait.height}`);
 assert.equal(nodes.get('characterScene').dataset.cameraSafeX, '0.23');
 assert.equal(nodes.get('characterScene').dataset.cameraSafeInset, '0.05');
 adapter.setHomeCharacter(EARTHFIRE_SOVEREIGN);
@@ -292,7 +292,7 @@ assert.equal(EARTHFIRE_SOVEREIGN.assets.blink.forPortrait, EARTHFIRE_SOVEREIGN.a
 assert.equal(EARTHFIRE_SOVEREIGN.assets.speaking.forPortrait, EARTHFIRE_SOVEREIGN.assets.portrait.src);
 assert.equal(homeName.textContent, '地炎君');
 assert.equal(nodes.get('characterPortraitButton').getAttribute('aria-label'), '点击地炎君，开启探索');
-assert.equal(nodes.get('characterPortraitButton').style.getPropertyValue('--character-ratio'), '625 / 1180');
+assert.equal(nodes.get('characterPortraitButton').style.getPropertyValue('--character-ratio'), `${EARTHFIRE_SOVEREIGN.assets.portrait.width} / ${EARTHFIRE_SOVEREIGN.assets.portrait.height}`);
 assert.equal(nodes.get('characterScene').dataset.cameraCloseScale, '1.7');
 assert.equal(nodes.get('characterScene').dataset.cameraSafeX, '0.885');
 for (const character of [QINGLAN, XINGLING, LUYE, SUYAN]) {
