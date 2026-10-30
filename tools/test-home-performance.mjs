@@ -254,7 +254,7 @@ try {
   // Optional fire layers and expression images must not block a role selection.
   for (const [id, heldPattern, filename, selector] of [
     ['diyan', /earthfire-(flame-seat|runes|rune-seal)\.webp/, 'earthfire-flame-seat.webp', '.character-fire-base'],
-    ['moonfox', /moonfox-cinema3d-blink\.webp/, 'moonfox-cinema3d-blink.webp', '.character-blink'],
+    ['moonfox', /moonfox-cinema3d-blink-v2\.webp/, 'moonfox-cinema3d-blink-v2.webp', '.character-blink'],
   ]) {
     const { page, context, errors } = await openContext();
     await page.setRequestInterception(true);

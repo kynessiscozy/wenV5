@@ -1,10 +1,11 @@
 /* 问问大师 PWA：离线可用 + 秒开的缓存策略。
    静态资源带 hash，可长期缓存；HTML 走 network-first 保证更新及时。 */
-const CACHE = 'wenda-cache-v42';
+const CACHE = 'wenda-cache-v43';
 const BASE = './';
 
 const OPTIONAL_ASSETS = [
   // Keep the previous paths for pages and bookmarks that have not updated yet.
+  'art/wenwen-cinema3d-blink-v2.webp', 'art/moonfox-cinema3d-blink-v2.webp', 'art/diyan-cinema3d-blink-v2.webp', 'art/yuchen-cinema3d-blink-v2.webp', 'art/qinglan-cinema3d-blink-v2.webp', 'art/xingling-cinema3d-blink-v2.webp', 'art/luye-cinema3d-blink-v2.webp', 'art/suyan-cinema3d-blink-v2.webp', 'art/rongrong-cinema3d-blink-v2.webp', 'art/zhiya-cinema3d-blink-v2.webp',
   'art/wenwen-cinema3d.webp', 'art/wenwen-cinema3d-avatar.webp', 'art/wenwen-cinema3d-blink.webp', 'art/wenwen-cinema3d-speak.webp',
   'art/moonfox-cinema3d.webp', 'art/moonfox-cinema3d-avatar.webp', 'art/moonfox-cinema3d-blink.webp', 'art/moonfox-cinema3d-speak.webp',
   'art/diyan-cinema3d.webp', 'art/diyan-cinema3d-avatar.webp', 'art/diyan-cinema3d-blink.webp', 'art/diyan-cinema3d-speak.webp',

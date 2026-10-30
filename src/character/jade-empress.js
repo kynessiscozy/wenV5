@@ -11,7 +11,7 @@ export const JADE_EMPRESS = Object.freeze({
       width: 896,
       height: 1200,
     }),
-    blink: Object.freeze({ src: './art/yuchen-cinema3d-blink.webp', alt: '', width: 896, height: 1200, forPortrait: './art/yuchen-cinema3d.webp' }),
+    blink: Object.freeze({ src: './art/yuchen-cinema3d-blink-v2.webp', alt: '', width: 896, height: 1200, forPortrait: './art/yuchen-cinema3d.webp' }),
     speaking: Object.freeze({ src: './art/yuchen-cinema3d-speak.webp', alt: '', width: 896, height: 1200, forPortrait: './art/yuchen-cinema3d.webp' }),
     avatar: Object.freeze({ src: './art/yuchen-cinema3d-avatar.webp', alt: '', width: 192, height: 192 }),
   }),

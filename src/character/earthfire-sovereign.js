@@ -11,7 +11,7 @@ export const EARTHFIRE_SOVEREIGN = Object.freeze({
       width: 848,
       height: 1264,
     }),
-    blink: Object.freeze({ src: './art/diyan-cinema3d-blink.webp', alt: '', width: 848, height: 1264, forPortrait: './art/diyan-cinema3d.webp' }),
+    blink: Object.freeze({ src: './art/diyan-cinema3d-blink-v2.webp', alt: '', width: 848, height: 1264, forPortrait: './art/diyan-cinema3d.webp' }),
     speaking: Object.freeze({ src: './art/diyan-cinema3d-speak.webp', alt: '', width: 848, height: 1264, forPortrait: './art/diyan-cinema3d.webp' }),
     fireThrone: Object.freeze({ src: './art/earthfire-flame-seat.webp', alt: '', width: 1124, height: 644 }),
     runes: Object.freeze({ src: './art/earthfire-runes.webp', alt: '', width: 512, height: 512 }),

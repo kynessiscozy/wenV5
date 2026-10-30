@@ -11,7 +11,7 @@ export const MOON_FOX = Object.freeze({
       width: 768,
       height: 1376,
     }),
-    blink: Object.freeze({ src: './art/moonfox-cinema3d-blink.webp', alt: '', width: 768, height: 1376, forPortrait: './art/moonfox-cinema3d.webp' }),
+    blink: Object.freeze({ src: './art/moonfox-cinema3d-blink-v2.webp', alt: '', width: 768, height: 1376, forPortrait: './art/moonfox-cinema3d.webp' }),
     speaking: Object.freeze({ src: './art/moonfox-cinema3d-speak.webp', alt: '', width: 768, height: 1376, forPortrait: './art/moonfox-cinema3d.webp' }),
     cloudTrail: Object.freeze({ src: './art/moon-fox-cloud-trail.webp', alt: '', width: 1000, height: 319 }),
     avatar: Object.freeze({ src: './art/moonfox-cinema3d-avatar.webp', alt: '', width: 192, height: 192 }),

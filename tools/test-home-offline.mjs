@@ -179,7 +179,7 @@ try {
   // None of the roles are chosen online; all scenes must still work offline.
   // A clean visitor must install the worker without a test-side register call.
   await page.waitForFunction(async () => (await navigator.serviceWorker.getRegistrations()).length === 1 &&
-    !!navigator.serviceWorker.controller && (await caches.keys()).includes('wenda-cache-v42') &&
+    !!navigator.serviceWorker.controller && (await caches.keys()).includes('wenda-cache-v43') &&
     !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39)$/.test(key)), { timeout: 30000 });
   assert.ok(await page.evaluate(async () => (await caches.keys()).includes('unrelated-app-cache')), '更新不能删除其他应用的缓存');
   await page.reload({ waitUntil: 'domcontentloaded' });
@@ -190,6 +190,7 @@ try {
     './icon-twins-192.png', './icon-twins-512.png', './icon-twins-maskable-192.png', './icon-twins-maskable-512.png',
     './art/master-twin-indigo.webp', './art/master-twin-rose.webp',
     './art/master-twin-indigo-avatar.webp', './art/master-twin-rose-avatar.webp',
+    './art/wenwen-cinema3d-blink-v2.webp', './art/moonfox-cinema3d-blink-v2.webp', './art/diyan-cinema3d-blink-v2.webp', './art/yuchen-cinema3d-blink-v2.webp', './art/qinglan-cinema3d-blink-v2.webp', './art/xingling-cinema3d-blink-v2.webp', './art/luye-cinema3d-blink-v2.webp', './art/suyan-cinema3d-blink-v2.webp', './art/rongrong-cinema3d-blink-v2.webp', './art/zhiya-cinema3d-blink-v2.webp',
     './art/wenwen-cinema3d.webp', './art/wenwen-cinema3d-avatar.webp', './art/wenwen-cinema3d-blink.webp', './art/wenwen-cinema3d-speak.webp',
     './art/moonfox-cinema3d.webp', './art/moonfox-cinema3d-avatar.webp', './art/moonfox-cinema3d-blink.webp', './art/moonfox-cinema3d-speak.webp',
     './art/diyan-cinema3d.webp', './art/diyan-cinema3d-avatar.webp', './art/diyan-cinema3d-blink.webp', './art/diyan-cinema3d-speak.webp',

@@ -867,8 +867,8 @@ html[data-theme="dark"] .character-portrait img[data-character-asset="portrait"]
   filter: saturate(.94);
 }
 .character-portrait .character-expression[hidden] { display: none; }
-.character-blink { animation: character-blink 6.4s infinite; }
-.character-scene.camera-react .character-blink { animation: camera-greeting-blink .72s ease-in-out both; }
+.character-blink { z-index: 2; animation: character-blink 6.4s steps(1, end) infinite; }
+.character-scene.camera-react .character-blink { animation: camera-greeting-blink .72s steps(1, end) both; }
 .character-scene.camera-react .character-aura { animation: camera-greeting-glow .85s ease-out both; }
 .character-scene[data-speaking="true"] .character-speak { animation: character-speaking .55s steps(1, end) infinite; }
 @keyframes camera-greeting-blink {
