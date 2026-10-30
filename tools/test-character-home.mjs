@@ -10,6 +10,7 @@ import { XINGLING } from '../src/character/xingling.js';
 import { LUYE } from '../src/character/luye.js';
 import { SUYAN } from '../src/character/suyan.js';
 import { HOME_THEMES } from '../src/ui/home-theme.js';
+import { CHAT_MASTER } from '../src/character/chat-master.js';
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173/';
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
@@ -49,7 +50,7 @@ async function newPage(width, height, options = {}) {
       const chunk = text => encoder.encode('data: ' + JSON.stringify({ choices: [{ delta: { content: text } }] }) + '\n\n');
       const stream = new ReadableStream({
         start(controller) {
-          setTimeout(() => controller.enqueue(chunk(currentMode === 'long' ? '【结论】：' + '完整回答'.repeat(30) + '<img src=x onerror=alert(1)>' : '这是服务返回的第一段。')), 100);
+          setTimeout(() => controller.enqueue(chunk(currentMode === 'long' ? '【结论】：' + '完整回答'.repeat(30) + '<img src=x onerror=alert(1)>' : '这是服务返回的第一段。')), currentMode === 'slowStart' ? 600 : 100);
           setTimeout(() => {
             if (currentMode === 'partialFail') {
               controller.error(new Error('mock interrupted stream'));
@@ -58,7 +59,7 @@ async function newPage(width, height, options = {}) {
               controller.enqueue(encoder.encode('data: [DONE]\n\n'));
               controller.close();
             }
-          }, currentMode === 'partialFail' ? 220 : 800);
+          }, currentMode === 'partialFail' ? 220 : currentMode === 'slowStart' ? 1200 : 800);
         },
       });
       return Promise.resolve(new Response(stream, { status: 200, headers: { 'Content-Type': 'text/event-stream' } }));
@@ -203,12 +204,12 @@ try {
     assert.equal(await page.$('#traitOptions'), null, '只能通过老虎机选择特质');
     assert.equal(await page.$$('.trait-role').then(els => els.length), 0);
     const pickerText = await page.$eval('#traitSelection', el => el.textContent);
-    assert.ok(!/问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言/.test(pickerText), '选择页不应暴露人物名称');
+    assert.ok(!/姜姜|问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言/.test(pickerText), '选择页不应暴露人物名称');
     assert.ok(!/让心意|转个方向|直接选择/.test(pickerText), '删除旧标题和直接选择文案');
     const choiceTree = await (await page.createCDPSession()).send('Accessibility.getFullAXTree');
     const choiceNames = choiceTree.nodes.filter(node => !node.ignored && ['button', 'togglebutton'].includes(node.role?.value)).map(node => node.name?.value);
     assert.ok(choiceNames.some(name => name?.includes('转一转')), '屏幕阅读器可以操作随机转轮');
-    assert.ok(!choiceNames.some(name => /问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言/.test(name || '')), '屏幕阅读器也不暴露角色名');
+    assert.ok(!choiceNames.some(name => /姜姜|问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言/.test(name || '')), '屏幕阅读器也不暴露角色名');
     const fetched = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name));
     assert.ok(!fetched.some(name => /(?:wenwen-reimagined|moon-fox-reimagined|earthfire-sovereign|yuchen-empress|qinglan(?:-renewed)?|xingling(?:-renewed)?|luye|suyan)\.webp/.test(name)), '未选择前不应预加载任何主图');
     await page.keyboard.press('Tab');
@@ -719,8 +720,23 @@ try {
   {
     const { page, context } = await newPage(390, 844);
     assert.equal(await page.$eval('#aiSheet', el => el.inert), true, '关闭的对话不应参与键盘导航');
+    assert.equal(await page.$$eval('#aiSheet [data-master-portrait]', images => images.every(image => !image.hasAttribute('src'))), true, '对话未打开时不加载双子大图');
+    assert.equal(await page.evaluate(() => performance.getEntriesByType('resource').some(entry => entry.name.includes('/master-twin-'))), false, '双子素材不能拖慢首页');
     await page.focus('#homeCtaCal');
     await openToolAssistant(page);
+    await page.waitForFunction(() => [...document.querySelectorAll('#aiSheet [data-master-portrait]')].every(image => image.complete && image.naturalWidth > 0));
+    assert.deepEqual(await page.$$eval('#aiSheet [data-master-portrait]', images => images.map(image => image.getAttribute('src'))), CHAT_MASTER.twins.map(twin => twin.portrait));
+    assert.equal(await page.$eval('#aiSheet .ai-master-twins', el => el.getAttribute('aria-hidden')), 'true');
+    assert.equal(await page.$$('img[src*="master-twin"]:not(#aiSheet img)').then(images => images.length), 0, '双子形象只出现在对话内');
+    const portraitsAvoidActions = await page.evaluate(() => {
+      const actions = document.querySelector('#aiSheet .ai-actions').getBoundingClientRect();
+      return [...document.querySelectorAll('#aiSheet [data-master-portrait]')].every(image => {
+        const rect = image.getBoundingClientRect();
+        return rect.right <= actions.left + 1 || rect.left >= actions.right - 1 ||
+          rect.bottom <= actions.top + 1 || rect.top >= actions.bottom - 1;
+      });
+    });
+    assert.equal(portraitsAvoidActions, true, '操作按钮不能盖住双子');
     await page.waitForFunction(() => document.activeElement.id === 'aiTitleText');
     assert.equal(await page.$eval('#page1', el => el.inert), true);
     assert.equal(await page.$eval('#aiSheet', el => el.getAttribute('aria-modal')), 'true');
@@ -746,6 +762,7 @@ try {
     await page.waitForSelector('#aiSettingsModal.open');
     assert.equal(await page.$eval('#aiSheet', el => el.inert), true, '嵌套设置打开时对话框应退出键盘导航');
     assert.equal(await page.$eval('#aiSettingsModal', el => el.getAttribute('aria-hidden')), 'false');
+    assert.equal(await page.$eval('#aiSheet .ai-settings', el => el.getAttribute('aria-expanded')), 'true');
     assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), '关闭 AI 设置');
     await page.click('#aiKeyEditBtn');
     assert.equal(await page.$eval('#aiKeyInput', el => el.type), 'password', '密钥编辑应隐藏输入内容');
@@ -770,6 +787,129 @@ try {
     await context.close();
   }
   console.log('✓ 工具助手缺少配置提示、草稿与键盘焦点');
+
+  // The conversation starters are editable drafts, never automatic requests.
+  {
+    const { page, context } = await newPage(390, 844, { mock: true });
+    await openToolAssistant(page);
+    assert.equal(await page.$$('.chat-starters-list button').then(buttons => buttons.length), 3);
+    assert.equal(await page.$eval('.chat-starters', el => el.getAttribute('aria-label')), '提问灵感');
+    assert.ok(await page.$eval('#askInput', el => parseFloat(getComputedStyle(el).fontSize)) >= 16, '手机输入字号不应触发浏览器自动放大');
+    await page.click('.chat-starters-list button:first-child');
+    const suggestion = '我最近有些迷茫，可以陪我理一理吗？';
+    assert.equal(await page.$eval('#askInput', el => el.value), suggestion);
+    assert.equal(await page.$eval('.chat-starters', el => el.hidden), true);
+    assert.equal(await page.evaluate(() => window.__aiCalls.length), 0, '点灵感不能直接发送');
+    assert.equal(await page.$$('.chat-msg-user').then(messages => messages.length), 0);
+    await page.click('#aiSheet .ai-send');
+    await page.waitForSelector('.chat-home-error');
+    assert.equal(await page.$eval('#askInput', el => el.value), suggestion, '无密钥时保留建议草稿');
+    await page.evaluate(() => window.closeAsk());
+    await openToolAssistant(page);
+    assert.equal(await page.$eval('#askInput', el => el.value), suggestion);
+    assert.equal(await page.$eval('.chat-starters', el => el.hidden), true);
+    await page.$eval('#askInput', el => { el.value = ''; el.dispatchEvent(new Event('input', { bubbles: true })); });
+    assert.equal(await page.$eval('.chat-starters', el => el.hidden), false);
+    await page.type('#askInput', '自己的问题');
+    await page.$eval('.chat-starters-list button:first-child', el => el.click());
+    assert.equal(await page.$eval('#askInput', el => el.value), '自己的问题', '灵感不能覆盖已有草稿');
+    await page.click('#aiSheet .ai-new');
+    assert.equal(await page.$eval('#askInput', el => el.value), '');
+    assert.equal(await page.$eval('.chat-starters', el => el.hidden), false, '新对话重新显示灵感');
+    await page.evaluate(() => window.closeAsk());
+    await page.evaluate(() => { void window.calc(true); });
+    await continueResult(page);
+    await page.click('#aiFab');
+    await page.waitForSelector('#aiSheet.open .chat-welcome');
+    assert.equal(await page.$eval('#aiSheet', el => el.getAttribute('aria-modal')), 'true');
+    assert.equal(await page.$eval('#page2', el => el.inert), true, '报告背景在对话时应退出键盘导航');
+    const welcomeBeforePrompts = await page.$eval('#askResult', el =>
+      [...el.children].indexOf(el.querySelector('.chat-welcome')) < [...el.children].indexOf(el.querySelector('.chat-starters')));
+    assert.equal(welcomeBeforePrompts, true, '从首页进入报告时，欢迎语应在灵感之前');
+    await page.waitForFunction(() => document.activeElement.id === 'aiTitleText');
+    await page.keyboard.down('Shift'); await page.keyboard.press('Tab'); await page.keyboard.up('Shift');
+    assert.equal(await page.evaluate(() => document.activeElement.className), 'ai-send', '报告对话的反向 Tab 应留在面板');
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.activeElement.className), 'ai-new');
+    await page.click('#aiBasisWestern');
+    assert.equal(await page.$eval('#aiBasisWestern', el => el.getAttribute('aria-checked')), 'true');
+    assert.equal(await page.$eval('#aiBasisEastern', el => el.getAttribute('aria-checked')), 'false');
+    assert.match(await page.$eval('#aiContext', el => el.textContent), /西方星相/);
+    assert.equal(await page.$eval('#aiBasisWestern', el => el.tabIndex), 0);
+    assert.equal(await page.$eval('#aiBasisEastern', el => el.tabIndex), -1);
+    await page.keyboard.press('ArrowLeft');
+    assert.equal(await page.$eval('#aiBasisEastern', el => el.getAttribute('aria-checked')), 'true');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'aiBasisEastern');
+    await page.keyboard.press('ArrowRight');
+    assert.equal(await page.$eval('#aiBasisWestern', el => el.getAttribute('aria-checked')), 'true');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'aiBasisWestern');
+    await page.evaluate(() => window.closeAsk());
+    assert.equal(await page.$eval('#page2', el => el.inert), false, '关闭后恢复报告交互');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'aiFab', '关闭报告对话后恢复入口焦点');
+    await context.close();
+  }
+  {
+    const { page, context } = await newPage(390, 844, { mock: true, key: 'test-key-only' });
+    await openToolAssistant(page);
+    await page.click('.chat-starters-list button:nth-child(2)');
+    assert.equal(await page.evaluate(() => window.__aiCalls.length), 0);
+    assert.equal(await page.$eval('#askInput', el => el.value), '我想聊聊关系里遇到的困惑。');
+    await page.click('#aiSheet .ai-send');
+    await waitForSend(page);
+    assert.equal(await page.evaluate(() => window.__aiCalls.length), 1);
+    assert.equal(await page.$('.chat-starters'), null, '有对话后不再显示建议');
+    await page.evaluate(() => window.closeAsk());
+    await openToolAssistant(page);
+    assert.equal(await page.$('.chat-starters'), null, '恢复历史时不显示建议');
+    await page.click('#aiSheet .ai-new');
+    assert.equal(await page.$eval('.chat-starters', el => el.hidden), false);
+    await context.close();
+  }
+  console.log('✓ 提问灵感只填草稿；历史、无密钥和新对话保持真实行为');
+
+  // Older WebKit implementations can reject the preventScroll focus option.
+  {
+    const { page, context } = await newPage(390, 844);
+    await page.evaluate(() => {
+      const original = HTMLElement.prototype.focus;
+      window.__restoreFocus = () => { HTMLElement.prototype.focus = original; delete window.__restoreFocus; };
+      HTMLElement.prototype.focus = function (...args) {
+        if (args.length) throw new TypeError('focus options unsupported');
+        return original.call(this);
+      };
+    });
+    await page.focus('#homeCtaCal');
+    await openToolAssistant(page);
+    await page.waitForFunction(() => document.activeElement.id === 'aiTitleText');
+    await page.click('.chat-starters-list button:first-child');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'askInput', '不支持焦点选项时灵感仍能填入输入框');
+    await page.click('#aiSheet .ai-settings');
+    await page.waitForSelector('#aiSettingsModal.open');
+    assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), '关闭 AI 设置');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.evaluate(() => document.activeElement.className), 'ai-settings', '设置关闭后焦点返回工具栏');
+    await page.evaluate(() => window.closeAsk());
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'homeCtaCal', '关闭后仍能恢复焦点');
+    await page.evaluate(() => window.__restoreFocus());
+    await context.close();
+  }
+  console.log('✓ 旧式焦点选项回退保持对话可用');
+
+  // Check actual rendered text and gradient contrast for both light and dark
+  // trait palettes, including the persistent composer and sending control.
+  for (const [id, theme] of [['wenwen', 'light'], ['xingling', 'dark']]) {
+    const { page, context } = await newPage(390, 844, { homeTheme: id, theme });
+    await openToolAssistant(page);
+    await page.waitForFunction(() => [...document.querySelectorAll('#aiSheet [data-master-portrait]')].every(image => image.complete && image.naturalWidth));
+    for (const selector of ['.ai-hero-caption', '.chat-home-intro p', '.chat-starters-title', '.ai-composer-note']) {
+      const sample = await renderedTextContrast(page, selector);
+      assert.ok(sample.samples > 20 && sample.ratio >= 4.5, `${id}/${theme}: ${selector} 文字对比不足 ${JSON.stringify(sample)}`);
+    }
+    const sendContrast = await renderedButtonContrast(page, ['#aiSheet .ai-send']);
+    assert.ok(sendContrast[0].ratio >= 4.5, `${id}/${theme}: 发送按钮对比不足 ${JSON.stringify(sendContrast)}`);
+    await context.close();
+  }
+  console.log('✓ 对话文字和发送按钮在浅色、深色特质主题下保持对比度');
 
   // Complete the previously blocked question through the settings UI with a mocked service.
   {
@@ -813,6 +953,22 @@ try {
   }
   console.log('✓ 小屏与特大字号下的对话布局');
 
+  // Extra-short home dialogs keep both setup actions and the composer visible.
+  {
+    const { page, context } = await newPage(568, 320);
+    await openToolAssistant(page);
+    const layout = await page.evaluate(() => {
+      const sheet = document.getElementById('aiSheet').getBoundingClientRect();
+      const intro = document.getElementById('homeChatIntro').getBoundingClientRect();
+      const body = document.getElementById('askResult').getBoundingClientRect();
+      const input = document.querySelector('#aiSheet .ai-input-row').getBoundingClientRect();
+      return { sheet: sheet.toJSON(), intro: intro.toJSON(), body: body.toJSON(), input: input.toJSON() };
+    });
+    assert.ok(layout.intro.bottom <= layout.body.bottom + 1, '横屏时设置和填写入口应完整可见');
+    assert.ok(layout.input.bottom <= layout.sheet.bottom && layout.input.bottom <= 320, '横屏输入区不能被遮住');
+    await context.close();
+  }
+
   // Both providers receive the explicitly absent chart; even a greeting is not a canned home reply.
   for (const provider of ['deepseek', 'openrouter']) {
     const { page, context } = await newPage(1280, 720, { mock: true, key: 'test-key-only', provider, motion: 'no-preference' });
@@ -821,8 +977,8 @@ try {
     await page.type('#askInput', '你好');
     await page.click('#aiSheet .ai-send');
     assert.notEqual(await page.$eval('#characterScene', el => el.dataset.speaking), 'true', '等待模型时不应假装在说话');
-    await page.waitForFunction(() => document.getElementById('characterScene').dataset.speaking === 'true', { timeout: 8000 });
-    assert.equal(await page.$eval('.character-speak', el => getComputedStyle(el).animationName), 'character-speaking');
+    await page.waitForFunction(() => window.__speakingEvents.includes(true), { timeout: 8000 });
+    assert.notEqual(await page.$eval('#characterScene', el => el.dataset.speaking), 'true', '大师回复时首页人物不能替他说话');
     assert.equal(await page.$eval('#aiSheet .ai-send', el => el.disabled), true);
     assert.equal(await page.$eval('#askResult', el => el.getAttribute('aria-busy')), 'true');
     const call = await page.evaluate(() => window.__aiCalls[0]);
@@ -834,9 +990,9 @@ try {
     assert.equal(await page.$eval('.chat-ai-text', el => el.textContent), '这是服务返回的第一段。我们可以从一件小事开始。');
     assert.match(await page.$eval('#aiLiveStatus', el => el.textContent), /问问回复：这是服务返回的第一段/);
     assert.equal(await page.$eval('#askResult', el => el.hasAttribute('aria-busy')), false);
-    assert.equal(await page.$eval('#characterScene', el => el.dataset.speaking), 'false');
+    assert.notEqual(await page.$eval('#characterScene', el => el.dataset.speaking), 'true');
     assert.deepEqual(await page.evaluate(() => window.__speakingEvents), [true, false]);
-    assert.equal(await page.$eval('.chat-msg-ai .chat-avatar img', el => el.currentSrc), new URL(WENWEN.assets.avatar.src, BASE).href);
+    assert.deepEqual(await page.$$eval('.chat-msg-ai:not(.chat-typing) .chat-avatar img', imgs => imgs.map(img => img.getAttribute('src'))), CHAT_MASTER.twins.map(twin => twin.avatar));
     if (provider === 'deepseek') {
       await page.click('.chat-actions [data-act="retry"]');
       assert.equal(await page.$eval('#aiSheet .ai-send', el => el.disabled), true, '重试也应防止并发发送');
@@ -846,7 +1002,21 @@ try {
     }
     await context.close();
   }
-  console.log('✓ 两个 AI 提供方的无命盘真实流式对话与嘴型状态');
+  console.log('✓ 两个 AI 提供方的无命盘流式对话与独立双子身份');
+
+  for (const motion of ['no-preference', 'reduce']) {
+    const { page, context } = await newPage(390, 844, { mock: true, key: 'test-key-only', mode: 'slowStart', motion });
+    await openToolAssistant(page);
+    await page.type('#askInput', '让双子想一想');
+    await page.click('#aiSheet .ai-send');
+    await page.waitForSelector('#aiSheet.ai-master-thinking .chat-typing');
+    const names = await page.$$eval('#aiSheet .ai-master-twin', twins => twins.map(twin => getComputedStyle(twin).animationName));
+    assert.deepEqual(names, motion === 'reduce' ? ['none', 'none'] : ['master-twin-thinking', 'master-twin-thinking'], '双子思考动画尊重减少动态');
+    await waitForSend(page);
+    assert.equal(await page.$eval('#aiSheet', sheet => sheet.classList.contains('ai-master-thinking')), false, '回复完成后停止思考动画');
+    await context.close();
+  }
+  console.log('✓ 双子思考互动与减少动态偏好');
 
   {
     const { page, context } = await newPage(390, 844, { mock: true, key: 'test-key-only', mode: 'long' });
@@ -895,7 +1065,7 @@ try {
     await waitForSend(page);
     assert.equal(await page.$eval('#askInput', el => el.value), '中途中断的问题');
     assert.equal(await page.$$('.chat-msg-ai:not(.chat-typing)').then(els => els.length), 0, '失败的半截流不能当作完整回答');
-    assert.equal(await page.$eval('#characterScene', el => el.dataset.speaking), 'false');
+    assert.notEqual(await page.$eval('#characterScene', el => el.dataset.speaking), 'true');
     await page.reload();
     await page.waitForFunction(() => window._tools2Ready === true);
     await openToolAssistant(page);
@@ -920,7 +1090,8 @@ try {
     await openToolAssistant(page);
     await page.type('#askInput', '减少动态测试');
     await page.click('#aiSheet .ai-send');
-    await page.waitForFunction(() => document.getElementById('characterScene').dataset.speaking === 'true');
+    await page.waitForFunction(() => window.__speakingEvents.includes(true));
+    assert.notEqual(await page.$eval('#characterScene', el => el.dataset.speaking), 'true');
     assert.equal(await page.$eval('.character-blink', el => getComputedStyle(el).animationName), 'none');
     assert.equal(await page.$eval('.character-speak', el => getComputedStyle(el).animationName), 'none');
     assert.equal(await page.$eval('.character-speak', el => getComputedStyle(el).opacity), '0');
@@ -941,7 +1112,9 @@ try {
     await continueResult(page);
     await page.waitForSelector('#page2.active #characterReportGuide', { timeout: 15000 });
     assert.equal(await page.$eval('#characterReportGuide', el => el.getAttribute('aria-label')), '问问的提示');
-    assert.equal(await page.$eval('#characterReportGuide img', el => el.getAttribute('src')), WENWEN.assets.avatar.src, '报告仍使用真实问问助手');
+    assert.equal(await page.$('#characterReportGuide img'), null, '报告入口不借用首页人物头像');
+    assert.ok(await page.$('#characterReportGuide .character-prompt-avatar--symbol svg'));
+    assert.equal(await page.$('#aiFab img'), null, '报告 dock 不在对话外显示人物形象');
     assert.equal(await page.evaluate(() => !!window._ctx && !window._ctx.isDemoPreview), true);
     assert.equal(await page.evaluate(() => window._ctx.input.resultStyle), 'rigorous');
     await page.click('#characterReportGuide .character-prompt-action');
@@ -992,7 +1165,8 @@ try {
     await continueResult(page);
     await page.waitForSelector('#page2.active #characterReportGuide', { timeout: 15000 });
     assert.equal(await page.$eval('#characterReportGuide', el => el.getAttribute('aria-label')), '问问的提示');
-    assert.equal(await page.$eval('#characterReportGuide img', el => el.getAttribute('src')), WENWEN.assets.avatar.src);
+    assert.equal(await page.$('#characterReportGuide img'), null);
+    assert.ok(await page.$('#characterReportGuide .character-prompt-avatar--symbol svg'));
     await page.click('#characterReportGuide .character-prompt-action');
     await page.waitForSelector('#aiSheet.open');
     assert.equal(await page.$eval('#aiTitleText', el => el.textContent), '问问大师', '地炎主题不能更改报告助手身份');
@@ -1033,10 +1207,79 @@ try {
     await page.click('#aiFab');
     await page.waitForSelector('#aiSheet.open .chat-msg-ai .chat-avatar img');
     assert.equal(await page.$eval('.chat-msg-ai .chat-bubble', el => el.textContent), '旧的回答');
+    assert.deepEqual(await page.$$eval('.chat-msg-ai .chat-avatar img', imgs => imgs.map(img => img.getAttribute('src'))), CHAT_MASTER.twins.map(twin => twin.avatar), '旧历史中 AI 头像升级为双子');
+    assert.equal(await page.$eval('.chat-msg-ai .chat-avatar', el => el.getAttribute('aria-hidden')), 'true');
     assert.equal(await page.$eval('.chat-msg-user .chat-avatar', el => el.textContent), '我');
     await context.close();
   }
-  console.log('✓ 旧对话恢复与共享头像');
+  console.log('✓ 旧对话恢复、保留用户内容与双子头像');
+
+  for (const [width, height, theme] of [[320, 568, 'light'], [320, 400, 'light'], [568, 320, 'dark']]) {
+    const { page, context } = await newPage(width, height, { theme });
+    await page.evaluate(() => { void window.calc(true); });
+    await continueResult(page);
+    await page.waitForSelector('#page2.active');
+    await page.$eval('#aiSheet', el => el.style.setProperty('--font-scale', '1.4'));
+    await page.click('#aiFab');
+    await page.waitForSelector('#aiSheet.open');
+    await page.waitForFunction(() => [...document.querySelectorAll('#aiSheet [data-master-portrait]')].every(image => image.complete && image.naturalWidth));
+    const layout = await page.evaluate(() => {
+      const sheet = document.getElementById('aiSheet');
+      const rect = selector => document.querySelector(selector).getBoundingClientRect().toJSON();
+      return { sheet: sheet.getBoundingClientRect().toJSON(), scroll: sheet.scrollHeight, client: sheet.clientHeight,
+        body: rect('#askResult'), input: rect('#aiSheet .ai-input-row'), title: rect('#aiTitleText'),
+        topline: rect('#aiSheet .ai-topline'), heroCopy: rect('#aiSheet .ai-hero-copy'), head: rect('#aiSheet .ai-head'),
+        twins: [...sheet.querySelectorAll('[data-master-portrait]')].map(el => el.getBoundingClientRect().toJSON()) };
+    });
+    assert.ok(layout.input.bottom <= layout.sheet.bottom && layout.input.bottom <= height, '报告中大字号输入区必须完整可见');
+    const badge = await page.evaluate(() => {
+      const badge = document.getElementById('evolveGenBadge');
+      const wasHidden = badge.hidden, text = badge.textContent;
+      badge.hidden = false; badge.textContent = '第123代';
+      const rect = badge.getBoundingClientRect().toJSON();
+      const actions = document.querySelector('#aiSheet .ai-actions').getBoundingClientRect().toJSON();
+      badge.hidden = wasHidden; badge.textContent = text;
+      return { rect, actions };
+    });
+    assert.ok(badge.rect.width > 0 && (badge.rect.right <= badge.actions.left + 1 || badge.rect.top >= badge.actions.bottom - 1), '自进化徽章不能遮住新建或设置按钮');
+    assert.ok(layout.body.height >= 45, '报告中应保留可滚动的消息区域');
+    assert.ok(layout.scroll <= layout.client + 1, '报告面板本身不能裁切');
+    if (height > 450) {
+      assert.ok(layout.heroCopy.top >= layout.topline.bottom - 1 && layout.heroCopy.bottom <= layout.head.top + 1, '大字号时主视觉文案不能压住标题或依据栏');
+    }
+    if (height <= 450) {
+      assert.ok(layout.twins.every(rect => rect.right <= layout.title.left + 1), '短屏的双子和标题不能重叠');
+      assert.equal(await page.$eval('#aiSheet .ai-close', el => getComputedStyle(el).display !== 'none'), true, '短屏报告需要可见的关闭按钮');
+    }
+    if (height > 360) {
+      await page.click('#aiBasisWestern');
+      const western = await page.evaluate(() => {
+        const sheet = document.getElementById('aiSheet');
+        const context = document.getElementById('aiContext');
+        const value = context.querySelector('b');
+        const range = document.createRange();
+        range.selectNodeContents(value);
+        const lines = [...range.getClientRects()];
+        return { context: context.getBoundingClientRect().toJSON(), lines: lines.map(line => line.toJSON()),
+          bodyHeight: document.getElementById('askResult').getBoundingClientRect().height,
+          inputBottom: sheet.querySelector('.ai-input-row').getBoundingClientRect().bottom,
+          sheetBottom: sheet.getBoundingClientRect().bottom, text: value.textContent };
+      });
+      assert.match(western.text, /太阳.*月亮.*主命数/);
+      assert.ok(western.lines.length && western.lines.every(line => line.bottom <= western.context.bottom + 1 && line.right <= western.context.right + 1), '西方依据的实际数据应完整换行而不是被截断');
+      assert.ok(western.bodyHeight >= 45 && western.inputBottom <= western.sheetBottom, '长依据不能挤掉消息和输入');
+    }
+    await page.type('#askInput', '你好');
+    await page.click('#aiSheet .ai-send');
+    await page.waitForFunction(() => document.querySelectorAll('#askResult .chat-msg-ai:not(.chat-typing)').length >= 2, { timeout: 5000 });
+    assert.equal(await page.$$eval('#askResult .chat-msg-ai:not(.chat-typing) .chat-avatar--twins', avatars => avatars.every(avatar => avatar.querySelectorAll('img').length === 2)), true);
+    if (height <= 450) {
+      await page.click('#aiSheet .ai-close');
+      assert.equal(await page.$eval('#aiSheet', el => el.classList.contains('open')), false);
+    }
+    await context.close();
+  }
+  console.log('✓ 报告对话在小屏、横屏、深色与特大字号下可读可发送');
 
   {
     const { page, context } = await newPage(390, 844);

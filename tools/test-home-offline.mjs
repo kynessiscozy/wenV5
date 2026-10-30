@@ -63,6 +63,16 @@ async function offlineCalculation(page, id, assetName = '') {
       speaking?.complete && speaking.naturalWidth > 0;
   }, { timeout: 10000 });
   if (id === 'wenwen') {
+    // The assistant's artwork and local answer both work on the first offline open.
+    await page.click('#aiFab');
+    await page.waitForSelector('#aiSheet.open');
+    await page.waitForFunction(() => [...document.querySelectorAll('#aiSheet [data-master-portrait], #aiSheet .chat-avatar--twins img')].length === 4 &&
+      [...document.querySelectorAll('#aiSheet [data-master-portrait], #aiSheet .chat-avatar--twins img')].every(image => image.complete && image.naturalWidth > 0));
+    await page.type('#askInput', '你好');
+    await page.click('#aiSheet .ai-send');
+    await page.waitForFunction(() => document.querySelectorAll('#askResult .chat-msg-ai:not(.chat-typing)').length >= 2, { timeout: 5000 });
+    assert.equal(await page.$$eval('#askResult .chat-msg-ai:not(.chat-typing) .chat-avatar--twins', avatars => avatars.every(avatar => avatar.querySelectorAll('img').length === 2)), true);
+    await page.evaluate(() => window.closeAsk());
     // The first-ever share in this page is a tool result, entirely offline.
     // The preview must already be available without fetching a new chunk.
     await page.evaluate(() => window.openToolPage('daily'));
@@ -140,17 +150,19 @@ try {
   await page.waitForFunction(() => window._tools2Ready === true && document.getElementById('traitMachine')?.dataset.ready === 'true');
   // None of the roles are chosen online; all scenes must still work offline.
   await page.evaluate(async () => {
-    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]) await caches.open(`wenda-cache-v${version}`);
+    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]) await caches.open(`wenda-cache-v${version}`);
     await caches.open('unrelated-app-cache');
     await navigator.serviceWorker.register('./sw.js');
     await navigator.serviceWorker.ready;
   });
-  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v34') && !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33)$/.test(key)));
+  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v36') && !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35)$/.test(key)));
   assert.ok(await page.evaluate(async () => (await caches.keys()).includes('unrelated-app-cache')), '更新不能删除其他应用的缓存');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => navigator.serviceWorker.controller && window._tools2Ready === true && document.getElementById('traitMachine')?.dataset.ready === 'true');
 
   const required = [
+    './art/master-twin-indigo.webp', './art/master-twin-rose.webp',
+    './art/master-twin-indigo-avatar.webp', './art/master-twin-rose-avatar.webp',
     './art/wenwen-reimagined.webp', './art/wenwen-reimagined-avatar.webp', './art/wenwen-reimagined-blink.webp', './art/wenwen-reimagined-speak.webp',
     './art/sacred-study-wide.webp', './art/sacred-study-mobile.webp',
     './art/moon-fox-reimagined.webp', './art/moon-fox-reimagined-avatar.webp', './art/moon-fox-reimagined-blink.webp', './art/moon-fox-reimagined-speak.webp',

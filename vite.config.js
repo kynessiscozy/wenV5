@@ -16,6 +16,9 @@ export default defineConfig({
             // Keep Vite's dynamic-import helper out of the engine chunk so the
             // small home entry does not have to download every report engine.
             { name: 'preload-helper', test: /\0vite\/preload-helper\.js$/, priority: 100 },
+            // The tiny focus helper is shared by home, chat and reports. Keep
+            // it out of the heavy engine chunk so home stays independently usable.
+            { name: 'focus', test: /\/src\/ui\/focus\.js$/, priority: 100 },
             { name: 'engines', test: /\/src\/engines\//, priority: 10 },
             { name: 'ai', test: /\/src\/ai\//, priority: 10 },
             { name: 'evolve', test: /\/src\/evolve\//, priority: 10 },

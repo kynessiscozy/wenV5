@@ -12,8 +12,9 @@ import {
   lastExperienceId, flagLastFollowUp, chartKeyOf, getGenome
 } from '../evolve/index.js';
 import { showToast } from './toast.js';
+import { focusSafely } from './focus.js';
 import { filterAiResponse } from '../ai/filter.js';
-import { WENWEN, characterAvatarMarkup } from '../character/wenwen.js';
+import { CHAT_MASTER, loadMasterPortraits, masterAvatarMarkup } from '../character/chat-master.js';
 
 /* ============================================================
    问问大师 · 重构版 — ChatGPT 气泡式对话
@@ -90,10 +91,11 @@ let _histCache = null;
 let _homeChat = false;
 let _homePending = false;
 let _returnFocus = null;
+let _backgroundPage = null;
 let _pageWasInert = false;
 let _focusTimer = 0;
 
-function _setCharacterSpeaking(active) {
+function _setAiStreaming(active) {
   window.dispatchEvent(new CustomEvent('tj:ai-stream', { detail: { active } }));
 }
 function _personalChart() {
@@ -122,6 +124,9 @@ function _updateHomeIntro() {
     intro.setAttribute('role', 'status');
     body.prepend(intro);
   }
+  const heading = document.createElement('div');
+  heading.className = 'chat-home-intro-title';
+  heading.textContent = hasKey ? '准备好了' : '开始之前';
   const message = document.createElement('p');
   message.textContent = !hasKey
     ? (hasChart ? '配置 AI 后可以开始对话。' : '配置 AI 后可以开始对话；如需命盘解读，也可以先填写出生信息。')
@@ -142,7 +147,64 @@ function _updateHomeIntro() {
     fill.addEventListener('click', _goFillChart);
     actions.appendChild(fill);
   }
-  intro.replaceChildren(message, actions);
+  intro.replaceChildren(heading, message, actions);
+}
+
+// A suggestion is only a draft: it never submits or replaces existing text.
+const STARTER_PROMPTS = [
+  ['聊聊迷茫', '我最近有些迷茫，可以陪我理一理吗？'],
+  ['关系困惑', '我想聊聊关系里遇到的困惑。'],
+  ['做个选择', '我想理清一个正在面对的选择。'],
+];
+
+function _syncStarters() {
+  const body = document.getElementById('askResult');
+  const group = body?.querySelector('.chat-starters');
+  if (!group) return;
+  const hasConversation = !!body.querySelector('.chat-msg:not(.chat-welcome)');
+  group.hidden = hasConversation || !!document.getElementById('askInput')?.value.trim();
+}
+
+function _renderStarters(body) {
+  if (!body) return;
+  const existing = body.querySelector('.chat-starters');
+  if (body.querySelector('.chat-msg:not(.chat-welcome)')) {
+    existing?.remove();
+    return;
+  }
+  if (!existing) {
+    const group = document.createElement('div');
+    group.className = 'chat-starters';
+    group.setAttribute('role', 'group');
+    group.setAttribute('aria-label', '提问灵感');
+    const title = document.createElement('div');
+    title.className = 'chat-starters-title';
+    title.textContent = '不知道从哪开始？';
+    const list = document.createElement('div');
+    list.className = 'chat-starters-list';
+    STARTER_PROMPTS.forEach(([label, prompt]) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.addEventListener('click', () => {
+        const input = document.getElementById('askInput');
+        if (!input) return;
+        if (!input.value.trim()) {
+          input.value = prompt;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        focusSafely(input);
+      });
+      list.appendChild(button);
+    });
+    group.append(title, list);
+    body.appendChild(group);
+  } else {
+    // The same panel may be reopened from a report after a home session.
+    // Keep the welcome message ahead of its optional prompts in both contexts.
+    body.appendChild(existing);
+  }
+  _syncStarters();
 }
 
 function _showHomeError(question, missingKey = false) {
@@ -217,7 +279,9 @@ function _restoreHistory(el) {
   el.innerHTML = arr.map(x => x.h).join('');
   // Older saved conversations may still contain the former star avatar.
   el.querySelectorAll('.chat-msg-ai .chat-avatar').forEach(avatar => {
-    avatar.innerHTML = characterAvatarMarkup();
+    avatar.classList.add('chat-avatar--twins');
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.innerHTML = masterAvatarMarkup();
   });
   // 工具跳转按钮的事件随 HTML 序列化丢失，按 data-tool 重新绑定
   el.querySelectorAll('.chat-tool-btn[data-tool]').forEach(b => {
@@ -246,10 +310,10 @@ function _renderWelcome(el) {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'chat-msg chat-msg-ai chat-welcome';
   msgDiv.innerHTML =
-    '<div class="chat-avatar">' + characterAvatarMarkup() + '</div>' +
+    '<div class="chat-avatar chat-avatar--twins" aria-hidden="true">' + masterAvatarMarkup() + '</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai">' +
-        '<div class="chat-welcome-greeting">' + greeting + '！我是问问大师 ✦</div>' +
+        '<div class="chat-welcome-greeting">' + greeting + '！我是问问大师</div>' +
         '<div class="chat-welcome-desc">' + contextLine + '</div>' +
       '</div>' +
       '<div class="chat-meta">' + _ts() + '</div>' +
@@ -259,6 +323,7 @@ function _renderWelcome(el) {
 
 // —— 用户气泡 ——
 function _renderUserBubble(el, text) {
+  el.querySelector('.chat-starters')?.remove();
   const msgDiv = document.createElement('div');
   msgDiv.className = 'chat-msg chat-msg-user';
   msgDiv.innerHTML =
@@ -273,6 +338,8 @@ function _renderUserBubble(el, text) {
 
 // —— Typing indicator ——
 function _showTyping(el, hint) {
+  const sheet = document.getElementById('aiSheet');
+  if (sheet?.classList.contains('open')) sheet.classList.add('ai-master-thinking');
   let indicator = el.querySelector('.chat-typing');
   if (indicator) {
     // 更新提示文字
@@ -283,7 +350,7 @@ function _showTyping(el, hint) {
   indicator = document.createElement('div');
   indicator.className = 'chat-msg chat-msg-ai chat-typing';
   indicator.innerHTML =
-    '<div class="chat-avatar">' + characterAvatarMarkup() + '</div>' +
+    '<div class="chat-avatar chat-avatar--twins" aria-hidden="true">' + masterAvatarMarkup() + '</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai">' +
         '<div class="typing-dots"><span></span><span></span><span></span></div>' +
@@ -295,6 +362,7 @@ function _showTyping(el, hint) {
   return indicator;
 }
 function _hideTyping(el) {
+  document.getElementById('aiSheet')?.classList.remove('ai-master-thinking');
   const indicator = el.querySelector('.chat-typing');
   if (indicator) indicator.remove();
 }
@@ -323,7 +391,7 @@ function _createAiBubble(el, q) {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'chat-msg chat-msg-ai chat-msg-appear';
   msgDiv.innerHTML =
-    '<div class="chat-avatar">' + characterAvatarMarkup() + '</div>' +
+    '<div class="chat-avatar chat-avatar--twins" aria-hidden="true">' + masterAvatarMarkup() + '</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai"><div class="chat-ai-text"></div></div>' +
       _chatActionsHtml(true) +
@@ -344,7 +412,7 @@ function _renderKbBubble(el, kbRes, q) {
   msgDiv.className = 'chat-msg chat-msg-ai chat-msg-appear';
   const kbHtml = renderSmartAnswer(kbRes, q);
   msgDiv.innerHTML =
-    '<div class="chat-avatar">' + characterAvatarMarkup() + '</div>' +
+    '<div class="chat-avatar chat-avatar--twins" aria-hidden="true">' + masterAvatarMarkup() + '</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai chat-bubble-kb">' + kbHtml + '</div>' +
       _chatActionsHtml(false) +
@@ -362,7 +430,7 @@ function _renderToolCallBubble(el, short, toolId) {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'chat-msg chat-msg-ai chat-msg-appear';
   msgDiv.innerHTML =
-    '<div class="chat-avatar">' + characterAvatarMarkup() + '</div>' +
+    '<div class="chat-avatar chat-avatar--twins" aria-hidden="true">' + masterAvatarMarkup() + '</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai">' +
         '可以，直接开始这个小工具，填完后我再帮你看结果。' +
@@ -386,7 +454,7 @@ function _renderNeedChart(el) {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'chat-msg chat-msg-ai chat-msg-appear';
   msgDiv.innerHTML =
-    '<div class="chat-avatar">' + characterAvatarMarkup() + '</div>' +
+    '<div class="chat-avatar chat-avatar--twins" aria-hidden="true">' + masterAvatarMarkup() + '</div>' +
     '<div class="chat-content">' +
       '<div class="chat-bubble chat-bubble-ai">' +
         '请先完成命盘排盘，我才能给出有针对性的建议。' +
@@ -431,11 +499,24 @@ export function setAiBasis(basis) {
     btnW.classList.toggle('active', isWestern);
     btnE.setAttribute('aria-checked', !isWestern ? 'true' : 'false');
     btnW.setAttribute('aria-checked', isWestern ? 'true' : 'false');
+    btnE.tabIndex = isWestern ? -1 : 0;
+    btnW.tabIndex = isWestern ? 0 : -1;
   }
 
   _syncAiContext();
 }
 window.setAiBasis = setAiBasis;
+
+// Keep the radiogroup usable with arrows as well as touch and clicks.
+document.querySelector('#aiSheet .ai-basis-pills')?.addEventListener('keydown', event => {
+  const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+  if (!keys.includes(event.key)) return;
+  event.preventDefault();
+  const basis = event.key === 'Home' ? 'eastern' : event.key === 'End' ? 'western'
+    : getAiBasis() === 'eastern' ? 'western' : 'eastern';
+  setAiBasis(basis);
+  focusSafely(document.getElementById(basis === 'western' ? 'aiBasisWestern' : 'aiBasisEastern'));
+});
 
 function _syncAiContext() {
   const context = document.getElementById('aiContext');
@@ -450,20 +531,22 @@ function _syncAiContext() {
     btnW.classList.toggle('active', isWestern);
     btnE.setAttribute('aria-checked', String(!isWestern));
     btnW.setAttribute('aria-checked', String(isWestern));
+    btnE.tabIndex = isWestern ? -1 : 0;
+    btnW.tabIndex = isWestern ? 0 : -1;
   }
 
   if (context) {
     if (!d) {
-      context.innerHTML = '<span>✦ 命盘</span><b>尚未提供出生信息</b>';
+      context.innerHTML = '<span>命盘</span><b>尚未提供出生信息</b>';
     } else if (isWestern) {
       const input = d.input || d._input || {};
       const y = input.by || 1995, m = input.bm || 6, dDate = input.bd || 15;
       const [h, min] = (input.timeStr || '12:00').split(':').map(Number);
       const chart = calcWesternChart(y, m, dDate, h || 12, min || 0);
       const num = calcNumerology(y, m, dDate);
-      context.innerHTML = `<span>✦ 西方星相依据</span><b>太阳 ${chart.sun.name} ｜ 上升 ${chart.asc.name} ｜ 月亮 ${chart.moon.name} ｜ 主命数 ${num.lifePath}号</b>`;
+      context.innerHTML = `<span>西方星相依据</span><b>太阳 ${chart.sun.name} ｜ 上升 ${chart.asc.name} ｜ 月亮 ${chart.moon.name} ｜ 主命数 ${num.lifePath}号</b>`;
     } else {
-      context.innerHTML = `<span>✦ 东方命理依据</span><b>${d.dg}${d.dw} · ${d.wx.st ? '身旺' : '身弱'} ｜ 大运 ${d.cDy.g}${d.cDy.z} ｜ 用神 ${d.wx.ys}</b>`;
+      context.innerHTML = `<span>东方命理依据</span><b>${d.dg}${d.dw} · ${d.wx.st ? '身旺' : '身弱'} ｜ 大运 ${d.cDy.g}${d.cDy.z} ｜ 用神 ${d.wx.ys}</b>`;
     }
   }
 }
@@ -476,21 +559,23 @@ export function openAsk() {
   const sheet = document.getElementById('aiSheet');
   if (sheet?.classList.contains('open')) { closeAsk(); return; }
   if (!sheet) return;
+  loadMasterPortraits(sheet);
 
   const page = document.getElementById('page1');
   _homeChat = !!page && !page.classList.contains('hidden');
   _returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  // Both entries now open the same modal conversation room.
+  _backgroundPage = _homeChat ? page : document.getElementById('page2');
+  _pageWasInert = !!_backgroundPage?.inert;
+  if (_backgroundPage) _backgroundPage.inert = true;
+  sheet.setAttribute('aria-modal', 'true');
   if (_homeChat) {
-    _pageWasInert = page.inert;
-    page.inert = true;
     document.body.classList.add('character-chat-open');
-    sheet.setAttribute('aria-modal', 'true');
   } else {
-    sheet.removeAttribute('aria-modal');
     const fab = document.getElementById('aiFab');
     if (fab) { fab.classList.remove('fab-pop'); void fab.offsetWidth; fab.classList.add('fab-pop'); fab.addEventListener('animationend', () => fab.classList.remove('fab-pop'), { once: true }); }
   }
-  document.getElementById('aiTitleText').textContent = _homeChat ? `和${WENWEN.name}聊聊` : '问问大师';
+  document.getElementById('aiTitleText').textContent = _homeChat ? `和${CHAT_MASTER.name}聊聊` : CHAT_MASTER.title;
   sheet.inert = false;
   sheet.setAttribute('aria-hidden', 'false');
   document.getElementById('aiOverlay').classList.add('open');
@@ -512,13 +597,14 @@ export function openAsk() {
   if (input && !input.value) {
     try { input.value = sessionStorage.getItem('tj_ai_draft') || ''; } catch (e) {}
   }
+  _renderStarters(body);
   clearTimeout(_focusTimer);
   _focusTimer = setTimeout(() => {
     if (!sheet.classList.contains('open') || sheet.inert) return;
     // Do not summon the mobile keyboard until the user taps the composer.
-    const target = _homeChat && window.matchMedia('(max-width: 650px)').matches
+    const target = window.matchMedia('(max-width: 650px)').matches
       ? document.getElementById('aiTitleText') : input;
-    target?.focus({ preventScroll: true });
+    focusSafely(target);
   }, 80);
 }
 
@@ -526,26 +612,27 @@ export function closeAsk() {
   const sheet = document.getElementById('aiSheet');
   if (!sheet?.classList.contains('open')) return;
   clearTimeout(_focusTimer);
-  _setCharacterSpeaking(false);
+  _setAiStreaming(false);
   document.getElementById('aiOverlay').classList.remove('open');
-  sheet.classList.remove('open');
+  sheet.classList.remove('open', 'ai-master-thinking');
   sheet.setAttribute('aria-hidden', 'true');
   sheet.removeAttribute('aria-modal');
   sheet.inert = true;
   document.getElementById('aiSuggest')?.classList.remove('show');
-  if (_homeChat) document.getElementById('page1').inert = _pageWasInert;
+  if (_backgroundPage) _backgroundPage.inert = _pageWasInert;
+  _backgroundPage = null;
   document.body.classList.remove('character-chat-open', 'character-chat-has-chart');
   _homeChat = false;
   const target = _returnFocus;
   _returnFocus = null;
-  if (target?.isConnected && target.getClientRects().length) target.focus({ preventScroll: true });
+  if (target?.isConnected && target.getClientRects().length) focusSafely(target);
 }
 
-// Keep keyboard navigation inside the home dialog; report chat remains dock-anchored.
+// Keep keyboard navigation in the shared dialog, for both entry points.
 document.getElementById('aiSheet')?.addEventListener?.('keydown', event => {
-  if (!_homeChat || event.key !== 'Tab') return;
+  if (!event.currentTarget.classList.contains('open') || event.currentTarget.inert || event.key !== 'Tab') return;
   const controls = [...event.currentTarget.querySelectorAll('button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')]
-    .filter(el => el.getClientRects().length && !el.closest('[inert]'));
+    .filter(el => el.tabIndex >= 0 && el.getClientRects().length && !el.closest('[inert]'));
   if (!controls.length) return;
   const first = controls[0], last = controls[controls.length - 1];
   if (event.shiftKey && (document.activeElement === first || !controls.includes(document.activeElement))) {
@@ -563,11 +650,13 @@ export function newAskChat() {
   const input = document.getElementById('askInput');
   const sug = document.getElementById('aiSuggest');
   if (result) {
+    _hideTyping(result);
     result.innerHTML = '';
     if (_homeChat) _updateHomeIntro();
     else _renderWelcome(result);
   }
   if (input) { input.value = ''; input.style.height = 'auto'; input.focus(); }
+  _renderStarters(result);
   const status = document.getElementById('aiLiveStatus');
   if (status) status.textContent = '';
   try { sessionStorage.removeItem('tj_ai_draft'); } catch (e) {}
@@ -656,7 +745,7 @@ async function _sendHomeQuestion(q, showUserBubble = true) {
     await generateAnswer(question, { homeSession: true });
   } catch (error) {
     _hideTyping(body);
-    _setCharacterSpeaking(false);
+    _setAiStreaming(false);
     _recoverHomeQuestion(question);
   } finally {
     _homePending = false;
@@ -718,6 +807,7 @@ export function aiOnInputSuggest() {
   if (sug) { sug.innerHTML = ''; sug.classList.remove('show'); }
   const input = document.getElementById('askInput');
   if (input) {
+    _syncStarters();
     try { sessionStorage.setItem('tj_ai_draft', input.value); } catch (e) {}
     input.style.height = 'auto';
     const max = parseFloat(getComputedStyle(input).maxHeight) || 132;
@@ -846,9 +936,9 @@ export async function generateAnswer(q, { homeSession = _homeChat } = {}) {
         _showTyping(el, '正在调用 ' + modelLabel(m) + '…');
       },
       onDelta: (partial) => {
-        if (homeSession && partial.trim() && _homeChat && document.getElementById('aiSheet')?.classList.contains('open') && document.getElementById('characterScene')?.dataset.speaking !== 'true') {
+        if (homeSession && partial.trim() && _homeChat && document.getElementById('aiSheet')?.classList.contains('open') && !speaking) {
           speaking = true;
-          _setCharacterSpeaking(true);
+          _setAiStreaming(true);
         }
         _mkBubble().innerHTML = homeSession ? formatAIText(partial) : formatStandardAnswer(partial);
         _scrollToBottom(el);
@@ -856,7 +946,7 @@ export async function generateAnswer(q, { homeSession = _homeChat } = {}) {
     });
 
     clearTimeout(slowTimer);
-    if (speaking) { _setCharacterSpeaking(false); speaking = false; }
+    if (speaking) { _setAiStreaming(false); speaking = false; }
     _hideTyping(el);
 
     // AI 输出兜底过滤：扫描最终文本中的黑名单词
@@ -872,7 +962,7 @@ export async function generateAnswer(q, { homeSession = _homeChat } = {}) {
     _setModelLabel(result.model);
     if (homeSession && _homeChat && document.getElementById('aiSheet')?.classList.contains('open')) {
       const status = document.getElementById('aiLiveStatus');
-      if (status && textEl) status.textContent = `${WENWEN.name}回复：${textEl.textContent}`;
+      if (status && textEl) status.textContent = `${CHAT_MASTER.name}回复：${textEl.textContent}`;
     }
 
     conversation.push({ role: 'user', content: q });
@@ -896,7 +986,7 @@ export async function generateAnswer(q, { homeSession = _homeChat } = {}) {
 
   } catch (e) {
     clearTimeout(slowTimer);
-    if (speaking) _setCharacterSpeaking(false);
+    if (speaking) _setAiStreaming(false);
     _hideTyping(el);
     if (homeSession) {
       // Do not turn a network failure (including a partial stream) into a fabricated reply.
