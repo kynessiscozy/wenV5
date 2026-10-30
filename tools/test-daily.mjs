@@ -1,54 +1,36 @@
-import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
+import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
-const BASE=process.env.BASE_URL||'http://localhost:5173/';
-const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});
-const p=await b.newPage();await p.setViewport({width:430,height:932,deviceScaleFactor:2});
-const errs=[];p.on('pageerror',e=>errs.push(e.message));
-p.on('console',m=>{if(m.type()==='error'&&!/404/.test(m.text()))errs.push(m.text())});
-await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
-await selectHomeTrait(p);
-await p.waitForFunction(() => typeof window.calc === 'function', { timeout: 15000 });
-await new Promise(r=>setTimeout(r,900));
+import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 
-console.log('=== 1. 无档案时不显示今日卡 ===');
-console.log('display =', await p.evaluate(()=>document.getElementById('todayCard')?.style.display));
+const BASE = process.env.BASE_URL || 'http://localhost:5173/';
+const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+try {
+  const page = await browser.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.setViewport({ width: 430, height: 932 });
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  await selectHomeTrait(page);
+  await page.waitForFunction(() => window._tools2Ready === true, { timeout: 15000 });
 
-console.log('\n=== 2. 保存档案 ===');
-await openDemoReport(p);await new Promise(r=>setTimeout(r,3600));
-await p.evaluate(()=>window.openSaveModal());await new Promise(r=>setTimeout(r,300));
-await p.evaluate(()=>{document.getElementById('saveName').value='我';});
-await p.evaluate(()=>window.confirmSaveProfile());await new Promise(r=>setTimeout(r,700));
+  await page.evaluate(() => window.openToolPage('daily'));
+  assert.match(await page.$eval('#toolModalContent', el => el.innerText), /请先完成个人推演/);
+  await page.evaluate(() => window.closeToolPage());
 
-console.log('\n=== 3. 日签工具（真实流日）===');
-await p.evaluate(()=>window.openToolPage('daily'));
-await p.waitForSelector('#v3_result',{timeout:5000});await new Promise(r=>setTimeout(r,500));
-await p.evaluate(()=>window.TJDailyRun());
-await new Promise(r=>setTimeout(r,800));
-console.log(await p.evaluate(()=>document.getElementById('v3_result').innerText.slice(0,560)));
-await p.screenshot({path:'/tmp/daily-result.png'});
-
-console.log('\n=== 4. 同一天重复生成内容一致 ===');
-const t1=await p.evaluate(()=>document.getElementById('v3_result').innerText);
-await p.evaluate(()=>window.TJDailyRun());await new Promise(r=>setTimeout(r,600));
-const t2=await p.evaluate(()=>document.getElementById('v3_result').innerText);
-console.log('一致 =', t1===t2);
-
-console.log('\n=== 5. 回到首页：今日卡应出现 ===');
-await p.evaluate(()=>{const b=document.querySelector('.tool-sheet-close');if(b)b.click();});
-await new Promise(r=>setTimeout(r,400));
-await p.evaluate(()=>window.goBack());
-await new Promise(r=>setTimeout(r,500));
-await p.evaluate(()=>window.renderTodayCard());
-await new Promise(r=>setTimeout(r,800));
-console.log(await p.evaluate(()=>{const e=document.getElementById('todayCard');
-  return 'display='+e.style.display+'\n'+e.innerText;}));
-await p.screenshot({path:'/tmp/today-card.png'});
-
-console.log('\n=== 6. 刷新后今日卡自动出现（回访场景）===');
-await p.reload({waitUntil:'domcontentloaded',timeout:15000});
-await selectHomeTrait(p);
-await new Promise(r=>setTimeout(r,1600));
-console.log('display =', await p.evaluate(()=>document.getElementById('todayCard')?.style.display));
-
-console.log('\n错误:', errs.length?[...new Set(errs)].join(' | '):'无');
-await b.close();
+  await openDemoReport(page);
+  await page.evaluate(() => window.openToolPage('daily'));
+  await page.waitForSelector('#toolModalContent .tw-y-card');
+  const first = await page.$eval('#toolModalContent .tw-y-card', el => el.innerText);
+  assert.match(first, /基调/);
+  assert.match(first, /宜/);
+  assert.match(first, /忌/);
+  assert.ok(await page.$('#twYShare'), '日签分享入口应保留');
+  await page.evaluate(() => { window.closeToolPage(); window.openToolPage('daily'); });
+  const second = await page.$eval('#toolModalContent .tw-y-card', el => el.innerText);
+  assert.equal(second, first, '同一命盘同一天的日签应稳定');
+  assert.deepEqual(errors, []);
+  console.log('✓ 日签无命盘提示、真实生成、分享入口与同日稳定性');
+} finally {
+  await browser.close();
+}

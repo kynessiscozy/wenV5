@@ -28,7 +28,7 @@ async function newHome({ width = 390, height = 844, theme = 'light', trait = 'we
     }
     if (!mock) return;
     localStorage.setItem('tj_ai_provider', 'deepseek');
-    localStorage.setItem('tj_ai_apikey', 'test-key-only');
+    localStorage.setItem('tj_ai_apikey_deepseek', 'test-key-only');
     window.__aiCalls = [];
     const realFetch = window.fetch.bind(window);
     window.fetch = (url, init = {}) => {

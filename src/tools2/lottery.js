@@ -4,18 +4,9 @@
    保留原逻辑：纯随机生成号码组合（不使用命盘）。
    流程：玩法/注数表单 → 摇一组号码 → 独立结果页（号码球）。
    ============================================================ */
-import { masthead, notice, esc, viewShell, goResult } from './runtime.js';
+import { masthead, notice, viewShell, goResult } from './runtime.js';
+import { LOTTERY_GAMES as DEFS, drawLotteryRows } from '../engines/lottery.js';
 
-const DEFS = {
-  ssq: { name: '双色球', red: { n: 6, max: 33 }, blue: { n: 1, max: 16 } },
-  dlt: { name: '超级大乐透', red: { n: 5, max: 35 }, blue: { n: 2, max: 12 } },
-};
-
-function pick(n, max) {
-  const set = new Set();
-  while (set.size < n) set.add(Math.floor(Math.random() * max) + 1);
-  return [...set].sort((a, b) => a - b);
-}
 const pad = x => String(x).padStart(2, '0');
 
 export const lottery = {
@@ -28,7 +19,6 @@ export const lottery = {
     const S = { type: 'ssq', count: 1 };
 
     const renderBalls = (row, base) => {
-      const def = DEFS[S.type];
       const reds = row.red.map((v, i) =>
         '<span class="tw-l-ball red" style="animation-delay:' + (base + i * 60) + 'ms">' + pad(v) + '</span>').join('');
       const blues = row.blue.map((v, i) =>
@@ -65,9 +55,7 @@ export const lottery = {
 
       container.querySelector('#twLotDraw').addEventListener('click', () => {
         const def = DEFS[S.type];
-        const rows = Array.from({ length: S.count }, (_, i) => {
-          return { idx: i + 1, red: pick(def.red.n, def.red.max), blue: pick(def.blue.n, def.blue.max) };
-        });
+        const rows = drawLotteryRows(S.type, S.count);
         goResult(container, lottery.name,
           '<div class="tw-kicker">NUMBER · 随机组合</div>' +
           '<div class="tw-h2">' + def.name + ' · ' + S.count + ' 注</div>' +

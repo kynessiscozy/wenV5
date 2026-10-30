@@ -2,6 +2,8 @@
    梅花易数 · 完整版
    ============================================================ */
 
+import { WX_SHENG, WX_KE } from './shared.js';
+
 const GUA_NAME = ['乾','兑','离','震','巽','坎','艮','坤'];
 const GUA_SYM  = ['☰','☱','☲','☳','☴','☵','☶','☷'];
 const GUA_WX   = ['金','金','火','木','木','水','土','土'];
@@ -51,16 +53,12 @@ function _hexName(upperIdx, lowerIdx) {
   return HEX_NAME[lowerIdx * 8 + upperIdx] || (GUA_NAME[upperIdx] + GUA_NAME[lowerIdx]);
 }
 
-/* 五行生克 */
-const SHENG = { 木:'火', 火:'土', 土:'金', 金:'水', 水:'木' };
-const KE    = { 木:'土', 火:'金', 土:'水', 金:'木', 水:'火' };
-
 function _tiYongRelation(tiWx, yongWx) {
   if (tiWx === yongWx) return { label: '比和', desc: '体用同气，事情按原有节奏推进，平和稳定。', score: 'neutral' };
-  if (SHENG[yongWx] === tiWx) return { label: '用生体', desc: '外部条件主动扶助自己，有贵人或资源注入。', score: 'good' };
-  if (SHENG[tiWx] === yongWx) return { label: '体生用', desc: '自身精力向外输出，需注意消耗过度。', score: 'caution' };
-  if (KE[yongWx] === tiWx) return { label: '用克体', desc: '外部压力较明显，宜先稳固自身基础。', score: 'bad' };
-  if (KE[tiWx] === yongWx) return { label: '体克用', desc: '有主动掌控力，利于推进但避免用力过猛。', score: 'good' };
+  if (WX_SHENG[yongWx] === tiWx) return { label: '用生体', desc: '外部条件主动扶助自己，有贵人或资源注入。', score: 'good' };
+  if (WX_SHENG[tiWx] === yongWx) return { label: '体生用', desc: '自身精力向外输出，需注意消耗过度。', score: 'caution' };
+  if (WX_KE[yongWx] === tiWx) return { label: '用克体', desc: '外部压力较明显，宜先稳固自身基础。', score: 'bad' };
+  if (WX_KE[tiWx] === yongWx) return { label: '体克用', desc: '有主动掌控力，利于推进但避免用力过猛。', score: 'good' };
   return { label: '平', desc: '内外关系平常，以具体行动和现实条件为准。', score: 'neutral' };
 }
 

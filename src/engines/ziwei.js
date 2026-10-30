@@ -21,7 +21,7 @@
  * 年界约定:紫微斗数以农历正月初一为年界(与八字引擎的立春年界不同),
  * 四化/禄马/火铃等按农历年干支取用。
  */
-import { TG, DZ, NY } from './shared.js';
+import { TG, DZ, getNayin } from './shared.js';
 
 /* 十二宫名(自命宫起逆时针布列) */
 const ZWG = '命宫,兄弟宫,夫妻宫,子女宫,财帛宫,疾厄宫,迁移宫,交友宫,事业宫,田宅宫,福德宫,父母宫'.split(',');
@@ -127,8 +127,8 @@ function mkZw(b, lunar) {
   // 命宫天干:五虎遁(农历年干 → 寅宫起干,顺数至命宫)
   const mingGongGanIdx = (MG_GAN_BASE[yearGanIdx % 5] + ((mingGongZhi - 2 + 12) % 12)) % 10;
   const mingGongGZ = TG[mingGongGanIdx] + DZ[mingGongZhi];
-  // 由干支序号还原六十甲子序号(x ≡ g mod 10 且 x ≡ z mod 12 → x = 6g − 5z mod 60),取纳音定五行局
-  const mingGongNaYin = NY[((6 * mingGongGanIdx - 5 * mingGongZhi) % 60 + 60) % 60] || '大驿土';
+  // 与长报告共用六十甲子纳音表，以命宫纳音定五行局。
+  const mingGongNaYin = getNayin(mingGongGZ) || '大驿土';
   const ju = WUXING_JU[mingGongNaYin.charAt(mingGongNaYin.length - 1)] || 5;
   const JU_NAMES = { 2: '水二局', 3: '木三局', 4: '金四局', 5: '土五局', 6: '火六局' };
 

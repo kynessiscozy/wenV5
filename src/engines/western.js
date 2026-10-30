@@ -12,7 +12,7 @@
      5. 毕达哥拉斯生命灵数 (Pythagorean Numerology: 主命数/卓越数11,22,33/流年周期)
    ============================================================ */
 
-import { SIGNS, getSunSignByDate } from '../tools2/horoscope.js';
+import { SIGNS } from './zodiac-data.js';
 
 /* —— 基础天文数学辅助函数 —— */
 function norm360(d) {

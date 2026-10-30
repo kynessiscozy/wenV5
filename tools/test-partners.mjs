@@ -1,72 +1,66 @@
-import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
+import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
-const BASE=process.env.BASE_URL||'http://localhost:5173/';
-const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});
-const p=await b.newPage();await p.setViewport({width:430,height:932,deviceScaleFactor:2});
-const errs=[];p.on('pageerror',e=>errs.push(e.message));
-p.on('console',m=>{if(m.type()==='error'&&!/404/.test(m.text()))errs.push(m.text())});
-// 授予剪贴板权限，便于测试分享降级路径
-await b.defaultBrowserContext().overridePermissions(new URL(BASE).origin,['clipboard-read','clipboard-write']);
-await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
-await selectHomeTrait(p);
-await p.waitForFunction(() => typeof window.calc === 'function', { timeout: 15000 });
-await openDemoReport(p);
-await new Promise(r=>setTimeout(r,3600));
+import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 
-const openForm=async()=>{
-  await p.evaluate(()=>window.openToolPage('relation'));
-  await p.waitForSelector('#v3_bdate',{timeout:5000});
-  await new Promise(r=>setTimeout(r,700));
-};
+const BASE = process.env.BASE_URL || 'http://localhost:5173/';
+const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+try {
+  const page = await browser.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.setViewport({ width: 430, height: 932 });
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  await page.evaluateOnNewDocument(() => {
+    Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: {
+      writeText(text) { window.__sharedText = text; return Promise.resolve(); },
+    } });
+  });
+  await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  await selectHomeTrait(page);
+  await openDemoReport(page);
+  await page.waitForFunction(() => window._tools2Ready === true);
+  await page.evaluate(() => window.openToolPage('relation'));
+  await page.waitForSelector('#twRDate');
+  assert.equal(await page.$('.tj-partner-picker'), null);
 
-console.log('=== 1. 首次：无最近对象 ===');
-await openForm();
-console.log('picker 存在 =', await p.evaluate(()=>!!document.querySelector('.tj-partner-picker')));
+  await page.$eval('#twRName', el => { el.value = '阿雯'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+  await page.$eval('#twRDate', el => { el.value = '1988-03-11'; el.dispatchEvent(new Event('change', { bubbles: true })); });
+  await page.click('#twRRun');
+  await page.waitForSelector('#twRSave');
+  const score = await page.evaluate(() => window._lastSynastry?.score);
+  assert.ok(Number.isFinite(score) && score >= 0 && score <= 100);
+  assert.match(await page.$eval('#toolModalContent .tw-view-result', el => el.innerText), /双方命盘/);
+  await page.click('#twRText');
+  await page.waitForFunction(() => window.__sharedText);
+  const shared = await page.evaluate(() => window.__sharedText);
+  assert.match(shared, /阿雯/);
+  assert.doesNotMatch(shared, /1988[-年]0?3/);
 
-console.log('\n=== 2. 合盘 → 保存对象 ===');
-await p.evaluate(()=>{document.getElementById('v3_pname').value='阿雯';document.getElementById('v3_bdate').value='1988-03-11';});
-await p.evaluate(()=>window.TJToolRun('relation'));
-await new Promise(r=>setTimeout(r,900));
-console.log('结果含操作条 =', await p.evaluate(()=>!!document.querySelector('.tj-sign-actions')));
-await p.evaluate(()=>window.TJSynSave());
-await new Promise(r=>setTimeout(r,600));
-console.log('toast =', await p.evaluate(()=>document.querySelector('.tj-toast')?.innerText||'(无)'));
-console.log('localStorage =', await p.evaluate(()=>{const a=JSON.parse(localStorage.getItem('tj_partners_v1')||'[]');return a.map(x=>x.name+'/'+x.y+'/'+x.lastScore).join(', ')}));
+  await page.click('#twRSave');
+  await page.waitForSelector('.tj-partner-chip');
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('tj_partners_v1') || '[]').length), 1);
+  await page.evaluate(() => { window.closeToolPage(); window.openToolPage('relation'); });
+  await page.waitForSelector('.tj-partner-chip');
+  await page.click('.tj-partner-chip');
+  assert.equal(await page.$eval('#twRName', el => el.value), '阿雯');
+  assert.equal(await page.$eval('#twRDate', el => el.value), '1988-03-11');
+  await page.click('#twRRun');
+  await page.waitForSelector('#twRSave', { timeout: 5000 });
+  assert.equal(await page.evaluate(() => window._lastSynastry.score), score, '选择已保存对象后应可直接再次计算');
 
-console.log('\n=== 3. 分享（降级到剪贴板）===');
-await p.evaluate(()=>{navigator.share=undefined;});
-await p.evaluate(()=>window.TJSynShare());
-await new Promise(r=>setTimeout(r,700));
-console.log('toast =', await p.evaluate(()=>document.querySelector('.tj-toast')?.innerText||'(无)'));
-const clip=await p.evaluate(()=>navigator.clipboard.readText().catch(()=>'(读取失败)'));
-console.log('剪贴板内容:\n'+clip);
-
-console.log('\n=== 4. 重开表单：应出现最近对象 ===');
-await openForm();
-const picker=await p.evaluate(()=>({
-  exists:!!document.querySelector('.tj-partner-picker'),
-  chips:[...document.querySelectorAll('.tj-partner-chip')].map(c=>c.innerText.replace(/\n/g,' ')),
-}));
-console.log(JSON.stringify(picker));
-await p.screenshot({path:'/tmp/partner-picker.png'});
-
-console.log('\n=== 5. 点击回填 ===');
-await p.evaluate(()=>document.querySelector('.tj-partner-chip [data-partner], .tj-partner-chip')?.click());
-await new Promise(r=>setTimeout(r,600));
-console.log(await p.evaluate(()=>'pname='+document.getElementById('v3_pname').value+' bdate='+document.getElementById('v3_bdate').value));
-
-console.log('\n=== 6. 刷新后仍在 ===');
-await p.reload({waitUntil:'domcontentloaded',timeout:15000});
-await selectHomeTrait(p);
-await openDemoReport(p);
-await new Promise(r=>setTimeout(r,3600));
-await openForm();
-console.log('刷新后 chips =', await p.evaluate(()=>document.querySelectorAll('.tj-partner-chip').length));
-
-console.log('\n=== 7. 删除 ===');
-await p.evaluate(()=>document.querySelector('.tj-partner-del')?.click());
-await new Promise(r=>setTimeout(r,600));
-console.log('删除后 chips =', await p.evaluate(()=>document.querySelectorAll('.tj-partner-chip').length));
-
-console.log('\n错误:', errs.length?[...new Set(errs)].join(' | '):'无');
-await b.close();
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 15000 });
+  await selectHomeTrait(page);
+  await openDemoReport(page);
+  await page.waitForFunction(() => window._tools2Ready === true);
+  await page.evaluate(() => window.openToolPage('relation'));
+  await page.waitForSelector('.tj-partner-chip');
+  assert.match(await page.$eval('.tj-partner-chip', el => el.textContent), /阿雯/);
+  await page.click('.tj-partner-del');
+  await page.waitForFunction(() => !document.querySelector('.tj-partner-chip'));
+  assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('tj_partners_v1') || '[]')), []);
+  assert.deepEqual(errors, []);
+  console.log('✓ 合盘结果、隐私分享、对象保存、回填、刷新与删除');
+} finally {
+  await browser.close();
+}

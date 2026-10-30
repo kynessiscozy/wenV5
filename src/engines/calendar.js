@@ -144,6 +144,21 @@ function getMonthPillar(year, month, day, hour = 12, minute = 0, second = 0, bir
   return { mi, yp };
 }
 
+/** 人元司权：以最近一个节的准确时刻起算，每经过 24 小时为一日，首日为 1。 */
+function solarTermDutyDay(instant) {
+  const birth = new Date(instant);
+  if (!Number.isFinite(birth.getTime())) return 15;
+  const year = birth.getUTCFullYear();
+  let last = null;
+  for (const y of [year - 1, year, year + 1]) {
+    for (let i = 0; i < 12; i++) {
+      const term = jqInstant(y, i);
+      if (term && term <= birth && (!last || term > last)) last = term;
+    }
+  }
+  return last ? Math.floor((birth - last) / 86400000) + 1 : 15;
+}
+
 /* ============================================================
  * 时区与真太阳时
  * ============================================================ */
@@ -293,4 +308,4 @@ function getDayPillarIndex(y, m, d) {
   return ((54 + diff) % 60 + 60) % 60;
 }
 
-export { _initJq, solarTermDate, jqDate, jqInstant, getMonthPillar, trueSolarTime, resolveBirthDateTime, getDayPillarIndex };
+export { solarTermDutyDay, zonedTimeToUtc, _initJq, solarTermDate, jqDate, jqInstant, getMonthPillar, trueSolarTime, resolveBirthDateTime, getDayPillarIndex };

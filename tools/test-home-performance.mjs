@@ -217,6 +217,38 @@ try {
   }
   console.log('✓ 日历按需加载，慢于两秒也不会丢失点击');
 
+  // The legacy wealth/layoff fallbacks must remain usable while tools2 is
+  // loading. Other tool types have always delegated rather than rendering the
+  // unreachable legacy forms that used to follow that delegation.
+  {
+    const { page, context, errors } = await openContext();
+    await page.setRequestInterception(true);
+    const gate = gateRequests(page, url => /\/assets\/tools2-[^/]+\.js(?:\?|$)/.test(url));
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => typeof window.runWealthTool === 'function', { timeout: 15000 });
+    await waitForHeld(gate, '/assets/tools2-');
+    assert.notEqual(await page.evaluate(() => window._tools2Ready), true);
+    await page.evaluate(() => {
+      window._ctx = { ws: 75, cs: 60, dg: '甲', dw: '木', wx: { st: false, ys: '木' } };
+      window.openToolPage('wealth');
+      document.getElementById('wealthIncome').value = '6000';
+      document.getElementById('wealthCost').value = '2000';
+      document.getElementById('wealthCash').value = '12000';
+      window.runWealthTool();
+    });
+    assert.match(await page.$eval('#toolModalContent', el => el.textContent), /每月结余/);
+    await page.evaluate(() => { window.openToolPage('layoff'); window.runLayoffTool(); });
+    assert.match(await page.$eval('#toolModalContent', el => el.textContent), /综合预警/);
+    await page.evaluate(() => window.openToolPage('career'));
+    assert.match(await page.$eval('#toolModalContent', el => el.textContent), /工具加载中/);
+    await gate.release();
+    await page.waitForFunction(() => window._tools2Ready === true &&
+      document.querySelector('#toolModalContent.tw-tool-career .tw-mast-title')?.textContent.includes('事业大师'), { timeout: 15000 });
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  console.log('✓ 旧工具兜底及新版工具加载交接正常');
+
   // Optional fire layers and expression images must not block a role selection.
   for (const [id, heldPattern, filename, selector] of [
     ['diyan', /earthfire-(flame-seat|runes|rune-seal)\.webp/, 'earthfire-flame-seat.webp', '.character-fire-base'],

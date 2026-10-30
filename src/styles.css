@@ -1839,33 +1839,6 @@ body[data-system-mode="eastern"] .ig-dock .ig-nav-icon-eastern { display: block 
 }
 .w-visual-banner .wb-takeaway b { color: var(--c-text-hi); }
 
-/* 本命星盘圆盘 (SVG 500px High-End Natal Wheel) */
-.w-wheel-container {
-  display: flex; flex-direction: column; align-items: center; margin: 14px auto 10px; width: 100%; max-width: 440px;
-}
-.w-wheel-stage {
-  position: relative; width: 100%; max-width: 400px; margin: 0 auto;
-}
-.w-wheel-svg {
-  width: 100%; height: auto; display: block; filter: drop-shadow(0 8px 24px rgba(0,0,0,.22));
-}
-.planet-glyph-group {
-  cursor: pointer; transition: transform .2s cubic-bezier(.2,.8,.2,1);
-}
-.planet-glyph-group:hover {
-  transform: scale(1.18); transform-origin: center;
-}
-.w-wheel-aspect-legend {
-  display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px; margin-top: 14px; width: 100%;
-}
-@media (max-width: 420px) { .w-wheel-aspect-legend { grid-template-columns: 1fr; } }
-.aspect-pill {
-  display: flex; align-items: center; gap: 8px; font-size: .74em; color: var(--c-text-2);
-  padding: 5px 10px; border-radius: 8px; background: var(--c-surface-3); border: 1px solid var(--c-border);
-}
-.aspect-pill i { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.aspect-pill span { white-space: nowrap; }
-
 /* 三核星盘卡 */
 .w-trio-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;

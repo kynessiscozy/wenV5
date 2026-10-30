@@ -1,7 +1,8 @@
+import { ZHI_CHONG } from '../engines/shared.js';
+
 /* —— 裁员风险检测：现实职场信号为主，命理趋势仅作低权重参考 —— */
 export function getLayoffAstroRisk(d){
   if(!d||!d.b)return{score:20,label:'信息不足',reasons:[],protectors:[],window:'未来3—6个月'};
-  const chong={子:'午',午:'子',丑:'未',未:'丑',寅:'申',申:'寅',卯:'酉',酉:'卯',辰:'戌',戌:'辰',巳:'亥',亥:'巳'};
   const lnSS=d.lnSS||d.cLnSS||'',dySS=d.dySS||d.cDySS||'',lmSS=d.lmSS||d.cLmSS||'';
   let score=20;
   const reasons=[],protectors=[];
@@ -14,8 +15,8 @@ export function getLayoffAstroRisk(d){
   if(lnSS==='劫财'){score+=7;reasons.push('流年劫财，同岗竞争加剧');}
   if(/正印|偏印/.test(lnSS)){score-=5;protectors.push('流年印星利资源与支持');}
   if(/正官/.test(lnSS)&&d.cs>=60){score-=4;protectors.push('正官到位，利正规评价与晋升通道');}
-  if(d.cLn&&chong[d.cLn.z]===d.b.M.z){score+=13;reasons.push('流年冲月柱，工作环境易变');}
-  if(d.cDy&&chong[d.cDy.z]===d.b.M.z){score+=9;reasons.push('大运冲月柱，组织关系处于变动期');}
+  if(d.cLn&&ZHI_CHONG[d.cLn.z]===d.b.M.z){score+=13;reasons.push('流年冲月柱，工作环境易变');}
+  if(d.cDy&&ZHI_CHONG[d.cDy.z]===d.b.M.z){score+=9;reasons.push('大运冲月柱，组织关系处于变动期');}
   if(d.cLn&&d.cLn.z===d.b.M.z){score+=4;reasons.push('流年伏吟月柱，职场议题被放大');}
   if(lmSS==='七杀'||lmSS==='伤官'){score+=5;reasons.push('当前流月考核或沟通压力上升');}
   if(d.tjx&&d.tjx.lnScore){

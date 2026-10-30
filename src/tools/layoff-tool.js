@@ -8,7 +8,6 @@ function runLayoffTool() {
   const d = getCtx();
   const score = Math.min(95, Math.round(signal * 16 + buffer * 10 + market * 10 + (100 - d.cs) * 0.18));
   const level = score >= 65 ? '需要立即准备' : score >= 42 ? '建议提前预案' : '保持观察';
-  const color = score >= 65 ? 'high' : score >= 42 ? 'mid' : 'low';
 
   const actions = score >= 65
     ? ['48 小时内更新简历与作品材料', '整理劳动合同、绩效与项目成果', '建立不少于 3 个外部机会']

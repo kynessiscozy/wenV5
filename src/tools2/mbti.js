@@ -11,8 +11,7 @@
      7. 生成高清 Claude 风格人格分享卡片
    ============================================================ */
 
-import { masthead, notice, esc, attachToolAI } from './runtime.js';
-import { getCtx } from '../state/context.js';
+import { masthead, notice, attachToolAI } from './runtime.js';
 import { showToast } from '../ui/toast.js';
 
 /* —— 16 型人格完整知识库与八维功能 —— */

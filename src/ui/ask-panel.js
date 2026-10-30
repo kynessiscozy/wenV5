@@ -1,14 +1,14 @@
 import { getCtx } from '../state/context.js';
 import { KB } from '../ai/kb.js';
 import { KBSearch, smartAnswer, extractIntents, buildBaziContext, buildWesternContext } from '../ai/index.js';
-import { calcWesternChart, calcNumerology } from '../engines/western.js';
+import { getWesternProfile } from '../engines/western-context.js';
 import { generateAnswerFallback } from '../ai/fallback.js';
 import { streamAskAnswer, probeConnection, getConnState, onConnChange, modelLabel } from '../ai/index.js';
 import { getApiKey } from './ai-settings.js';
 import { getResultStyle } from '../state/result-style.js';
 import { renderSmartAnswer, renderRouteButtons, buildRelatedRoutes, formatStandardAnswer, formatAIText } from '../render/ai.js';
 import {
-  getEvolvePrompt, recordExperience, rateExperience, flagExperience,
+  recordExperience, rateExperience, flagExperience,
   lastExperienceId, flagLastFollowUp, chartKeyOf, getGenome
 } from '../evolve/index.js';
 import { showToast } from './toast.js';
@@ -575,12 +575,12 @@ function _syncAiContext() {
     if (!d) {
       context.innerHTML = '<span>命盘</span><b>尚未提供出生信息</b>';
     } else if (isWestern) {
-      const input = d.input || d._input || {};
-      const y = input.by || 1995, m = input.bm || 6, dDate = input.bd || 15;
-      const [h, min] = (input.timeStr || '12:00').split(':').map(Number);
-      const chart = calcWesternChart(y, m, dDate, h || 12, min || 0);
-      const num = calcNumerology(y, m, dDate);
-      context.innerHTML = `<span>西方星相依据</span><b>太阳 ${chart.sun.name} ｜ 上升 ${chart.asc.name} ｜ 月亮 ${chart.moon.name} ｜ 主命数 ${num.lifePath}号</b>`;
+      const profile = getWesternProfile(d);
+      if (!profile) context.innerHTML = '<span>西方星相依据</span><b>尚未提供完整出生信息</b>';
+      else {
+        const { chart, numerology: num } = profile;
+        context.innerHTML = `<span>西方星相依据</span><b>太阳 ${chart.sun.name} ｜ 上升 ${chart.asc.name} ｜ 月亮 ${chart.moon.name} ｜ 主命数 ${num.lifePath}号</b>`;
+      }
     } else {
       context.innerHTML = `<span>东方命理依据</span><b>${d.dg}${d.dw} · ${d.wx.st ? '身旺' : '身弱'} ｜ 大运 ${d.cDy.g}${d.cDy.z} ｜ 用神 ${d.wx.ys}</b>`;
     }
@@ -910,7 +910,8 @@ export async function generateAnswer(q, { homeSession = _homeChat } = {}) {
   const basis = getAiBasis();
   const isWestern = basis === 'western';
   const resultStyle = getResultStyle(d?.input?.resultStyle);
-  const evolveBlock = getEvolvePrompt();
+  // Personal memory stays on-device; never append its summary to provider prompts.
+  const evolveBlock = '';
 
   let ctx = '';
   let systemPrompt = '';
@@ -943,8 +944,6 @@ export async function generateAnswer(q, { homeSession = _homeChat } = {}) {
 ⑥ 不把命理说成事实，不承诺必然结果，不制造恐惧，不鼓励高风险投资、迷信消费或替代医疗。拿不准就坦诚说「我不确定」。`;
   }
 
-  let usedModel = '';
-
   // 7 秒慢速提示
   const slowTimer = setTimeout(() => {
     _showTyping(el, '模型响应较慢，正在尝试…');
@@ -967,7 +966,6 @@ export async function generateAnswer(q, { homeSession = _homeChat } = {}) {
       aiPrefs,
       previousTurns,
       onModelSwitch: (m) => {
-        usedModel = m;
         _setModelLabel(m);
         _showTyping(el, '正在调用 ' + modelLabel(m) + '…');
       },

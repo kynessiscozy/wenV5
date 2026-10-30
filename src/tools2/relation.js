@@ -108,13 +108,18 @@ export const relation = {
           notice('<b>精度：</b>不知道对方时辰也能算——日柱（夫妻宫）不依赖时辰，仍为精确计算，核心结论成立；缺时柱主要影响子女宫与晚年节奏的判断。')
         );
 
-      bindPartnerPicker(container, p => {
+      // Scope delegation to the picker itself: re-rendering removes its old
+      // listener, and another tool's data-del buttons cannot delete partners.
+      bindPartnerPicker(container.querySelector('.tj-partner-picker'), p => {
         S.pname = p.name;
+        S.bdate = p.y + '-' + String(p.m).padStart(2, '0') + '-' + String(p.d).padStart(2, '0');
+        S.bhour = p.hourZhi == null ? '' : String(p.hourZhi);
+        if (p.relation) S.focus = p.relation;
         const set = (id, v) => { const el = container.querySelector(id); if (el) el.value = v; };
-        set('#twRName', p.name);
-        set('#twRDate', p.y + '-' + String(p.m).padStart(2, '0') + '-' + String(p.d).padStart(2, '0'));
-        set('#twRHour', p.hourZhi == null ? '' : String(p.hourZhi));
-        if (p.relation) set('#twRFocus', p.relation);
+        set('#twRName', S.pname);
+        set('#twRDate', S.bdate);
+        set('#twRHour', S.bhour);
+        set('#twRFocus', S.focus);
         showToast('已填入「' + p.name + '」');
       }, () => renderForm());
 

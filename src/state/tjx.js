@@ -1,4 +1,5 @@
-import { TG, DZ, WX, GW, ZW, SS } from '../engines/shared.js';
+import { TG, DZ, WX, GW, ZW, SS, WX_SHENG, WX_KE, WX_MOTHER, WX_OVERCOMER,
+  GAN_HE, ZHI_HE, ZHI_CHONG, ZHI_HAI } from '../engines/shared.js';
 
 /* ============================================================
    TJX 推算内核 v1.0  ——  TianJi eXtended Engine
@@ -19,8 +20,8 @@ import { TG, DZ, WX, GW, ZW, SS } from '../engines/shared.js';
    同时增强：得令(人元司权+进气退气) + 得地(墓库开闭+禄位) + 得势(生克链传播)
    ============================================================ */
 const __TJX_V5 = (function(){
-  const BEI_SHENG = {木:'水',火:'木',土:'火',金:'土',水:'金'};
-  const BEI_KE    = {木:'金',火:'水',土:'木',金:'火',水:'土'};
+  const BEI_SHENG = WX_MOTHER;
+  const BEI_KE = WX_OVERCOMER;
 
   // 人元司权表
   const MONTH_DUTY = {
@@ -57,8 +58,6 @@ const __TJX_V5 = (function(){
 
   const LU = {甲:'寅',乙:'卯',丙:'巳',丁:'午',戊:'巳',己:'午',庚:'申',辛:'酉',壬:'亥',癸:'子'};
   const DI_WANG = {甲:'卯',乙:'寅',丙:'午',丁:'巳',戊:'午',己:'巳',庚:'酉',辛:'申',壬:'子',癸:'亥'};
-  const CHONG = {子:'午',午:'子',丑:'未',未:'丑',寅:'申',申:'寅',卯:'酉',酉:'卯',辰:'戌',戌:'辰',巳:'亥',亥:'巳'};
-  const HE = {子:'丑',丑:'子',寅:'亥',亥:'寅',卯:'戌',戌:'卯',辰:'酉',酉:'辰',巳:'申',申:'巳',午:'未',未:'午'};
   const TOMB = {辰:'水',戌:'火',丑:'金',未:'木'};
 
   // 穷通宝鉴气数（精简：12日干×12月=144条）
@@ -134,7 +133,7 @@ const __TJX_V5 = (function(){
         if(cw===dw){
           let rs=hw*8*wgt;
           if(TOMB[z]===dw){
-            const cz=CHONG[z];
+            const cz=ZHI_CHONG[z];
             rs*=allZ.includes(cz)?1.8:0.4;
           }
           score+=rs;
@@ -154,8 +153,8 @@ const __TJX_V5 = (function(){
       const gw=GW[g],df=1.0/Math.sqrt(dist);
       if(gw===dw){score+=10*df;chains.push(pos+'比劫+'+Math.round(10*df));}
       else if(gw===BEI_SHENG[dw]){score+=7*df;chains.push(pos+'印生+'+Math.round(7*df));}
-      else if(gw===ZSHENG){score-=5*df;chains.push(pos+'食伤-'+Math.round(5*df));}
-      else if(gw===ZKE){score-=6*df;chains.push(pos+'财耗-'+Math.round(6*df));}
+      else if(gw===ZSHENG[dw]){score-=5*df;chains.push(pos+'食伤-'+Math.round(5*df));}
+      else if(gw===ZKE[dw]){score-=6*df;chains.push(pos+'财耗-'+Math.round(6*df));}
       else if(gw===BEI_KE[dw]){score-=9*df;chains.push(pos+'官杀-'+Math.round(9*df));}
     }
     if(yg&&mg){
@@ -201,7 +200,7 @@ const __TJX_V5 = (function(){
       if(p.length===3){
         if(wx===dw){score+=18;details.push('三合'+wx+'局+18');}
         else if(wx===BEI_SHENG[dw]){score+=14;details.push('三合'+wx+'生扶+14');}
-        else if(wx===ZSHENG){score-=6;details.push('三合'+wx+'泄-6');}
+        else if(wx===ZSHENG[dw]){score-=6;details.push('三合'+wx+'泄-6');}
       }else if(p.length===2){
         const mids=['子','卯','午','酉'];const hm=p.some(z=>mids.includes(z));
         if(hm){if(wx===dw){score+=10;details.push('半合'+wx+'(中神)+10');}else if(wx===BEI_SHENG[dw]){score+=7;details.push('半合'+wx+'生扶+7');}}
@@ -214,14 +213,14 @@ const __TJX_V5 = (function(){
       if(p.length===3){
         if(wx===dw){score+=22;details.push('三会'+wx+'方+22');}
         else if(wx===BEI_SHENG[dw]){score+=16;details.push('三会'+wx+'生扶+16');}
-        else if(wx===ZSHENG){score-=8;details.push('三会'+wx+'泄-8');}
+        else if(wx===ZSHENG[dw]){score-=8;details.push('三会'+wx+'泄-8');}
       }else if(p.length===2){if(wx===dw){score+=6;details.push('三会缺一+6');}}
     }
     return{score:Math.round(score),details};
   }
 
-  const ZSHENG = {木:'火',火:'土',土:'金',金:'水',水:'木'};
-  const ZKE    = {木:'土',火:'金',土:'水',金:'木',水:'火'};
+  const ZSHENG = WX_SHENG;
+  const ZKE = WX_KE;
 
   function classifyLevel(ns){
     if(ns>=75)return{level:6,label:'极旺',extreme:true};
@@ -265,10 +264,7 @@ const __TJX_V5 = (function(){
   return{compute};
 })();
 const TJX = (function(){
-  const SH={木:'火',火:'土',土:'金',金:'水',水:'木'};   // 五行相生
-  const KE={木:'土',火:'金',土:'水',金:'木',水:'火'};   // 我克
-  const BS={木:'水',火:'木',土:'火',金:'土',水:'金'};   // 生我
-  const BK={木:'金',火:'水',土:'木',金:'火',水:'土'};   // 克我
+  const SH=WX_SHENG, KE=WX_KE, BS=WX_MOTHER, BK=WX_OVERCOMER;
 
   // 地支藏干本气/中气/余气 权重（沈孝瞻法）
   const ZC_W={
@@ -289,22 +285,6 @@ const TJX = (function(){
   // 十二长生表（日干在各地支的状态系数：越接近根越大）
   // 顺序：长生·沐浴·冠带·临官·帝旺·衰·病·死·墓·绝·胎·养
   const CS_W=[0.4,0.25,0.5,1.0,1.0,0.4,0.25,0.1,0.3,0.0,0.15,0.3];
-  const CS_START={
-    甲:11,乙:6,丙:2,丁:9,戊:2,己:9,庚:5,辛:0,壬:8,癸:3
-  }; // 日干在哪个地支起"长生"（按 DZ 索引 子=0...亥=11 的"逆向位置"算）
-  // 上述表参考子平：阳干顺行、阴干逆行
-  const YANG_GAN={甲:1,丙:1,戊:1,庚:1,壬:1,乙:0,丁:0,己:0,辛:0,癸:0};
-
-  function cs(dg,zhi){
-    // 日干在某地支的"十二长生"权重
-    const dzIdx={子:0,丑:1,寅:2,卯:3,辰:4,巳:5,午:6,未:7,申:8,酉:9,戌:10,亥:11};
-    const start=CS_START[dg];
-    if(start===undefined)return 0;
-    const idx=dzIdx[zhi];
-    const step=YANG_GAN[dg]?((idx-start+12)%12):((start-idx+12)%12);
-    return CS_W[step]||0;
-  }
-
   // —— 调候用神（穷通宝鉴精简表） ——
   // key: 日干+月令地支 → 主用神, 次用神
   const TIAO_HOU={
@@ -362,7 +342,7 @@ const TJX = (function(){
   /* ——— 1. 旺衰精算（三维：得令/得地/得势） ——— */
   /* ——— 1. 旺衰精算（V5 五维引擎：得令/得地/得势/得气/得局） ——— */
   function strength(b){
-    var bd = (b._meta && b._meta.bd) ? b._meta.bd : 15;
+    var bd = (b._meta && b._meta.dutyDay) ? b._meta.dutyDay : 15;
     var v5r = __TJX_V5.compute(b, bd);
     return {
       dw: v5r.dw,
@@ -553,26 +533,19 @@ const TJX = (function(){
     const out={gan_he:[],zhi_he:[],zhi_chong:[],zhi_xing:[],zhi_hai:[],san_he:[],san_hui:[]};
 
     // 天干五合
-    const ganHe={甲:'己',己:'甲',乙:'庚',庚:'乙',丙:'辛',辛:'丙',丁:'壬',壬:'丁',戊:'癸',癸:'戊'};
     for(let i=0;i<4;i++)for(let j=i+1;j<4;j++){
-      if(ganHe[gz[i].g]===gz[j].g) out.gan_he.push({a:labels[i]+gz[i].g,b:labels[j]+gz[j].g});
+      if(GAN_HE[gz[i].g]===gz[j].g) out.gan_he.push({a:labels[i]+gz[i].g,b:labels[j]+gz[j].g});
     }
 
-    // 地支六合
-    const zhiHe={子:'丑',丑:'子',寅:'亥',亥:'寅',卯:'戌',戌:'卯',辰:'酉',酉:'辰',巳:'申',申:'巳',午:'未',未:'午'};
-    // 地支六冲
-    const zhiChong={子:'午',午:'子',丑:'未',未:'丑',寅:'申',申:'寅',卯:'酉',酉:'卯',辰:'戌',戌:'辰',巳:'亥',亥:'巳'};
-    // 地支相害
-    const zhiHai={子:'未',未:'子',丑:'午',午:'丑',寅:'巳',巳:'寅',卯:'辰',辰:'卯',申:'亥',亥:'申',酉:'戌',戌:'酉'};
     // 地支相刑（不含三刑）
     const zhiXing=[['寅','巳'],['巳','申'],['申','寅'],['丑','戌'],['戌','未'],['未','丑'],['子','卯']];
     const ziXing=['辰','午','酉','亥']; // 自刑
 
     for(let i=0;i<4;i++)for(let j=i+1;j<4;j++){
       const a=gz[i].z, c=gz[j].z;
-      if(zhiHe[a]===c) out.zhi_he.push({a:labels[i]+a,b:labels[j]+c});
-      if(zhiChong[a]===c) out.zhi_chong.push({a:labels[i]+a,b:labels[j]+c});
-      if(zhiHai[a]===c) out.zhi_hai.push({a:labels[i]+a,b:labels[j]+c});
+      if(ZHI_HE[a]===c) out.zhi_he.push({a:labels[i]+a,b:labels[j]+c});
+      if(ZHI_CHONG[a]===c) out.zhi_chong.push({a:labels[i]+a,b:labels[j]+c});
+      if(ZHI_HAI[a]===c) out.zhi_hai.push({a:labels[i]+a,b:labels[j]+c});
       if(zhiXing.some(p=>(p[0]===a&&p[1]===c)||(p[0]===c&&p[1]===a))) out.zhi_xing.push({a:labels[i]+a,b:labels[j]+c});
     }
     // 自刑
@@ -638,14 +611,13 @@ const TJX = (function(){
     });
 
     // 刑冲（与日支、月支）
-    const chongMap={子:'午',午:'子',丑:'未',未:'丑',寅:'申',申:'寅',卯:'酉',酉:'卯',辰:'戌',戌:'辰',巳:'亥',亥:'巳'};
-    if(chongMap[gz.z]===b.D.z){score-=15;reasons.push('冲日支（变动·健康注意）');}
-    if(chongMap[gz.z]===b.M.z){score-=10;reasons.push('冲月支（事业·家庭变化）');}
+    if(ZHI_CHONG[gz.z]===b.D.z){score-=15;reasons.push('冲日支（变动·健康注意）');}
+    if(ZHI_CHONG[gz.z]===b.M.z){score-=10;reasons.push('冲月支（事业·家庭变化）');}
     if(gz.z===b.Y.z){score-=5;reasons.push('伏吟年支（本命之年）');}
 
     // 天克地冲（大忌）
     const ganChong={甲:'庚',乙:'辛',丙:'壬',丁:'癸',戊:'甲',己:'乙',庚:'丙',辛:'丁',壬:'戊',癸:'己'};
-    if(ganChong[gz.g]===b.D.g && chongMap[gz.z]===b.D.z){
+    if(ganChong[gz.g]===b.D.g && ZHI_CHONG[gz.z]===b.D.z){
       score-=25;reasons.push('天克地冲日柱（重大变动）');
     }
 
@@ -659,8 +631,6 @@ const TJX = (function(){
     const events=[];
     const lnSS=SS[dg][gz.g]||'';
     const dySS=dyGz?(SS[dg][dyGz.g]||''):'';
-    const chongMap={子:'午',午:'子',丑:'未',未:'丑',寅:'申',申:'寅',卯:'酉',酉:'卯',辰:'戌',戌:'辰',巳:'亥',亥:'巳'};
-    const heMap={子:'丑',丑:'子',寅:'亥',亥:'寅',卯:'戌',戌:'卯',辰:'酉',酉:'辰',巳:'申',申:'巳',午:'未',未:'午'};
 
     // 十神事件
     if(lnSS==='正官'||lnSS==='七杀'){
@@ -685,8 +655,8 @@ const TJX = (function(){
       events.push({type:'感情',tag:'配偶星到位（婚恋机遇）',weight:9});
     }
     // 配偶宫(日支)被冲合
-    if(chongMap[gz.z]===b.D.z) events.push({type:'感情',tag:'配偶宫被冲（关系动荡）',weight:7});
-    if(heMap[gz.z]===b.D.z) events.push({type:'感情',tag:'配偶宫逢合（关系升温）',weight:7});
+    if(ZHI_CHONG[gz.z]===b.D.z) events.push({type:'感情',tag:'配偶宫被冲（关系动荡）',weight:7});
+    if(ZHI_HE[gz.z]===b.D.z) events.push({type:'感情',tag:'配偶宫逢合（关系升温）',weight:7});
 
     // 岁运并临
     if(dyGz&&dyGz.g===gz.g&&dyGz.z===gz.z){

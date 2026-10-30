@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 import { spinFor } from './trait-picker-helper.mjs';
+import { KB } from '../src/ai/kb.js';
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173/';
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
@@ -56,6 +57,14 @@ try {
     await page.click('.character-guide-link');
     await page.click('.ng-act-btn.primary');
     await page.waitForSelector('#formModal.open');
+    assert.match(await page.$eval('#formDefaults', el => el.innerText), /示例日期和地点.*09:00/);
+    assert.match(await page.$eval('#bTime', el => el.getAttribute('aria-describedby')), /formDefaults/);
+    const solarLabel = '真太阳时（按时区、经度和均时差估算）';
+    assert.equal(await page.$eval('#swText', el => el.innerText), '关闭' + solarLabel);
+    await page.click('#swTrueSolar');
+    assert.equal(await page.$eval('#swText', el => el.innerText), '开启' + solarLabel);
+    assert.equal(await page.evaluate(() => window.__TJ_GLOSSARY__['真太阳时']), KB.terms.find(term => term.t === '真太阳时').d);
+    await page.click('#swTrueSolar');
     await page.evaluate(() => window.TJCloseForm());
     await page.evaluate(() => { void window.calc(true); });
     await page.waitForFunction(() => document.getElementById('calculationOverlay').dataset.calculationState === 'ready');
@@ -63,6 +72,8 @@ try {
     await page.waitForFunction(() => document.body.classList.contains('report-active'));
     await page.evaluate(() => window.openNoviceGuide('western'));
     assert.equal(await page.$eval('#ng-tab-western', el => el.getAttribute('aria-selected')), 'true');
+    assert.match(await page.$eval('#ngBodyContent', el => el.innerText), /出生地时区及历史夏令时/);
+    assert.match(await page.$eval('#ngBodyContent', el => el.innerText), /不是实时天象/);
     await page.keyboard.press('Escape');
     assert.equal(await page.$eval('#noviceGuideModal', el => el.classList.contains('open')), false);
     assert.equal(await page.evaluate(() => document.body.classList.contains('report-active')), true, '关闭指引不能返回首页');

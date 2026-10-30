@@ -1,53 +1,104 @@
-import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
+import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
-const BASE=process.env.BASE_URL||'http://localhost:5173/';
-const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});
-const p=await b.newPage();await p.setViewport({width:430,height:932,deviceScaleFactor:2});
-const errs=[];p.on('pageerror',e=>errs.push(e.message));
-await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
-await selectHomeTrait(p);
-await p.waitForFunction(() => typeof window.calc === 'function', { timeout: 15000 });
-await openDemoReport(p);
-await new Promise(r=>setTimeout(r,4200));
+import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 
-console.log('=== 1. 首次进入应出现引导 ===');
-console.log(await p.evaluate(()=>{const e=document.getElementById('glossHint');return e?e.innerText.replace(/\n/g,' '):'❗未出现'}));
+const BASE = process.env.BASE_URL || 'http://localhost:5173/';
+const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+const errors = [];
 
-console.log('\n=== 2. 术语视觉 ===');
-console.log(await p.evaluate(()=>{
-  const all=[...document.querySelectorAll('#page2 .glossary-term')].filter(e=>e.offsetParent);
-  if(!all.length)return '❗无术语';
-  const t=all[0];
-  const hinted=[...document.querySelectorAll('#page2 .glossary-term.has-hint')].filter(e=>e.offsetParent);
-  const c=getComputedStyle(t);
-  const a=hinted[0]?getComputedStyle(hinted[0],'::after').content:'(无)';
-  return `首个="${t.textContent}" cursor=${c.cursor} | 术语${all.length}个/带问号${hinted.length}个 问号=${a}`;
-}));
-await p.screenshot({path:'/tmp/gloss-hint.png'});
-
-console.log('\n=== 3. 点击术语后引导消失 ===');
-await p.evaluate(()=>[...document.querySelectorAll('#page2 .glossary-term')].filter(e=>e.offsetParent)[0].click());
-await new Promise(r=>setTimeout(r,500));
-console.log('弹层:', await p.evaluate(()=>document.querySelector('.gloss-pop')?.innerText.replace(/\n/g,' ').slice(0,90)||'无'));
-console.log('引导已移除:', await p.evaluate(()=>!document.getElementById('glossHint')));
-
-console.log('\n=== 4. 刷新后不再出现 ===');
-await p.reload({waitUntil:'domcontentloaded',timeout:15000});
-await selectHomeTrait(p);
-await openDemoReport(p);
-await new Promise(r=>setTimeout(r,4200));
-console.log('再次出现:', await p.evaluate(()=>!!document.getElementById('glossHint')));
-
-console.log('\n=== 5. 新增词条可解释 ===');
-for(const w of ['格局','命局','喜神','食神格']){
-  const ok=await p.evaluate(t=>{
-    const el=[...document.querySelectorAll('#page2 .glossary-term')].find(e=>e.dataset.term===t);
-    if(!el)return '未标注';
-    el.click();
-    const pop=document.querySelector('.gloss-pop');
-    return pop?pop.innerText.split('\n').slice(1).join(' ').slice(0,44):'无弹层';
-  },w);
-  console.log(`  ${w}: ${ok}`);
+async function openReport({ touch = false } = {}) {
+  const context = await browser.createBrowserContext();
+  const page = await context.newPage();
+  page.on('pageerror', error => errors.push(error.message));
+  await page.setViewport(touch
+    ? { width: 390, height: 844, isMobile: true, hasTouch: true }
+    : { width: 1200, height: 850 });
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  await selectHomeTrait(page);
+  await openDemoReport(page);
+  // Report layout is reorganized after the reveal; select text only once the
+  // real section tabs have been mounted and the rearrangement has settled.
+  await page.waitForFunction(() => document.querySelectorAll('#s-ming .ming-tab').length >= 2);
+  await new Promise(resolve => setTimeout(resolve, 800));
+  return { page, context };
 }
-console.log('\n错误:', errs.length?[...new Set(errs)].join(' | '):'无');
-await b.close();
+
+// Select a term from the actual rendered report, not a test-only fixture.
+async function selectTerm(page, term) {
+  const found = await page.evaluate(text => {
+    const root = document.querySelector('#page2 .sec.active');
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const offset = node.data.indexOf(text);
+      const parent = node.parentElement;
+      if (offset < 0 || !parent || !parent.getClientRects().length) continue;
+      parent.scrollIntoView({ block: 'center', behavior: 'instant' });
+      const range = document.createRange();
+      range.setStart(node, offset);
+      range.setEnd(node, offset + text.length);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return true;
+    }
+    return false;
+  }, term);
+  assert.equal(found, true, `报告中未找到可见术语「${term}」`);
+}
+
+try {
+  {
+    const { page, context } = await openReport();
+    assert.equal(await page.$$('#page2 .glossary-term').then(nodes => nodes.length), 0, '报告不应恢复旧的自动下划线标注');
+    await selectTerm(page, '用神');
+    await page.waitForSelector('#glossChip', { visible: true });
+    assert.match(await page.$eval('#glossChip', el => el.textContent), /解释「用神」/);
+    await page.click('#glossChip .gloss-chip-x');
+    await page.waitForSelector('#glossPop.open');
+    assert.equal(await page.$eval('#glossPopTt', el => el.textContent), '用神');
+    assert.equal(await page.$eval('#glossPopBd', el => el.textContent), await page.evaluate(() => window.__TJ_GLOSSARY__['用神']));
+
+    // Right click must offer the same definition and dismiss cleanly.
+    await selectTerm(page, '用神');
+    const prevented = await page.evaluate(() => {
+      const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 150, clientY: 120 });
+      document.dispatchEvent(event);
+      return event.defaultPrevented;
+    });
+    assert.equal(prevented, true);
+    await page.waitForSelector('#glossCtx');
+    await page.click('#glossCtx [data-act="explain"]');
+    assert.equal(await page.$eval('#glossPopTt', el => el.textContent), '用神');
+    assert.equal(await page.$('#glossCtx'), null);
+
+    // The AI entry opens the real assistant and passes the selected term.
+    await selectTerm(page, '用神');
+    await page.evaluate(() => document.dispatchEvent(new MouseEvent('contextmenu', {
+      bubbles: true, cancelable: true, clientX: 150, clientY: 120,
+    })));
+    await page.click('#glossCtx [data-act="ask"]');
+    await page.waitForSelector('#aiSheet.open');
+    await page.waitForFunction(() => [...document.querySelectorAll('#askResult .chat-msg-user')]
+      .some(message => message.textContent.includes('用神')), { timeout: 10000 });
+    await context.close();
+  }
+  console.log('✓ 报告选词解释、右键菜单和问问大师入口');
+
+  {
+    const { page, context } = await openReport({ touch: true });
+    await selectTerm(page, '用神');
+    await page.waitForSelector('.dock-gloss-x', { visible: true });
+    await page.waitForFunction(() => !document.querySelector('.tab-bar-inner')?.classList.contains('dock-gloss-arm'));
+    await page.click('.dock-gloss-x');
+    await page.waitForSelector('#glossPop.open');
+    assert.equal(await page.$eval('#glossPopTt', el => el.textContent), '用神');
+    assert.equal(await page.$('.dock-gloss-x'), null, '解释后应恢复原有导航');
+    await context.close();
+  }
+  console.log('✓ 触屏选词解释与导航恢复');
+  assert.deepEqual(errors, []);
+} finally {
+  await browser.close();
+}

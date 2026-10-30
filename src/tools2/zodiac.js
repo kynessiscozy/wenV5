@@ -5,7 +5,7 @@
    新形态：12 生肖环形图，选择对方生肖后高亮连线，
    中心卡片给出判定与沟通建议。
    ============================================================ */
-import { masthead, notice, esc, attachToolAI } from './runtime.js';
+import { masthead, notice, attachToolAI } from './runtime.js';
 import { getCtx } from '../state/context.js';
 
 const SX = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];

@@ -13,7 +13,7 @@
 import { masthead, notice, esc, viewShell, goResult } from './runtime.js';
 import { getCtx } from '../state/context.js';
 import { getWxGeo, requestGeo } from '../ui/weather.js';
-import { TG, DZ } from '../engines/shared.js';
+import { TG, DZ, WX_SHENG, WX_KE } from '../engines/shared.js';
 
 /* ============================================================
    1) 定位 + 八宅
@@ -43,28 +43,14 @@ const BAZHAI = {
   兑: { 伏位: '正西', 生气: '西北', 延年: '东北', 天医: '西南', 祸害: '东南', 六煞: '正南', 五鬼: '正东', 绝命: '正北' },
 };
 const GOOD_STARS = ['生气', '天医', '延年', '伏位'];
-const BAD_STARS = ['五鬼', '六煞', '祸害', '绝命'];
-const STAR_MEANING = {
-  生气: '最吉，生发旺气，主财运、事业兴旺',
-  天医: '次吉，主健康、贵人与化病',
-  延年: '主长寿、夫妻和谐、稳健',
-  伏位: '平稳蓄势，宜静养安身',
-  绝命: '最凶，主健康损耗、意外',
-  五鬼: '主是非、烂桃花、意外',
-  六煞: '主口舌、破耗、情绪不稳',
-  祸害: '主小人是非、病痛不顺',
-};
-
 /* 命卦 → 五行（用于与地域五行呼应） */
 const GUA_WX = { 坎: '水', 离: '火', 震: '木', 巽: '木', 乾: '金', 兑: '金', 坤: '土', 艮: '土' };
-const SHENG = { 木: '火', 火: '土', 土: '金', 金: '水', 水: '木' };
-const KE    = { 木: '土', 火: '金', 土: '水', 金: '木', 水: '火' };
 function wxRelate(a, b) {
   if (!a || !b) return '';
-  if (SHENG[a] === b) return '生';       // a 生 b
-  if (SHENG[b] === a) return '生我';     // b 生 a
-  if (KE[a] === b) return '克';           // a 克 b
-  if (KE[b] === a) return '被克';         // b 克 a
+  if (WX_SHENG[a] === b) return '生';       // a 生 b
+  if (WX_SHENG[b] === a) return '生我';     // b 生 a
+  if (WX_KE[a] === b) return '克';           // a 克 b
+  if (WX_KE[b] === a) return '被克';         // b 克 a
   return '比和';
 }
 /* 由经纬度推位置特征：真实可算的「真太阳时差」+ 民俗方位五行近似 */
@@ -117,7 +103,7 @@ function classifyFeature(tags) {
   }
   return null;
 }
-async function fetchSurroundings(lat, lon) {
+async function fetchSurroundings(lat, lon, signal) {
   const q = '[out:json][timeout:15];(' +
     'way["building"](around:160,' + lat + ',' + lon + ');' +
     'way["natural"="water"](around:230,' + lat + ',' + lon + ');' +
@@ -127,6 +113,9 @@ async function fetchSurroundings(lat, lon) {
     'way["amenity"~"school|hospital|place_of_worship|fuel"](around:230,' + lat + ',' + lon + ');' +
     ');out center tags;';
   const ctrl = new AbortController();
+  const abort = () => ctrl.abort();
+  if (signal?.aborted) abort();
+  else signal?.addEventListener('abort', abort, { once: true });
   const t = setTimeout(() => ctrl.abort(), 9000);
   try {
     const resp = await fetch('https://overpass-api.de/api/interpreter', {
@@ -154,6 +143,7 @@ async function fetchSurroundings(lat, lon) {
     return null;
   } finally {
     clearTimeout(t);
+    signal?.removeEventListener('abort', abort);
   }
 }
 function analyzeSurroundings(surr, ys, mg) {
@@ -649,12 +639,15 @@ export const fengshui = {
   name: '风水大师',
   cat: '日常决策',
   icon: '风',
-  desc: '结合当前位置、房屋坐向与你的命卦/用神，加上当年九宫飞星，用 AI 算出适合你的居所与工位布局。',
+  desc: '结合当前位置、房屋坐向与命卦、用神和当年九宫飞星，生成居所与工位布局参考；可选择继续使用 AI 解读。',
   open(container) {
     const ctx = getCtx();
     const year = new Date().getFullYear();
     const stars = yearStars(year);
     const S = { space: '住宅', focus: 'wealth', zuo: '坐北朝南', compassTxt: '', locating: false, locErr: '' };
+    let active = true;
+    let locateTimer = null;
+    let surroundingsRequest = null;
 
     const geoElId = 'twFGeoNote';
     const refreshLocUI = () => {
@@ -681,12 +674,12 @@ export const fengshui = {
       } catch (e) {
         S.locErr = (e && e.message ? e.message : '未知错误');
       }
+      if (!active) return;
       S.locating = false; refreshLocUI();
       if (locBtn) { locBtn.disabled = false; locBtn.textContent = '📍 获取当前位置'; }
     };
 
     const render = () => {
-      const ys = (ctx && ctx.wx && ctx.wx.ys) || null;
       const geo = getWxGeo();
       const locNote = geo && geo.city ? '已定位 ' + esc(geo.city) : (S.locating ? '正在定位…' : '未定位（可点击「获取当前位置」授权，或手动选择坐向）');
       container.innerHTML =
@@ -713,8 +706,8 @@ export const fengshui = {
             '<button type="button" class="tw-btn tw-btn-ghost" id="twFCompass">🧭 用罗盘定向</button>' +
           '</div>' +
           '<div class="tw-fs-compass-note" id="twFCompassNote">' + esc(S.compassTxt) + '</div>' +
-          '<div class="tw-actions" style="margin-top:8px"><button type="button" class="tw-btn tw-btn-primary" id="twFGen">AI 测算风水布局 →</button></div>' +
-          notice('<b>AI 测算：</b>结果页会结合你授权定位后的「四周建筑/道路/水体」按方位拆解，并把这些与当前位置、坐向、命卦/宅卦、用神、九宫飞星一并交给 AI，给出一条结合你处境的具体建议。')
+          '<div class="tw-actions" style="margin-top:8px"><button type="button" class="tw-btn tw-btn-primary" id="twFGen">生成布局参考 →</button></div>' +
+          notice('<b>定位与 AI：</b>打开工具会尝试定位；生成结果时，已授权坐标会发送给 Overpass 查询周边。点击 AI 解读后，相关位置、坐向和工具依据会发送给所选 AI 服务商。未定位仍可手动选择坐向。')
         );
 
       container.querySelector('#twFSpace')?.addEventListener('change', e => { S.space = e.target.value; });
@@ -730,6 +723,7 @@ export const fengshui = {
         btn.disabled = true; btn.textContent = '读取中…';
         try {
           const hd = await readCompass();                       // 面向角度
+          if (!active) return;
           const facing = headingToDir(hd);                       // 面向方位
           const zuoLabel = ZUO_LABEL[DIR_OPP[facing]] || S.zuo;  // 坐 = 向的对宫
           S.zuo = zuoLabel;
@@ -738,6 +732,7 @@ export const fengshui = {
           S.compassTxt = '罗盘读数 ' + Math.round(hd) + '°，面向 ' + facing + '，即「' + zuoLabel + '」。请手持设备面向大门前进方向测量更准。';
           if (note) note.textContent = S.compassTxt;
         } catch (e) {
+          if (!active) return;
           S.compassTxt = '未能读取罗盘（需在 HTTPS 且授权设备方向）。可在下方手动选择坐向，或用手机指南针测出门朝向。';
           if (note) note.textContent = S.compassTxt;
         }
@@ -751,8 +746,11 @@ export const fengshui = {
         const geo = getWxGeo();
         let surr = null;
         if (geo && geo.lat != null) {
-          try { surr = await fetchSurroundings(geo.lat, geo.lon); } catch (_) { surr = null; }
+          surroundingsRequest = new AbortController();
+          try { surr = await fetchSurroundings(geo.lat, geo.lon, surroundingsRequest.signal); } catch (_) { surr = null; }
+          surroundingsRequest = null;
         }
+        if (!active) return; // A later tool may now own this shared container.
         const out = buildResult(ctx, S, stars, year, surr);
         goResult(container, fengshui.name, out.html, {
           getSource: () => out.aiCtx,
@@ -770,15 +768,20 @@ export const fengshui = {
           if (detail) detail.hidden = v !== 'detail';
         }));
         genBtn.disabled = false;
-        genBtn.textContent = 'AI 测算风水布局 →';
+        genBtn.textContent = '生成布局参考 →';
       });
     };
     render();
 
     /* 打开工具时若已有定位则直接用；没有则自动尝试一次（可被用户拒绝，不影响手动选择） */
     if (!getWxGeo() || !getWxGeo().city) {
-      setTimeout(doLocate, 400);
+      locateTimer = setTimeout(doLocate, 400);
     }
+    return () => {
+      active = false;
+      clearTimeout(locateTimer);
+      surroundingsRequest?.abort();
+    };
   },
 };
 

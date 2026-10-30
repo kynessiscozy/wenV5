@@ -5,7 +5,7 @@
    匹配 + 冲/宜收扣分，按适配度排序推荐前 3。
    新形态：日历热力网格（能量色块）+ 点击看详情 + 榜单。
    ============================================================ */
-import { masthead, notice, esc, attachToolAI } from './runtime.js';
+import { masthead, notice, attachToolAI } from './runtime.js';
 import { getCtx } from '../state/context.js';
 import { calcLiuRi } from '../engines/liuri.js';
 
@@ -72,7 +72,6 @@ export const date = {
     };
 
     const fmt = d => d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
-    const fmtShort = d => (d.getMonth() + 1) + '/' + d.getDate();
 
     const render = () => {
       const days = compute();
@@ -149,7 +148,7 @@ export const date = {
             '<p><b>基调：</b>' + TONE_CN[x.r.tone] + '（能量 ' + x.r.energy + '）　<b>十神：</b>' + x.r.role + ' —— ' + x.r.roleInfo.domain + '</p>' +
             (x.r.chong.length ? '<p><b>留意：</b>' + x.r.chong.map(h => h.text).join('；') + '</p>' : '') +
             (x.r.he.length ? '<p><b>助力：</b>' + x.r.he.map(h => h.text).join('；') + '</p>' : '') +
-            '<p><b>' + S.event + '：</b>' + (roleHit ? '当日领域与本事项契合' : '本事项' + NOTES[S.event]) + '。适配度 ' + x.score + '。' + (i === 0 ? '' : '') + '</p>';
+            '<p><b>' + S.event + '：</b>' + (roleHit ? '当日领域与本事项契合' : '本事项' + NOTES[S.event]) + '。适配度 ' + x.score + '。' + '</p>';
         });
       });
 

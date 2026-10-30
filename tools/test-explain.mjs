@@ -1,56 +1,47 @@
-import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
+import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
-const BASE=process.env.BASE_URL||'http://localhost:5173/';
-const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});
-const p=await b.newPage();await p.setViewport({width:430,height:932,deviceScaleFactor:2});
-const errs=[];p.on('pageerror',e=>errs.push(e.message));
-p.on('console',m=>{if(m.type()==='error'&&!/404/.test(m.text()))errs.push(m.text())});
-await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
-await selectHomeTrait(p);
-await p.waitForFunction(() => typeof window.calc === 'function', { timeout: 15000 });
-await openDemoReport(p);
-await new Promise(r=>setTimeout(r,4500));
+import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 
-console.log('=== 1. 新手模式：解释入口数量 ===');
-console.log(await p.evaluate(()=>{
-  const b=[...document.querySelectorAll('.explain-btn')].filter(e=>e.offsetParent);
-  return b.length+' 个';
-}));
+const BASE = process.env.BASE_URL || 'http://localhost:5173/';
+const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+try {
+  const page = await browser.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.setViewport({ width: 430, height: 932 });
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  await selectHomeTrait(page);
+  await openDemoReport(page);
+  await page.evaluate(() => window.openAsk());
+  await page.waitForSelector('#aiSheet.open');
 
-console.log('\n=== 2. 点击后自动生成的问题 ===');
-await p.evaluate(()=>[...document.querySelectorAll('.explain-btn')].filter(e=>e.offsetParent)[0].click());
-await new Promise(r=>setTimeout(r,2600));
-console.log(await p.evaluate(()=>{
-  const t=document.getElementById('askResult').innerText;
-  return t.slice(0,520);
-}));
-await p.screenshot({path:'/tmp/explain-ask.png'});
+  async function ask(question) {
+    await page.evaluate(q => { window.newAskChat(); window.doAsk(q); }, question);
+    await page.waitForFunction(() => window._aiConversation?.length >= 2, { timeout: 10000 });
+    return page.$eval('#askResult', el => el.innerText);
+  }
 
-console.log('\n=== 3. 大师模式：各卡片入口 ===');
-await p.evaluate(()=>window.closeAsk());
-await new Promise(r=>setTimeout(r,400));
-await p.evaluate(()=>window.setUserMode('master'));
-await new Promise(r=>setTimeout(r,1600));
-console.log(await p.evaluate(()=>{
-  return [...document.querySelectorAll('#s-ming [data-card]')].filter(c=>c.offsetParent).map(c=>{
-    const t=(c.querySelector('.card-tt')||c.querySelector('.qr-title'))?.textContent.trim()||c.dataset.card;
-    return t+': '+(c.querySelector(':scope > .explain-btn')?'有':'无');
-  }).join('\n');
-}));
-await p.screenshot({path:'/tmp/explain-master.png'});
+  // The old inline explanation buttons were removed. The current chat and
+  // selected-text explanations must still recognize the full matching term.
+  for (const [question, term] of [
+    ['食神格是什么意思？', '食神格'], ['用神是什么', '用神'], ['身旺怎么理解', '身旺'],
+  ]) {
+    const answer = await ask(question);
+    assert.match(answer, /释义/);
+    assert.ok(answer.includes(term));
+    const actual = await page.evaluate(() => window._aiConversation.at(-1)?.content);
+    assert.ok(actual?.length > 8, `${term} 应有实际解释`);
+  }
 
-console.log('\n=== 4. 术语提问不再答非所问 ===');
-for(const q of ['食神格是什么意思？','用神是什么','身旺怎么理解']){
-  await p.evaluate(()=>window.newAskChat&&window.newAskChat());
-  await new Promise(r=>setTimeout(r,300));
-  await p.evaluate(x=>window.doAsk(x),q);
-  await new Promise(r=>setTimeout(r,1800));
-  const a=await p.evaluate(()=>{
-    const t=document.getElementById('askResult').innerText;
-    const i=t.lastIndexOf('释义');
-    return i>-1?t.slice(i,i+70).replace(/\n/g,' '):'❗未走术语分支: '+t.slice(-90).replace(/\n/g,' ');
-  });
-  console.log(`  「${q}」→ ${a}`);
+  // A personal question must reference the actual chart, not merely return a
+  // definition of the word in the question (works without a configured key).
+  const dayMaster = await page.evaluate(() => window._ctx.dg);
+  const answer = await ask('我的事业有什么特点？');
+  assert.ok(dayMaster && answer.includes('日主' + dayMaster));
+  assert.doesNotMatch(answer, /术语\s*事业\s*\d\s*释义/);
+  assert.deepEqual(errors, []);
+  console.log('✓ 术语最长匹配、个人命盘上下文及离线解答');
+} finally {
+  await browser.close();
 }
-console.log('\n错误:', errs.length?[...new Set(errs)].join(' | '):'无');
-await b.close();

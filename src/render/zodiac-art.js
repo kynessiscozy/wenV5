@@ -26,7 +26,7 @@ export const ZODIAC_STARS = {
 function starR(mag) { return Math.max(1.1, 4.3 - mag * 0.72); }
 
 /* 投影:星座内赤经范围左右翻转(天文图习惯东在左),适配画布 */
-/* 全名 id(horoscope.js SIGNS 约定)→ 本表缩写键 的别名映射。
+/* 全名 id(zodiac-data.js SIGNS 约定)→ 本表缩写键 的别名映射。
    调用方两套约定并存('aries' vs 'ari'),统一在此兼容,查不到再返回 null。 */
 const SIGN_ALIAS = {
   aries: 'ari', taurus: 'tau', gemini: 'gem', cancer: 'cnc', leo: 'leo', virgo: 'vir',

@@ -133,6 +133,8 @@ try {
   // Two very slow successive portraits must not unmask or restore an old one.
   {
     const { page, context } = await openPage('reduce');
+    // Exercise network stalls, not the worker's pre-cached artwork.
+    await page.setBypassServiceWorker(true);
     await spinFor(page, 'wenwen');
     await waitForChoice(page, 'wenwen');
     await page.setRequestInterception(true);

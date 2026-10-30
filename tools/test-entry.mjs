@@ -1,8 +1,9 @@
+import { spinFor } from './trait-picker-helper.mjs';
+
 // Shared entry helpers for browser tests: every page visit requires a trait,
 // and the real calculation result stays visible until explicitly acknowledged.
 export async function selectHomeTrait(page, role = 'wenwen') {
-  await page.waitForSelector(`[data-trait="${role}"]`, { timeout: 15000 });
-  await page.click(`[data-trait="${role}"]`);
+  await spinFor(page, role);
   await page.waitForFunction(id => document.documentElement.dataset.homeTheme === id && document.getElementById('traitSelection').hidden && typeof window.calc === 'function', { timeout: 15000 }, role);
 }
 

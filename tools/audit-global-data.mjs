@@ -76,7 +76,6 @@ const { TAROT_CARDS, TAROT_SPREADS } = await import('../src/tools2/tarot.js');
 const { MBTI_TYPES, MBTI_QUESTIONS, calcMBTIMaturity } = await import('../src/tools2/mbti.js');
 const { TOOL_DEFINITIONS, renderToolsHubHtml } = await import('../src/render/tools-catalog.js');
 const { KB, KBSearch, buildBaziContext, buildWesternContext } = await import('../src/ai/index.js');
-const { chartFacts } = await import('../src/ai/explain.js');
 
 let passCount = 0;
 let failCount = 0;
@@ -285,7 +284,7 @@ audit('buildBaziContext (东方依据) 结构化输出真实有效', () => {
     P: null,
     gen: 'male',
     q: '事业',
-    city: { n: '北京' },
+    city: CD.beijing,
     input: { by: 1995, bm: 6, bd: 15, timeStr: '08:00' }
   });
 

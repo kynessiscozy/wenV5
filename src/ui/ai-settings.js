@@ -8,7 +8,8 @@ const defaults = { natural: true, context: true, length: 'short' };
 const BUILTIN_KEY          = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) || '';
 const BUILTIN_DEEPSEEK_KEY = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_DEEPSEEK_KEY) || '';
 const LS_KEY      = 'tj_ai_settings';
-const LS_APIKEY   = 'tj_ai_apikey';
+// Legacy shared keys are deliberately not migrated: their provider is unknown.
+const apiKeyStorage = () => 'tj_ai_apikey_' + getProvider();
 
 /* ============================================================
    获取当前生效的 API Key
@@ -16,7 +17,7 @@ const LS_APIKEY   = 'tj_ai_apikey';
    ============================================================ */
 export function getApiKey() {
   try {
-    const custom = localStorage.getItem(LS_APIKEY);
+    const custom = localStorage.getItem(apiKeyStorage());
     if (custom && custom.trim()) return custom.trim();
   } catch (_) {}
   return getProvider() === 'deepseek' ? BUILTIN_DEEPSEEK_KEY : BUILTIN_KEY;
@@ -100,9 +101,9 @@ if (typeof window !== 'undefined') {
 /* 提供方对应密钥说明 */
 function _providerInfo(p) {
   if (p === 'deepseek') {
-    return 'Key 保存在本地浏览器，请求时会发送给所选服务商。<br>获取地址：<a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com/api_keys</a>';
+    return '自行填写的 Key 保存在本机浏览器；使用 AI 或检测连接时会发送给所选服务商。对话与工具解读还会发送问题及相关上下文，请避免输入敏感信息。<br>获取地址：<a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com/api_keys</a>';
   }
-  return 'Key 保存在本地浏览器，请求时会发送给所选服务商。<br>获取地址：<a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>';
+  return '自行填写的 Key 保存在本机浏览器；使用 AI 或检测连接时会发送给所选服务商。对话与工具解读还会发送问题及相关上下文，请避免输入敏感信息。<br>获取地址：<a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>';
 }
 
 /* ============================================================
@@ -157,7 +158,8 @@ function _buildPanel(container) {
     <div class="ai-setting-section">
       <div class="ai-setting-section-title">对话偏好</div>
       <label class="ai-setting-row"><span>自然对话</span><input id="aiSettingNatural" type="checkbox" ${v.natural ? 'checked' : ''}></label>
-      <label class="ai-setting-row"><span>结合上下文</span><input id="aiSettingContext" type="checkbox" ${v.context ? 'checked' : ''}></label>
+      <label class="ai-setting-row"><span>携带近期对话</span><input id="aiSettingContext" type="checkbox" ${v.context ? 'checked' : ''}></label>
+      <div class="ai-setting-hint">关闭近期对话后，仍会发送当前问题及相关命盘或工具依据。</div>
       <label class="ai-setting-row"><span>回复长度</span><select id="aiSettingLength"><option value="short">简洁</option><option value="standard">标准</option></select></label>
     </div>
 
@@ -219,7 +221,8 @@ function _buildPanel(container) {
     setProvider(np);
     container.querySelector('#aiKeyNote').innerHTML = _providerInfo(np);
     _refreshKeyStatus(container);
-    probeConnection(getApiKey());
+    container.querySelector('#aiKeyInput').value = '';
+    container.querySelector('#aiKeyInputRow').style.display = 'none';
   });
 
   // —— API Key 交互 ——
@@ -241,7 +244,7 @@ function _buildPanel(container) {
   saveBtn.addEventListener('click', () => {
     const val = input.value.trim();
     if (!val) return;
-    try { localStorage.setItem(LS_APIKEY, val); } catch (_) {}
+    try { localStorage.setItem(apiKeyStorage(), val); } catch (_) {}
     inputRow.style.display = 'none';
     _refreshKeyStatus(container);
     probeConnection(val);
@@ -253,7 +256,7 @@ function _buildPanel(container) {
 
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
-      try { localStorage.removeItem(LS_APIKEY); } catch (_) {}
+      try { localStorage.removeItem(apiKeyStorage()); } catch (_) {}
       inputRow.style.display = 'none';
       _refreshKeyStatus(container);
       probeConnection(getApiKey());
@@ -268,7 +271,7 @@ function _buildPanel(container) {
    辅助函数
    ============================================================ */
 function _getSavedCustomKey() {
-  try { return localStorage.getItem(LS_APIKEY) || ''; } catch (_) { return ''; }
+  try { return localStorage.getItem(apiKeyStorage()) || ''; } catch (_) { return ''; }
 }
 
 function _maskKey(key) {
@@ -284,7 +287,7 @@ function _refreshKeyStatus(container) {
   const hasCustom = !!savedKey;
 
   if (hasCustom) {
-    statusEl.innerHTML = '<span class="ai-key-badge custom">自定义</span><span class="ai-key-masked">' + _maskKey(savedKey) + '</span>';
+    statusEl.innerHTML = '<span class="ai-key-badge custom">自定义</span><span class="ai-key-masked">' + _maskKey(savedKey).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) + '</span>';
     editBtn.textContent = '更换 Key';
     if (!actionsEl.querySelector('#aiKeyResetBtn')) {
       const btn = document.createElement('button');
@@ -293,7 +296,7 @@ function _refreshKeyStatus(container) {
       btn.className = 'ai-key-action danger';
       btn.textContent = '恢复内置';
       btn.addEventListener('click', () => {
-        try { localStorage.removeItem(LS_APIKEY); } catch (_) {}
+        try { localStorage.removeItem(apiKeyStorage()); } catch (_) {}
         container.querySelector('#aiKeyInputRow').style.display = 'none';
         _refreshKeyStatus(container);
         probeConnection(getApiKey());
@@ -304,6 +307,9 @@ function _refreshKeyStatus(container) {
     statusEl.innerHTML = (BUILTIN_KEY || BUILTIN_DEEPSEEK_KEY)
       ? '<span class="ai-key-badge builtin">内置</span><span class="ai-key-hint">使用内置 Key</span>'
       : '<span class="ai-key-badge none">未配置</span><span class="ai-key-hint">请输入 Key 才能使用 AI</span>';
+    if (!getApiKey()) {
+      try { if (localStorage.getItem('tj_ai_apikey')) statusEl.innerHTML += '<span class="ai-key-hint">旧版共用 Key 未自动迁移，请在对应服务商下重新填写。</span>'; } catch (_) {}
+    }
     editBtn.textContent = '自定义 Key';
     const oldReset = actionsEl.querySelector('#aiKeyResetBtn');
     if (oldReset) oldReset.remove();

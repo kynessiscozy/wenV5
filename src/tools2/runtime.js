@@ -6,7 +6,8 @@
    统一模板。保留旧全局入口 openToolPage / closeToolPage 兼容。
    ============================================================ */
 import { attachToolAI } from './ai-insight.js';
-export { attachToolAI };
+import { esc } from './escape.js';
+export { attachToolAI, esc };
 
 const TOOLS = new Map();
 let _current = null;        // 当前打开的 tool id
@@ -250,11 +251,6 @@ export function goForm(container) {
 export function backTopBtn() {
   /* 注意：不要用 data-gofrom——goResult 会把该属性一律绑定为"返回表单" */
   return '<button type="button" class="tw-back-top" data-backtop aria-label="返回顶部" style="display:none">↑</button>';
-}
-
-export function esc(s) {
-  return String(s == null ? '' : s)
-    .replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 
 /* —— 旧入口兼容（由 index.js 覆盖） —— */

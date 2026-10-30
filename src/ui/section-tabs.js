@@ -252,24 +252,30 @@ export function initSectionTabs() {
        3. 仅靠 MutationObserver 防抖 —— 自身 DOM 写入会不断重置计时器
      改为「轮询 + 稳定即停」：报告激活后短时间内周期性尝试构建，
      结构稳定（连续两次签名一致）后停止，成本可忽略。 */
-  let timer = null, lastSig = '', stable = 0;
+  let timer = null, deadline = null, lastSig = '', stable = 0;
   const sig = () => ['s-ming', 's-yun', 's-rel']
     .map(id => document.getElementById(id)?.querySelectorAll('.sec-tab').length || 0).join(',');
 
   function startPolling() {
+    if (!document.body.classList.contains('report-active')) return;
+    if (document.body.classList.contains('beginner-mode')) { stopPolling(); run(); return; }
     if (timer) return;
     stable = 0; lastSig = '';
     timer = setInterval(() => {
       if (!document.body.classList.contains('report-active')) { stopPolling(); return; }
       run();
       const s2 = sig();
-      stable = (s2 === lastSig && s2 !== '0,0,0') ? stable + 1 : 0;
+      // Zero is a valid stable result for sections already grouped by the report.
+      stable = s2 === lastSig ? stable + 1 : 0;
       lastSig = s2;
       if (stable >= 3) stopPolling();          // 连续三次无变化即认为稳定
     }, 400);
-    setTimeout(stopPolling, 15000);            // 兜底，绝不长跑
+    deadline = setTimeout(stopPolling, 15000); // 兜底，绝不长跑
   }
-  function stopPolling() { clearInterval(timer); timer = null; }
+  function stopPolling() {
+    clearInterval(timer); clearTimeout(deadline);
+    timer = null; deadline = null;
+  }
 
   /* body 的 class 同时承载 report-active 与 beginner-mode。
      新手↔大师切换必须立刻 run() 一次：仅靠轮询会有最多 400ms 的窗口，
@@ -294,24 +300,22 @@ export function initSectionTabs() {
       if (m.target instanceof Element && m.target.classList?.contains('sec')) { startPolling(); return; }
     }
   });
-  // 只需在 .sec 首次出现时挂一次观察器。
-  // 早期写成 setInterval(…, 1000) 永久轮询，会让页面一直有待处理任务，
-  // 导致 Puppeteer 截图超时（实测 test-syn-fold 卡死）。
+  // The report container exists from startup, but its sections are created
+  // only when a report is rendered. Observe that one direct replacement instead
+  // of waking every 500ms on the home screen. Reattach after recalculation.
+  let observedSections = [];
   const attachCardObs = () => {
-    const list = document.querySelectorAll('.sec');
-    list.forEach(el => {
-      if (el.__cardObs) return;
-      el.__cardObs = 1;
-      cardObs.observe(el, { childList: true });
-    });
-    return list.length > 0;
+    const list = [...document.querySelectorAll('#p2Inner .sec')];
+    if (list.length === observedSections.length && list.every((el, i) => el === observedSections[i])) return;
+    cardObs.disconnect();
+    observedSections = list;
+    list.forEach(el => cardObs.observe(el, { childList: true }));
+    // A report can be replaced while already active (e.g. recalculation).
+    if (list.length && document.body.classList.contains('report-active')) startPolling();
   };
-  if (!attachCardObs()) {
-    let tries = 0;
-    const t = setInterval(() => {
-      if (attachCardObs() || ++tries > 40) clearInterval(t);   // 最多等 20s
-    }, 500);
-  }
+  const reportRoot = document.getElementById('p2Inner');
+  if (reportRoot) new MutationObserver(attachCardObs).observe(reportRoot, { childList: true });
+  attachCardObs();
 
   if (document.body.classList.contains('report-active')) startPolling();
   window.TJBuildSectionTabs = run;

@@ -54,26 +54,6 @@ function glyphTexture(char, color, size = 160) {
   return tex;
 }
 
-function numberTexture(num, color, size = 256) {
-  const c = document.createElement('canvas');
-  c.width = c.height = size;
-  const g = c.getContext('2d');
-  const grad = g.createLinearGradient(0, 0, size, size);
-  grad.addColorStop(0, '#ffffff');
-  grad.addColorStop(0.45, color);
-  grad.addColorStop(1, new THREE.Color(color).multiplyScalar(0.55).getStyle());
-  g.fillStyle = grad;
-  g.font = `700 ${Math.floor(size * 0.56)}px "Noto Serif SC", "Songti SC", serif`;
-  g.textAlign = 'center';
-  g.textBaseline = 'middle';
-  g.shadowColor = color;
-  g.shadowBlur = size * 0.08;
-  g.fillText(String(num), size / 2, size / 2 + size * 0.03);
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
-
 function glowSpriteTexture(color = '#ffd98c') {
   const s = 256, c = document.createElement('canvas');
   c.width = c.height = s;
@@ -678,7 +658,7 @@ async function ensure(key) {
   if (!THREE || !ADDONS) {
     if (!threeLoading) {
       threeLoading = Promise.all([
-        import('three'),
+        import('./three-runtime.js'),
         import('three/addons/postprocessing/EffectComposer.js'),
         import('three/addons/postprocessing/RenderPass.js'),
         import('three/addons/postprocessing/UnrealBloomPass.js'),
@@ -691,6 +671,8 @@ async function ensure(key) {
     }
     await threeLoading;
   }
+  // The user may have left the report or hidden the tab while modules loaded.
+  if (STATE.activeKey !== key || document.hidden || !document.body.classList.contains('report-active')) return null;
   const container = document.getElementById(CONTAINER_IDS[key]);
   // Another sync may have finished while the shared imports were pending.
   if (built[key] && built[key].container === container && container?.isConnected) return built[key];
@@ -754,9 +736,10 @@ function start(key) {
   if (s.composer) s.composer.render(); else s.renderer.render(s.scene, s.camera);
   s.raf = requestAnimationFrame(tt => tick(key, tt));
   // RAF 兜底：600ms 内没有帧推进（后台标签/受限环境）则降级为定时器驱动
-  setTimeout(() => {
-    if (built[key] && !built[key].raf) return;
-    if ((built[key]?.frames || 0) < 2 && STATE.activeKey === key) {
+  s.fallbackTimer = setTimeout(() => {
+    s.fallbackTimer = 0;
+    if (built[key] !== s || !s.raf) return;
+    if (s.frames < 2 && STATE.activeKey === key && !document.hidden) {
       stop(key);
       const s2 = built[key];
       if (!s2) return;
@@ -776,6 +759,7 @@ function stop(key) {
   if (!s) return;
   if (s.raf) { cancelAnimationFrame(s.raf); s.raf = 0; }
   if (s.timer) { clearInterval(s.timer); s.timer = 0; }
+  if (s.fallbackTimer) { clearTimeout(s.fallbackTimer); s.fallbackTimer = 0; }
   s.frames = 0;
 }
 
@@ -827,13 +811,14 @@ export function syncWestern3D() {
     if (STATE.disposed) return;
     const mode = document.body.getAttribute('data-system-mode') || 'eastern';
     const activeSec = document.querySelector('.sec.active')?.id || null;
-    const key = mode === 'western' ? KEYS[activeSec] : null;
+    const key = !document.hidden && document.body.classList.contains('report-active') && mode === 'western' ? KEYS[activeSec] : null;
     STATE.activeKey = key;
     Object.values(KEYS).forEach(sceneKey => { if (sceneKey !== key) stop(sceneKey); });
     if (!key) return;
     try {
       const s = await ensure(key);
-      if (s && !STATE.disposed && STATE.activeKey === key && s.container.isConnected) {
+      if (s && !STATE.disposed && STATE.activeKey === key && !document.hidden &&
+          document.body.classList.contains('report-active') && s.container.isConnected) {
         syncTraitAccent(s);
         start(key);
         redrawInteraction(s);
@@ -880,7 +865,17 @@ export function disposeWestern3D() {
 
 /* ---------- 自接线：模式/分区/内容/主题变化 → 重新同步 ---------- */
 export function initWestern3D() {
-  const resync = () => { if (document.body.classList.contains('report-active')) syncWestern3D(); };
+  const resync = () => {
+    // Background timers can be throttled for seconds; stop immediately rather
+    // than waiting for the debounced scene sync to run.
+    if (document.hidden || !document.body.classList.contains('report-active') ||
+        document.body.getAttribute('data-system-mode') !== 'western') {
+      STATE.activeKey = null;
+      Object.values(KEYS).forEach(stop);
+    }
+    syncWestern3D();
+  };
+  document.addEventListener('visibilitychange', resync);
 
   // 分区切换 / Dock 点击
   document.addEventListener('click', e => {

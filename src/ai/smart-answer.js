@@ -110,6 +110,9 @@ export function smartAnswer(q,ctx){
       related:[]
     };
   }
+  // Personal knowledge is matched locally and never sent to the provider.
+  const evolved = _matchEvolved(q);
+  if (evolved) return evolved;
   // 2) FAQ 命中（高置信）
   const hits=KBSearch.search(q,3);
   // 门槛从 8 提到 12：实测「食神格是什么意思？」会以 8.4 分错配到
@@ -138,17 +141,14 @@ export function smartAnswer(q,ctx){
 }
 
 
-import { calcWesternChart, calcNumerology } from '../engines/western.js';
-import { getHoroscopeForecast } from '../tools2/horoscope.js';
+import { getWesternProfile } from '../engines/western-context.js';
+import { getHoroscopeForecast } from '../engines/horoscope.js';
 
 export function buildWesternContext(d){
-  const input=d.input||d._input||{};
-  const y=input.by||1995, m=input.bm||6, dDate=input.bd||15;
-  const timeStr=input.timeStr||'12:00';
-  const [h, min]=timeStr.split(':').map(Number);
-
-  const chart=calcWesternChart(y, m, dDate, h||12, min||0);
-  const num=calcNumerology(y, m, dDate);
+  const profile=getWesternProfile(d);
+  if(!profile)return '尚未提供完整出生信息，无法生成个人星盘或灵数；请勿编造。';
+  const chart=profile.chart;
+  const num=profile.numerology;
   const sun=chart.sun;
   const moon=chart.moon;
   const asc=chart.asc;
@@ -162,7 +162,7 @@ export function buildWesternContext(d){
     `【毕达哥拉斯生命灵数】核心主命数：${num.lifePath}号 (${num.archetype.name} · ${num.archetype.tag}) ｜ 天赋数：${num.talentNums.join('、')} ｜ 生日数：${num.birthdayNum}`,
     `【灵数能量连线】已激活优势连线：${num.activeLines.map(l => `${l.name}(${l.key})`).join('、') || '能量独立'} ｜ 缺失数字：${num.missingNums.join('、') || '无'}`,
     `【9年生命周期】今年处于第 ${num.personalYear} 号流年周期（${num.personalYearGuide.theme}）—— ${num.personalYearGuide.advice}`,
-    `【今日时空运势】${sun.name} 今日综合评分 ${fToday.baseScore}分 ｜ 气场：${fToday.mood} ｜ 幸运色：${fToday.luckyColor} ｜ 贵人星座：${fToday.noble}`,
+    `【按日期与星座生成的参考（非实时天象或预测）】${sun.name} 今日参考分 ${fToday.baseScore}分 ｜ 气场：${fToday.mood} ｜ 幸运色：${fToday.luckyColor} ｜ 贵人星座：${fToday.noble}`,
     `【运势分项指引】事业：${fToday.career} ｜ 感情：${fToday.love} ｜ 财富：${fToday.wealth} ｜ 宜：${fToday.yi.join(' ')} ｜ 忌：${fToday.ji.join(' ')}`
   ];
   return lines.filter(Boolean).join('\n');
