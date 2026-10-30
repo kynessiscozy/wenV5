@@ -10,7 +10,7 @@ export const QINGLAN = Object.freeze({
       width: 848,
       height: 1264,
     }),
-    blink: Object.freeze({ src: './art/qinglan-cinema3d-blink.webp', alt: '', width: 848, height: 1264, forPortrait: './art/qinglan-cinema3d.webp' }),
+    blink: Object.freeze({ src: './art/qinglan-cinema3d-blink-v2.webp', alt: '', width: 848, height: 1264, forPortrait: './art/qinglan-cinema3d.webp' }),
     speaking: Object.freeze({ src: './art/qinglan-cinema3d-speak.webp', alt: '', width: 848, height: 1264, forPortrait: './art/qinglan-cinema3d.webp' }),
     avatar: Object.freeze({ src: './art/qinglan-cinema3d-avatar.webp', alt: '', width: 192, height: 192 }),
   }),

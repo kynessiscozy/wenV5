@@ -12,7 +12,7 @@ export const JIANGJIANG = Object.freeze({
       height: 1264,
     }),
     // Transparent expression layers are aligned to the portrait and may be omitted by other characters.
-    blink: Object.freeze({ src: './art/wenwen-cinema3d-blink.webp', alt: '', width: 848, height: 1264, forPortrait: './art/wenwen-cinema3d.webp' }),
+    blink: Object.freeze({ src: './art/wenwen-cinema3d-blink-v2.webp', alt: '', width: 848, height: 1264, forPortrait: './art/wenwen-cinema3d.webp' }),
     speaking: Object.freeze({ src: './art/wenwen-cinema3d-speak.webp', alt: '', width: 848, height: 1264, forPortrait: './art/wenwen-cinema3d.webp' }),
     // Optional scene props belong to this character and may be swapped independently.
     // The hanging cord meets the illustrated cord at this horizontal percentage.

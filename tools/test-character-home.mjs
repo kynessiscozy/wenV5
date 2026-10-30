@@ -469,15 +469,15 @@ try {
   // a whole face or a mismatched portrait, and must actually be painted.
   for (const [id, limits] of Object.entries({
     wenwen: { blink: [370, 185, 485, 250], speak: [380, 230, 468, 276] },
-    moonfox: { blink: [310, 158, 416, 223], speak: [328, 195, 404, 245] },
+    moonfox: { blink: [300, 170, 390, 232], speak: [328, 195, 404, 245] },
     diyan: { blink: [365, 201, 483, 267], speak: [385, 243, 468, 291] },
     yuchen: { blink: [404, 191, 492, 244], speak: [417, 220, 479, 261] },
-    qinglan: { blink: [310, 239, 412, 300], speak: [325, 272, 398, 315] },
-    xingling: { blink: [345, 231, 444, 296], speak: [364, 273, 430, 319] },
-    luye: { blink: [321, 198, 498, 286], speak: [370, 275, 482, 328] },
+    qinglan: { blink: [307, 226, 410, 297], speak: [325, 272, 398, 315] },
+    xingling: { blink: [350, 226, 453, 286], speak: [364, 273, 430, 319] },
+    luye: { blink: [315, 199, 496, 307], speak: [370, 275, 482, 328] },
     suyan: { blink: [304, 168, 447, 246], speak: [331, 221, 426, 274] },
-    rongrong: { blink: [366, 133, 475, 200], speak: [384, 178, 457, 221] },
-    zhiya: { blink: [324, 268, 440, 335], speak: [350, 312, 434, 361] },
+    rongrong: { blink: [374, 143, 477, 207], speak: [384, 178, 457, 221] },
+    zhiya: { blink: [322, 285, 399, 356], speak: [350, 312, 434, 361] },
   })) {
     const { page, context } = await newPage(390, 844, { homeTheme: id });
     const bounds = await page.evaluate(() => Object.fromEntries(['blink', 'speak'].map(kind => {
