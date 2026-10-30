@@ -17,15 +17,8 @@
      · 不给出无法验证的具体预言
    ============================================================ */
 
-import { TG, DZ, GW, ZW, ZC, SS } from './shared.js';
+import { TG, DZ, GW, ZW, SS, WX_SHENG, WX_KE, GAN_HE, ZHI_HE, ZHI_CHONG, ZHI_HAI } from './shared.js';
 import { getDayPillarIndex, getMonthPillar } from './calendar.js';
-
-const ZHI_HE    = { 子:'丑', 丑:'子', 寅:'亥', 亥:'寅', 卯:'戌', 戌:'卯', 辰:'酉', 酉:'辰', 巳:'申', 申:'巳', 午:'未', 未:'午' };
-const ZHI_CHONG = { 子:'午', 午:'子', 丑:'未', 未:'丑', 寅:'申', 申:'寅', 卯:'酉', 酉:'卯', 辰:'戌', 戌:'辰', 巳:'亥', 亥:'巳' };
-const ZHI_HAI   = { 子:'未', 未:'子', 丑:'午', 午:'丑', 寅:'巳', 巳:'寅', 卯:'辰', 辰:'卯', 申:'亥', 亥:'申', 酉:'戌', 戌:'酉' };
-const GAN_HE    = { 甲:'己', 己:'甲', 乙:'庚', 庚:'乙', 丙:'辛', 辛:'丙', 丁:'壬', 壬:'丁', 戊:'癸', 癸:'戊' };
-const SHENG = { 木:'火', 火:'土', 土:'金', 金:'水', 水:'木' };
-const KE    = { 木:'土', 火:'金', 土:'水', 金:'木', 水:'火' };
 
 const PILLAR_LABEL = { Y:'年柱', M:'月柱', D:'日柱', H:'时柱' };
 // 流日与哪一柱互动最要紧：日柱（自身）> 月柱（工作/环境）> 时柱 > 年柱
@@ -102,8 +95,8 @@ export function calcLiuRi(chart, yongShen, date = new Date()) {
   // —— 用神关系：今天的五行对我是助力还是消耗 ——
   let wxRelation, wxScore;
   if (day.wx === yongShen)            { wxRelation = 'same';    wxScore = 8; }
-  else if (SHENG[day.wx] === yongShen){ wxRelation = 'support'; wxScore = 5; }
-  else if (KE[day.wx] === yongShen)   { wxRelation = 'drain';   wxScore = -5; }
+  else if (WX_SHENG[day.wx] === yongShen){ wxRelation = 'support'; wxScore = 5; }
+  else if (WX_KE[day.wx] === yongShen)   { wxRelation = 'drain';   wxScore = -5; }
   else                                { wxRelation = 'neutral'; wxScore = 0; }
 
   // —— 汇总为单一基调（关键：所有文案由它统一决定，避免自相矛盾）——

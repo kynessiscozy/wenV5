@@ -201,18 +201,15 @@ function removeSaved(index) {
   try {
     const v2 = JSON.parse(localStorage.getItem(KEY) || '[]');
     const v1 = JSON.parse(localStorage.getItem('tj_answerbook_saved') || '[]');
+    // Keep the original array index through sorting so equal timestamps and
+    // legacy v2 records using `text` cannot delete a different favourite.
     const merged = [...v2.map((x, i) => ({ ...x, src: 2, i })),
-      ...v1.filter(x => x && x.text).map((x, i) => ({ ...x, src: 1, i }))]
+      ...v1.map((x, i) => x && x.text ? { ...x, src: 1, i } : null).filter(Boolean)]
       .sort((a, b) => (b.at || 0) - (a.at || 0)).slice(0, 30);
     const hit = merged[index];
     if (!hit) return;
-    if (hit.src === 2) {
-      const idx = v2.findIndex(y => (y.at || 0) === (hit.at || 0) && (y.answer || '') === (hit.answer || ''));
-      if (idx >= 0) v2.splice(idx, 1);
-    } else {
-      const idx = v1.findIndex(y => (y.at || 0) === (hit.at || 0) && (y.text || '') === (hit.answer || ''));
-      if (idx >= 0) v1.splice(idx, 1);
-    }
+    if (hit.src === 2) v2.splice(hit.i, 1);
+    else v1.splice(hit.i, 1);
     localStorage.setItem(KEY, JSON.stringify(v2));
     localStorage.setItem('tj_answerbook_saved', JSON.stringify(v1));
   } catch (e) {}

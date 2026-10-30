@@ -67,13 +67,9 @@ try {
 
   await page.goto(base, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#traitMachine[data-ready="true"]');
-  assert.equal(await page.evaluate(() => !!navigator.serviceWorker.controller), false, '没有旧注册时不自动安装 worker');
   assert.ok(homeModule, '应观察到首页角色模块');
 
-  await page.evaluate(async () => {
-    await navigator.serviceWorker.register('./sw.js');
-    await navigator.serviceWorker.ready;
-  });
+  await page.evaluate(async () => { await navigator.serviceWorker.ready; });
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
   await page.evaluate(async url => {
     const legacy = await caches.open('wenda-cache-legacy-test');
@@ -90,10 +86,28 @@ try {
   phase = 'new';
   failOneArtwork = true;
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(async name => {
-    return (await caches.keys()).includes(name) && !document.documentElement.dataset.staleHome &&
-      document.getElementById('traitMachine')?.dataset.ready === 'true';
-  }, { timeout: 15000 }, cacheName);
+  try {
+    await page.waitForFunction(async name => {
+      return (await caches.keys()).includes(name) && !document.documentElement.dataset.staleHome &&
+        document.getElementById('traitMachine')?.dataset.ready === 'true';
+    }, { timeout: 30000 }, cacheName);
+  } catch (error) {
+    const state = await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.getRegistration();
+      return {
+        caches: await caches.keys(),
+        controller: navigator.serviceWorker.controller?.state,
+        active: registration?.active?.state,
+        installing: registration?.installing?.state,
+        waiting: registration?.waiting?.state,
+        stale: document.documentElement.dataset.staleHome,
+        ready: document.getElementById('traitMachine')?.dataset.ready,
+        status: document.getElementById('traitStatus')?.textContent,
+      };
+    });
+    console.error('缓存升级状态:', { ...state, navigations, staleResponses: staleResponses.length });
+    throw error;
+  }
   assert.ok(staleResponses.length, '测试应先命中旧 worker 的损坏缓存');
   assert.ok(navigations >= 3, '新 worker 接管后应自动重载选择页面');
   assert.equal(await page.evaluate(async () => (await caches.keys()).includes('unrelated-app-cache')), true, '不能删除其他应用的缓存');

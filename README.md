@@ -127,6 +127,7 @@ npm run dev          # 启动开发服务器（默认 5173 端口）
 
 ```bash
 npm run build        # 生产构建 → dist/
+npm run size         # 构建并统计原始体积及逐文件 gzip 估算
 npm run preview      # 本地预览构建产物（默认 4173 端口）
 ```
 
@@ -134,7 +135,7 @@ npm run preview      # 本地预览构建产物（默认 4173 端口）
 
 ```bash
 npm run test:unit    # 引擎单测(流日/合盘/塔罗/MBTI/西方星历/农历全量等)
-npm run test:character # 特质轮盘、八角色、推演、报告、指引及键盘交互
+npm run test:character # 特质轮盘、十角色、推演、报告、指引及键盘交互
 npm run test:guide     # 指引与关于弹窗的内容、焦点及响应式
 npm run test:mobile-calculation # 手机、平板表单与推演回归
 node tools/test-home-offline.mjs     # 生产子路径与离线缓存（先运行 npm run build）

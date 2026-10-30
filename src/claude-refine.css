@@ -537,33 +537,8 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
   .beginner-basic { grid-template-columns: 1fr 1fr !important; }
 }
 
-/* ---------- 15. 「这段是什么意思」入口 ---------- */
+/* 报告卡片作为内部定位的参照。 */
 #page2 [data-card], #page2 .beginner-brief { position: relative; }
-.explain-btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  margin-top: var(--sp-3);
-  min-height: 34px; padding: 0 12px;
-  border: 1px dashed var(--c-border-2);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--c-text-3);
-  font: 500 var(--fs-micro) var(--sf);
-  cursor: pointer;
-  transition: background .15s ease, color .15s ease, border-color .15s ease;
-}
-.explain-btn::before {
-  content: '?';
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 14px; height: 14px; border-radius: 50%;
-  background: var(--c-accent-soft); color: var(--c-accent-text);
-  font-size:calc(9px * var(--font-scale, 1)); font-weight: 700;
-}
-.explain-btn:hover {
-  background: var(--c-accent-soft);
-  border-color: color-mix(in srgb, var(--c-accent) 40%, transparent);
-  border-style: solid;
-  color: var(--c-accent-text);
-}
 
 /* 新手首屏标签：术语与标签同行显示，避免括号被换行拆散 */
 .beginner-basic > div > span {
@@ -655,7 +630,7 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
 .p2-top .p2-act { height: 40px !important; min-height: 40px !important; max-height: 40px !important; }
 .gloss-hint-close { width: 36px !important; height: 36px !important; }
 .card-toggle { width: 36px !important; height: 36px !important; }
-.qr-act, .explain-btn, .structure-tab, .focus-tab { min-height: 36px !important; }
+.qr-act, .structure-tab, .focus-tab { min-height: 36px !important; }
 /* 首页开关：26px 高不易点，扩到 44×28 并留出热区 */
 .switch { height: 28px !important; }
 .switch-row { min-height: 44px; }
@@ -1047,9 +1022,6 @@ body .ig-dock .tab-item.active .ig-nav-icon { stroke-width: 2.1 !important; tran
 .qr-body-inner { min-height: 0; overflow: hidden; }
 /* 收起时去掉头部下方留白 */
 .qr-card.qr-collapsed > .qr-head { margin-bottom: 0 !important; }
-/* 「这段是什么意思」是在卡片末尾另行注入的，不在 qr-body 内，
-   收起时需一并隐藏，否则会孤零零留在空卡片里 */
-.qr-card.qr-collapsed > .explain-btn { display: none !important; }
 .qr-card.qr-collapsed { padding-bottom: 10px !important; }
 
 /* ---- 21.2 分区标签：去外框，改居中下划线 ---- */

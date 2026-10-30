@@ -209,7 +209,7 @@ function makeHero(id, theme, ctx, western, isDemo, onReselect, overview, astro) 
   const dayMaster = [ctx?.dg, ctx?.dw].filter(Boolean).join('');
   const westernHeading = element('div', 'result-character-reading sys-western');
   westernHeading.append(element('h1', 'result-character-title', isDemo ? '示例星盘' : '星盘一览'));
-  westernHeading.append(element('p', 'result-character-description', '拖动星盘，探索星体位置。'));
+  westernHeading.append(element('p', 'result-character-description', '拖动星盘，探索星体位置。星盘按出生地时区及历史夏令时计算；夏令时切换时的重复或不存在的时间可能产生偏差。'));
   copy.append(westernHeading);
 
   const controls = element('div', 'result-character-controls');
@@ -315,7 +315,7 @@ export function mountCharacterReport({ ctx, western = {}, isDemo = false, onRese
   try {
     hero = makeHero(id, theme, ctx, western, isDemo, onReselect, overview, astro);
     luckChapter = makeChapter(id, theme, 'yun',
-      [isDemo ? '示例星象' : '星象一览', '拖动星象，看看此刻的变化。'], horo, luckOverview, isDemo);
+      [isDemo ? '示例星象' : '星象一览', '拖动星象，探索十二星座示意。'], horo, luckOverview, isDemo);
     relationChapter = makeChapter(id, theme, 'rel',
       [isDemo ? '示例灵数' : '灵数一览', '从主命数出发，探索数字线索。'], num, relationOverview, isDemo);
   } catch (error) {

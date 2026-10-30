@@ -8,8 +8,8 @@
 <meta name="theme-color" content="#faf9f5">
 <meta name="description" content="和 2.5D 星光向导问问一起，从命盘与星象出发，探索更了解自己的方式。">
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" type="image/svg+xml" href="./icon.svg?v=35">
-<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="128x128" href="./icon-twins-128.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-twins.png">
 
 <script>
   /* 用系统字体及应用主题，选择特质后再加载对应角色。 */
@@ -44,6 +44,11 @@
       navigator.serviceWorker.getRegistration().then(function (registration) {
         if (registration) return registration.update();
       }).catch(function () { /* Offline visits keep using their existing cache. */ });
+    }
+    if ('serviceWorker' in navigator && !navigator.serviceWorker.controller) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./sw.js').catch(function () {});
+      }, { once: true });
     }
     // If the small entry module itself cannot load, don't leave a silent spinner.
     window.setTimeout(function () {
@@ -312,9 +317,9 @@
       </div>
     </div>
   </div>
-  <!-- 关于问问大师 / 新手指引 / 免责声明：固定在菜单底部 -->
+  <!-- 关于问问大师 / 使用指南 / 免责声明：固定在菜单底部 -->
   <div class="home-menu-footer" style="padding:12px 16px;border-top:1px solid var(--c-border);display:flex;flex-direction:column;gap:8px">
-    <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleHomeMenu(false);openNoviceGuide()">新手指引</button>
+    <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleHomeMenu(false);openNoviceGuide()">使用指南</button>
     <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleHomeMenu(false);openAboutModal()">关于问问大师</button>
     <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleHomeMenu(false);openDisclaimerModal()">免责声明</button>
   </div>
@@ -520,14 +525,15 @@
       <h2 class="form-modal-tt" id="formModalTitle" tabindex="-1">让我们从认识你开始</h2>
       <p class="form-modal-intro">填写出生信息，生成一份专属命盘。</p>
       <div class="form-grid">
-        <div class="fd"><label for="bDate">出生日期</label><input type="date" id="bDate" value="1990-06-15" aria-describedby="formError"></div>
-        <div class="fd"><label for="bTime">出生时间</label><input type="time" id="bTime" value="09:00" aria-describedby="formError" style="font-family:var(--sf)"></div>
-        <div class="fd"><label for="cInp">出生地点</label><div class="cw"><input type="text" id="cInp" placeholder="搜索并选择城市…" autocomplete="off" value="上海" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="cDD" aria-describedby="formError"><input type="hidden" id="bPlace" value="shanghai"><div class="cdd" id="cDD" role="listbox" aria-label="出生城市候选"></div></div></div>
+        <div class="fd"><label for="bDate">出生日期</label><input type="date" id="bDate" value="1990-06-15" aria-describedby="formDefaults formError"></div>
+        <div class="fd"><label for="bTime">出生时间</label><input type="time" id="bTime" value="09:00" aria-describedby="formDefaults formError" style="font-family:var(--sf)"></div>
+        <div class="fd"><label for="cInp">出生地点</label><div class="cw"><input type="text" id="cInp" placeholder="搜索并选择城市…" autocomplete="off" value="上海" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="cDD" aria-describedby="formDefaults formError"><input type="hidden" id="bPlace" value="shanghai"><div class="cdd" id="cDD" role="listbox" aria-label="出生城市候选"></div></div></div>
         <div class="fd"><label for="bGen">性别</label><select id="bGen"><option value="male">男（乾造）</option><option value="female">女（坤造）</option></select></div>
         <div class="fd full result-style-field"><div class="result-style-heading"><div class="result-style-label">选择你希望的风格</div><small class="result-style-hint" id="resultStyleHint">先接住当下感受，再一起把问题拆小。</small></div><input type="hidden" id="bResultStyle" value="companion"><div class="result-style-options" id="resultStyleOptions" role="radiogroup" aria-label="结果风格"><button type="button" class="result-style-option active" data-style="companion" role="radio" aria-checked="true" onclick="selectResultStyle('companion')">陪伴型</button><button type="button" class="result-style-option" data-style="rigorous" role="radio" aria-checked="false" onclick="selectResultStyle('rigorous')">严谨型</button><button type="button" class="result-style-option" data-style="traditional" role="radio" aria-checked="false" onclick="selectResultStyle('traditional')">传统型</button><button type="button" class="result-style-option" data-style="advisory" role="radio" aria-checked="false" onclick="selectResultStyle('advisory')">建议型</button></div></div>
       </div>
       <input type="hidden" id="bQ" value="">
-      <div class="switch-row" style="margin-top:6px"><button type="button" class="switch" id="swTrueSolar" role="switch" aria-checked="false" aria-labelledby="swText" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'));document.getElementById('swText').textContent=(this.classList.contains('on')?'开启':'关闭')+'真太阳时（按出生地经度精确换算时辰）'"></button><span id="swText">关闭真太阳时（按出生地经度精确换算时辰）</span></div>
+      <p class="character-form-defaults" id="formDefaults">首次打开时预填示例日期和地点，请核对；时间默认 09:00，不确定时相关结果可能有偏差。</p>
+      <div class="switch-row" style="margin-top:6px"><button type="button" class="switch" id="swTrueSolar" role="switch" aria-checked="false" aria-labelledby="swText" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'));document.getElementById('swText').textContent=(this.classList.contains('on')?'开启':'关闭')+'真太阳时（按时区、经度和均时差估算）'"></button><span id="swText">关闭真太阳时（按时区、经度和均时差估算）</span></div>
       <p class="character-form-error" id="formError" role="alert" hidden></p>
       <button class="character-form-submit" type="button" onclick="calc()">开始推演 <span aria-hidden="true">↗</span></button>
       <p class="character-form-privacy" id="formPrivacy">✧ &nbsp; 保存的档案存放在本机，可随时管理</p>
@@ -693,9 +699,9 @@
       </div>
     </div>
   </div>
-  <!-- 关于 / 新手指引 / 免责声明 -->
+  <!-- 关于 / 使用指南 / 免责声明 -->
   <div class="p2-menu-footer" style="padding:12px 16px;border-top:1px solid var(--c-border);display:flex;flex-direction:column;gap:8px">
-    <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleP2Menu(false);openNoviceGuide()">新手指引</button>
+    <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleP2Menu(false);openNoviceGuide()">使用指南</button>
     <button type="button" class="pf-io-btn" id="aboutBtnP2" style="width:100%;padding:10px;font-size:.82em" onclick="toggleP2Menu(false);openAboutModal()">关于问问大师</button>
     <button type="button" class="pf-io-btn" style="width:100%;padding:10px;font-size:.82em" onclick="toggleP2Menu(false);openDisclaimerModal()">免责声明</button>
   </div>
@@ -928,7 +934,8 @@
     </div>
     <div class="about-section">
       <h3>关于问问与数据</h3>
-      <p>同行特质只改变角色与演出，不改变计算。档案和部分偏好可保存在本机浏览器；使用外部 AI 服务时，问题及相关上下文可能发送给所选服务商，请留意其隐私政策。</p>
+      <p>同行特质只改变角色与演出，不改变计算。档案和部分偏好可保存在本机浏览器；使用 AI 时，问题及相关上下文会发送给所选服务商。请避免输入敏感信息，并留意其隐私政策。</p>
+      <p>打开菜单、穿搭或风水工具时，应用会尝试定位并联网查询天气或地点；未授权定位时，天气会尝试使用北京默认值。风水周边查询也需要网络。</p>
     </div>
     <div class="about-note"><b>请理性看待</b><p>内容仅供文化体验与自我反思，不保证准确，也不能替代医疗、法律、财务等专业建议。重要选择请结合实际情况独立判断。</p></div>
   </div>
@@ -944,16 +951,19 @@
       <p style="margin-bottom:12px">欢迎使用问问大师（V5.0）。在使用本应用前，请仔细阅读以下免责声明。使用本应用即表示您已充分理解并同意本声明的全部内容。</p>
 
       <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">一、内容性质与文化体验定位</div>
-      <p style="margin-bottom:10px">问问大师提供的所有内容——包括四柱八字、紫微斗数、奇门遁甲、梅花易数等东方命理推演，西方占星、几何相位与生命灵数分析，以及塔罗、摇签、答案之书等工具——均基于传统文化体系与占星数理模型进行算法演算，仅供<b>文化体验、娱乐消遣与自我反思参考</b>，不构成任何形式的专业建议（包括但不限于法律、医疗、金融、心理咨询、职业规划等领域）。</p>
+      <p style="margin-bottom:10px">问问大师提供的内容包括东方命理、西方星相与生命灵数，以及塔罗、摇签、答案之书等工具；这些体验采用不同的传统文化、计算或随机呈现方式，仅供<b>文化体验、娱乐消遣与自我反思参考</b>，不构成任何形式的专业建议（包括但不限于法律、医疗、金融、心理咨询、职业规划等领域）。</p>
 
       <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">二、不构成决策依据</div>
-      <p style="margin-bottom:10px">本应用的推演结果不应作为人生重大决策（如投资、择业、婚恋、医疗、法律事务等）的唯一或主要依据。命盘与星盘揭示的是倾向与节奏，而非宿命结论。用户在做出任何重要决定前，应结合实际情况、咨询相关领域专业人士并独立判断。因依赖本应用内容而产生的任何直接或间接损失，本应用及开发者不承担任何责任。</p>
+      <p style="margin-bottom:10px">本应用的推演结果不应作为人生重大决策（如投资、择业、婚恋、医疗、法律事务等）的唯一或主要依据。命盘与星盘是传统解读框架，不对人生事件作出确定预测。用户在做出任何重要决定前，应结合实际情况、咨询相关领域专业人士并独立判断。因依赖本应用内容而产生的任何直接或间接损失，本应用及开发者不承担任何责任。</p>
 
       <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">三、AI 生成内容说明</div>
-      <p style="margin-bottom:10px">本应用的部分内容由 AI 模型自动生成，包括但不限于命盘解读文本、运势描述、建议文案与对话回答。AI 生成内容可能存在偏差、不完整或不准确的情况，用户应理性看待。开发者不对 AI 生成内容的准确性、完整性和时效性做任何保证。</p>
+      <p style="margin-bottom:10px">报告中的本地计算和模板解读无需 AI；使用联网 AI 对话或工具解读时，回答由所选外部服务生成，可能不准确、不完整或过时。请核对重要信息，不要将回答当作专业意见。</p>
+      <p style="margin-bottom:10px">星座运势的文字与分值按日期和星座生成，六维图使用星座模板；它们不是实时天象、科学测量或对现实事件的预测。当前西方星盘按 UTC+8 计算，其他时区及历史夏令时可能有偏差。</p>
 
       <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">四、隐私保护</div>
-      <p style="margin-bottom:10px">本应用所有数据（包括出生信息、命盘档案、推演记录、3D 场景偏好与自进化记忆等）均存储在用户本地设备，不会上传至任何服务器。自进化只根据你在这台设备上的反馈调整回答偏好，不训练云端模型。开发者无法访问、收集或使用用户的个人数据。用户应自行妥善保管设备及数据安全。</p>
+      <p style="margin-bottom:10px">出生信息用于本地计算；你保存的档案、部分偏好、工具记录及自进化记忆保存在本机浏览器中。清理浏览器数据或更换设备可能导致这些内容丢失，请自行备份并保护设备。</p>
+      <p style="margin-bottom:10px">使用外部 AI 时，API Key、问题、近期对话及相关命盘或工具上下文可能发送给所选服务商；连接检测也会发送 Key。自进化偏好保存在本机，外部服务对请求内容的处理以其隐私政策为准，请勿输入不愿分享的敏感信息。</p>
+      <p style="margin-bottom:10px">打开菜单、穿搭或风水工具会尝试获取定位。授权后，坐标可能发送给 OpenStreetMap Nominatim 和 Open-Meteo 用于地点及天气查询；未授权时天气会尝试使用北京默认坐标。生成风水结果时，已授权坐标可能发送给 Overpass 查询周边。使用系统分享或导出时，所选内容会交给设备上的分享或保存功能。</p>
 
       <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">五、知识产权</div>
       <p style="margin-bottom:10px">本应用的界面设计、算法逻辑、3D 星象场景、星座配图、图标素材及所有原创内容的知识产权归开发者所有。本应用基于 Three.js 等开源库构建，并遵守相应开源协议。未经书面许可，不得复制、修改、传播或用于商业目的。</p>

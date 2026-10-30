@@ -84,6 +84,22 @@ async function offlineCalculation(page, id, assetName = '') {
     await page.click('#shareStudio .share-studio-close');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'twYShare', '离线关闭分享返回原工具按钮');
     await page.evaluate(() => window.closeToolPage());
+    // The regrouped horoscope data/calculations and the shared tools must be
+    // available after an offline reload of a subpath production build.
+    await page.evaluate(() => window.openToolPage('horoscope'));
+    await page.waitForSelector('#twHSynMe');
+    await page.select('#twHSynMe', 'aries');
+    await page.select('#twHSynOther', 'leo');
+    assert.match(await page.$eval('.pair-title', el => el.textContent), /白羊座.*狮子座/);
+    await page.evaluate(() => { window.closeToolPage(); window.openToolPage('date'); });
+    await page.waitForSelector('#twDDetail');
+    await page.click('#toolModalContent button.tw-d-day');
+    assert.match(await page.$eval('#twDDetail', el => el.textContent), /基调.*适配度/s);
+    await page.evaluate(() => { window.closeToolPage(); window.openToolPage('lottery'); });
+    await page.waitForSelector('#twLotDraw');
+    await page.click('#twLotDraw');
+    assert.equal((await page.$$('#toolModalContent .tw-l-ball-row')).length, 1);
+    await page.evaluate(() => window.closeToolPage());
     // The character poster and selected assets must also be available offline.
     await page.click('#p2ShareBtn');
     await page.waitForSelector('#shareStudio .share-studio-image', { timeout: 15000 });
@@ -146,21 +162,32 @@ try {
   const page = await browser.newPage();
   page.on('pageerror', error => errors.push(error.message));
   await page.setViewport({ width: 390, height: 844 });
+  await page.goto(base + 'manifest.webmanifest', { waitUntil: 'domcontentloaded' });
+  await page.evaluate(async () => {
+    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]) await caches.open(`wenda-cache-v${version}`);
+    await caches.open('unrelated-app-cache');
+  });
   await page.goto(base, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window._tools2Ready === true && document.getElementById('traitMachine')?.dataset.ready === 'true');
+  const cdp = await page.createCDPSession();
+  const browserManifest = await cdp.send('Page.getAppManifest');
+  assert.equal(browserManifest.url, `${base}manifest.webmanifest`);
+  assert.deepEqual(browserManifest.errors, [], '浏览器应能解析生产清单');
+  const { installabilityErrors } = await cdp.send('Page.getInstallabilityErrors');
+  assert.deepEqual(installabilityErrors.filter(error => /icon|manifest/i.test(error.errorId)), [], '浏览器不应报告图标或清单安装错误');
+  await cdp.detach();
   // None of the roles are chosen online; all scenes must still work offline.
-  await page.evaluate(async () => {
-    for (const version of [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37]) await caches.open(`wenda-cache-v${version}`);
-    await caches.open('unrelated-app-cache');
-    await navigator.serviceWorker.register('./sw.js');
-    await navigator.serviceWorker.ready;
-  });
-  await page.waitForFunction(async () => (await caches.keys()).includes('wenda-cache-v38') && !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37)$/.test(key)));
+  // A clean visitor must install the worker without a test-side register call.
+  await page.waitForFunction(async () => (await navigator.serviceWorker.getRegistrations()).length === 1 &&
+    !!navigator.serviceWorker.controller && (await caches.keys()).includes('wenda-cache-v40') &&
+    !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39)$/.test(key)), { timeout: 30000 });
   assert.ok(await page.evaluate(async () => (await caches.keys()).includes('unrelated-app-cache')), '更新不能删除其他应用的缓存');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => navigator.serviceWorker.controller && window._tools2Ready === true && document.getElementById('traitMachine')?.dataset.ready === 'true');
 
   const required = [
+    './manifest.webmanifest', './icon-twins-128.png', './apple-touch-icon-twins.png',
+    './icon-twins-192.png', './icon-twins-512.png', './icon-twins-maskable-192.png', './icon-twins-maskable-512.png',
     './art/master-twin-indigo.webp', './art/master-twin-rose.webp',
     './art/master-twin-indigo-avatar.webp', './art/master-twin-rose-avatar.webp',
     './art/wenwen-reimagined.webp', './art/wenwen-reimagined-avatar.webp', './art/wenwen-reimagined-blink.webp', './art/wenwen-reimagined-speak.webp',
@@ -188,6 +215,58 @@ try {
   const resources = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name).filter(url => url.startsWith(location.origin + '/demo/')));
   await page.waitForFunction(async urls => (await Promise.all(urls.map(url => caches.match(url)))).every(Boolean), { timeout: 15000 }, [...required, ...resources]);
   await page.setOfflineMode(true);
+
+  // The installed app, Apple home screen and tab icon must still resolve from
+  // the production subpath without a network connection.
+  const offlineIcons = await page.evaluate(async () => {
+    const manifestURL = document.querySelector('link[rel="manifest"]').href;
+    const manifestResponse = await fetch(manifestURL);
+    if (!manifestResponse.ok) throw new Error('离线清单不可用');
+    const manifest = await manifestResponse.json();
+    const specs = [
+      ...manifest.icons.map(icon => ({ url: new URL(icon.src, manifestURL).href, size: Number.parseInt(icon.sizes, 10) })),
+      { url: document.querySelector('link[rel="apple-touch-icon"]').href, size: 180 },
+      { url: document.querySelector('link[rel="icon"]').href, size: 128 },
+    ];
+    return Promise.all(specs.map(async ({ url, size }) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`离线图标不可用: ${url}`);
+      const image = await createImageBitmap(await response.blob());
+      const path = new URL(url).pathname;
+      let unsafeDelta = null;
+      if (path.includes('-maskable-')) {
+        // These icons use a quiet gradient outside the 80% safe circle. Check
+        // that no bright foreground detail leaks into the area a launcher may crop.
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        context.drawImage(image, 0, 0);
+        const pixels = context.getImageData(0, 0, size, size).data;
+        unsafeDelta = 0;
+        for (let y = 0; y < size; y++) {
+          for (let x = 0; x < size; x++) {
+            if (Math.hypot((x + .5) / size - .5, (y + .5) / size - .5) < .4) continue;
+            const fraction = x / (size - 1);
+            for (let channel = 0; channel < 3; channel++) {
+              const background = pixels[(y * size) * 4 + channel] * (1 - fraction) +
+                pixels[(y * size + size - 1) * 4 + channel] * fraction;
+              unsafeDelta = Math.max(unsafeDelta, Math.abs(pixels[(y * size + x) * 4 + channel] - background));
+            }
+          }
+        }
+      }
+      const result = { path, width: image.width, height: image.height, size, unsafeDelta };
+      image.close();
+      return result;
+    }));
+  });
+  assert.equal(offlineIcons.length, 6);
+  assert.ok(offlineIcons.every(icon => icon.path.startsWith('/demo/') && icon.width === icon.size && icon.height === icon.size),
+    '离线清单、浏览器与 Apple 图标应在子路径中正确解码');
+  assert.equal(offlineIcons.filter(icon => icon.unsafeDelta !== null).length, 2);
+  assert.ok(offlineIcons.every(icon => icon.unsafeDelta === null || icon.unsafeDelta < 32),
+    '自适应图标的关键前景应保留在 80% 安全区域内');
+  console.log('✓ /demo/ 离线清单、浏览器、Apple 及自适应图标与安全区域');
 
   const roles = [
     ['wenwen', 848, 'sacred-study-mobile.webp', 'awakening-scroll.webp'],

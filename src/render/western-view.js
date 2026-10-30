@@ -1,9 +1,9 @@
 /* ============================================================
-   western-view.js · 西方星相体系高精矢量视觉化渲染层 (Pure SVG / Zero Emoji)
+   western-view.js · 西方星相报告渲染层（3D 场景 + SVG 图标）
    ------------------------------------------------------------
    打造博物馆级别、高精度、极具仪式感的西方星盘全景体验：
      1. 占星术 (Astrology)：
-        - 高精视觉化本命星盘圆盘 (SVG 500px High-End Natal Wheel)
+        - 按需加载的本命星盘 3D 场景
         - 360° 黄道度数刻度、12 宫位划分、四大天顶地轴 (ASC/DSC/MC/IC)
         - 十大星曜高精度落点与纯 SVG 发光勋章 (Zero Emoji)
         - 真实几何相位织网 (Trine/Sextile/Opposition/Square) 与相位速查表
@@ -18,13 +18,13 @@
         - 9年生命周期循环流年环 (9-Year Cycle Ring)
    ============================================================ */
 
-import { calcWesternChart, calcNumerology } from '../engines/western.js';
+import { getWesternProfile } from '../engines/western-context.js';
 import { initWestern3D, syncWestern3D } from '../fx/western3d.js';
 import { zodiacArtSVG } from './zodiac-art.js';
 
 let _w3dReady = false;
 function ensureW3D() { if (!_w3dReady) { _w3dReady = true; try { initWestern3D(); } catch (e) { console.warn('[western3d]', e); } } }
-import { SIGNS, getSunSignByDate, getHoroscopeForecast } from '../tools2/horoscope.js';
+import { SIGNS, getHoroscopeForecast } from '../engines/horoscope.js';
 import { attachToolAI } from '../tools2/runtime.js';
 
 /* ============================================================
@@ -207,201 +207,6 @@ export function getWesternSvgIcon(name, size = 16, color = 'currentColor') {
   return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" class="w-svg-ic" style="color:${color}" aria-hidden="true">${content}</svg>`;
 }
 
-/* ============================================================
-   1. 高精视觉化本命星盘圆盘 (500x500 高清矢量绘制 · 纯 SVG)
-   ============================================================ */
-function renderAstroWheelSvg(chart) {
-  const size = 500, cx = 250, cy = 250;
-  const rOut = 238, rZodiacOut = 232, rZodiacIn = 188, rHousesIn = 120, rCenter = 48;
-  const signs = SIGNS;
-  const planets = chart.planets;
-
-  // 1. 最外层 360 度精细刻度线
-  const tickMarks = [];
-  for (let i = 0; i < 360; i++) {
-    const a = (i - 90) * Math.PI / 180;
-    const is30 = i % 30 === 0;
-    const is10 = i % 10 === 0;
-    const is5 = i % 5 === 0;
-    const tickLen = is30 ? 10 : is10 ? 7 : is5 ? 4.5 : 2.5;
-    const x1 = cx + (rOut - tickLen) * Math.cos(a), y1 = cy + (rOut - tickLen) * Math.sin(a);
-    const x2 = cx + rOut * Math.cos(a), y2 = cy + rOut * Math.sin(a);
-    const stroke = is30 ? 'var(--ac)' : is10 ? 'var(--ac4)' : is5 ? 'var(--c-border-2)' : 'var(--c-border)';
-    const width = is30 ? 1.5 : is10 ? 1 : 0.6;
-    tickMarks.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${stroke}" stroke-width="${width}"/>`);
-  }
-
-  // 2. 黄道十二宫 12 扇区背景与纯 SVG 矢量星座符号
-  const signArcs = signs.map((s, i) => {
-    const startAngle = (i * 30 - 90) * Math.PI / 180;
-    const endAngle = ((i + 1) * 30 - 90) * Math.PI / 180;
-    const midAngle = ((i + 0.5) * 30 - 90) * Math.PI / 180;
-
-    const x1 = cx + rZodiacOut * Math.cos(startAngle), y1 = cy + rZodiacOut * Math.sin(startAngle);
-    const x2 = cx + rZodiacOut * Math.cos(endAngle), y2 = cy + rZodiacOut * Math.sin(endAngle);
-    const x3 = cx + rZodiacIn * Math.cos(endAngle), y3 = cy + rZodiacIn * Math.sin(endAngle);
-    const x4 = cx + rZodiacIn * Math.cos(startAngle), y4 = cy + rZodiacIn * Math.sin(startAngle);
-
-    const tx = cx + (rZodiacIn + 23) * Math.cos(midAngle);
-    const ty = cy + (rZodiacIn + 23) * Math.sin(midAngle);
-    const lx = cx + (rZodiacIn + 8) * Math.cos(midAngle);
-    const ly = cy + (rZodiacIn + 8) * Math.sin(midAngle);
-
-    const isSun = s.id === chart.sun.id;
-    const isMoon = s.id === chart.moon.id;
-    const isAsc = s.id === chart.asc.id;
-
-    const elemColor = s.elemKey === 'fire' ? '#e05a47' : s.elemKey === 'earth' ? '#5c8d62' : s.elemKey === 'air' ? '#d4a34b' : '#5e7fa2';
-    const bgFill = isSun ? 'rgba(217, 119, 87, 0.28)' : isAsc ? 'rgba(181, 131, 141, 0.22)' : isMoon ? 'rgba(107, 139, 164, 0.22)' : (i % 2 === 0 ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.035)');
-
-    return `
-      <path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${rZodiacOut} ${rZodiacOut} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)} L ${x3.toFixed(1)} ${y3.toFixed(1)} A ${rZodiacIn} ${rZodiacIn} 0 0 0 ${x4.toFixed(1)} ${y4.toFixed(1)} Z" fill="${bgFill}" stroke="var(--c-border)" stroke-width="0.8"/>
-      ${getZodiacSvgNode(s.id, tx, ty, 0.78, elemColor)}
-      <text x="${lx.toFixed(1)}" y="${(ly + 3).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="600" fill="var(--c-text-3)">${s.name.slice(0, 2)}</text>
-    `;
-  }).join('');
-
-  // 3. 12 宫位划分线与罗马数字 (I ~ XII)
-  const romanHouses = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-  const houseLines = Array.from({ length: 12 }, (_, i) => {
-    const a = (i * 30 - 90) * Math.PI / 180;
-    const x1 = cx + rZodiacIn * Math.cos(a), y1 = cy + rZodiacIn * Math.sin(a);
-    const x2 = cx + rHousesIn * Math.cos(a), y2 = cy + rHousesIn * Math.sin(a);
-    const isAxis = i === 0 || i === 6 || i === 3 || i === 9;
-
-    const midA = ((i + 0.5) * 30 - 90) * Math.PI / 180;
-    const htx = cx + (rHousesIn + 16) * Math.cos(midA), hty = cy + (rHousesIn + 16) * Math.sin(midA);
-
-    return `
-      <line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${isAxis ? 'var(--ac)' : 'var(--c-border)'}" stroke-width="${isAxis ? '1.8' : '0.6'}" ${isAxis ? '' : 'stroke-dasharray="2 3"'}/>
-      <text x="${htx.toFixed(1)}" y="${(hty + 3.5).toFixed(1)}" text-anchor="middle" font-size="8.5" font-family="var(--serif)" font-weight="700" fill="var(--c-text-4)">${romanHouses[i]}</text>
-    `;
-  }).join('');
-
-  // 4. 四大核心天顶地轴 (ASC / DSC / MC / IC)
-  const axisMarks = `
-    <!-- ASC (东方上升点) -->
-    <line x1="${cx - rOut - 6}" y1="${cy}" x2="${cx - rHousesIn + 10}" y2="${cy}" stroke="var(--ac)" stroke-width="2.2"/>
-    <polygon points="${cx - rOut - 12},${cy} ${cx - rOut - 4},${cy - 4} ${cx - rOut - 4},${cy + 4}" fill="var(--ac)"/>
-    <text x="${cx - rOut - 16}" y="${cy + 4}" text-anchor="end" font-size="10" font-weight="800" fill="var(--ac-text)">ASC 上升</text>
-
-    <!-- DSC (西方下降点) -->
-    <line x1="${cx + rHousesIn - 10}" y1="${cy}" x2="${cx + rOut + 6}" y2="${cy}" stroke="var(--ac)" stroke-width="1.8" stroke-dasharray="4 2"/>
-    <text x="${cx + rOut + 12}" y="${cy + 4}" text-anchor="start" font-size="9" font-weight="700" fill="var(--c-text-3)">DSC 下降</text>
-
-    <!-- MC (天顶中天) -->
-    <line x1="${cx}" y1="${cy - rOut - 6}" x2="${cx}" y2="${cy - rHousesIn + 10}" y2="${cy}" stroke="var(--ac)" stroke-width="2.2"/>
-    <polygon points="${cx},${cy - rOut - 12} ${cx - 4},${cy - rOut - 4} ${cx + 4},${cy - rOut - 4}" fill="var(--ac)"/>
-    <text x="${cx}" y="${cy - rOut - 16}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--ac-text)">MC 天顶</text>
-
-    <!-- IC (天底) -->
-    <line x1="${cx}" y1="${cy + rHousesIn - 10}" x2="${cx}" y2="${cy + rOut + 6}" stroke="var(--ac)" stroke-width="1.8" stroke-dasharray="4 2"/>
-    <text x="${cx}" y="${cy + rOut + 16}" text-anchor="middle" font-size="9" font-weight="700" fill="var(--c-text-3)">IC 天底</text>
-  `;
-
-  // 5. 真实几何相位连线 (Aspect Lines)
-  const planetCoords = {};
-  planets.forEach((p, idx) => {
-    const totalDeg = p.absDegree || 0;
-    const a = (totalDeg - 90) * Math.PI / 180;
-    const rDist = rHousesIn - 12 - (idx % 2) * 14;
-    planetCoords[p.key] = {
-      x: cx + rDist * Math.cos(a),
-      y: cy + rDist * Math.sin(a),
-      edgeX: cx + rZodiacIn * Math.cos(a),
-      edgeY: cy + rZodiacIn * Math.sin(a),
-      a,
-      totalDeg,
-      p
-    };
-  });
-
-  const aspectLinesSvg = (chart.aspects || []).slice(0, 14).map(asp => {
-    const c1 = planetCoords[asp.p1.key];
-    const c2 = planetCoords[asp.p2.key];
-    if (!c1 || !c2) return '';
-    return `<line x1="${c1.x.toFixed(1)}" y1="${c1.y.toFixed(1)}" x2="${c2.x.toFixed(1)}" y2="${c2.y.toFixed(1)}" stroke="${asp.color}" stroke-width="${asp.type === 'trine' || asp.type === 'conjunction' ? '1.4' : '0.9'}" opacity="0.68" ${asp.strokeStyle === 'dashed' ? 'stroke-dasharray="3 3"' : ''}/>`;
-  }).join('');
-
-  // 6. 行星精准落座勋章与引线 (纯 SVG 矢量微标)
-  const planetMedallions = planets.map((p) => {
-    const item = planetCoords[p.key];
-    if (!item) return '';
-    const isCore = p.key === 'Sun' || p.key === 'Moon' || p.key === 'Asc';
-    const rad = isCore ? 13.5 : 10.5;
-
-    // 连接星体勋章到黄道内圈的细引线
-    const leadLine = `<line x1="${item.x.toFixed(1)}" y1="${item.y.toFixed(1)}" x2="${item.edgeX.toFixed(1)}" y2="${item.edgeY.toFixed(1)}" stroke="var(--ac4)" stroke-width="0.7" stroke-dasharray="1.5 2"/>`;
-
-    return `
-      ${leadLine}
-      <g class="planet-glyph-group" data-planet="${p.key}">
-        <circle cx="${item.x.toFixed(1)}" cy="${item.y.toFixed(1)}" r="${rad}" fill="var(--c-surface)" stroke="${isCore ? 'var(--ac)' : 'var(--c-border-2)'}" stroke-width="${isCore ? '1.8' : '1'}" filter="drop-shadow(0 2px 5px rgba(0,0,0,0.18))"/>
-        ${getPlanetSvgNode(p.key, item.x, item.y, isCore ? 0.68 : 0.54, isCore ? 'var(--ac-text)' : 'var(--c-text-hi)')}
-      </g>
-    `;
-  }).join('');
-
-  return `<div class="w-wheel-container">
-    <div class="w-wheel-stage">
-      <svg viewBox="0 0 ${size} ${size}" class="w-wheel-svg" aria-label="西方本命星盘圆盘">
-        <defs>
-          <radialGradient id="spaceGrad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="var(--c-surface-3)" stop-opacity="0.7"/>
-            <stop offset="70%" stop-color="var(--c-surface-2)" stop-opacity="0.95"/>
-            <stop offset="100%" stop-color="var(--c-surface)" stop-opacity="1"/>
-          </radialGradient>
-          <filter id="glowGold" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur"/>
-            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-          </filter>
-        </defs>
-
-        <!-- 背景底盘 -->
-        <circle cx="${cx}" cy="${cy}" r="${rOut + 4}" fill="url(#spaceGrad)" stroke="var(--c-border)" stroke-width="1.2"/>
-        <circle cx="${cx}" cy="${cy}" r="${rOut}" fill="none" stroke="var(--ac4)" stroke-width="1.2"/>
-        <circle cx="${cx}" cy="${cy}" r="${rZodiacOut}" fill="none" stroke="var(--c-border)" stroke-width="0.8"/>
-        <circle cx="${cx}" cy="${cy}" r="${rZodiacIn}" fill="none" stroke="var(--ac4)" stroke-width="1"/>
-        <circle cx="${cx}" cy="${cy}" r="${rHousesIn}" fill="var(--c-surface)" stroke="var(--c-border-2)" stroke-width="1"/>
-
-        <!-- 360 度刻度 -->
-        ${tickMarks.join('')}
-
-        <!-- 12 扇区 -->
-        ${signArcs}
-
-        <!-- 12 宫位划分 -->
-        ${houseLines}
-
-        <!-- 相位织网 -->
-        ${aspectLinesSvg}
-
-        <!-- 四大天顶地轴 -->
-        ${axisMarks}
-
-        <!-- 十大星曜徽章 -->
-        ${planetMedallions}
-
-        <!-- 中央星盘宇宙星核 -->
-        <circle cx="${cx}" cy="${cy}" r="${rCenter}" fill="var(--c-surface-2)" stroke="var(--ac)" stroke-width="2" filter="url(#glowGold)"/>
-        <circle cx="${cx}" cy="${cy}" r="${rCenter - 5}" fill="none" stroke="var(--c-border)" stroke-width="0.7" stroke-dasharray="2 3"/>
-        <g transform="translate(${cx}, ${cy - 16}) scale(0.72)">${getPlanetSvgNode('Sun', 0, 0, 0.9, 'var(--ac-text)')}</g>
-        <text x="${cx}" y="${cy - 2}" text-anchor="middle" font-size="12" font-weight="900" fill="var(--ac-text)">${chart.sun.name}</text>
-        <text x="${cx}" y="${cy + 13}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--c-text-hi)">${chart.asc.name}上升</text>
-        <text x="${cx}" y="${cy + 26}" text-anchor="middle" font-size="8" fill="var(--c-text-3)">${chart.moon.name}月亮</text>
-      </svg>
-    </div>
-
-    <!-- 底部相位与要素图例说明 -->
-    <div class="w-wheel-aspect-legend">
-      <div class="aspect-pill trine"><i style="background:#7ab648"></i><span>三分相 (120° 顺畅)</span></div>
-      <div class="aspect-pill sextile"><i style="background:#3a8696"></i><span>六分相 (60° 契机)</span></div>
-      <div class="aspect-pill oppo"><i style="background:#d4654a"></i><span>对分相 (180° 张力)</span></div>
-      <div class="aspect-pill square"><i style="background:#d97757"></i><span>四分相 (90° 挑战)</span></div>
-    </div>
-  </div>`;
-}
-
 /* —— SVG 工具函数：绘制六维潜能雷达图 —— */
 function renderRadarSvg(radar) {
   const size = 220, cx = 110, cy = 110, rMax = 78;
@@ -465,13 +270,9 @@ function renderRadarSvg(radar) {
    1. 占星术渲染 (#s-ming)
    ============================================================ */
 export function renderWesternAstrologySection(ctx) {
-  const input = (ctx && ctx.input) || (ctx && ctx._input) || {};
-  const city = (ctx && ctx.city) || { n: '北京', o: 116.4, a: 39.9 };
-  const y = input.by || 1995, m = input.bm || 6, d = input.bd || 15;
-  const timeStr = input.timeStr || '12:00';
-  const [h, min] = timeStr.split(':').map(Number);
-
-  const chart = calcWesternChart(y, m, d, Number.isFinite(h) ? h : 12, Number.isFinite(min) ? min : 0, city.o ?? 116.4, city.a ?? 39.9);
+  const profile = getWesternProfile(ctx);
+  if (!profile) return '<div class="glass card-2">请先填写完整出生信息，才能生成星相依据。</div>';
+  const chart = profile.chart;
   const sun = chart.sun;
   const moon = chart.moon;
   const asc = chart.asc;
@@ -535,7 +336,7 @@ export function renderWesternAstrologySection(ctx) {
       '' +
       '<div>' +
         '' +
-        '<div class="card-st">元素配比 ｜ 潜能六维雷达评估</div>' +
+        '<div class="card-st">元素配比 ｜ 太阳星座六维模板</div>' +
       '</div>' +
     '</div>' +
     '<div class="w-elem-radar-layout">' +
@@ -554,7 +355,7 @@ export function renderWesternAstrologySection(ctx) {
         '</div>' +
       '</div>' +
       '<div class="w-radar-col">' +
-        '<div class="w-elem-title" style="text-align:center">六维人格天赋雷达</div>' +
+        '<div class="w-elem-title" style="text-align:center">太阳星座六维模板（非科学测量）</div>' +
         renderRadarSvg(sun.radar) +
       '</div>' +
     '</div>' +
@@ -607,9 +408,9 @@ export function renderWesternAstrologySection(ctx) {
    2. 星座全览渲染 (#s-yun)
    ============================================================ */
 export function renderWesternHoroscopeSection(ctx) {
-  const input = (ctx && ctx.input) || (ctx && ctx._input) || {};
-  const m = input.bm || 6, d = input.bd || 15;
-  const sun = getSunSignByDate(m, d);
+  const profile = getWesternProfile(ctx);
+  if (!profile) return '<div class="glass card-2">请先填写完整出生信息，才能生成星相依据。</div>';
+  const sun = profile.chart.sun;
 
   const fToday = getHoroscopeForecast(sun, 'today');
   const fWeek = getHoroscopeForecast(sun, 'week');
@@ -625,7 +426,7 @@ export function renderWesternHoroscopeSection(ctx) {
   H += '<div class="w3d-hero w3d-hero-night" id="w3d-horo" data-system="western">' +
     '<button class="w3d-reset" type="button" aria-label="复位视角" title="复位视角" onpointerdown="event.stopPropagation()" onclick="window._w3dReset && window._w3dReset(\'horo\')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 2.6-6.4"/><path d="M3 4v5h5"/></svg></button>' +
     '<div class="w3d-loading"><span class="w3d-load-ring"></span><span>星空正在编译中...</span></div>' +
-    '<div class="w3d-ov"><div class="w3d-ov-kicker">黄道天球 · 实时星象</div><div class="w3d-ov-chips"><span>☉ ' + sun.name + '</span><span>' + fToday.sub + '</span></div></div>' +
+    '<div class="w3d-ov"><div class="w3d-ov-kicker">黄道天球 · 星座示意</div><div class="w3d-ov-chips"><span>☉ ' + sun.name + '</span><span>' + fToday.sub + '</span></div></div>' +
   '</div>';
 
   // 今日运势总览大卡
@@ -634,7 +435,7 @@ export function renderWesternHoroscopeSection(ctx) {
       '' +
       '<div>' +
         '' +
-        '<div class="card-st">' + fToday.sub + '</div>' +
+        '<div class="card-st">' + fToday.sub + ' · 按日期和星座生成，仅供参考</div>' +
       '</div>' +
     '</div>' +
     '<div class="w-horo-hero">' +
@@ -643,7 +444,7 @@ export function renderWesternHoroscopeSection(ctx) {
           '<circle cx="50" cy="50" r="42" fill="none" stroke="var(--c-surface-3)" stroke-width="8"/>' +
           '<circle cx="50" cy="50" r="42" fill="none" stroke="var(--ac)" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + (2 * Math.PI * 42 * fToday.baseScore / 100) + ' 300" style="transform:rotate(-90deg);transform-origin:center"/>' +
         '</svg>' +
-        '<div class="score-txt">' + fToday.baseScore + '<small>今日综合分</small></div>' +
+        '<div class="score-txt">' + fToday.baseScore + '<small>今日参考分</small></div>' +
       '</div>' +
       '<div class="hero-details">' +
         '<div class="mood-tag">' + fToday.mood + '</div>' +
@@ -684,7 +485,7 @@ export function renderWesternHoroscopeSection(ctx) {
       '' +
       '<div>' +
         '' +
-        '<div class="card-st">各星座今日综合分 ｜ 实时能量气场</div>' +
+        '<div class="card-st">按日期与星座生成的参考分，并非实时天象或预测</div>' +
       '</div>' +
     '</div>' +
     '<div class="w-all-signs-grid">' +
@@ -706,12 +507,12 @@ export function renderWesternHoroscopeSection(ctx) {
     '<div class="card-hd">' +
       '' +
       '<div>' +
-        '<div class="card-tt">中长期星象展望 · ' + sun.name + '</div>' +
-        '<div class="card-st">周报 ｜ 月度 ｜ 年度跃迁</div>' +
+        '<div class="card-tt">中长期主题参考 · ' + sun.name + '</div>' +
+        '<div class="card-st">每周 ｜ 每月 ｜ 每年</div>' +
       '</div>' +
     '</div>' +
     '<div class="w-macro-list">' +
-      '<div class="m-item"><b>' + getWesternSvgIcon('calendar', 14) + ' 本周星象：</b><span>' + fWeek.career + ' ' + fWeek.love + '</span></div>' +
+      '<div class="m-item"><b>' + getWesternSvgIcon('calendar', 14) + ' 本周参考：</b><span>' + fWeek.career + ' ' + fWeek.love + '</span></div>' +
       '<div class="m-item"><b>' + getWesternSvgIcon('moon', 14) + ' 本月罗盘：</b><span>' + fMonth.career + ' ' + fMonth.wealth + '</span></div>' +
       '<div class="m-item"><b>' + getWesternSvgIcon('sun', 14) + ' 年度跃迁：</b><span>' + fYear.career + ' ' + fYear.love + '</span></div>' +
     '</div>' +
@@ -725,10 +526,9 @@ export function renderWesternHoroscopeSection(ctx) {
    3. 生命灵术渲染 (#s-rel)
    ============================================================ */
 export function renderWesternNumerologySection(ctx) {
-  const input = (ctx && ctx.input) || (ctx && ctx._input) || {};
-  const y = input.by || 1995, m = input.bm || 6, d = input.bd || 15;
-
-  const num = calcNumerology(y, m, d);
+  const profile = getWesternProfile(ctx);
+  if (!profile) return '<div class="glass card-2">请先填写完整出生信息，才能生成灵数依据。</div>';
+  const { y, m, d, numerology: num } = profile;
   const arch = num.archetype;
 
   // Three.js 生命矩阵场景

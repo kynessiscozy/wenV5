@@ -25,10 +25,10 @@
 
 import { showToast } from '../ui/toast.js';
 import { getCtx } from '../state/context.js';
-import { calcWesternChart, calcNumerology } from '../engines/western.js';
+import { getWesternProfile } from '../engines/western-context.js';
 import { GW, ZW, WC } from '../engines/shared.js';
 import { drawZodiacArt } from '../render/zodiac-art.js';
-import { SIGNS, getSunSignByDate, getHoroscopeForecast } from '../tools2/horoscope.js';
+import { getNayin } from '../engines/shared.js';
 
 const W = 840;      // 基准逻辑宽度（2x 输出为 1680px 高清画布）
 const PAD = 48;     // 页面两侧安全内边距
@@ -78,12 +78,13 @@ function getThemePalette() {
 
 /** 绘制圆角矩形 */
 function roundRect(ctx, x, y, w, h, r = 16) {
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
   ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y + w, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
 }
 
@@ -110,69 +111,6 @@ function wrapText(ctx, text, maxW) {
 /* ============================================================
    共享绘制件
    ============================================================ */
-const NY60 = {
-  '甲子': '海中金',
-  '乙丑': '海中金',
-  '丙寅': '炉中火',
-  '丁卯': '炉中火',
-  '戊辰': '大林木',
-  '己巳': '大林木',
-  '庚午': '路旁土',
-  '辛未': '路旁土',
-  '壬申': '剑锋金',
-  '癸酉': '剑锋金',
-  '甲戌': '山头火',
-  '乙亥': '山头火',
-  '丙子': '涧下水',
-  '丁丑': '涧下水',
-  '戊寅': '城头土',
-  '己卯': '城头土',
-  '庚辰': '白蜡金',
-  '辛巳': '白蜡金',
-  '壬午': '杨柳木',
-  '癸未': '杨柳木',
-  '甲申': '泉中水',
-  '乙酉': '泉中水',
-  '丙戌': '屋上土',
-  '丁亥': '屋上土',
-  '戊子': '霹雳火',
-  '己丑': '霹雳火',
-  '庚寅': '松柏木',
-  '辛卯': '松柏木',
-  '壬辰': '长流水',
-  '癸巳': '长流水',
-  '甲午': '沙中金',
-  '乙未': '沙中金',
-  '丙申': '山下火',
-  '丁酉': '山下火',
-  '戊戌': '平地木',
-  '己亥': '平地木',
-  '庚子': '壁上土',
-  '辛丑': '壁上土',
-  '壬寅': '金箔金',
-  '癸卯': '金箔金',
-  '甲辰': '覆灯火',
-  '乙巳': '覆灯火',
-  '丙午': '天河水',
-  '丁未': '天河水',
-  '戊申': '大驿土',
-  '己酉': '大驿土',
-  '庚戌': '钗钏金',
-  '辛亥': '钗钏金',
-  '壬子': '桑柘木',
-  '癸丑': '桑柘木',
-  '甲寅': '大溪水',
-  '乙卯': '大溪水',
-  '丙辰': '沙中土',
-  '丁巳': '沙中土',
-  '戊午': '天上火',
-  '己未': '天上火',
-  '庚申': '石榴木',
-  '辛酉': '石榴木',
-  '壬戌': '大海水',
-  '癸亥': '大海水'
-};
-
 function seededRand(seed) {
   let s = seed >>> 0;
   return () => { s = (s + 0x6D2B79F5) >>> 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -203,11 +141,11 @@ function drawNightHeader(ctx, P, y, h, kicker, title, metaText, seed) {
 
   ctx.fillStyle = '#f2ede4';
   ctx.font = '800 40px ' + P.serif;
-  ctx.fillText(title, PAD, y + 96);
+  ctx.fillText(title, PAD, y + 96, W - PAD * 2);
 
   ctx.fillStyle = '#cfd3e8';
   ctx.font = '400 21px ' + P.sans;
-  ctx.fillText(metaText, PAD, y + 132);
+  ctx.fillText(metaText, PAD, y + 132, W - PAD * 2);
 
   ctx.strokeStyle = 'rgba(217,179,106,0.55)';
   ctx.lineWidth = 1.5;
@@ -228,18 +166,6 @@ function sectionHead(ctx, P, y, num, title) {
   return y + 44;
 }
 
-function drawChip(ctx, text, x, y, P) {
-  ctx.font = '500 19px ' + P.sans;
-  const w = ctx.measureText(text).width + 28;
-  roundRect(ctx, x, y, w, 36, 18);
-  ctx.fillStyle = P.accentSoft; ctx.fill();
-  ctx.strokeStyle = P.accentBorder; ctx.lineWidth = 1;
-  roundRect(ctx, x, y, w, 36, 18); ctx.stroke();
-  ctx.fillStyle = P.accent;
-  ctx.fillText(text, x + 14, y + 25);
-  return w;
-}
-
 function kvLine(ctx, P, label, value, x, y, valueColor) {
   ctx.fillStyle = P.text3;
   ctx.font = '500 19px ' + P.sans;
@@ -256,19 +182,21 @@ function drawEasternReport(ctx, d, P, dryRun = false) {
   const contentW = W - PAD * 2;
   let y = PAD;
 
-  const b = d.b || { Y: { g: '甲', z: '子' }, M: { g: '丙', z: '寅' }, D: { g: '戊', z: '辰' }, H: { g: '壬', z: '子' } };
-  const wx = d.wx || { Wood: 20, Fire: 25, Earth: 30, Metal: 15, Water: 10 };
+  const b = d?.b;
+  const input = d?.input || d?._input;
+  if (!input?.by || !input?.bm || !input?.bd || !b?.Y || !b?.M || !b?.D || !b?.H) {
+    throw new Error('请先填写完整出生信息并生成命盘');
+  }
+  const wx = d.wx || {};
   const ss = d.ss || {};
-  const si = d.si || {};
   const shensha = d.shensha || [];
-  const input = d.input || {};
-  const gl = d.gl || '乾造';
-  const cDy = d.cDy || { g: '庚', z: '午', startAge: 30, endAge: 39 };
-  const cLn = d.cLn || { g: '甲', z: '辰' };
-  const zw = d.zw || { name: '紫微天府' };
-  const qm = d.qm || { name: '天辅星 · 生门' };
-  const mh = d.mh || { name: '风火家人' };
-  const dg = d.dg || '戊';
+  const gl = d.gl || '—';
+  const cDy = d.cDy;
+  const cLn = d.cLn;
+  const zw = d.zw;
+  const qm = d.qm;
+  const mh = d.mh;
+  const dg = d.dg || b.D.g;
   const personaAll = d.P || {};
   const personaDims = [
     ['本我驱动', personaAll[dg]?.core || ''],
@@ -279,12 +207,13 @@ function drawEasternReport(ctx, d, P, dryRun = false) {
   ].filter(x => x[1]);
 
   /* ---- 夜空报头 ---- */
-  const metaText = (input.by || 1995) + ' 年 ' + (input.bm || 6) + ' 月 ' + (input.bd || 15) + ' 日 · ' + (d.city?.n || '上海') + ' · ' + (input.timeStr || '12:00');
+  const metaText = input.by + ' 年 ' + input.bm + ' 月 ' + input.bd + ' 日 · ' + (d.city?.n || '地点未提供') + ' · ' + (input.timeStr || '时间未提供');
   drawNightHeader(ctx, P, y, 156, '东方命理 · 全景报告', '四柱八字与五行格局全览', metaText, 20260829);
   y += 156 + 26;
 
   /* ---- 信息胶囊 ---- */
-  const capText = '【' + gl + '】 日主 ' + dg + (d.dw || '') + ' · 命格 ' + (d.pa?.name || '正财格') + ' · 用神 ' + (d.wx?.ys || '土');
+  const pattern = Array.isArray(d.pa) ? d.pa.join('、') : (d.pa?.name || '—');
+  const capText = '【' + gl + '】 日主 ' + dg + (d.dw || '') + ' · 命格 ' + pattern + ' · 用神 ' + (wx.ys || '—');
   if (!dryRun) {
     roundRect(ctx, PAD, y, contentW, 46, 23);
     ctx.fillStyle = P.accentSoft; ctx.fill();
@@ -292,7 +221,7 @@ function drawEasternReport(ctx, d, P, dryRun = false) {
     roundRect(ctx, PAD, y, contentW, 46, 23); ctx.stroke();
     ctx.fillStyle = P.accent;
     ctx.font = '600 21px ' + P.sans;
-    ctx.fillText(capText, PAD + 20, y + 30);
+    ctx.fillText(capText, PAD + 20, y + 30, contentW - 40);
   }
   y += 46 + 26;
 
@@ -335,19 +264,19 @@ function drawEasternReport(ctx, d, P, dryRun = false) {
       ctx.fillStyle = zc; ctx.fillText(p.p.z, px + colW / 2 + 26, y + 128);
       ctx.fillStyle = P.text2;
       ctx.font = '400 19px ' + P.sans;
-      ctx.fillText('纳音 ' + (NY60[p.p.g + p.p.z] || '—'), px + colW / 2, y + 172);
-      const zcTxt = (p.zc || []).map(x => x.g + (x.ss ? '·' + x.ss : '')).join(' ');
+      ctx.fillText('纳音 ' + (getNayin(p.p.g + p.p.z) || '—'), px + colW / 2, y + 172);
+      const zcTxt = (p.zc || []).map(x => x.g + (x.s ? '·' + x.s : '')).join(' ');
       ctx.fillStyle = P.text3;
       ctx.font = '400 16px ' + P.sans;
-      ctx.fillText('藏干 ' + (zcTxt || '—'), px + colW / 2, y + 202);
+      ctx.fillText('藏干 ' + (zcTxt || '—'), px + colW / 2, y + 202, colW - 20);
       ctx.textAlign = 'left';
     });
   }
   y += matrixH + 14;
 
   /* —— 冲合刑害标签行 —— */
-  const notes = shensha.map(x => x.t || x.n || x).filter(Boolean).slice(0, 4);
-  let noteH = 64;
+  const notes = shensha.map(x => typeof x === 'string' ? x : [x.n, x.v, x.t].filter(Boolean).join(' · ')).filter(Boolean).slice(0, 4);
+  let noteH = 24;
   for (const nt of notes) {
     ctx.font = '400 21px ' + P.sans;
     noteH += wrapText(ctx, '· ' + nt, contentW - 56).length * 33 + 8;
@@ -377,7 +306,7 @@ function drawEasternReport(ctx, d, P, dryRun = false) {
     { name: '金', pct: Math.round((wcMap['金'] || 0) / wTotal * 100), col: '#c9a227' },
     { name: '水', pct: Math.round((wcMap['水'] || 0) / wTotal * 100), col: '#5e7fa2' },
   ];
-  const wxCardH = 196;
+  const wxCardH = 226;
   if (!dryRun) {
     roundRect(ctx, PAD, y, contentW, wxCardH, 18);
     ctx.fillStyle = P.bgCard; ctx.fill();
@@ -393,8 +322,10 @@ function drawEasternReport(ctx, d, P, dryRun = false) {
       const tx = barStartX + 46;
       roundRect(ctx, tx, by2 - 13, trackW, 15, 7);
       ctx.fillStyle = P.bgCardAlt; ctx.fill();
-      roundRect(ctx, tx, by2 - 13, Math.max(10, trackW * (it.pct / 100)), 15, 7);
-      ctx.fillStyle = it.col; ctx.fill();
+      if (it.pct > 0) {
+        roundRect(ctx, tx, by2 - 13, trackW * (it.pct / 100), 15, 7);
+        ctx.fillStyle = it.col; ctx.fill();
+      }
       ctx.fillStyle = P.text;
       ctx.font = '700 19px ' + P.sans;
       ctx.fillText(it.pct + '%', tx + trackW + 18, by2 + 1);
@@ -409,9 +340,9 @@ function drawEasternReport(ctx, d, P, dryRun = false) {
 
   /* ---- 叁 · 心智画像 ---- */
   y = sectionHead(ctx, P, y, '叁', '心智画像与行为倾向');
-  const personaKeys = personaDims;
+  const personaKeys = personaDims.length ? personaDims : [['提示', '暂无人格画像，完成命盘后查看。']];
   let personaH = 16;
-  for (const [k, v] of personaKeys) {
+  for (const [, v] of personaKeys) {
     ctx.font = '400 22px ' + P.sans;
     const lines = wrapText(ctx, v, contentW - 190);
     personaH += Math.max(40, lines.length * 33) + 14;
@@ -452,10 +383,15 @@ function drawEasternReport(ctx, d, P, dryRun = false) {
     ctx.fillStyle = P.accent;
     ctx.font = '700 20px ' + P.sans;
     ctx.fillText('当前时空坐标', PAD + 28, y + 42);
+    const startAge = cDy?.as ?? cDy?.startAge;
+    const endAge = cDy?.ae ?? cDy?.endAge;
+    const ageRange = startAge != null && endAge != null ? ' (' + startAge + '~' + endAge + '岁)' : '';
     const leftLines = [
-      ['十年大运', cDy.g + cDy.z + ' (' + (cDy.startAge || 30) + '~' + (cDy.endAge || 39) + '岁)'],
-      ['今年流年', cLn.g + cLn.z + ' · ' + (d.cLnSS || '太岁气场')],
-      ['事业评分', String(d.cs || '—') + ' 分'], ['财富评分', String(d.ws || '—') + ' 分'], ['爱情评分', String(d.ls || '—') + ' 分']
+      ['十年大运', cDy ? cDy.g + cDy.z + ageRange : '—'],
+      ['今年流年', cLn ? cLn.g + cLn.z + (d.cLnSS ? ' · ' + d.cLnSS : '') : '—'],
+      ['事业评分', d.cs != null ? String(d.cs) + ' 分' : '—'],
+      ['财富评分', d.ws != null ? String(d.ws) + ' 分' : '—'],
+      ['爱情评分', d.ls != null ? String(d.ls) + ' 分' : '—']
     ];
     let ly = y + 80;
     leftLines.forEach(([lb, v]) => { kvLine(ctx, P, lb, v, PAD + 28, ly); ly += 36; });
@@ -464,10 +400,13 @@ function drawEasternReport(ctx, d, P, dryRun = false) {
     ctx.fillStyle = '#b8860b';
     ctx.font = '700 20px ' + P.sans;
     ctx.fillText('三大流派精要', rx, y + 42);
+    const mingGong = zw?.ps?.[zw.mingGongZhi];
+    const ziweiSummary = mingGong ? (mingGong.m?.length ? mingGong.m.join('、') : '命宫无主星') : '—';
+    const qimenSummary = qm && qm.ju != null && qm.yangDun != null ? (qm.yangDun ? '阳遁' : '阴遁') + qm.ju + '局' : '—';
     const rightLines = [
-      ['紫微斗数', zw.name || '紫微天府'],
-      ['奇门遁甲', qm.name || '天辅生门'],
-      ['梅花易数', mh.name || '风火家人']
+      ['紫微斗数', ziweiSummary],
+      ['奇门遁甲', qimenSummary],
+      ['梅花易数', mh?.benName || '—']
     ];
     ly = y + 80;
     rightLines.forEach(([lb, v]) => {
@@ -496,8 +435,6 @@ function drawEasternReport(ctx, d, P, dryRun = false) {
   return y;
 }
 
-function dwFix(dw) { return dw || ''; }
-
 /* ============================================================
    2. 西方星相全景长报告渲染器 (真 3D 同源数据 + 星座星图带)
    ============================================================ */
@@ -505,22 +442,17 @@ function drawWesternReport(ctx, d, P, dryRun = false) {
   const contentW = W - PAD * 2;
   let y = PAD;
 
-  const input = d.input || {};
-  const by = input.by || 1995, bm = input.bm || 6, bd = input.bd || 15;
-  const timeStr = input.timeStr || '12:00';
-  const [h, min] = timeStr.split(':').map(Number);
-  const city = d.city || { o: 116.4, a: 39.9, n: '北京' };
-
-  const chart = calcWesternChart(by, bm, bd, h || 12, min || 0, city.o, city.a);
+  const profile = getWesternProfile(d);
+  if (!profile) throw new Error('请先填写完整出生信息');
+  const { y: by, m: bm, d: bd, city, chart, numerology: num } = profile;
+  const timeStr = (d.input || d._input).timeStr;
   const sun = chart.sun;
   const moon = chart.moon;
   const asc = chart.asc;
-  const num = calcNumerology(by, bm, bd);
-  const fToday = getHoroscopeForecast(sun, 'today');
 
   /* ---- 夜空报头 ---- */
-  const metaText = by + ' 年 ' + bm + ' 月 ' + bd + ' 日 · ' + city.n + ' · ' + timeStr;
-  drawNightHeader(ctx, P, y, 156, '西方星象 · 全景报告', '本命星盘 · 黄道十二宫与生命灵数', metaText, 20260915);
+  const metaText = by + ' 年 ' + bm + ' 月 ' + bd + ' 日 · ' + city.n + ' · ' + timeStr + '（' + (city.tz || 'Asia/Shanghai') + '）';
+  drawNightHeader(ctx, P, y, 156, '西方星象 · 全景报告', '本命星盘 · 星座与生命灵数', metaText, 20260915);
   y += 156 + 24;
 
   /* —— 十二星座真实星图带 —— */
@@ -546,18 +478,22 @@ function drawWesternReport(ctx, d, P, dryRun = false) {
 
   /* ---- 壹 · 三核本我 ---- */
   y = sectionHead(ctx, P, y, '壹', '三核本我 · 人格三支柱');
-  const trioH = 250;
+  const trio = [
+    { k: '太阳 · 本我驱动', s: sun, c: '#c96f3f', d: '核心英雄之旅与意志驱动' },
+    { k: '月亮 · 内心情感', s: moon, c: '#5e7fa2', d: '潜意识、安全感与情绪需求' },
+    { k: '上升 · 第一名片', s: asc, c: '#b5838d', d: '呈现给世界的面具与第一反应' }
+  ];
+  const colW = (contentW - 40) / 3;
+  // Measure in both passes: summaries vary by sign, so a fixed card height
+  // would cut text off or overlap the following section.
+  ctx.font = '400 18px ' + P.sans;
+  const trioLines = trio.map(t => wrapText(ctx, t.d + '。' + (t.s.summary || ''), colW - 44));
+  const trioH = Math.max(250, 158 + (Math.max(...trioLines.map(lines => lines.length)) - 1) * 28 + 30);
   if (!dryRun) {
     roundRect(ctx, PAD, y, contentW, trioH, 18);
     ctx.fillStyle = P.bgCard; ctx.fill();
     ctx.strokeStyle = P.line; ctx.lineWidth = 1;
     roundRect(ctx, PAD, y, contentW, trioH, 18); ctx.stroke();
-    const trio = [
-      { k: '太阳 · 本我驱动', s: sun, c: '#c96f3f', d: '核心英雄之旅与意志驱动' },
-      { k: '月亮 · 内心情感', s: moon, c: '#5e7fa2', d: '潜意识、安全感与情绪需求' },
-      { k: '上升 · 第一名片', s: asc, c: '#b5838d', d: '呈现给世界的面具与第一反应' }
-    ];
-    const colW = (contentW - 40) / 3;
     trio.forEach((t, i) => {
       const px = PAD + 14 + i * (colW + 6);
       if (i === 0) {
@@ -577,24 +513,24 @@ function drawWesternReport(ctx, d, P, dryRun = false) {
       ctx.font = '400 18px ' + P.sans;
       ctx.fillText(t.s.elem + '象 · ' + t.s.mode, px + colW / 2, y + 126);
       ctx.textAlign = 'left';
-      const lines = wrapText(ctx, t.d + '。' + (t.s.summary || ''), colW - 44);
       let ly = y + 158;
-      lines.slice(0, 4).forEach(l => { ctx.fillText(l, px + 22, ly); ly += 28; });
+      trioLines[i].forEach(l => { ctx.fillText(l, px + 22, ly); ly += 28; });
     });
   }
   y += trioH + 20;
 
   /* ---- 贰 · 十大星曜 ---- */
   y = sectionHead(ctx, P, y, '贰', '十大星曜落座与宫位');
-  const gridH = 240;
+  const gridH = 270;
   if (!dryRun) {
     roundRect(ctx, PAD, y, contentW, gridH, 18);
     ctx.fillStyle = P.bgCard; ctx.fill();
     ctx.strokeStyle = P.line; ctx.lineWidth = 1;
     roundRect(ctx, PAD, y, contentW, gridH, 18); ctx.stroke();
-    const planets = chart.planets || [];
+    // Ascendant is a point, not one of the ten planets. Preserve Pluto.
+    const planets = chart.planets.filter(pl => pl.key !== 'Asc');
     const colW = contentW / 5, rowH = gridH / 2;
-    planets.slice(0, 10).forEach((pl, i) => {
+    planets.forEach((pl, i) => {
       const cx = PAD + (i % 5) * colW + 24;
       const cy = y + 52 + Math.floor(i / 5) * rowH;
       ctx.fillStyle = P.accent;
@@ -605,13 +541,13 @@ function drawWesternReport(ctx, d, P, dryRun = false) {
       ctx.fillText(pl.sign?.name || pl.sign, cx, cy + 32);
       ctx.fillStyle = P.text2;
       ctx.font = '400 18px ' + P.sans;
-      ctx.fillText((pl.house ? '第' + pl.house + '宫' : '') + ' · ' + (pl.degree || ''), cx, cy + 60);
+      ctx.fillText('第' + pl.houseNum + '宫 · ' + pl.degree, cx, cy + 60);
     });
   }
   y += gridH + 20;
 
   /* ---- 叁 · 四象能量与六维潜能 ---- */
-  y = sectionHead(ctx, P, y, '叁', '四象能量与六维潜能');
+  y = sectionHead(ctx, P, y, '叁', '四象能量与太阳星座模板');
   const quadH = 230;
   if (!dryRun) {
     roundRect(ctx, PAD, y, contentW, quadH, 18);
@@ -620,38 +556,36 @@ function drawWesternReport(ctx, d, P, dryRun = false) {
     roundRect(ctx, PAD, y, contentW, quadH, 18); ctx.stroke();
     const halfW = (contentW - 72) / 2;
     // 左:四象条形
-    const elems = chart.elemBreakdown || chart.elements || [];
-    const elArr = Array.isArray(elems) ? elems : [];
-    const items = (elArr.length ? elArr : [
-      { name: '火象', pct: 25, col: '#e05a47' }, { name: '土象', pct: 25, col: '#5c8d62' },
-      { name: '风象', pct: 27, col: '#c9a227' }, { name: '水象', pct: 23, col: '#5e7fa2' }
-    ]).slice(0, 4);
+    const items = chart.elemBreakdown;
     ctx.fillStyle = P.accent;
     ctx.font = '700 20px ' + P.sans;
     ctx.fillText('四象能量配比', PAD + 28, y + 46);
     items.forEach((it, i) => {
       const by2 = y + 84 + i * 30;
-      ctx.fillStyle = it.col || P.text2;
+      ctx.fillStyle = it.color || P.text2;
       ctx.font = '700 19px ' + P.serif;
       ctx.fillText(it.name || it.elem || '—', PAD + 28, by2 + 1);
       const tx = PAD + 118, tw = halfW - 130;
       roundRect(ctx, tx, by2 - 13, tw, 15, 7);
       ctx.fillStyle = P.bgCardAlt; ctx.fill();
-      roundRect(ctx, tx, by2 - 13, Math.max(10, tw * ((it.pct || it.value || 25) / 100)), 15, 7);
-      ctx.fillStyle = it.col || P.accent; ctx.fill();
+      if (it.pct > 0) {
+        roundRect(ctx, tx, by2 - 13, tw * it.pct / 100, 15, 7);
+        ctx.fillStyle = it.color || P.accent; ctx.fill();
+      }
       ctx.fillStyle = P.text;
       ctx.font = '700 19px ' + P.sans;
-      ctx.fillText((it.pct || it.value || 25) + '%', tx + tw + 14, by2 + 1);
+      ctx.fillText(it.pct + '%', tx + tw + 14, by2 + 1);
     });
     // 右:六维
     const rx = PAD + 60 + halfW;
     ctx.fillStyle = P.accent;
     ctx.font = '700 20px ' + P.sans;
-    ctx.fillText('六维人格天赋', rx, y + 46);
-    const dims = (chart.dimensions || d.dimensions || [
-      { name: '行动力', v: 82 }, { name: '逻辑力', v: 86 }, { name: '洞察力', v: 88 },
-      { name: '同理心', v: 75 }, { name: '创造力', v: 95 }, { name: '坚韧度', v: 68 }
-    ]).slice(0, 6);
+    ctx.fillText('太阳星座六维模板', rx, y + 46);
+    const dims = [
+      { name: '行动力', v: sun.radar.action }, { name: '同理心', v: sun.radar.empathy },
+      { name: '洞察力', v: sun.radar.insight }, { name: '逻辑力', v: sun.radar.logic },
+      { name: '创造力', v: sun.radar.creative }, { name: '坚韧度', v: sun.radar.grit }
+    ];
     dims.forEach((dm, i) => {
       const dx = rx + (i % 3) * (halfW / 3);
       const dy = y + 92 + Math.floor(i / 3) * 56;
@@ -660,14 +594,17 @@ function drawWesternReport(ctx, d, P, dryRun = false) {
       ctx.fillText(dm.name || dm.k || '', dx, dy);
       ctx.fillStyle = P.accent;
       ctx.font = '800 30px ' + P.serif;
-      ctx.fillText((dm.v || dm.score || 0) + '', dx, dy + 32);
+      ctx.fillText(String(dm.v), dx, dy + 32);
     });
   }
   y += quadH + 20;
 
   /* ---- 肆 · 生命灵数 ---- */
   y = sectionHead(ctx, P, y, '肆', '生命灵数与流年密码');
-  const numH = 190;
+  ctx.font = '400 20px ' + P.sans;
+  const yearText = '9 年周期流年 · 第 ' + num.personalYear + ' 年：' + (num.personalYearGuide?.advice || '仅作自我探索参考。');
+  const yearLines = wrapText(ctx, yearText, contentW - 180);
+  const numH = Math.max(190, 132 + (yearLines.length - 1) * 30 + 32);
   if (!dryRun) {
     roundRect(ctx, PAD, y, contentW, numH, 18);
     ctx.fillStyle = P.bgCard; ctx.fill();
@@ -681,10 +618,9 @@ function drawWesternReport(ctx, d, P, dryRun = false) {
     ctx.fillText((num.archetype?.name || '') + ' · 核心原型', PAD + 150, y + 62);
     ctx.fillStyle = P.text2;
     ctx.font = '400 20px ' + P.sans;
-    ctx.fillText('天赋数 ' + (num.talent || '—') + ' ｜ 生日数 ' + (num.bday || '—') + ' ｜ ' + (num.archetype?.tag || ''), PAD + 150, y + 96);
-    const lines = wrapText(ctx, '9 年周期流年 · 第 ' + (num.personalYear || num.cycleYear || 1) + ' 年:稳中求进,把长期目标拆解为可落地的阶段计划。', contentW - 60);
-    let ly = y + 136;
-    lines.forEach(l => { ctx.fillText(l, PAD + 30, ly); ly += 30; });
+    ctx.fillText('天赋数 ' + num.talentNums.join('、') + ' ｜ 生日数 ' + num.birthdayNum + ' ｜ ' + (num.archetype?.tag || ''), PAD + 150, y + 96);
+    let ly = y + 132;
+    yearLines.forEach(l => { ctx.fillText(l, PAD + 150, ly); ly += 30; });
   }
   y += numH + 26;
 
@@ -695,7 +631,7 @@ function drawWesternReport(ctx, d, P, dryRun = false) {
     y += 26;
     ctx.fillStyle = P.text3;
     ctx.font = '400 19px ' + P.sans;
-    ctx.fillText('✦ 问问大师 V5.0 · 报告仅供心理探索参考', PAD, y);
+    ctx.fillText('✦ 问问大师 V5.0 · 报告仅供自我探索与生活参考', PAD, y);
     const gen = '生成于 ' + new Date().toLocaleString('zh-CN');
     ctx.fillText(gen, W - PAD - ctx.measureText(gen).width, y);
   }
@@ -806,8 +742,6 @@ export function printFullReport() {
 /* ============================================================
    5. 全景长报告弹窗 UI 交互 (Modal & Live Preview)
    ============================================================ */
-let currentShareMode = null;
-
 export function openFullReportShare(customMode = null) {
   const ctxData = getCtx() || {
     input: { by: 1995, bm: 6, bd: 15, timeStr: '12:00' },
@@ -816,7 +750,6 @@ export function openFullReportShare(customMode = null) {
   };
 
   const sysMode = customMode || (document.body.getAttribute('data-system-mode') === 'western' ? 'western' : 'eastern');
-  currentShareMode = sysMode;
 
   let modal = document.getElementById('fullReportShareModal');
   if (!modal) {
@@ -876,7 +809,6 @@ export function closeFullReportShare() {
 }
 
 export function switchFullReportShareMode(mode) {
-  currentShareMode = mode;
   const ctxData = getCtx();
   renderShareModalContent(ctxData, mode);
 }

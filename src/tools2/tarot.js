@@ -16,8 +16,6 @@
    ============================================================ */
 
 import { masthead, notice, esc, attachToolAI } from './runtime.js';
-import { getCtx } from '../state/context.js';
-import { showToast } from '../ui/toast.js';
 
 /* —— 22 张大阿卡纳核心牌库 + 4 花色首牌 —— */
 export const TAROT_CARDS = [
@@ -719,7 +717,6 @@ export const tarot = {
             const c = item.card;
             const rev = item.isReversed;
             const flipped = item.isFlipped;
-            const meaning = rev ? c.reversed : c.upright;
 
             return '<div class="tw-t-card-slot' + (flipped ? ' flipped' : '') + '" data-idx="' + idx + '">' +
               '<div class="pos-badge">' + item.posInfo.name + '</div>' +

@@ -8,9 +8,8 @@
      4. 生成事业大师分享卡片
    ============================================================ */
 
-import { masthead, notice, esc, attachToolAI } from './runtime.js';
+import { masthead, notice, attachToolAI } from './runtime.js';
 import { getCtx } from '../state/context.js';
-import { showToast } from '../ui/toast.js';
 
 const PATHS = {
   转行: ['约 3 位目标行业资深从业者深聊，核实你对该领域的预期与真实差距', '通过兼职、试单或独立作品集投递做一次低成本真实验证', '评估确认起步期的收入落差，确保在个人现金流可承受范围内'],

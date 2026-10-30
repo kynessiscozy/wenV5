@@ -8,7 +8,7 @@
    ============================================================ */
 import { masthead, notice, esc, viewShell, goResult } from './runtime.js';
 import { getCtx } from '../state/context.js';
-import { getWxNow } from '../ui/weather.js';
+import { ensureWeather, getWxNow } from '../ui/weather.js';
 
 const PALETTE = {
   木: { 主: { c: '#3f6f52', t: '青绿 · 墨绿' }, 辅: { c: '#e8e0cd', t: '米白 · 原木色' }, 点缀: { c: '#5f8fb0', t: '少量湖蓝' }, 饰: { c: '#8a6b4a', t: '木质或布艺小物' } },
@@ -52,8 +52,8 @@ function wxBadge(wxNow) {
   const icon = wxNow.icon || 'sun';
   const glyph = { sun: '☀', 'sun-cloud': '◐', 'cloud-sun': '◑', cloud: '☁', drizzle: '☂', rain: '☔', 'heavy-rain': '☔', snow: '❄', thunder: '⚡', fog: '≡' }[icon] || '☁';
   return '<span class="wx-glyph">' + glyph + '</span>' +
-    '<div class="wx-copy"><b>' + wxNow.temp + '°C · ' + (wxNow.label || '未知') + '</b>' +
-    '<span>' + (wxNow.city || '当前位置') + ' · 湿度 ' + wxNow.hum + '% · 风 ' + wxNow.wind + ' km/h</span></div>';
+    '<div class="wx-copy"><b>' + esc(wxNow.temp) + '°C · ' + esc(wxNow.label || '未知') + '</b>' +
+    '<span>' + esc(wxNow.city || '当前位置') + ' · 湿度 ' + esc(wxNow.hum) + '% · 风 ' + esc(wxNow.wind) + ' km/h</span></div>';
 }
 
 /* —— 穿搭配图：衣架三件套（主/辅/点缀 + 随身小物） —— */
@@ -87,7 +87,6 @@ function outfitSvg(p) {
 /* —— 工位配图：桌面俯视（屏幕/键盘/绿植/台灯/水杯/记事本） —— */
 function deskSvg(p, dir) {
   const line = 'var(--tw-line-2)';
-  const main = p.主.c, dot = p.点缀.c;
   return '<svg viewBox="0 0 280 210" class="tw-style-art" role="img" aria-label="工位布局示意">' +
     // 桌面
     '<rect x="8" y="8" width="264" height="194" rx="12" fill="var(--tw-card)" stroke="' + line + '" stroke-width="1.5"/>' +
@@ -123,7 +122,7 @@ function deskSvg(p, dir) {
     '</g>' +
     '<text x="46" y="178" text-anchor="middle" font-size="9" fill="var(--tw-ink-3)">暖光台灯</text>' +
     // 有利方位
-    '<text x="140" y="198" text-anchor="middle" font-size="10" fill="var(--tw-accent)" font-weight="700">有利方位 · ' + esc(dir) + '</text>' +
+    '<text x="140" y="198" text-anchor="middle" font-size="10" fill="var(--tw-accent)" font-weight="700">' + (dir ? '有利方位 · ' + esc(dir) : '空间布局示意') + '</text>' +
   '</svg>';
 }
 
@@ -138,11 +137,14 @@ export const style = {
   desc: '将抽象的五行提示转成颜色、环境和专注习惯，并结合当日天气给出穿法。',
   open(container) {
     const ctx = getCtx();
-    const ys = (ctx && ctx.wx && ctx.wx.ys) || '土';
+    const candidate = ctx?.wx?.ys;
+    const ys = candidate && PALETTE[candidate] ? candidate : null;
     const p = PALETTE[ys] || PALETTE['土'];
     const S = { scene: '重要沟通', space: '杂乱' };
-    const wxNow = getWxNow();
-    const dir = DIR_OF[ys] || '中央';
+    let wxNow = getWxNow();
+    let weatherStatus = wxNow ? 'ready' : 'loading';
+    let active = true;
+    const dir = ys ? DIR_OF[ys] : null;
 
     const render = () => {
       container.innerHTML =
@@ -156,11 +158,11 @@ export const style = {
             '<select id="twSSpace">' +
               Object.keys(SPACE_FIX).map(k => '<option' + (k === S.space ? ' selected' : '') + '>' + k + '</option>').join('') +
             '</select></div>' +
-          (wxNow ? '<div class="tw-style-wx">' + wxBadge(wxNow) + '</div>' : '') +
+          '<div class="tw-style-wx" data-style-weather aria-live="polite">' + (wxNow ? wxBadge(wxNow) : '天气查询中，可先生成通用方案。') + '</div>' +
           '<div class="tw-actions" style="margin-top:20px">' +
             '<button type="button" class="tw-btn tw-btn-primary" id="twSGen">生成方案 →</button>' +
           '</div>' +
-          notice('<b>说明：</b>配色与穿法用于状态提醒，舒适、整洁和可持续使用优先；天气数据来自当前定位（可授权后自动获取）。')
+          notice('<b>说明：</b>配色与穿法仅供生活参考，舒适、整洁优先。打开本工具会尝试定位并联网获取天气；未授权时会尝试使用北京默认天气。' + (ys ? '' : '尚未生成个人报告，本次使用通用配色。'))
         );
 
       container.querySelectorAll('[data-s]').forEach(btn => {
@@ -175,11 +177,10 @@ export const style = {
         const s = SCENES[S.scene];
         const fix = SPACE_FIX[S.space] || SPACE_FIX['杂乱'];
         const wAdv = weatherAdvice(wxNow);
-      const wxRow = wxNow ? '<div class="tw-style-wx">' + wxBadge(wxNow) + '</div>' : '';
       goResult(container, style.name,
           '<div class="tw-kicker">WEATHER · 今日天气</div>' +
-          (wxNow ? '<div class="tw-style-wx" style="margin-bottom:16px">' + wxBadge(wxNow) + '</div>' : '<div class="tw-para" style="margin-bottom:14px">未能获取天气，以下按通用方案给出建议；可授权定位后重试。</div>') +
-          '<div class="tw-kicker">PALETTE · 用神「' + ys + '」配色</div>' +
+          (wxNow ? '<div class="tw-style-wx" style="margin-bottom:16px">' + wxBadge(wxNow) + '</div>' : '<div class="tw-para" style="margin-bottom:14px">' + (weatherStatus === 'loading' ? '天气仍在查询中，本次先按通用方案提供建议；返回修改后可使用已获取的天气。' : '天气暂不可用，以下按通用方案给出建议；可检查网络或定位权限后重试。') + '</div>') +
+          '<div class="tw-kicker">PALETTE · ' + (ys ? '用神「' + esc(ys) + '」配色' : '通用配色') + '</div>' +
           '<div class="tw-s-palette">' +
             '<div class="tw-s-swatch"><div class="color" style="background:' + p.主.c + '"><span class="tag">主色</span></div><div class="desc"><b>' + p.主.t + '</b>大面积 · 主体穿搭</div></div>' +
             '<div class="tw-s-swatch"><div class="color" style="background:' + p.辅.c + '"><span class="tag">辅助</span></div><div class="desc"><b>' + p.辅.t + '</b>打底 · 中和</div></div>' +
@@ -200,6 +201,15 @@ export const style = {
       });
     };
     render();
+    // 只更新天气区域，不重建表单或覆盖用户已选的场景与工位。
+    void ensureWeather().then(wx => {
+      if (!active) return;
+      wxNow = wx;
+      weatherStatus = wx ? 'ready' : 'error';
+      const host = container.querySelector('[data-style-weather]');
+      if (host) host.innerHTML = wx ? wxBadge(wx) : '天气暂不可用，可先生成通用方案。';
+    });
+    return () => { active = false; };
   },
 };
 

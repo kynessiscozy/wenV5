@@ -1,4 +1,4 @@
-import { SS } from '../engines/shared.js';
+import { SS, CURR_YEAR } from '../engines/shared.js';
 
 /* ============================================================
    全局上下文工具 TJ —— 所有派生量的单一来源

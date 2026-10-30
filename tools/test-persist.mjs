@@ -1,4 +1,5 @@
 import { selectHomeTrait, openDemoReport, continueCalculation } from './test-entry.mjs';
+import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 const BASE=process.env.BASE_URL||'http://localhost:5173/';
 const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});
@@ -31,6 +32,9 @@ const after=await p.evaluate(()=>({
   firstName: document.querySelector('#profileGrid .r-name')?.innerText||'(无)',
 }));
 console.log('刷新后:', JSON.stringify(after));
+assert.equal(after.recentVisible, 'block');
+assert.equal(after.profileCards, 1);
+assert.equal(after.firstName, '测试档案A');
 
 // 3. 点击档案能否载入
 if(after.profileCards>0){
@@ -39,8 +43,11 @@ if(after.profileCards>0){
   await continueCalculation(p);
   // loadProfile 会触发 calc()，含约 2s 的推演动画，需等待其结束
   await new Promise(r=>setTimeout(r,4000));
-  console.log('载入后 bDate =', await p.evaluate(()=>document.getElementById('bDate').value));
-  console.log('是否跳到报告页 =', await p.evaluate(()=>document.getElementById('page2').classList.contains('active')));
+  const restored = await p.evaluate(() => ({ date: document.getElementById('bDate').value, report: document.getElementById('page2').classList.contains('active') }));
+  assert.equal(restored.date, '1990-06-15');
+  assert.equal(restored.report, true);
+  console.log('载入后:', restored);
 }
+assert.deepEqual(errs, []);
 console.log('错误:', errs.length?[...new Set(errs)].join(' | '):'无');
 await b.close();

@@ -1,25 +1,20 @@
 import { showToast } from './ui/toast.js';
 import { focusSafely } from './ui/focus.js';
-import { CURR_YEAR, TG, DZ, SX, WX, GW, ZW, ZC, WC, NY, SS } from './engines/shared.js';
+import { CURR_YEAR, TG, DZ, SS, ZHI_CHONG } from './engines/shared.js';
 import { CD, CG } from './engines/cities.js';
-import { _initJq, solarTermDate, jqDate, getMonthPillar, trueSolarTime, resolveBirthDateTime, getDayPillarIndex } from './engines/calendar.js';
-import { mkBazi, mkWx, mkSs, mkShenSha, mkDy, mkLn, getLiuYue, getShenShaLabels, getTodayGZ } from './engines/bazi.js';
+import { jqDate, solarTermDutyDay, resolveBirthDateTime, getDayPillarIndex } from './engines/calendar.js';
+import { mkBazi, mkWx, mkSs, mkShenSha, mkDy, mkLn, getLiuYue } from './engines/bazi.js';
 import { mkZw } from './engines/ziwei.js';
 import { solarToLunar } from './engines/lunar.js';
 import { mkQm } from './engines/qimen.js';
 import { mkMh } from './engines/meihua.js';
 import { mkSi } from './engines/sizhi.js';
-import { calcSynastry } from './engines/synastry.js';
-import { shareSynastry, saveSynastryPartner, partnerPickerHtml, bindPartnerPicker, listPartners } from './tools/synastry-share.js';
-import { calcLiuRi, buildDailyCopy, dailyOneLiner } from './engines/liuri.js';
-import { buildExplainQuestion, extractSection, chartFacts } from './ai/explain.js';
 import { initSectionTabs } from './ui/section-tabs.js';
 import { TJ } from './state/tj.js';
 import { getCtx } from './state/context.js';
-import { toolPageShell, setToolOutput } from './tools/shared.js';
 import { closeToolPage, openToolPage } from './tools/center.js';
-import { getDecisionAdvice, openDecisionTool, runDecisionTool } from './tools/decision.js';
-import { openFocusTool, openBreathTool, startBreathTool } from './tools/wellness.js';
+import { openDecisionTool, runDecisionTool } from './tools/decision.js';
+import { startBreathTool } from './tools/wellness.js';
 import { runWealthTool } from './tools/wealth.js';
 import { runCareerTool } from './tools/career.js';
 import { runDateTool } from './tools/dating.js';
@@ -30,13 +25,11 @@ import { runOracleTool } from './tools/oracle.js';
 import { runLotteryTool } from './tools/lottery.js';
 import { runZodiacTool } from './tools/zodiac.js';
 import { runRelationTool } from './tools/relation.js';
-import { openAnswerBook } from './tools/answerbook-v2.js';
 import { openPosterShare as showPosterShare, openCanvasShare } from './share/studio.js';
 import { initTools3DRingCarousel } from './render/tools-ring.js';
 import { characterCompanion, homeThemePicker } from './home.js';
 import { mountCharacterReport } from './ui/character-report.js';
 import { beginCharacterCalculation, warmCharacterCalculation } from './ui/character-calculation.js';
-import { TJX } from './state/tjx.js';
 import { getResultStyle } from './state/result-style.js';
 
 // The preview module loads with the report, so an already available report
@@ -69,31 +62,17 @@ document.addEventListener('click',e=>{
   const btn=e.target.closest?.('.result-style-option');
   if(btn)window.selectResultStyle(btn.dataset.style);
 },true);
-import { calcYearScores, calcPattern } from './state/scoring.js';
+import { calcYearScores } from './state/scoring.js';
 import { buildContext } from './state/context.js';
 import {
-  KB, KBSearch, smartAnswer, extractIntents, buildBaziContext,
-  getLayoffAstroRisk, generateAnswerFallback, askToolInsight
-} from './ai/index.js';
-import {
-  formatAIText, renderSmartAnswer, renderRouteButtons, buildRelatedRoutes,
-  compactAIText, formatStandardAnswer, getPersona, getTimeline,
-  getMonthlyAlert, getRiskWarning, calcLayoffRisk, getRelationMode,
-  getSuitableType, getRelationRisks, renderAll, renderBeginnerBrief,
-  organizeMasterReportLayout, switchStructureTab, toggleFullGods,
-  renderQuickRead, _qrCard, buildAISummary, calcRelation, drawCurve, copyReport
+  calcLayoffRisk, renderAll, switchStructureTab, toggleFullGods, calcRelation, copyReport
 } from './render/index.js';
 import {
-  applyTheme, jumpTo, showPage2, goBack, scrollToForm, switchTab,
-  setGlassMode, toggleLgPanel, moveTabIndicator, initNavigationUI,
-  openAsk, closeAsk, newAskChat, aiToolRequest, doAsk, doAskCustom,
-  aiSwitchCat, aiRefreshChips, aiOnInputSuggest, generateAnswer, getAiBasis, setAiBasis,
-  getAISettings, getApiKey, toggleAISettings, initAISettings, buildAISettingsPanel,
-  applyThemePref, getThemePref
+  applyTheme, jumpTo, showPage2, goBack, switchTab, setGlassMode, moveTabIndicator, initNavigationUI, openAsk, closeAsk, newAskChat, doAsk, doAskCustom, aiOnInputSuggest, setAiBasis, toggleAISettings, initAISettings, buildAISettingsPanel, applyThemePref, getThemePref
 } from './ui/index.js';
 import { initFontSize } from './font-size.js';
 import { initWeather } from './ui/weather.js';
-import { initOnboarding, openNoviceGuide, closeNoviceGuide, switchNoviceGuideTab, initGlobalNoviceGuide } from './onboarding.js';
+import { initOnboarding, openNoviceGuide, closeNoviceGuide, switchNoviceGuideTab } from './onboarding.js';
 import { initEvolveUI } from './evolve/ui.js';
 
 // This module can arrive after DOMContentLoaded or load on a slow connection.
@@ -252,12 +231,12 @@ let aboutReturnFocus=null;
       }else{
         html+=list.slice(0,10).map(p=>{
           const city=CD[p.bp]||{n:'未知'};
-          return `<div class="profile-item" style="cursor:pointer" onclick="loadProfile(${p.id});document.getElementById('p2ProfileMenu').classList.remove('open')">
+          return `<div class="profile-item" style="cursor:pointer" onclick="loadProfile(${Number(p.id)});document.getElementById('p2ProfileMenu').classList.remove('open')">
             <div style="display:flex;justify-content:space-between;align-items:center">
-              <span style="font-weight:600;font-size:.9em">${(p.name||'未命名').replace(/</g,'&lt;')}</span>
-              <span style="font-size:.7em;color:var(--c-text-4,#aaa);cursor:pointer" onclick="event.stopPropagation();deleteProfile(${p.id});TJToggleProfileMenu()">×</span>
+              <span style="font-weight:600;font-size:.9em">${profileEscape(p.name||'未命名')}</span>
+              <span style="font-size:.7em;color:var(--c-text-4,#aaa);cursor:pointer" onclick="event.stopPropagation();deleteProfile(${Number(p.id)});TJToggleProfileMenu()">×</span>
             </div>
-            <div style="font-size:.72em;color:var(--c-text-3,#999);margin-top:2px">${p.bd||''} · ${city.n} · ${p.gen==='male'?'男':'女'}</div>
+            <div style="font-size:.72em;color:var(--c-text-3,#999);margin-top:2px">${profileEscape(p.bd||'')} · ${city.n} · ${p.gen==='male'?'男':'女'}</div>
           </div>`;
         }).join('');
       }
@@ -380,13 +359,13 @@ async function calc(isDemoPreview=false){
     const b=mkBazi(resolved.year,resolved.month,resolved.day,resolved.hourZhi,resolved.hour,resolved.minute,resolved.instant);
     const wx=mkWx(b),ss=mkSs(b),dy=mkDy(b,gen,y,m,d),ln=mkLn(CURR_YEAR),zw=mkZw(b,solarToLunar(resolved.year,resolved.month,resolved.day)),qm=mkQm(b),mh=mkMh(b),si=mkSi(b);
     const shensha=mkShenSha(b);const liuyue=getLiuYue(CURR_YEAR);
-    b._meta={hourZhi:resolved.hourZhi,useTrueSolar:resolved.note?true:false,by:y,bm:m,bd:d};
+    b._meta={hourZhi:resolved.hourZhi,useTrueSolar:resolved.note?true:false,by:y,bm:m,bd:d,dutyDay:solarTermDutyDay(resolved.instant)};
     const _input={by:y,bm:m,bd:d,bd_raw:bd,timeStr,bp,gen,q,useTrueSolar,resultStyle:resultStyleId,resultStyleLabel:resultStyle.label};
     const _preCtx=buildContext({b,wx,ss,dy,ln,zw,qm,mh,si,shensha,liuyue,P:null,gen,q,city,input:_input});
     window._ctx=_preCtx;window._baziData=_preCtx;window._reportData=_preCtx;
     window._formDirty=false; // 已推演应用，表单修改视为已保存
     applyTheme(wx.ys);
-    renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,y,shensha,liuyue);
+    renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,y,shensha,liuyue,_preCtx);
     // 让问问大师与报告顶部共享“示例报告”状态。
     if(window._ctx)window._ctx.isDemoPreview=!!isDemoPreview;
     if(window._baziData)window._baziData.isDemoPreview=!!isDemoPreview;
@@ -510,9 +489,8 @@ function renderRiQian(){
   const now=new Date();const y=now.getFullYear(),m=now.getMonth()+1,d=now.getDate();
   const dji=getDayPillarIndex(y,m,d);const dgi=dji%10,dzi=dji%12;const dg=TG[dgi],dz=DZ[dzi];
   let jie='';for(let i=0;i<12;i++){const j=jqDate(y,i);if(j){if(m>j[0]||(m===j[0]&&d>=j[1]))jie=['立春','惊蛰','清明','立夏','芒种','小暑','立秋','白露','寒露','立冬','大雪','小寒'][i];}}
-  const ch={'子':'午','午':'子','丑':'未','未':'丑','寅':'申','申':'寅','卯':'酉','酉':'卯','辰':'戌','戌':'辰','巳':'亥','亥':'巳'};
   const sxm={'子':'鼠','丑':'牛','寅':'虎','卯':'兔','辰':'龙','巳':'蛇','午':'马','未':'羊','申':'猴','酉':'鸡','戌':'狗','亥':'猪'};
-  const todaySX=sxm[dz],chongSX=sxm[ch[dz]];
+  const todaySX=sxm[dz],chongSX=sxm[ZHI_CHONG[dz]];
   const sxjx={'鼠':'天贵','牛':'天德','虎':'天马','兔':'文昌','龙':'紫微','蛇':'红鸾','马':'将星','羊':'天医','猴':'驿马','鸡':'桃花','狗':'华盖','猪':'福星'};
   let yi=[],ji=['与'+chongSX+'相冲者大事需谨慎'];let yj='';
   if('甲乙'.includes(dg)){yi.push('种植','出行','会友');ji.push('动土','开矿');yj='木气生发之日，宜动不宜静，早起行好运，利谋新事。';}
@@ -574,6 +552,7 @@ function closeMonthModal(){document.getElementById('monthModal').classList.remov
 
 function selChip(el){const wrap=document.getElementById('qChips');wrap.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('bQ').value=el.dataset.q;}
 
+const profileEscape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const DB_NAME='TJ_Bazi',DB_VER=2;
 let _db=null;
 function initDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,DB_VER);r.onerror=()=>rej(r.error);r.onsuccess=(e)=>{_db=e.target.result;res(_db);};r.onupgradeneeded=(e)=>{const d=e.target.result;if(!d.objectStoreNames.contains('profiles')){const s=d.createObjectStore('profiles',{keyPath:'id',autoIncrement:true});s.createIndex('updatedAt','updatedAt',{unique:false});}};});}
@@ -591,10 +570,10 @@ function saveCurrentProfile(name){
 async function renderProfiles(){try{const list=await dbGetAll();const zone=document.getElementById('profileZone');const grid=document.getElementById('profileGrid');const empty=document.getElementById('profileEmpty');const recentZone=document.getElementById('recentZone');const recentGrid=document.getElementById('recentGrid');const recentEmpty=document.getElementById('recentEmpty');const profileZoneEmpty=document.getElementById('profileZoneEmpty');
   if(!list.length){if(grid)grid.innerHTML='';if(empty)empty.style.display='none';if(zone)zone.style.display='none';if(recentZone)recentZone.style.display='none';if(recentEmpty)recentEmpty.style.display='block';if(profileZoneEmpty)profileZoneEmpty.style.display='block';return;}
   if(empty)empty.style.display='none';if(zone)zone.style.display='block';if(recentEmpty)recentEmpty.style.display='none';if(profileZoneEmpty)profileZoneEmpty.style.display='none';
-  if(recentZone){recentZone.style.display='block';recentGrid.innerHTML=list.slice(0,3).map(p=>{const city=CD[p.bp]||{n:'未知'};const _bd=(p.bd||'1990-1-1').split('-').map(Number);/* 用保存的出生时间推时辰（无则按子时），避免档案星级一律按子时失真 */const _hm=String(p.timeStr||'').split(':');const _hh=Number(_hm[0]);const _hz=(Number.isFinite(_hh))?Math.floor(((_hh+1)%24)/2):0;const _b=mkBazi(_bd[0],_bd[1],_bd[2],_hz,Number.isFinite(_hh)?_hh:12);const dg=_b.D.g;const dy=mkDy(_b,p.gen||'male',_bd[0],_bd[1]||1,_bd[2]||1);const age=TJ.calcAge(_bd[0],_bd[1]||1,_bd[2]||1);const cDy=TJ.findDaYun(dy,age)||dy.ds[0];const cLn=mkLn(CURR_YEAR);let stars='★★★☆☆';try{const wx=mkWx(_b),ss=mkSs(_b);const sc=calcYearScores(_b,wx,ss,SS[dg][cDy.g],SS[dg][cLn.g],null,cDy,cLn);const avgv=(sc.career+sc.wealth+sc.love+sc.health)/4;const n=Math.max(1,Math.min(5,Math.round(avgv/20)));stars='★'.repeat(n)+'☆'.repeat(5-n);}catch(e){}return`<div class="r-card" onclick="loadProfile(${p.id})"><div class="r-ava">${(p.name||'未').charAt(0)}</div><div class="r-info"><div class="r-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div><div class="r-meta">当前大运：${cDy.g}${cDy.z} · ${CURR_YEAR}运势：${stars}<br>最近关注：${p.q||'综合'}</div></div><div class="r-arrow">›</div></div>`;}).join('');}
-  if(grid)grid.innerHTML=list.slice(0,8).map(p=>{const city=CD[p.bp]||{n:'未知'};const d=new Date(p.updatedAt);return`<div class="r-card" onclick="loadProfile(${p.id})"><div class="r-ava">${(p.name||'未').charAt(0)}</div><div class="r-info"><div class="r-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div><div class="r-meta">${p.bd||''} · ${city.n} · ${p.gen==='male'?'男':'女'}${p.useTrueSolar?'·真':''}</div></div><div style="position:absolute;top:6px;right:8px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9em;color:var(--c-text-4);cursor:pointer;transition:all .15s;z-index:2" onclick="event.stopPropagation();deleteProfile(${p.id})">×</div></div>`;}).join('');
+  if(recentZone){recentZone.style.display='block';recentGrid.innerHTML=list.slice(0,3).map(p=>{const _bd=(p.bd||'1990-1-1').split('-').map(Number);/* 用保存的出生时间推时辰（无则按子时），避免档案星级一律按子时失真 */const _hm=String(p.timeStr||'').split(':');const _hh=Number(_hm[0]);const _hz=(Number.isFinite(_hh))?Math.floor(((_hh+1)%24)/2):0;const _b=mkBazi(_bd[0],_bd[1],_bd[2],_hz,Number.isFinite(_hh)?_hh:12);const dg=_b.D.g;const dy=mkDy(_b,p.gen||'male',_bd[0],_bd[1]||1,_bd[2]||1);const age=TJ.calcAge(_bd[0],_bd[1]||1,_bd[2]||1);const cDy=TJ.findDaYun(dy,age)||dy.ds[0];const cLn=mkLn(CURR_YEAR);let stars='★★★☆☆';try{const wx=mkWx(_b),ss=mkSs(_b);const sc=calcYearScores(_b,wx,ss,SS[dg][cDy.g],SS[dg][cLn.g],null,cDy,cLn);const avgv=(sc.career+sc.wealth+sc.love+sc.health)/4;const n=Math.max(1,Math.min(5,Math.round(avgv/20)));stars='★'.repeat(n)+'☆'.repeat(5-n);}catch(e){}return`<div class="r-card" onclick="loadProfile(${Number(p.id)})"><div class="r-ava">${profileEscape(String(p.name||'未').charAt(0))}</div><div class="r-info"><div class="r-name">${profileEscape(p.name||'未命名')}</div><div class="r-meta">当前大运：${cDy.g}${cDy.z} · ${CURR_YEAR}运势：${stars}<br>最近关注：${profileEscape(p.q||'综合')}</div></div><div class="r-arrow">›</div></div>`;}).join('');}
+  if(grid)grid.innerHTML=list.slice(0,8).map(p=>{const city=CD[p.bp]||{n:'未知'};return`<div class="r-card" onclick="loadProfile(${Number(p.id)})"><div class="r-ava">${profileEscape(String(p.name||'未').charAt(0))}</div><div class="r-info"><div class="r-name">${profileEscape(p.name||'未命名')}</div><div class="r-meta">${profileEscape(p.bd||'')} · ${city.n} · ${p.gen==='male'?'男':'女'}${p.useTrueSolar?'·真':''}</div></div><div style="position:absolute;top:6px;right:8px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9em;color:var(--c-text-4);cursor:pointer;transition:all .15s;z-index:2" onclick="event.stopPropagation();deleteProfile(${Number(p.id)})">×</div></div>`;}).join('');
 }catch(e){console.log('renderProfiles',e);}}
-async function loadProfile(id){try{const list=await dbGetAll();const p=list.find(x=>x.id===id);if(!p)return;document.getElementById('bDate').value=p.bd||'';document.getElementById('bTime').value=p.timeStr||'09:00';document.getElementById('bPlace').value=p.bp||'';document.getElementById('cInp').value=(CD[p.bp]||{n:''}).n;document.getElementById('bGen').value=p.gen||'male';const styleEl=document.getElementById('bResultStyle');if(styleEl){styleEl.value=p.resultStyle||'companion';document.querySelectorAll('.result-style-option').forEach(btn=>{const on=btn.dataset.style===styleEl.value;btn.classList.toggle('active',on);btn.setAttribute('aria-checked',on?'true':'false');});const loadedStyle=getResultStyle(styleEl.value);const loadedHint=document.getElementById('resultStyleHint');if(loadedHint)loadedHint.textContent=loadedStyle.intro;}document.getElementById('bQ').value=p.q||'';const sw=document.getElementById('swTrueSolar');if(sw){if(p.useTrueSolar)sw.classList.add('on');else sw.classList.remove('on');sw.setAttribute('aria-checked',String(sw.classList.contains('on')));document.getElementById('swText').textContent=(sw.classList.contains('on')?'开启':'关闭')+'真太阳时（按出生地经度精确换算时辰）';}const chips=document.getElementById('qChips');if(chips){chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.q===p.q));}calc();}catch(e){console.log('loadProfile',e);}}
+async function loadProfile(id){try{const list=await dbGetAll();const p=list.find(x=>x.id===id);if(!p)return;document.getElementById('bDate').value=p.bd||'';document.getElementById('bTime').value=p.timeStr||'09:00';document.getElementById('bPlace').value=p.bp||'';document.getElementById('cInp').value=(CD[p.bp]||{n:''}).n;document.getElementById('bGen').value=p.gen||'male';const styleEl=document.getElementById('bResultStyle');if(styleEl){styleEl.value=p.resultStyle||'companion';document.querySelectorAll('.result-style-option').forEach(btn=>{const on=btn.dataset.style===styleEl.value;btn.classList.toggle('active',on);btn.setAttribute('aria-checked',on?'true':'false');});const loadedStyle=getResultStyle(styleEl.value);const loadedHint=document.getElementById('resultStyleHint');if(loadedHint)loadedHint.textContent=loadedStyle.intro;}document.getElementById('bQ').value=p.q||'';const sw=document.getElementById('swTrueSolar');if(sw){if(p.useTrueSolar)sw.classList.add('on');else sw.classList.remove('on');sw.setAttribute('aria-checked',String(sw.classList.contains('on')));document.getElementById('swText').textContent=(sw.classList.contains('on')?'开启':'关闭')+'真太阳时（按时区、经度和均时差估算）';}const chips=document.getElementById('qChips');if(chips){chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.q===p.q));}calc();}catch(e){console.log('loadProfile',e);}}
 async function deleteProfile(id){try{await dbDel(id);renderProfiles();}catch(e){console.log('deleteProfile',e);}}
 function openSaveModal(){
   const m=document.getElementById('saveModal');
@@ -670,14 +649,14 @@ async function renderArchiveList(){
       const city=CD[p.bp]||{n:'未知'};
       const d=new Date(p.updatedAt);
       const dateStr=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-      return `<div class="save-archive-card" onclick="loadProfileFromArchive(${p.id})">
-        <div class="sa-ava">${(p.name||'未').charAt(0)}</div>
+      return `<div class="save-archive-card" onclick="loadProfileFromArchive(${Number(p.id)})">
+        <div class="sa-ava">${profileEscape(String(p.name||'未').charAt(0))}</div>
         <div class="sa-info">
-          <div class="sa-name">${(p.name||'未命名').replace(/</g,'&lt;')}</div>
-          <div class="sa-meta">${p.bd||''} · ${city.n} · ${p.gen==='male'?'男':'女'} · ${dateStr}</div>
+          <div class="sa-name">${profileEscape(p.name||'未命名')}</div>
+          <div class="sa-meta">${profileEscape(p.bd||'')} · ${city.n} · ${p.gen==='male'?'男':'女'} · ${dateStr}</div>
         </div>
         <div class="sa-actions">
-          <button type="button" class="sa-del" onclick="event.stopPropagation();deleteProfileFromArchive(${p.id})" title="删除">×</button>
+          <button type="button" class="sa-del" onclick="event.stopPropagation();deleteProfileFromArchive(${Number(p.id)})" title="删除">×</button>
         </div>
       </div>`;
     }).join('');
@@ -712,7 +691,7 @@ function quickSaveName(name){
 }
 function confirmSaveProfile(){const name=document.getElementById('saveName').value.trim();if(!name){showToast('请输入档案名称');return;}saveCurrentProfile(name).then(()=>{closeSaveModal();renderProfiles();showToast('已保存到档案库');}).catch(e=>showToast('保存失败：'+e));}
 async function exportProfiles(){try{const list=await dbGetAll();const blob=new Blob([JSON.stringify(list,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='问问大师档案_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}catch(e){showToast('导出失败');}}
-async function handleImport(input){const file=input.files[0];if(!file)return;try{const text=await file.text();const arr=JSON.parse(text);if(!Array.isArray(arr))throw new Error('格式错误');let count=0;for(const p of arr){if(p.bd&&p.bp&&p.gen){delete p.id;p.updatedAt=Date.now();await dbPut(p);count++;}}renderProfiles();renderArchiveList();showToast(`成功导入 ${count} 条档案`);}catch(e){showToast('导入失败：'+e.message);}input.value='';}
+async function handleImport(input){const file=input.files[0];if(!file)return;try{const text=await file.text();const arr=JSON.parse(text);if(!Array.isArray(arr))throw new Error('格式错误');let count=0;for(const p of arr){if(p && typeof p === 'object' && typeof p.bd === 'string' && /^\d{1,4}-\d{1,2}-\d{1,2}$/.test(p.bd) && typeof p.bp === 'string' && Object.prototype.hasOwnProperty.call(CD,p.bp) && (p.gen === 'male' || p.gen === 'female')){const rec={bd:p.bd,bp:p.bp,gen:p.gen,timeStr:typeof p.timeStr==='string'?p.timeStr.slice(0,16):'',q:typeof p.q==='string'?p.q.slice(0,500):'',name:typeof p.name==='string'?p.name.slice(0,100):'',useTrueSolar:p.useTrueSolar===true,resultStyle:typeof p.resultStyle==='string'?p.resultStyle.slice(0,40):'companion',createdAt:Date.now(),updatedAt:Date.now()};await dbPut(rec);count++;}}renderProfiles();renderArchiveList();showToast(`成功导入 ${count} 条档案`);}catch(e){showToast('导入失败：'+e.message);}input.value='';}
 
 (function(){
   const inp=document.getElementById('cInp'),hid=document.getElementById('bPlace'),dd=document.getElementById('cDD');
@@ -880,10 +859,6 @@ function _syncP2ThemeSeg(){
 /* ============================================================
    全局设置弹窗
    ============================================================ */
-const GS_KEY_THEME='tj_theme';
-const GS_KEY_DENSITY='tj_density';
-const GS_KEY_STAR='tj_star_mode';
-
 function _buildGlobalSettingsPanel(){
   const panel=document.getElementById('globalSettingsPanel');
   if(!panel||panel.children.length)return panel;
@@ -1000,12 +975,6 @@ function focusSwitchTab(btn){
 }
 
 /* ====== 信息密度：紧凑/详细 切换 + 返回顶部 ====== */
-function toggleDensity(){
-  document.body.classList.toggle('density-compact');
-  const btn=document.getElementById('densityToggle');
-  if(btn)btn.classList.toggle('on',document.body.classList.contains('density-compact'));
-  try{localStorage.setItem('tj_density',document.body.classList.contains('density-compact')?'1':'0');}catch(e){}
-}
 (function(){
   // 还原上次设置
   try{if(localStorage.getItem('tj_density')==='1')document.body.classList.add('density-compact');}catch(e){}
@@ -1033,7 +1002,6 @@ function toggleDensity(){
    首页：粒子 + 鼠标跟随 + 卡片视差 + body.home 自动切换
    ========================================================= */
 (function(){
-  const ROOT=document.documentElement;
   const isMobile=window.matchMedia('(hover:none)').matches;
 
   // ---- body.home 状态管理（page1 显示时启用首页特效）----
@@ -1054,19 +1022,47 @@ function toggleDensity(){
     applyHomeState();
   });
 
-  // ---- 鼠标跟随光球（含 lerp 拖尾）----
+  // ---- 鼠标光球：只在可见时运动，静止后停止调度帧 ----
+  // Older WebViews may reject a media query even when matchMedia exists.
+  let reducedMotion={matches:false};
+  try{reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');}catch(e){}
+  const onMotionChange=(callback)=>{
+    if(reducedMotion.addEventListener)reducedMotion.addEventListener('change',callback);
+    else if(reducedMotion.addListener)reducedMotion.addListener(callback);
+  };
   if(!isMobile){
     const dot=document.getElementById('tjCursorDot');
     const ring=document.getElementById('tjCursorRing');
     if(dot&&ring){
       let mx=window.innerWidth/2,my=window.innerHeight/2;
-      let dx=mx,dy=my,rx=mx,ry=my;
-      let pressed=false;
-      window.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.classList.remove('hide');ring.classList.remove('hide');},{passive:true});
-      window.addEventListener('mouseleave',()=>{dot.classList.add('hide');ring.classList.add('hide');});
-      window.addEventListener('mousedown',()=>{pressed=true;ring.classList.add('active');});
-      window.addEventListener('mouseup',()=>{pressed=false;ring.classList.remove('active');});
-      // hover 检测：交互元素
+      let dx=mx,dy=my,rx=mx,ry=my,frame=0,hasPointer=false;
+      const visible=()=>!document.hidden&&!document.body.classList.contains('home');
+      const position=()=>{
+        dot.style.transform='translate3d('+dx+'px,'+dy+'px,0) translate(-50%,-50%)';
+        ring.style.transform='translate3d('+rx+'px,'+ry+'px,0) translate(-50%,-50%)';
+      };
+      const cancel=()=>{if(frame)cancelAnimationFrame(frame);frame=0;};
+      function tick(){
+        frame=0;
+        if(!visible()||!hasPointer)return;
+        dx+=(mx-dx)*0.4;dy+=(my-dy)*0.4;
+        rx+=(mx-rx)*0.18;ry+=(my-ry)*0.18;
+        if(Math.max(Math.abs(mx-dx),Math.abs(my-dy),Math.abs(mx-rx),Math.abs(my-ry))<0.15){
+          dx=rx=mx;dy=ry=my;
+          position();
+          return;
+        }
+        position();frame=requestAnimationFrame(tick);
+      }
+      function sync(){
+        if(!visible()||!hasPointer){cancel();return;}
+        if(reducedMotion.matches){cancel();dx=rx=mx;dy=ry=my;position();}
+        else if(!frame)frame=requestAnimationFrame(tick);
+      }
+      window.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;hasPointer=true;dot.classList.remove('hide');ring.classList.remove('hide');sync();},{passive:true});
+      window.addEventListener('mouseleave',()=>{hasPointer=false;cancel();dot.classList.add('hide');ring.classList.add('hide');});
+      window.addEventListener('mousedown',()=>ring.classList.add('active'));
+      window.addEventListener('mouseup',()=>ring.classList.remove('active'));
       document.addEventListener('mouseover',e=>{
         const t=e.target;
         if(t&&t.closest&&t.closest('button,a,input,select,textarea,.chip,.cta,.tab-item,.r-card,.pf-card,.ai-chip,.ai-cat,.ai-route-btn,.tl-card,.lym-item,[onclick],[data-q]')){
@@ -1079,164 +1075,87 @@ function toggleDensity(){
           dot.classList.remove('hover');ring.classList.remove('hover');
         }
       });
-      function tick(){
-        dx+=(mx-dx)*0.4;dy+=(my-dy)*0.4;
-        rx+=(mx-rx)*0.18;ry+=(my-ry)*0.18;
-        dot.style.transform='translate3d('+dx+'px,'+dy+'px,0) translate(-50%,-50%)';
-        ring.style.transform='translate3d('+rx+'px,'+ry+'px,0) translate(-50%,-50%)';
-        requestAnimationFrame(tick);
-      }
-      tick();
+      new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilter:['class']});
+      document.addEventListener('visibilitychange',sync);
+      onMotionChange(sync);
     }
   }
 
-  // ---- 粒子系统 ----
+  // ---- 粒子：仅在报告可见时初始化和绘制；减少动态效果时保留静态星点 ----
   const cv=document.getElementById('tjParticles');
   if(cv){
-    const ctx=cv.getContext('2d');
-    let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
-    let parts=[];
+    let ctx=null,W=0,H=0,DPR=1,parts=[],frame=0,lastDraw=0,needsResize=true;
     let mouseX=-9999,mouseY=-9999;
-    function resize(){
-      W=window.innerWidth;H=window.innerHeight;
-      cv.width=W*DPR;cv.height=H*DPR;
-      cv.style.width=W+'px';cv.style.height=H+'px';
-      ctx.setTransform(DPR,0,0,DPR,0,0);
-      const target=Math.min(130,Math.max(55,Math.floor(W*H/13000)));
-      parts=[];
-      for(let i=0;i<target;i++){
-        const br=Math.random()<0.12;
-        parts.push({
-          x:Math.random()*W,
-          y:Math.random()*H,
-          vx:(Math.random()-0.5)*0.18,
-          vy:(Math.random()-0.5)*0.18,
-          r:br?(Math.random()*1.4+1.0):(Math.random()*1.0+0.3),
-          a:br?(Math.random()*0.3+0.55):(Math.random()*0.5+0.2),
-          twinkle:Math.random()*Math.PI*2,
-          bright:br,
-          spike:br?(Math.random()*3.5+2.5):0,
-          tspd:0.02+Math.random()*0.05
-        });
-      }
-    }
-    window.addEventListener('mousemove',e=>{mouseX=e.clientX;mouseY=e.clientY;},{passive:true});
-    window.addEventListener('mouseleave',()=>{mouseX=-9999;mouseY=-9999;});
-
-    let running=true;
-    document.addEventListener('visibilitychange',()=>{running=!document.hidden;if(running)tick();});
-    // 缓存主题强调色，避免每帧 getComputedStyle 触发强制同步样式计算（严重性能反模式）
-    let accentH='38',accentS='55%',lastDraw=0;
+    let accentH='38',accentS='55%';
+    const visible=()=>!document.hidden&&document.body.classList.contains('report-active');
     function readAccent(){
       const st=getComputedStyle(document.documentElement);
       accentH=st.getPropertyValue('--accent-h').trim()||'38';
       accentS=st.getPropertyValue('--accent-s').trim()||'55%';
     }
-    readAccent();
-    new MutationObserver(readAccent).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-    window.addEventListener('resize',readAccent,{passive:true});
-
-    let shoots=[];
-    function spawnShoot(){
-      if(shoots.length>=2)return;
-      shoots.push({
-        x:Math.random()*W*0.6,
-        y:Math.random()*H*0.4,
-        vx:3+Math.random()*4,
-        vy:1+Math.random()*2,
-        life:1,
-        tail:70+Math.random()*50
+    function resize(){
+      DPR=Math.min(window.devicePixelRatio||1,2);
+      W=window.innerWidth;H=window.innerHeight;
+      cv.width=W*DPR;cv.height=H*DPR;
+      cv.style.width=W+'px';cv.style.height=H+'px';
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+      const target=Math.min(130,Math.max(55,Math.floor(W*H/13000)));
+      parts=Array.from({length:target},()=>{
+        const bright=Math.random()<0.12;
+        return {x:Math.random()*W,y:Math.random()*H,
+          vx:(Math.random()-0.5)*0.18,vy:(Math.random()-0.5)*0.18,
+          r:bright?(Math.random()*1.4+1.0):(Math.random()*1.0+0.3),
+          a:bright?(Math.random()*0.3+0.55):(Math.random()*0.5+0.2),
+          twinkle:Math.random()*Math.PI*2,tspd:0.02+Math.random()*0.05};
       });
+      needsResize=false;
     }
-
-    function tick(now){
-      if(!running)return;
-      requestAnimationFrame(tick);
-      // 首页与测试结果页均绘制；报告页以纯星点呈现，减少连线干扰阅读。
-      const isHome=false; // 首页已切换为人物场景，不绘制被隐藏的粒子。
-      const isReport=document.body.classList.contains('report-active');
-      if(!isHome&&!isReport){
-        ctx.clearRect(0,0,W,H);
-        return;
-      }
-      // 粒子为缓慢运动，30fps 已足够流畅，降低绘制与重排开销
-      if(typeof now==='number'&&now-lastDraw<33){return;}
-      lastDraw=now||0;
+    function draw(){
       ctx.clearRect(0,0,W,H);
-      // 主题强调色已在外部缓存（主题/尺寸变化时更新），避免每帧 getComputedStyle 触发强制同步样式计算
-      const h=accentH,sat=accentS;
-
-      // 首页保留星点连线；测试结果页仅保留星点，视觉更像安静的星空。
-      if(isHome)for(let i=0;i<parts.length;i++){
-        const p=parts[i];
-        for(let j=i+1;j<parts.length;j++){
-          const q=parts[j];
-          const dx=p.x-q.x,dy=p.y-q.y;
-          const d2=dx*dx+dy*dy;
-          if(d2<11000){
-            const alpha=(1-d2/11000)*0.18;
-            ctx.strokeStyle='hsla('+h+','+sat+',65%,'+alpha+')';
-            ctx.lineWidth=0.5;
-            ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
-          }
-        }
-      }
-      // 画粒子 + 鼠标交互
       for(const p of parts){
-        p.x+=p.vx;p.y+=p.vy;
-        p.twinkle+=p.tspd||0.04;
-        if(p.x<0)p.x=W;else if(p.x>W)p.x=0;
-        if(p.y<0)p.y=H;else if(p.y>H)p.y=0;
-        // 鼠标排斥（轻微）
-        const dx=p.x-mouseX,dy=p.y-mouseY;
-        const d2=dx*dx+dy*dy;
-        if(d2<14400){
-          const f=(1-d2/14400)*0.6;
-          p.x+=dx*f*0.04;p.y+=dy*f*0.04;
+        if(!reducedMotion.matches){
+          p.x+=p.vx;p.y+=p.vy;p.twinkle+=p.tspd;
+          if(p.x<0)p.x=W;else if(p.x>W)p.x=0;
+          if(p.y<0)p.y=H;else if(p.y>H)p.y=0;
+          const dx=p.x-mouseX,dy=p.y-mouseY,d2=dx*dx+dy*dy;
+          if(d2<14400){const f=(1-d2/14400)*0.6;p.x+=dx*f*0.04;p.y+=dy*f*0.04;}
         }
         const tw=0.7+Math.sin(p.twinkle)*0.3;
-        // 亮星光晕 + 十字芒
-        if(isHome&&p.bright){
-          const glowR=p.r*5*tw;
-          const g2=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,glowR);
-          g2.addColorStop(0,'hsla('+h+','+sat+',85%,'+(0.22*tw)+')');
-          g2.addColorStop(0.5,'hsla('+h+','+sat+',80%,'+(0.06*tw)+')');
-          g2.addColorStop(1,'hsla('+h+','+sat+',80%,0)');
-          ctx.fillStyle=g2;
-          ctx.beginPath();ctx.arc(p.x,p.y,glowR,0,Math.PI*2);ctx.fill();
-          var sl=p.spike*tw;
-          ctx.strokeStyle='hsla('+h+','+sat+',90%,'+(0.32*tw)+')';
-          ctx.lineWidth=0.6;
-          ctx.beginPath();
-          ctx.moveTo(p.x-sl,p.y);ctx.lineTo(p.x+sl,p.y);
-          ctx.moveTo(p.x,p.y-sl);ctx.lineTo(p.x,p.y+sl);
-          ctx.stroke();
-        }
-        ctx.fillStyle='hsla('+h+','+sat+',75%,'+(p.a*tw)+')';
+        ctx.fillStyle='hsla('+accentH+','+accentS+',75%,'+(p.a*tw)+')';
         ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
       }
-      // 流星
-      if(isHome){
-        if(Math.random()<0.004)spawnShoot();
-        for(let i=shoots.length-1;i>=0;i--){
-          const s=shoots[i];
-          s.x+=s.vx;s.y+=s.vy;s.life-=0.012;
-          if(s.life<=0||s.x>W+50||s.y>H+50){shoots.splice(i,1);continue;}
-          const tx=s.x-s.vx*s.tail/8, ty=s.y-s.vy*s.tail/8;
-          const g3=ctx.createLinearGradient(s.x,s.y,tx,ty);
-          g3.addColorStop(0,'hsla('+h+','+sat+',90%,'+(s.life*0.9)+')');
-          g3.addColorStop(1,'hsla('+h+','+sat+',90%,0)');
-          ctx.strokeStyle=g3;
-          ctx.lineWidth=1.5;
-          ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(tx,ty);ctx.stroke();
-          ctx.fillStyle='hsla('+h+','+sat+',95%,'+s.life+')';
-          ctx.beginPath();ctx.arc(s.x,s.y,1.5,0,Math.PI*2);ctx.fill();
-        }
+    }
+    function tick(now){
+      frame=0;
+      if(!visible()||reducedMotion.matches)return;
+      if(now-lastDraw>=33){lastDraw=now;draw();}
+      frame=requestAnimationFrame(tick);
+    }
+    function sync(){
+      if(!visible()){
+        if(frame)cancelAnimationFrame(frame);
+        frame=0;
+        return;
+      }
+      if(!ctx)ctx=cv.getContext('2d');
+      if(!ctx)return;
+      if(needsResize)resize();
+      if(reducedMotion.matches){
+        if(frame)cancelAnimationFrame(frame);
+        frame=0;draw();
+      }else if(!frame){
+        lastDraw=0;frame=requestAnimationFrame(tick);
       }
     }
-    resize();
-    window.addEventListener('resize',resize);
-    tick();
+    function updateAccent(){readAccent();if(visible()&&reducedMotion.matches&&ctx)draw();}
+    window.addEventListener('mousemove',e=>{mouseX=e.clientX;mouseY=e.clientY;},{passive:true});
+    window.addEventListener('mouseleave',()=>{mouseX=-9999;mouseY=-9999;});
+    window.addEventListener('resize',()=>{needsResize=true;readAccent();sync();},{passive:true});
+    document.addEventListener('visibilitychange',sync);
+    new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilter:['class']});
+    new MutationObserver(updateAccent).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-home-theme']});
+    onMotionChange(sync);
+    readAccent();sync();
   }
 
   // ---- 表单与独立卡片 3D 视差倾斜 (自动跳过 3D 轮播卡片避免矩阵冲突) ----
@@ -1410,7 +1329,7 @@ const GLOSSARY={
   '养':'十二长生之一，代表孕育完成、蓄势待发的阶段。',
 
   /* —— 常用实务词 —— */
-  '真太阳时':'按出生地经度精算出来的"当地真实太阳时间"，比统一北京时间更贴近命理用的时辰。',
+  '真太阳时':'按出生地时区、经度和均时差估算的太阳时间，可作为时辰参考。',
   '本命年':'流年地支与自己出生年地支相同的年份，传统认为该年宜守稳、少折腾。',
   '冲太岁':'流年地支与出生年地支相冲的年份，主变动、迁移、计划调整较多。',
   '犯太岁':'流年与出生年地支之间存在冲、刑、害、破关系的统称，提醒当年多留意人际与决策。',
@@ -1486,18 +1405,10 @@ const GLOSSARY={
 // 供 AI 术语检索复用，避免 GLOSSARY 与 KB.terms 两份词表各自漂移
 try{ window.__TJ_GLOSSARY__=GLOSSARY; }catch(e){}
 let _glossKeys=null;
-let _annotatedTerms=new Set();
 function _getGlossKeys(){
   if(_glossKeys)return _glossKeys;
   _glossKeys=Object.keys(GLOSSARY).sort((a,b)=>b.length-a.length);
   return _glossKeys;
-}
-function resetGlossaryState(){_annotatedTerms=new Set();}
-/* 术语解释 v2：取消自动下划线标注，改为「选中文字 → 右键/长按 → 解释」。
-   此函数保留导出兼容，但不再生成 .glossary-term 下划线标注。 */
-function annotateGlossary(root){
-  /* no-op：不再自动标注术语（改为选中解释，见 installSelectionGloss） */
-  void root;
 }
 /* ---- 选中文字解释（右键/长按菜单 + 选区浮动解释） ---- */
 function matchGlossText(text){
@@ -1687,28 +1598,6 @@ function installSelectionGloss(){
     restoreDockGloss();
   });
 }
-function showGlossPop(e){
-  // 新手版与大师版均可点译：专业阅读时也无需离开报告查术语。
-  e.stopPropagation();
-  const trigger=e.currentTarget||e.target;
-  const term=trigger.dataset.term;
-  const def=GLOSSARY[term];if(!def)return;
-  let pop=document.getElementById('glossPop');
-  if(!pop){
-    pop=document.createElement('div');pop.className='gloss-pop';pop.id='glossPop';
-    pop.innerHTML='<div class="gloss-pop-tt" id="glossPopTt"></div><div class="gloss-pop-bd" id="glossPopBd"></div>';
-    document.body.appendChild(pop);
-  }
-  document.getElementById('glossPopTt').textContent=term;
-  document.getElementById('glossPopBd').textContent=def;
-  const r=trigger.getBoundingClientRect();
-  const vw=window.innerWidth,vh=window.innerHeight;
-  let left=Math.min(Math.max(12,r.left),vw-272);
-  let top=r.bottom+8;
-  if(top+120>vh)top=Math.max(12,r.top-8-120);
-  pop.style.left=left+'px';pop.style.top=top+'px';
-  pop.classList.add('open');
-}
 document.addEventListener('click',function(e){
   const pop=document.getElementById('glossPop');
   if(pop&&pop.classList.contains('open')&&!e.target.closest('.glossary-term,.gloss-ctx,.gloss-chip,.gloss-bar,.dock-gloss')){pop.classList.remove('open');}
@@ -1740,7 +1629,7 @@ function wrapProCollapsibles(root){
   });
 }
 
-function enrichBeginnerContent(root){annotateGlossary(root);wrapProCollapsibles(root);}
+function enrichBeginnerContent(root){wrapProCollapsibles(root);}
 
 function setSystemMode(mode){
   const isWestern=mode==='western';
@@ -1785,7 +1674,6 @@ function setSystemMode(mode){
     moveTabIndicator(activeTab);
   }
 }
-function setUserMode(mode){setSystemMode(mode==='beginner'?'eastern':'western');}
 /* 顶部右侧圆形按钮：打开日历模式 */
 let calendarOpening = false;
 async function openCalendarMode(){

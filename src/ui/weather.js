@@ -78,8 +78,9 @@ async function reverseCity(lat, lon) {
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=zh&zoom=10`;
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 4000);
-    const r = await fetch(url, { signal: ctrl.signal });
-    clearTimeout(t);
+    let r;
+    try { r = await fetch(url, { signal: ctrl.signal }); }
+    finally { clearTimeout(t); }
     if (!r.ok) throw new Error('nominatim fail');
     const d = await r.json();
     const addr = d.address || {};
@@ -94,8 +95,9 @@ async function fetchWeather(lat, lon) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`;
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 6000);
-  const r = await fetch(url, { signal: ctrl.signal });
-  clearTimeout(t);
+  let r;
+  try { r = await fetch(url, { signal: ctrl.signal }); }
+  finally { clearTimeout(t); }
   if (!r.ok) throw new Error(`API ${r.status}`);
   return r.json();
 }
@@ -103,30 +105,33 @@ async function fetchWeather(lat, lon) {
 /* ---- 渲染天气模块 ---- */
 /* 同时刷新首页和 p2 菜单的天气卡片 */
 function _setWxLoading(prefix) {
-  const card = document.getElementById(prefix + 'WxLine');
+  const card = document.getElementById(prefix + 'Line');
   if (!card) return;
   card.style.display = 'block';
   card.classList.add('is-loading');
-  const iconEl = document.getElementById(prefix + 'WxIcon');
-  const primaryEl = document.getElementById(prefix + 'WxPrimary');
-  const secondaryEl = document.getElementById(prefix + 'WxSecondary');
+  const iconEl = document.getElementById(prefix + 'Icon');
+  const primaryEl = document.getElementById(prefix + 'Primary');
+  const secondaryEl = document.getElementById(prefix + 'Secondary');
   if (primaryEl) primaryEl.innerHTML = '天气加载中…';
   if (secondaryEl) secondaryEl.innerHTML = '';
   if (iconEl) iconEl.innerHTML = '<svg viewBox="0 0 26 26" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="13" cy="12" r="4.5" fill="currentColor" fill-opacity=".12"/><path d="M13 1.5v2M13 22.5v1.5M3.5 12h2M20.5 12h2M6.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M6.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>';
 }
 
 function _setWxContent(prefix, icon, temp, label, city, hum, wind) {
-  const card = document.getElementById(prefix + 'WxLine');
+  const card = document.getElementById(prefix + 'Line');
   if (!card) return;
   card.classList.remove('is-loading');
-  const iconEl = document.getElementById(prefix + 'WxIcon');
-  const primaryEl = document.getElementById(prefix + 'WxPrimary');
-  const secondaryEl = document.getElementById(prefix + 'WxSecondary');
+  const iconEl = document.getElementById(prefix + 'Icon');
+  const primaryEl = document.getElementById(prefix + 'Primary');
+  const secondaryEl = document.getElementById(prefix + 'Secondary');
   if (iconEl) iconEl.innerHTML = wxIconBig(icon);
   if (primaryEl) primaryEl.innerHTML = `<span class="t">${temp}°</span>${label}`;
   if (secondaryEl) {
     let parts = [];
-    if (city) parts.push(`<span class="wx-meta-item">${miniLoc}${city}</span>`);
+    if (city) {
+      const safeCity = String(city).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      parts.push(`<span class="wx-meta-item">${miniLoc}${safeCity}</span>`);
+    }
     parts.push(`<span class="wx-meta-item">${miniHum}${hum}%</span>`);
     parts.push(`<span class="wx-meta-item">${miniWnd}${wind} km/h</span>`);
     secondaryEl.innerHTML = parts.join('<span class="wx-meta-sep">·</span>');
@@ -134,12 +139,12 @@ function _setWxContent(prefix, icon, temp, label, city, hum, wind) {
 }
 
 function _setWxError(prefix) {
-  const card = document.getElementById(prefix + 'WxLine');
+  const card = document.getElementById(prefix + 'Line');
   if (!card) return;
   card.classList.remove('is-loading');
-  const iconEl = document.getElementById(prefix + 'WxIcon');
-  const primaryEl = document.getElementById(prefix + 'WxPrimary');
-  const secondaryEl = document.getElementById(prefix + 'WxSecondary');
+  const iconEl = document.getElementById(prefix + 'Icon');
+  const primaryEl = document.getElementById(prefix + 'Primary');
+  const secondaryEl = document.getElementById(prefix + 'Secondary');
   if (primaryEl) primaryEl.innerHTML = '天气暂不可用';
   if (secondaryEl) secondaryEl.innerHTML = '';
   if (iconEl) iconEl.innerHTML = '<svg viewBox="0 0 26 26" width="26" height="26"><circle cx="13" cy="13" r="5" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"/><path d="M10 10l6 6M10 16l6-6" stroke="currentColor" stroke-width="1.5" opacity=".4" stroke-linecap="round"/></svg>';
@@ -151,103 +156,134 @@ async function refreshWeather() {
   WX_PREFIXES.forEach(p => _setWxLoading(p));
 
   try {
-    let lat, lon, city = '';
+    let lat, lon, city;
     try {
-      const pos = await new Promise((resolve, reject) => {
-        if (!navigator.geolocation) return reject(new Error('no geo'));
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: false, timeout: 8000, maximumAge: 600000
-        });
-      });
-      lat = pos.coords.latitude.toFixed(4);
-      lon = pos.coords.longitude.toFixed(4);
-      city = await reverseCity(lat, lon);
-      _wxGeo = { city, lat: parseFloat(lat), lon: parseFloat(lon) };
+      // Reuse a recent location obtained by the fengshui tool; its explicit
+      // "获取当前位置" button still performs a fresh request when pressed.
+      const geo = _wxGeo && Date.now() - _lastGeo < WEATHER_TTL ? _wxGeo : await requestGeo();
+      lat = geo.lat.toFixed(4);
+      lon = geo.lon.toFixed(4);
+      city = geo.city;
     } catch (e) {
-      lat = '39.9042'; lon = '116.4074'; city = '北京';
+      // 明确标注默认城市，不能把回退天气当作当前位置。
+      lat = '39.9042'; lon = '116.4074'; city = '北京（默认）';
     }
 
-    const data = await fetchWeather(lat, lon);
+    let data;
+    while (true) {
+      const locationVersion = _geoVersion;
+      try { data = await fetchWeather(lat, lon); }
+      catch (error) {
+        if (locationVersion === _geoVersion) throw error;
+      }
+      if (locationVersion === _geoVersion) break;
+      // A manual relocation completed while the weather was in flight. Do not
+      // show the older city's weather as if it belongs to the new location.
+      if (_wxGeo) {
+        lat = _wxGeo.lat.toFixed(4); lon = _wxGeo.lon.toFixed(4); city = _wxGeo.city;
+      } else {
+        lat = '39.9042'; lon = '116.4074'; city = '北京（默认）';
+      }
+    }
     const cur = data.current;
+    if (!cur || ![cur.temperature_2m, cur.relative_humidity_2m, cur.wind_speed_10m].every(Number.isFinite)) throw new Error('天气数据不完整');
     const wx = WX_MAP[cur.weather_code] || { icon: 'sun', label: '未知' };
     const temp = Math.round(cur.temperature_2m);
-    const hum  = cur.relative_humidity_2m;
+    const hum = cur.relative_humidity_2m;
     const wind = Math.round(cur.wind_speed_10m);
-    // 缓存最近天气，供需要结合环境的工具使用
     _wxNow = { city, temp, hum, wind, label: wx.label, code: cur.weather_code, icon: wx.icon };
-
     WX_PREFIXES.forEach(p => _setWxContent(p, wx.icon, temp, wx.label, city, hum, wind));
+    return _wxNow;
   } catch (e) {
     console.warn('天气获取失败:', e);
+    _wxNow = null;
     WX_PREFIXES.forEach(p => _setWxError(p));
+    return null;
   }
 }
 
-/* ---- 导出当前地理位置 ---- */
 let _wxGeo = null;
+let _geoPending = null;
+let _wxNow = null;
+let _weatherPending = null;
+let _lastFetch = 0;
+let _lastGeo = 0;
+let _geoVersion = 0;
+let _initialized = false;
+const WEATHER_TTL = 600000;
 
-export function getWxGeo() {
-  return _wxGeo;
-}
+export function getWxGeo() { return _wxGeo; }
+export function getWxNow() { return _wxNow; }
 
-/* ---- 主动获取定位（供工具按需调用，如风水大师） ----
-   返回 {city, lat, lon}，并写入 _wxGeo 缓存。
-   失败时抛出错误，由调用方决定是否回退默认值。 */
-export async function requestGeo() {
-  return await new Promise((resolve, reject) => {
+/* 定位中的天气与风水工具共享一次请求；失败后允许重试。 */
+export function requestGeo() {
+  if (_geoPending) return _geoPending;
+  _geoPending = new Promise((resolve, reject) => {
     if (!navigator.geolocation) return reject(new Error('当前浏览器不支持定位'));
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      try {
-        const lat = parseFloat(pos.coords.latitude.toFixed(4));
-        const lon = parseFloat(pos.coords.longitude.toFixed(4));
-        const city = await reverseCity(lat, lon);
-        _wxGeo = { city: city || '当前位置', lat, lon };
-        resolve(_wxGeo);
-      } catch (e) {
-        _wxGeo = { city: '当前位置', lat: pos.coords.latitude, lon: pos.coords.longitude };
-        resolve(_wxGeo);
-      }
+    navigator.geolocation.getCurrentPosition((pos) => {
+      (async () => {
+        const lat = Number(pos.coords.latitude.toFixed(4));
+        const lon = Number(pos.coords.longitude.toFixed(4));
+        if (!Number.isFinite(lat) || Math.abs(lat) > 90 || !Number.isFinite(lon) || Math.abs(lon) > 180) throw new Error('定位坐标无效');
+        const city = (await reverseCity(lat, lon)) || '当前位置';
+        const changed = !_wxGeo || _wxGeo.lat !== lat || _wxGeo.lon !== lon || _wxGeo.city !== city;
+        _wxGeo = { city, lat, lon };
+        _lastGeo = Date.now();
+        if (changed) {
+          _geoVersion++;
+          // A cached forecast belongs to the old location (or the fallback).
+          // Refresh an open menu immediately; otherwise refresh on next use.
+          if (_wxNow) {
+            _wxNow = null;
+            _lastFetch = 0;
+            if (document.getElementById('homeMenuDrawer')?.classList.contains('open') ||
+                document.getElementById('p2MenuDrawer')?.classList.contains('open')) void ensureWeather();
+          }
+        }
+        return _wxGeo;
+      })().then(resolve, reject);
     }, (err) => {
       reject(new Error(err && err.code === 1 ? '定位权限被拒绝，请在浏览器设置中允许后重试' : '定位失败'));
-    }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
-  });
+    }, { enableHighAccuracy: false, timeout: 8000, maximumAge: WEATHER_TTL });
+  }).catch(error => {
+    if (_wxGeo) {
+      _geoVersion++;
+      if (_wxNow) WX_PREFIXES.forEach(p => _setWxError(p));
+      _wxNow = null;
+      _lastFetch = 0;
+    }
+    _wxGeo = null;
+    _lastGeo = 0;
+    throw error;
+  }).finally(() => { _geoPending = null; });
+  return _geoPending;
 }
 
-/* ---- 导出最近一次天气（供工具结合使用） ---- */
-let _wxNow = null;
-
-export function getWxNow() {
-  return _wxNow;
+/* 打开天气或穿搭时按需加载；同一轮只发一次，失败后可再次尝试。 */
+export function ensureWeather() {
+  if (_weatherPending) return _weatherPending;
+  if (_wxNow && Date.now() - _lastFetch < WEATHER_TTL) return Promise.resolve(_wxNow);
+  _weatherPending = refreshWeather().then(wx => {
+    if (wx) _lastFetch = Date.now();
+    return wx;
+  }).finally(() => { _weatherPending = null; });
+  return _weatherPending;
 }
-let _lastFetch = 0;
 
 export function initWeather() {
-  const el = document.getElementById('wxLine');
-  if (!el) return;
-
-  refreshWeather();
-  _lastFetch = Date.now();
-
-  const observer = new MutationObserver(() => {
-    const homeDrawer = document.getElementById('homeMenuDrawer');
-    const p2Drawer = document.getElementById('p2MenuDrawer');
-    const isOpen = (homeDrawer && homeDrawer.classList.contains('open')) ||
-                   (p2Drawer && p2Drawer.classList.contains('open'));
-    if (isOpen) {
-      const now = Date.now();
-      if (now - _lastFetch > 600000) {
-        refreshWeather();
-        _lastFetch = now;
-      }
-    }
-  });
-
+  if (_initialized) return;
+  if (!document.getElementById('wxLine')) return;
+  _initialized = true;
   const homeDrawer = document.getElementById('homeMenuDrawer');
-  if (homeDrawer) {
-    observer.observe(homeDrawer, { attributes: true, attributeFilter: ['class'] });
-  }
   const p2Drawer = document.getElementById('p2MenuDrawer');
-  if (p2Drawer) {
-    observer.observe(p2Drawer, { attributes: true, attributeFilter: ['class'] });
-  }
+  const onDrawerChange = () => {
+    if (homeDrawer?.classList.contains('open') || p2Drawer?.classList.contains('open')) {
+      void ensureWeather();
+    }
+  };
+  const observer = new MutationObserver(onDrawerChange);
+  if (homeDrawer) observer.observe(homeDrawer, { attributes: true, attributeFilter: ['class'] });
+  if (p2Drawer) observer.observe(p2Drawer, { attributes: true, attributeFilter: ['class'] });
+  // 菜单可能在主模块加载前就已打开。
+  onDrawerChange();
 }

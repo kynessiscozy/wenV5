@@ -1,10 +1,13 @@
 /* 问问大师 PWA：离线可用 + 秒开的缓存策略。
    静态资源带 hash，可长期缓存；HTML 走 network-first 保证更新及时。 */
-const CACHE = 'wenda-cache-v38';
+const CACHE = 'wenda-cache-v40';
 const BASE = './';
 
 const OPTIONAL_ASSETS = [
+  // Keep the previous paths for pages and bookmarks that have not updated yet.
   'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png',
+  'icon-twins-128.png', 'icon-twins-192.png', 'icon-twins-512.png',
+  'icon-twins-maskable-192.png', 'icon-twins-maskable-512.png', 'apple-touch-icon-twins.png',
   'art/master-twin-indigo.webp', 'art/master-twin-rose.webp',
   'art/master-twin-indigo-avatar.webp', 'art/master-twin-rose-avatar.webp',
   'art/wenwen-reimagined.webp', 'art/wenwen-reimagined-avatar.webp', 'art/wenwen-reimagined-blink.webp', 'art/wenwen-reimagined-speak.webp',
@@ -35,6 +38,20 @@ self.addEventListener('install', (e) => {
     const cache = await caches.open(CACHE);
     // Never replace a working offline version unless the new HTML is available.
     await cache.add(BASE);
+    // Production emits a manifest of hashed application chunks. Fetch them at
+    // install time so a first visit can be used offline after activation.
+    try {
+      const response = await fetch(BASE + 'offline-assets.json', { cache: 'no-store' });
+      if (response.ok) {
+        const text = await response.text();
+        // Vite's dev server responds to unknown URLs with its HTML fallback.
+        const assets = text.trimStart().startsWith('<') ? [] : JSON.parse(text);
+        if (Array.isArray(assets)) await Promise.all(assets.filter(asset => /^assets\/[\w.\-]+\.(?:js|css)$/.test(asset)).map(asset => cache.add(BASE + asset)));
+      }
+    } catch (error) {
+      // Do not replace a working version with an incomplete installation.
+      throw error;
+    }
     await Promise.all(OPTIONAL_ASSETS.map(async (asset) => {
       const url = BASE + asset;
       try {

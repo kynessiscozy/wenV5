@@ -2,6 +2,13 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   base: './',
+  plugins: [{
+    name: 'offline-asset-manifest',
+    generateBundle(_options, bundle) {
+      const assets = Object.keys(bundle).filter(name => /^assets\/.*\.(?:js|css)$/.test(name));
+      this.emitFile({ type: 'asset', fileName: 'offline-assets.json', source: JSON.stringify(assets) });
+    },
+  }],
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

@@ -1,7 +1,7 @@
 import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 /* 验证三项改动：
    1. 命盘/运势/关系 三分区统一为「速读 + 吸顶标签栏 + 一次一张卡」的排列形式
-   2. 问问大师面板位于 Dock 之上，不遮蔽 Dock
+   2. 问问大师作为模态对话隔离报告，关闭后恢复 Dock 交互
    说明：分区标签组由 organizeMasterReportLayout 在每次渲染后重组
    （ming/yun/rel 各自的 -tabs/-pane 结构），西方模式卡片组不受影响。 */
 import puppeteer from 'puppeteer';
@@ -113,31 +113,31 @@ const b = await puppeteer.launch({ headless: 'shell', args: ['--no-sandbox'] });
   await p.close();
 }
 
-/* ---------- 2. 聊天面板不遮蔽 Dock ---------- */
-console.log('\n[问问大师 × Dock]');
+/* ---------- 2. 模态对话隔离报告并在关闭后恢复 ---------- */
+console.log('\n[问问大师 × 报告导航]');
 for (const [w, h] of [[360, 740], [430, 932], [768, 1024], [1440, 900]]) {
   const p = await b.newPage();
   await p.setViewport({ width: w, height: h });
-  await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000});
+  await p.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  await p.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 15000 });
   await selectHomeTrait(p);
-  await p.waitForFunction(() => typeof window.calc === 'function', { timeout: 15000 });
   await openDemoReport(p);
-  await new Promise(r => setTimeout(r, 4000));
-  await p.evaluate(() => window.openAsk && window.openAsk());
-  await new Promise(r => setTimeout(r, 900));
-
+  await p.evaluate(() => window.openAsk());
+  await p.waitForSelector('#aiSheet.open');
   const d = await p.evaluate(() => {
-    const s = document.getElementById('aiSheet');
-    const dk = document.querySelector('.ig-dock.tab-bar');
-    const a = s.getBoundingClientRect(), c = dk.getBoundingClientRect();
-    // 命中测试：Dock 上的按钮必须真的点得到，不能被遮罩吃掉
-    const hit = document.elementFromPoint(c.left + 30, c.top + c.height / 2);
-    return { gap: Math.round(c.top - a.bottom), h: Math.round(a.height), clickable: !!hit?.closest('.tab-item') };
+    const sheet = document.getElementById('aiSheet');
+    const rect = sheet.getBoundingClientRect();
+    return { modal: sheet.getAttribute('aria-modal') === 'true', inert: document.getElementById('page2').inert,
+      h: Math.round(rect.height), top: rect.top, bottom: rect.bottom };
   });
-  console.log(`  ${w}×${h} 间距 ${d.gap}px，面板高 ${d.h}px`);
-  ok(d.gap >= 0, `${w}px：面板不压住 Dock`, 'gap=' + d.gap);
-  ok(d.clickable, `${w}px：Dock 按钮可点击`);
-  ok(d.h >= 320, `${w}px：面板仍有可用高度`, 'h=' + d.h);
+  console.log(`  ${w}×${h} 面板高 ${d.h}px`);
+  ok(d.modal && d.inert, `${w}px：对话打开时隔离报告背景`);
+  ok(d.h >= 320 && d.top >= -1 && d.bottom <= h + 1, `${w}px：对话在视口内且有可用高度`, JSON.stringify(d));
+  await p.click('#aiSheet .ai-close');
+  await p.waitForFunction(() => !document.getElementById('aiSheet').classList.contains('open') && !document.getElementById('page2').inert);
+  await p.waitForSelector('.tab-item[data-sec="s-yun"]', { visible: true });
+  await p.click('.tab-item[data-sec="s-yun"]');
+  ok(await p.$eval('#s-yun', el => el.classList.contains('active')), `${w}px：关闭对话后可切换报告导航`);
   await p.close();
 }
 

@@ -32,7 +32,7 @@ async function newPage(width, height, options = {}) {
     localStorage.setItem('tj_theme', theme || 'light');
     if (homeTheme != null) localStorage.setItem('tj_home_character', homeTheme);
     if (provider) localStorage.setItem('tj_ai_provider', provider);
-    if (key) localStorage.setItem('tj_ai_apikey', key);
+    if (key) localStorage.setItem('tj_ai_apikey_' + (provider || 'deepseek'), key);
     if (history) localStorage.setItem('tj_ai_history_v2', JSON.stringify(history));
     if (!mock) return;
     window.__mockMode = mode || 'success';

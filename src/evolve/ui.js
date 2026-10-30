@@ -9,7 +9,7 @@ import {
   onEvolveChange, getEvolveSnapshot, setEvolveEnabled,
   exportEvolve, wipeEvolve, initEvolve
 } from './index.js';
-import { TONE_KEYS, TONE_LABEL, TONE_HINT } from './genome.js';
+import { TONE_KEYS, TONE_LABEL } from './genome.js';
 
 function esc(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

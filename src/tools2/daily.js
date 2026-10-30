@@ -5,12 +5,10 @@
    新形态：竖版日签卡（干支印章 / 基调 / 宜·忌两栏 / 行动），
    打开即生成，无需表单。
    ============================================================ */
-import { masthead, notice, esc, attachToolAI } from './runtime.js';
+import { masthead, notice, attachToolAI } from './runtime.js';
 import { getCtx } from '../state/context.js';
 import { calcLiuRi, buildDailyCopy, getDayGZ } from '../engines/liuri.js';
 import { showToast } from '../ui/toast.js';
-
-const TONE_CN = { flow: '顺势', steady: '平稳', friction: '有阻力', rest: '宜收' };
 
 export const daily = {
   id: 'daily',

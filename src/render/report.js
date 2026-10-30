@@ -1,6 +1,5 @@
 import { CURR_YEAR, TG, DZ, WX, GW, ZW, ZC, WC, SS } from '../engines/shared.js';
-import { resolveBirthDateTime } from '../engines/calendar.js';
-import { mkBazi, mkWx, mkSs, getShenShaLabels, getTodayGZ } from '../engines/bazi.js';
+import { getShenShaLabels, getTodayGZ } from '../engines/bazi.js';
 import { TJ } from '../state/tj.js';
 import { getCtx } from '../state/context.js';
 import { getResultStyle } from '../state/result-style.js';
@@ -170,15 +169,6 @@ function _hexLines(lines,lineNumbers=[],changingLine=0){
     return '<div class="mh-line" style="min-height:16px;display:flex;align-items:center;gap:8px">'+bar+(active?'<em style="font-style:normal;font-size:.66em;color:var(--c-yellow);flex:0 0 auto">动</em>':'')+'</div>';
   }).join('');
 }
-function _elementRelation(a,b){
-  const sheng={木:'火',火:'土',土:'金',金:'水',水:'木'},ke={木:'土',火:'金',土:'水',金:'木',水:'火'};
-  if(a===b)return '上下卦同气，事情更容易沿着原有惯性推进。';
-  if(sheng[a]===b)return '上卦生下卦，外部条件对内在基础有扶助。';
-  if(sheng[b]===a)return '下卦生上卦，靠自身投入带动局面变化。';
-  if(ke[a]===b)return '上卦克下卦，外部压力较明显，宜先稳基础。';
-  if(ke[b]===a)return '下卦克上卦，主动性强，但要避免硬冲。';
-  return '内外关系平常，以具体行动和现实条件为准。';
-}
 export function renderZiWeiCard(zw){
   if(!zw||!zw.ps)return '';
   const ps=zw.ps||[],ming=ps[zw.mingGongZhi]||{},body=ps[zw.bodyGongZhi]||{},career=ps.find(p=>p.n==='事业宫')||{},wealth=ps.find(p=>p.n==='财帛宫')||{},love=ps.find(p=>p.n==='夫妻宫')||{};
@@ -194,6 +184,7 @@ export function renderZiWeiCard(zw){
       +'</div>';
   }).join('');
   return '<div class="glass card-2" data-card="ziwei"><div class="card-hd"><div><div class="card-tt">紫微斗数</div><div class="card-st">命宫、身宫、十二宫与主辅煞星</div></div></div>'
+    +(zw.approximate ? '<div class="at" role="note"><p>出生日期超出农历数据范围，紫微盘使用近似算法，结果仅供参考，不宜作精确判断。</p></div>' : '')
     +'<div class="ig" style="margin-bottom:12px">'+[
       ['命宫', (DZ[zw.mingGongZhi]||'')+' · '+mainStars],['身宫',(DZ[zw.bodyGongZhi]||'')+' · '+bodyStars],['事业宫',(career.m&&career.m.length?career.m.join('、'):'平稳')],['财帛宫',(wealth.m&&wealth.m.length?wealth.m.join('、'):'看流年')],['夫妻宫',(love.m&&love.m.length?love.m.join('、'):'重经营')],['盘面提示','主星看性格，辅煞看助力与阻力']
     ].map(x=>'<div class="ii"><div class="il">'+x[0]+'</div><div class="iv">'+x[1]+'</div></div>').join('')+'</div>'
@@ -202,7 +193,7 @@ export function renderZiWeiCard(zw){
 }
 export function renderQiMenCard(qm){
   if(!qm||!qm.ps)return '';
-  const ps=qm.ps||[],dun=qm.yangDun?'阳遁':'阴遁',open=ps.find(x=>x.d==='开门')||{},sheng=ps.find(x=>x.d==='生门')||{},rest=ps.find(x=>x.d==='休门')||{},fu=ps.find(x=>x.g==='值符')||ps[0]||{};
+  const ps=qm.ps||[],dun=qm.yangDun?'阳遁':'阴遁',open=ps.find(x=>x.d==='开门')||{},sheng=ps.find(x=>x.d==='生门')||{},fu=ps.find(x=>x.g==='值符')||ps[0]||{};
   const doorTone={开门:'开局、沟通、发布',生门:'增长、求财、修复',休门:'休整、谈和、恢复',景门:'曝光、表达、文书',杜门:'保密、学习、闭关',伤门:'冲突、突破、损耗',死门:'停滞、收尾、保守',惊门:'消息、口舌、突发'};
   const grid=ps.map(x=>'<div style="min-height:96px;padding:10px;border-radius:14px;background:'+(x.cc?'color-mix(in srgb,var(--c-yellow) 10%,transparent)':'var(--c-surface-2)')+';border:1px solid '+(x.g==='值符'?'var(--ac4)':'var(--c-border)')+'"><div style="display:flex;justify-content:space-between;gap:6px;margin-bottom:7px"><b style="font-size:.78em;color:var(--c-text-hi)">'+x.p+'</b><span style="font-size:.62em;color:var(--c-text-3)">'+(x.cc?'中宫':'')+'</span></div><div>'+_mysticPill(x.d,'main')+_mysticPill(x.s,'aux')+_mysticPill(x.g,x.g==='白虎'||x.g==='玄武'?'sha':'muted')+'</div><div style="margin-top:7px;font-size:.66em;line-height:1.55;color:var(--c-text-2)">'+(doorTone[x.d]||'顺势观察')+'</div></div>').join('');
   return '<div class="glass card-2" data-card="qimen"><div class="card-hd"><div><div class="card-tt">奇门遁甲</div><div class="card-st">'+dun+' '+qm.ju+'局 · 九宫、八门、九星、八神</div></div></div>'
@@ -249,10 +240,11 @@ export function renderThreeStylesCard(zw,qm,mh){
   return '<div class=\"glass card-2 three-styles-card structure-card\" data-card=\"three-styles\"><div class=\"three-styles-intro\">以紫微看人生结构，以奇门看局势入口，以梅花看事情变化；三式用于交叉观察，不以单一术式下确定结论。</div><div class=\"structure-tabs three-styles-tabs\" role=\"tablist\" aria-label=\"三式合参结构\">'+panes.map(([key,label],i)=>'<button class=\"structure-tab'+(i===0?' active':'')+'\" type=\"button\" data-structure=\"'+key+'\" onclick=\"switchStructureTab(this)\">'+label+'</button>').join('')+'</div><div class=\"structure-panes three-styles-panes\">'+panes.map(([key,,html],i)=>'<div class=\"structure-pane'+(i===0?' active':'')+'\" data-structure=\"'+key+'\" data-card=\"'+key+'\">'+_threeStyleInner(html)+'</div>').join('')+'</div><div class=\"three-styles-note\">合参提示：三式分别回答“底色、时势、变化”。若结果出现差异，优先核对出生信息、具体问题、起局时间与现实证据。</div></div>';
 }
 
-export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue){
-  // —— 统一上下文（所有派生量的唯一来源）——
+export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue,preparedContext=null){
+  // Reuse the freshly computed context instead of recalculating scores and TJX.
+  // Keep the old signature usable for independent callers.
   const _input=(window._ctx&&window._ctx.input)?window._ctx.input:{by:by,bm:1,bd:1};
-  const ctx=buildContext({b,wx,ss,dy,ln,zw,qm,mh,si,shensha,liuyue,P:null,gen,q,city,input:_input});
+  const ctx=preparedContext||buildContext({b,wx,ss,dy,ln,zw,qm,mh,si,shensha,liuyue,P:null,gen,q,city,input:_input});
   const dg=ctx.dg,dw=ctx.dw,age=ctx.age,cDy=ctx.cDy,cLn=ctx.cLn,lnSS=ctx.lnSS,dySS=ctx.dySS;
   // —— 评分/命格 全部来自 ctx，避免与其他位置算法不一致 ——
   const cs=ctx.cs,ws=ctx.ws,ls=ctx.ls,hs=ctx.hs;
@@ -261,7 +253,6 @@ export function renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,by,shensha,liuyue
   const HM={木:{o:'肝胆',a:'多食绿蔬'},火:{o:'心脏',a:'适量运动'},土:{o:'脾胃',a:'饮食规律'},金:{o:'肺部',a:'远离烟尘'},水:{o:'肾脏',a:'充足睡眠'}};
   const gl=gen==='male'?'乾造':'坤造';
   const siS={旺:'得令强旺',相:'得气充足',休:'休囚需扶',囚:'受困宜补',死:'失令需生'}[si.st]||'平';
-  const curveD=dy.ds.map((_,i)=>Math.round(Math.min(95,Math.max(30,50+Math.sin(i*.7)*20+Math.cos(i*.5)*10+(wx.c[GW[dy.ds[i].g]]||0)*5))));
 
   // 顶栏不再显示报告标题，命盘信息保留在报告正文中。
 
@@ -811,7 +802,7 @@ export function toggleFullGods(btn){
 }
 export function renderQuickRead(secKey,d){
   if(!d)return '';
-  const dg=d.dg,wx=d.wx,cDy=d.cDy,cLn=d.cLn,cLm=d.cLm;
+  const dg=d.dg,wx=d.wx,cDy=d.cDy,cLn=d.cLn;
   const items=[];
   if(secKey==='ming'){
     items.push({l:'日主',v:dg+wx.dw,c:wx.dw,f:'day-master'});
@@ -862,7 +853,6 @@ export function buildAISummary(b,wx,ss,dy,ln,pa,P,gen,si,age){
   // —— 与 renderAll 共享 ctx，保证 AI 摘要与界面显示完全一致 ——
   const _c=getCtx();
   const cDy=(_c&&_c.cDy)||TJ.findDaYun(dy,age);
-  const cLn=(_c&&_c.cLn)||TJ.findLiuNian(ln,CURR_YEAR);
   const dg=b.D.g;
   const persona=P[dg]||P['甲'];
   const phase=age<28?'前期积累':age<38?'突破发力':age<48?'沉淀守成':'影响力期';

@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 import puppeteer from 'puppeteer';
 const BASE = process.env.BASE_URL || 'http://localhost:5173/';
@@ -30,14 +31,15 @@ await p.evaluate(() => { const s = document.getElementById('twFZuo'); s.value = 
 
 // 点击生成
 await p.evaluate(() => document.getElementById('twFGen').click());
-await new Promise(r => setTimeout(r, 600));
+await p.waitForSelector('#toolModalContent .tw-fs-tg[data-v="detail"]', { visible: true, timeout: 10000 });
+await p.click('#toolModalContent .tw-fs-tg[data-v="detail"]');
 
-const resultSvg = await p.evaluate(() => !!document.querySelector('.tw-result-page .tw-fs-svg'));
-const dirCells = await p.evaluate(() => document.querySelectorAll('.tw-result-page .tw-fs-card').length);
-const hasDirRow = await p.evaluate(() => !!document.querySelector('.tw-result-page .tw-fs-dir-row'));
-const hasLoc = await p.evaluate(() => !!document.querySelector('.tw-result-page .tw-fs-loc'));
-const hasEight = await p.evaluate(() => !!document.querySelector('.tw-result-page .tw-fs-pair'));
-const resultText = await p.evaluate(() => (document.querySelector('.tw-result-page-body') || {}).innerText || '');
+const resultSvg = await p.evaluate(() => !!document.querySelector('#toolModalContent .tw-fs-svg'));
+const dirCells = await p.evaluate(() => document.querySelectorAll('#toolModalContent .tw-fs-card').length);
+const hasDirRow = await p.evaluate(() => !!document.querySelector('#toolModalContent .tw-fs-dir-row'));
+const hasLoc = await p.evaluate(() => !!document.querySelector('#toolModalContent .tw-fs-loc'));
+const hasEight = await p.evaluate(() => !!document.querySelector('#toolModalContent .tw-fs-compass-svg'));
+const resultText = await p.evaluate(() => (document.querySelector('#toolModalContent .tw-fs-detail') || {}).innerText || '');
 const hasMingGua = /命卦/.test(resultText);
 const hasZhaiGua = /宅卦/.test(resultText);
 
@@ -60,5 +62,11 @@ console.log('结果含「九宫飞星」:', resultText.includes('九宫飞星'))
 console.log('结果含「五黄」:', resultText.includes('五黄'));
 console.log('结果含「八白」:', resultText.includes('八白'));
 console.log('结果含「一白」:', resultText.includes('一白'));
+assert.equal(title, '风水大师');
+assert.ok(hasStatus && selectCount === 3 && hasCompass && hasLocNote);
+assert.ok(resultSvg && dirCells > 0 && hasDirRow && hasLoc && hasEight);
+assert.ok(hasMingGua && hasZhaiGua && resultText.includes('九宫飞星'));
+assert.ok(resultText.includes('五黄') && resultText.includes('八白') && resultText.includes('一白'));
+assert.deepEqual(errs, []);
 console.log('\n错误:', errs.length ? [...new Set(errs)].slice(0, 8).join(' | ') : '无');
 await b.close();

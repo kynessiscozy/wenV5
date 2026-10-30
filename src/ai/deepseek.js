@@ -65,6 +65,37 @@ function fetchWithTimeout(url, options, timeoutMs = 22000) {
   return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
+// Bound each idle interval after headers; cancel the underlying stream on timeout.
+function readWithTimeout(reader, timeoutMs = 22000) {
+  let timer;
+  return Promise.race([
+    reader.read(),
+    new Promise((_, reject) => { timer = setTimeout(() => {
+      reject(new Error('stream timeout'));
+      Promise.resolve(reader.cancel()).catch(() => {});
+    }, timeoutMs); })
+  ]).finally(() => clearTimeout(timer));
+}
+
+// Read non-streaming replies and HTTP errors with the same idle deadline.
+async function readResponseText(response) {
+  if (!response.body) return '';
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let text = '';
+  try {
+    while (true) {
+      const { done, value } = await readWithTimeout(reader);
+      if (done) return text + decoder.decode();
+      text += decoder.decode(value, { stream: true });
+      if (text.length > 2_000_000) throw new Error('response too large');
+    }
+  } catch (error) {
+    Promise.resolve(reader.cancel()).catch(() => {});
+    throw error;
+  }
+}
+
 function cleanTurns(turns) {
   return (turns || []).slice(-6).map(x => ({
     role: x.role === 'assistant' ? 'assistant' : 'user',
@@ -122,7 +153,7 @@ export async function streamAskAnswer({
 
       if (!resp.ok || !resp.body) {
         let body = '';
-        try { body = await resp.text(); } catch (_) {}
+        try { body = await readResponseText(resp); } catch (_) {}
         throw new Error('HTTP ' + resp.status + ' ' + body.slice(0, 80));
       }
 
@@ -130,7 +161,7 @@ export async function streamAskAnswer({
       const dec = new TextDecoder();
       let buf = '';
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } = await readWithTimeout(reader);
         if (done) break;
         buf += dec.decode(value, { stream: true });
         const lines = buf.split('\n');
@@ -206,7 +237,7 @@ export async function askToolInsight({
         })
       });
       if (!resp.ok) continue;
-      const json = await resp.json();
+      const json = JSON.parse(await readResponseText(resp));
       const answer = json.choices?.[0]?.message?.content?.trim() || '';
       if (answer) return answer;
     } catch (_) {}

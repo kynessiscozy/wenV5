@@ -237,7 +237,6 @@ export const calendar = {
       let body = '';
       if (info && s.r) {
         const r = s.r;
-        const t = TONE[r.tone];
         const wxText = {
           same:    '今日五行属' + r.dayGanWx + '，正是你的用神「' + info.ys + '」，做事更容易顺手。',
           support: '今日五行属' + r.dayGanWx + '，能生助你的用神「' + info.ys + '」，是有利的一天。',

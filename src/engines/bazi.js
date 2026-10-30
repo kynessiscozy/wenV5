@@ -10,7 +10,8 @@
  *
  * 本文件由早期压缩风格源码展开重构而来,导出签名与返回结构与重构前完全一致。
  */
-import { TG, DZ, SX, WX, NY, GW, ZW, ZC, SS } from './shared.js';
+import { TG, DZ, SX, WX, NY, GW, ZW, ZC, SS,
+  WX_SHENG, WX_KE, WX_MOTHER, WX_OVERCOMER, ZHI_CHONG, ZHI_HAI, ZHI_HE } from './shared.js';
 import { jqDate, getMonthPillar, getDayPillarIndex } from './calendar.js';
 
 /* ============================================================
@@ -27,14 +28,11 @@ const MONTH_GAN_BASE = [2, 4, 6, 8, 0];
  *  以日干序号 % 5 索引,得到子时的天干起点。 */
 const HOUR_GAN_BASE = [0, 2, 4, 6, 8];
 
-/** 五行相生:木→火→土→金→水→木 */
-const SHENG = { 木: '火', 火: '土', 土: '金', 金: '水', 水: '木' };
-/** 五行相克:木克土、火克金、土克水、金克木、水克火 */
-const KE = { 木: '土', 火: '金', 土: '水', 金: '木', 水: '火' };
-/** 五行之母(生我者):木←水、火←木、土←火、金←土、水←金 */
-const MOTHER = { 木: '水', 火: '木', 土: '火', 金: '土', 水: '金' };
-/** 五行之侮(克我者):木←金、火←水、土←木、金←火、水←土 */
-const OVERCOMER = { 木: '金', 火: '水', 土: '木', 金: '火', 水: '土' };
+/* mkWx 将关系表暴露在结果中；保留模块私有副本，避免外部修改影响其他引擎。 */
+const SHENG = { ...WX_SHENG };
+const KE = { ...WX_KE };
+const MOTHER = { ...WX_MOTHER };
+const OVERCOMER = { ...WX_OVERCOMER };
 
 /** 旬空表:按日柱所在旬(60 甲子 index / 10)取该旬缺失的两个地支。
  *  甲子旬戌亥空、甲戌旬申酉空、甲申旬午未空、
@@ -102,9 +100,6 @@ const YANGREN_MAP = {
 const KUIGANG_DAYS = ['庚辰', '庚戌', '壬辰', '戊戌'];
 
 /* 地支作用关系(用于 getShenShaLabels) */
-const CHONG = { 子: '午', 午: '子', 丑: '未', 未: '丑', 寅: '申', 申: '寅', 卯: '酉', 酉: '卯', 辰: '戌', 戌: '辰', 巳: '亥', 亥: '巳' };
-const HAI   = { 子: '未', 未: '子', 丑: '午', 午: '丑', 寅: '巳', 巳: '寅', 卯: '辰', 辰: '卯', 申: '亥', 亥: '申', 酉: '戌', 戌: '酉' };
-const LIUHE = { 子: '丑', 丑: '子', 寅: '亥', 亥: '寅', 卯: '戌', 戌: '卯', 辰: '酉', 酉: '辰', 巳: '申', 申: '巳', 午: '未', 未: '午' };
 const PO    = { 子: '酉', 酉: '子', 丑: '辰', 辰: '丑', 寅: '亥', 亥: '寅', 卯: '午', 午: '卯', 巳: '申', 申: '巳', 未: '戌', 戌: '未' };
 const ZIXING = { 辰: '辰', 午: '午', 酉: '酉', 亥: '亥' }; // 自刑:辰午酉亥
 
@@ -486,9 +481,9 @@ function getShenShaLabels(b) {
     for (let j = i + 1; j < 4; j++) {
       const a = zhiList[i];
       const b2 = zhiList[j];
-      if (CHONG[a] === b2) labels.push({ t: a + b2 + '·冲', ...styleMap.red });
-      if (HAI[a] === b2) labels.push({ t: a + b2 + '·害', ...styleMap.orange });
-      if (LIUHE[a] === b2) labels.push({ t: a + b2 + '·合', ...styleMap.green });
+      if (ZHI_CHONG[a] === b2) labels.push({ t: a + b2 + '·冲', ...styleMap.red });
+      if (ZHI_HAI[a] === b2) labels.push({ t: a + b2 + '·害', ...styleMap.orange });
+      if (ZHI_HE[a] === b2) labels.push({ t: a + b2 + '·合', ...styleMap.green });
       if (PO[a] === b2) labels.push({ t: a + b2 + '·破', ...styleMap.yellow });
       if (ZIXING[a] === b2) labels.push({ t: a + '·自刑', ...styleMap.red });
     }

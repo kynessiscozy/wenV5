@@ -280,6 +280,7 @@ try {
   // An optional prop can fail and later retry; it must not block the report.
   {
     const { page, context } = await newPage();
+    await page.setBypassServiceWorker(true);
     await page.setRequestInterception(true);
     let failures = 0;
     page.on('request', request => {
@@ -309,6 +310,7 @@ try {
   // complete while the request is still held; a late response cannot reopen it.
   {
     const { page, context } = await newPage();
+    await page.setBypassServiceWorker(true);
     await page.setRequestInterception(true);
     const held = [];
     let notify;

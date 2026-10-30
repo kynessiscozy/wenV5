@@ -343,20 +343,16 @@ await safe('C', () => {
       stat(sec, 'C5e', { n: 60, bad, samples, unit: '天(60甲子纳音 vs oracle)', failAt: 0 });
     } else add(sec, 'WARN', 'C5e', '未找到甲子日锚点');
   }
-  // C5f 仓库内第二纳音字典(long-report.js)与 shared.NY 一致性
-  try {
-    const lrSrc = fs.readFileSync(path.join(ROOT, 'src/share/long-report.js'), 'utf8');
-    const dict = {};
-    for (const m2 of lrSrc.matchAll(/'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])'\s*:\s*'([^']{2,4})'/g)) dict[m2[1]] = m2[2];
-    if (Object.keys(dict).length >= 60) {
-      let bad2 = 0; const samples2 = [];
-      for (let i = 0; i < 60; i++) {
-        const gz = TG[i % 10] + DZ[i % 12];
-        if (dict[gz] && dict[gz] !== NY[i]) { bad2++; samples2.push(`${gz}: shared=${NY[i]} long-report=${dict[gz]}`); }
-      }
-      stat(sec, 'C5f', { n: 60, bad: bad2, samples: samples2, unit: '项(shared.NY vs long-report 字典)', failAt: 0 });
-    } else add(sec, 'INFO', 'C5f', `long-report 纳音字典提取 ${Object.keys(dict).length} 条(<60,跳过)`);
-  } catch { add(sec, 'INFO', 'C5f', 'long-report.js 不可读,跳过双表一致性'); }
+  // C5f 共享的干支→纳音查询与 60 甲子表一致；绘制入口另由 test-long-report 覆盖。
+  let bad2 = 0; const samples2 = [];
+  for (let i = 0; i < 60; i++) {
+    const gz = TG[i % 10] + DZ[i % 12];
+    if (SH.getNayin(gz) !== NY[i]) { bad2++; samples2.push(`${gz}: 表=${NY[i]} 查询=${SH.getNayin(gz)}`); }
+  }
+  for (const invalid of ['', '甲丑', '未知', '甲子额外']) {
+    if (SH.getNayin(invalid) !== '') { bad2++; samples2.push(`非法组合 ${invalid} 应无纳音`); }
+  }
+  stat(sec, 'C5f', { n: 64, bad: bad2, samples: samples2, unit: '项(共享纳音查询及非法值)', failAt: 0 });
   // C6 十神规则独立重推导(五行生克 + 同异性)
   const gen = (i) => (i + 1) % 5, ke = (i) => (i + 2) % 5;
   const rel = (me, other, sameYY) => {
@@ -734,7 +730,7 @@ await safe('H', async () => {
   stat(sec, 'H4b', { n: terms.length + faqs.length, bad, samples, unit: `条(terms=${terms.length} faqs=${faqs.length})` });
   check(sec, 'H4c', new Set(faqs.map((f) => f.id)).size === faqs.length && new Set(terms.map((t) => t.t)).size === terms.length, 'KB id/词条唯一');
   // 答题册(防御式:导入失败仅 INFO)
-  for (const p of ['../src/tools2/answerbook.js', '../src/tools/answerbook-v2.js']) {
+  for (const p of ['../src/tools2/answerbook.js']) {
     try {
       const mod = await import(p);
       const arrs = Object.entries(mod).filter(([, v]) => Array.isArray(v) && v.length > 3);

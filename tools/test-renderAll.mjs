@@ -20,6 +20,10 @@ function createMockEl(id) {
 }
 
 globalThis.requestAnimationFrame = globalThis.requestAnimationFrame || ((fn) => setTimeout(fn, 0));
+globalThis.MutationObserver = globalThis.MutationObserver || class {
+  observe() {}
+  disconnect() {}
+};
 
 globalThis.window = globalThis.window || {
   localStorage: { getItem: () => null, setItem: () => {} },
@@ -74,7 +78,8 @@ for (const tc of testCases) {
   globalThis.window._ctx = _preCtx;
 
   console.log(`Testing renderAll for ${tc.bd} ${tc.timeStr}...`);
-  renderAll(b, wx, ss, dy, ln, zw, qm, mh, si, tc.gen, tc.q, city, y, shensha, liuyue);
+  renderAll(b, wx, ss, dy, ln, zw, qm, mh, si, tc.gen, tc.q, city, y, shensha, liuyue, _preCtx);
+  if (globalThis.window._ctx !== _preCtx) throw new Error('renderAll should reuse the prepared context');
   console.log(`  ✓ renderAll passed for ${tc.bd}`);
 }
 
