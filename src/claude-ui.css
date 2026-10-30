@@ -517,39 +517,3 @@ body:not(.home) .theme-toggle-home { display: none; }
 
 /* 旧的「玻璃质感」入口在扁平设计中已无意义 */
 .lg-panel { display: none; }
-
-
-/* ---------- 15. 派生变量（放在最后，覆盖 styles.css 的 :root） ---------- */
-/* 强调色派生量（沿用旧变量名，避免大范围改动） */
-:root {
-  --accent:   var(--c-accent);
-  --ac:       var(--c-accent);
-  --ac1:      var(--c-accent-soft);
-  --ac2:      color-mix(in srgb, var(--c-accent) 8%, transparent);
-  --ac3:      color-mix(in srgb, var(--c-accent) 5%, transparent);
-  --ac4:      color-mix(in srgb, var(--c-accent) 38%, transparent);
-  --ac5:      color-mix(in srgb, var(--c-accent) 62%, transparent);
-  --ac-glow:  color-mix(in srgb, var(--c-accent) 22%, transparent);
-  --ac-text:  var(--c-accent-text);
-  --ac-dim:   color-mix(in srgb, var(--c-accent-text) 62%, transparent);
-
-  --green:  var(--c-green);
-  --red:    var(--c-red);
-  --orange: var(--c-orange);
-  --yellow: var(--c-yellow);
-  --teal:   var(--c-teal);
-  --purple: var(--c-purple);
-
-  /* 字体：Claude = 正文无衬线 + 标题衬线 */
-  --sf: "Styrene B", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-  --serif: "Noto Serif SC", ui-serif, Georgia, "Songti SC", "STSong", serif;
-  --display: var(--serif);
-
-  --r:  var(--c-r-xl);
-  --rs: var(--c-r);
-  --rx: var(--c-r-sm);
-
-  color-scheme: var(--c-scheme);
-}
-

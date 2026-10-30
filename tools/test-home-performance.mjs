@@ -66,6 +66,8 @@ async function waitForHeld(gate, part) {
 async function openContext(homeTheme = 'wenwen') {
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
+  // Network gates must observe requests rather than a service worker's cache.
+  await page.setBypassServiceWorker(true);
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
@@ -167,7 +169,7 @@ try {
     await waitForHeld(gate, '/assets/engines-');
     await choose(page, 'yuchen');
     assert.equal(await page.evaluate(() => typeof window.TJOpenForm), 'undefined');
-    assert.equal(gate.seen.some(url => /\/(wenwen-reimagined\.webp|sacred-study-(wide|mobile)\.webp|wenwen-lantern\.webp)(?:\?|$)/.test(url)), false);
+    assert.equal(gate.seen.some(url => /\/(wenwen-cinema3d\.webp|sacred-study-(wide|mobile)\.webp|wenwen-lantern\.webp)(?:\?|$)/.test(url)), false);
     assert.deepEqual(gate.external, []);
     assert.equal(await page.$eval('#calculationOverlay', el => el.hidden), true);
     await page.click('#homeCtaMain');
@@ -252,7 +254,7 @@ try {
   // Optional fire layers and expression images must not block a role selection.
   for (const [id, heldPattern, filename, selector] of [
     ['diyan', /earthfire-(flame-seat|runes|rune-seal)\.webp/, 'earthfire-flame-seat.webp', '.character-fire-base'],
-    ['moonfox', /moon-fox-reimagined-blink\.webp/, 'moon-fox-reimagined-blink.webp', '.character-blink'],
+    ['moonfox', /moonfox-cinema3d-blink\.webp/, 'moonfox-cinema3d-blink.webp', '.character-blink'],
   ]) {
     const { page, context, errors } = await openContext();
     await page.setRequestInterception(true);
@@ -275,18 +277,18 @@ try {
   {
     const { page, context } = await openContext();
     await page.setRequestInterception(true);
-    const gate = gateRequests(page, url => url.endsWith('/yuchen-empress.webp'));
+    const gate = gateRequests(page, url => url.endsWith('/yuchen-cinema3d.webp'));
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#traitMachine[data-ready="true"]');
     await spinFor(page, 'yuchen');
-    await waitForHeld(gate, '/yuchen-empress.webp');
+    await waitForHeld(gate, '/yuchen-cinema3d.webp');
     assert.equal(await page.$$eval('#traitSpin, #traitLever, #traitConfirm', buttons => buttons.every(button => button.disabled)), true);
     await page.waitForFunction(() => document.documentElement.dataset.homeTheme === 'yuchen', { timeout: 5000 });
     assert.equal(await page.$eval('[data-character-asset="portrait"]', image => getComputedStyle(image).visibility), 'hidden');
     await gate.release();
     await page.waitForFunction(() => {
       const image = document.querySelector('[data-character-asset="portrait"]');
-      return image.complete && image.currentSrc.endsWith('/yuchen-empress.webp') && getComputedStyle(image).visibility === 'visible';
+      return image.complete && image.currentSrc.endsWith('/yuchen-cinema3d.webp') && getComputedStyle(image).visibility === 'visible';
     });
     await context.close();
   }
@@ -339,7 +341,7 @@ try {
     assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
     responses.length = 0;
     await choose(page, 'moonfox');
-    for (const name of ['moon-fox-reimagined.webp', 'moon-fox-study-mobile.webp']) {
+    for (const name of ['moonfox-cinema3d.webp', 'moon-fox-study-mobile.webp']) {
       const response = responses.find(item => item.url.endsWith('/' + name));
       assert.ok(response?.cached, `${name} 重新选择应复用浏览器缓存`);
     }

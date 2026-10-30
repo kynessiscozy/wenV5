@@ -1,10 +1,20 @@
 /* 问问大师 PWA：离线可用 + 秒开的缓存策略。
    静态资源带 hash，可长期缓存；HTML 走 network-first 保证更新及时。 */
-const CACHE = 'wenda-cache-v40';
+const CACHE = 'wenda-cache-v42';
 const BASE = './';
 
 const OPTIONAL_ASSETS = [
   // Keep the previous paths for pages and bookmarks that have not updated yet.
+  'art/wenwen-cinema3d.webp', 'art/wenwen-cinema3d-avatar.webp', 'art/wenwen-cinema3d-blink.webp', 'art/wenwen-cinema3d-speak.webp',
+  'art/moonfox-cinema3d.webp', 'art/moonfox-cinema3d-avatar.webp', 'art/moonfox-cinema3d-blink.webp', 'art/moonfox-cinema3d-speak.webp',
+  'art/diyan-cinema3d.webp', 'art/diyan-cinema3d-avatar.webp', 'art/diyan-cinema3d-blink.webp', 'art/diyan-cinema3d-speak.webp',
+  'art/yuchen-cinema3d.webp', 'art/yuchen-cinema3d-avatar.webp', 'art/yuchen-cinema3d-blink.webp', 'art/yuchen-cinema3d-speak.webp',
+  'art/qinglan-cinema3d.webp', 'art/qinglan-cinema3d-avatar.webp', 'art/qinglan-cinema3d-blink.webp', 'art/qinglan-cinema3d-speak.webp',
+  'art/xingling-cinema3d.webp', 'art/xingling-cinema3d-avatar.webp', 'art/xingling-cinema3d-blink.webp', 'art/xingling-cinema3d-speak.webp',
+  'art/luye-cinema3d.webp', 'art/luye-cinema3d-avatar.webp', 'art/luye-cinema3d-blink.webp', 'art/luye-cinema3d-speak.webp',
+  'art/suyan-cinema3d.webp', 'art/suyan-cinema3d-avatar.webp', 'art/suyan-cinema3d-blink.webp', 'art/suyan-cinema3d-speak.webp',
+  'art/rongrong-cinema3d.webp', 'art/rongrong-cinema3d-avatar.webp', 'art/rongrong-cinema3d-blink.webp', 'art/rongrong-cinema3d-speak.webp',
+  'art/zhiya-cinema3d.webp', 'art/zhiya-cinema3d-avatar.webp', 'art/zhiya-cinema3d-blink.webp', 'art/zhiya-cinema3d-speak.webp',
   'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png',
   'icon-twins-128.png', 'icon-twins-192.png', 'icon-twins-512.png',
   'icon-twins-maskable-192.png', 'icon-twins-maskable-512.png', 'apple-touch-icon-twins.png',
@@ -22,8 +32,10 @@ const OPTIONAL_ASSETS = [
   'art/qinglan-room-wide.webp', 'art/qinglan-room-mobile.webp', 'art/qinglan-sword.webp',
   'art/xingling-renewed.webp', 'art/xingling-renewed-avatar.webp', 'art/xingling-renewed-blink.webp', 'art/xingling-renewed-speak.webp',
   'art/xingling-room-wide.webp', 'art/xingling-room-mobile.webp', 'art/xingling-fan.webp',
+  'art/luye-3d.webp', 'art/luye-3d-avatar.webp', 'art/luye-3d-blink.webp', 'art/luye-3d-speak.webp',
   'art/luye.webp', 'art/luye-avatar.webp', 'art/luye-blink.webp', 'art/luye-speak.webp',
   'art/luye-room-wide.webp', 'art/luye-room-mobile.webp', 'art/luye-turntable.svg', 'art/luye-vinyl.svg',
+  'art/suyan-3d.webp', 'art/suyan-3d-avatar.webp', 'art/suyan-3d-blink.webp', 'art/suyan-3d-speak.webp',
   'art/suyan.webp', 'art/suyan-avatar.webp', 'art/suyan-blink.webp', 'art/suyan-speak.webp',
   'art/suyan-room-wide.webp', 'art/suyan-room-mobile.webp', 'art/suyan-camera.svg',
   'art/rongrong.webp', 'art/rongrong-avatar.webp', 'art/rongrong-blink.webp', 'art/rongrong-speak.webp',

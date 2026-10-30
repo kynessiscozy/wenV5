@@ -4,16 +4,16 @@ import puppeteer from 'puppeteer';
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173/';
 const THEMES = {
-  wenwen: { trait: '温柔', portrait: 'wenwen-reimagined.webp', art: 'awakening-scroll.webp', selector: '.calculation-scroll', animation: 'calculation-scroll' },
-  moonfox: { trait: '神秘', portrait: 'moon-fox-reimagined.webp', art: 'awakening-fox-fan.webp', selector: '.calculation-tail--left img', animation: 'calculation-tail-left' },
-  diyan: { trait: '威严', portrait: 'earthfire-sovereign.webp', art: 'earthfire-flame-seat.webp', selector: '.calculation-fire-seat', animation: 'calculation-fire-seat' },
-  yuchen: { trait: '从容', portrait: 'yuchen-empress.webp', art: 'awakening-phoenix-wing.webp', selector: '.calculation-wing--left', animation: 'calculation-wing-left' },
-  qinglan: { trait: '洒脱', portrait: 'qinglan-renewed.webp', art: 'qinglan-sword.webp', selector: '.calculation-sword', animation: 'calculation-sword-draw' },
-  xingling: { trait: '魅惑', portrait: 'xingling-renewed.webp', art: 'xingling-fan.webp', selector: '.calculation-star-fan', animation: 'calculation-fan-unfold' },
-  luye: { trait: '好奇', portrait: 'luye.webp', art: 'luye-turntable.svg', selector: '.calculation-turntable', animation: 'calculation-turntable-enter', detail: '.calculation-vinyl', detailAnimation: 'calculation-vinyl-spin' },
-  suyan: { trait: '自信', portrait: 'suyan.webp', art: 'suyan-camera.svg', selector: '.calculation-camera-prop', animation: 'calculation-camera-focus', detail: '.calculation-camera-iris', detailAnimation: 'calculation-iris-focus' },
-  rongrong: { trait: '可爱', portrait: 'rongrong.webp', art: 'rongrong-pawbell.webp', selector: '.calculation-pawbell', animation: 'calculation-pawbell-swing' },
-  zhiya: { trait: '天真', portrait: 'zhiya.webp', art: 'zhiya-crane.webp', selector: '.calculation-crane', animation: 'calculation-crane-flight' },
+  wenwen: { trait: '温柔', portrait: 'wenwen-cinema3d.webp', art: 'awakening-scroll.webp', selector: '.calculation-scroll', animation: 'calculation-scroll' },
+  moonfox: { trait: '神秘', portrait: 'moonfox-cinema3d.webp', art: 'awakening-fox-fan.webp', selector: '.calculation-tail--left img', animation: 'calculation-tail-left' },
+  diyan: { trait: '威严', portrait: 'diyan-cinema3d.webp', art: 'earthfire-flame-seat.webp', selector: '.calculation-fire-seat', animation: 'calculation-fire-seat' },
+  yuchen: { trait: '从容', portrait: 'yuchen-cinema3d.webp', art: 'awakening-phoenix-wing.webp', selector: '.calculation-wing--left', animation: 'calculation-wing-left' },
+  qinglan: { trait: '洒脱', portrait: 'qinglan-cinema3d.webp', art: 'qinglan-sword.webp', selector: '.calculation-sword', animation: 'calculation-sword-draw' },
+  xingling: { trait: '魅惑', portrait: 'xingling-cinema3d.webp', art: 'xingling-fan.webp', selector: '.calculation-star-fan', animation: 'calculation-fan-unfold' },
+  luye: { trait: '好奇', portrait: 'luye-cinema3d.webp', art: 'luye-turntable.svg', selector: '.calculation-turntable', animation: 'calculation-turntable-enter', detail: '.calculation-vinyl', detailAnimation: 'calculation-vinyl-spin' },
+  suyan: { trait: '自信', portrait: 'suyan-cinema3d.webp', art: 'suyan-camera.svg', selector: '.calculation-camera-prop', animation: 'calculation-camera-focus', detail: '.calculation-camera-iris', detailAnimation: 'calculation-iris-focus' },
+  rongrong: { trait: '可爱', portrait: 'rongrong-cinema3d.webp', art: 'rongrong-pawbell.webp', selector: '.calculation-pawbell', animation: 'calculation-pawbell-swing' },
+  zhiya: { trait: '天真', portrait: 'zhiya-cinema3d.webp', art: 'zhiya-crane.webp', selector: '.calculation-crane', animation: 'calculation-crane-flight' },
 };
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 const errors = [];
@@ -179,7 +179,7 @@ try {
     const { page, context } = await newPage({ theme: 'moonfox' });
     // Predecode the other tab's role so the test observes the switch while
     // the short, normal-length scene is still on screen even on slower CI.
-    await page.evaluate(async () => Promise.all(['./art/yuchen-empress.webp', './art/yuchen-hall-mobile.webp'].map(src => {
+    await page.evaluate(async () => Promise.all(['./art/yuchen-cinema3d.webp', './art/yuchen-hall-mobile.webp'].map(src => {
       const image = new Image(); image.src = src; return image.decode();
     })));
     await openForm(page);
@@ -189,7 +189,7 @@ try {
     await delay(300);
     assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'moonfox', '其他标签页不能改变本次选择');
     assert.equal(await page.$eval('#calculationOverlay', el => el.dataset.calculationTheme), 'moonfox');
-    assert.ok(await page.$eval('[data-calculation-portrait]', el => el.currentSrc.endsWith('/moon-fox-reimagined.webp')));
+    assert.ok(await page.$eval('[data-calculation-portrait]', el => el.currentSrc.endsWith('/moonfox-cinema3d.webp')));
     assert.equal(await page.$eval('#calculationByline', el => el.textContent), '神秘 · 命盘推演');
     await continueToReport(page);
     await context.close();

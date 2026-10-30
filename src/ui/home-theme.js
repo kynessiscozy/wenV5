@@ -15,61 +15,61 @@ import { ZHIYA } from '../character/zhiya.js';
 // New characters need only add another entry; choices remain page-local.
 export const HOME_THEMES = Object.freeze({
   wenwen: Object.freeze({
-    trait: Object.freeze({ label: '温柔', mark: '柔', color: '#ecc1ae' }),
+    trait: Object.freeze({ label: '温柔', description: '温和细腻，善于倾听与陪伴。', mark: '柔', color: '#ecc1ae' }),
     reportLead: '别急，我们慢慢看。',
     character: JIANGJIANG,
     backdrop: Object.freeze({ wide: './art/sacred-study-wide.webp', mobile: './art/sacred-study-mobile.webp' }),
   }),
   moonfox: Object.freeze({
-    trait: Object.freeze({ label: '神秘', mark: '秘', color: '#b9dbef' }),
+    trait: Object.freeze({ label: '神秘', description: '敏锐内敛，总想探索未知。', mark: '秘', color: '#b9dbef' }),
     reportLead: '有意思，线索已经浮现。',
     character: MOON_FOX,
     backdrop: Object.freeze({ wide: './art/moon-fox-study-wide.webp', mobile: './art/moon-fox-study-mobile.webp' }),
   }),
   diyan: Object.freeze({
-    trait: Object.freeze({ label: '威严', mark: '威', color: '#ec8278' }),
+    trait: Object.freeze({ label: '威严', description: '坚定果断，敢于为选择担当。', mark: '威', color: '#ec8278' }),
     reportLead: '先定根基，再看全局。',
     character: EARTHFIRE_SOVEREIGN,
     backdrop: Object.freeze({ wide: './art/earthfire-hall-wide.webp', mobile: './art/earthfire-hall-mobile.webp' }),
   }),
   yuchen: Object.freeze({
-    trait: Object.freeze({ label: '从容', mark: '容', color: '#d9d3a9' }),
+    trait: Object.freeze({ label: '从容', description: '沉静笃定，遇事自有节奏。', mark: '容', color: '#d9d3a9' }),
     reportLead: '静下心，先看这一处。',
     character: JADE_EMPRESS,
     backdrop: Object.freeze({ wide: './art/yuchen-hall-wide.webp', mobile: './art/yuchen-hall-mobile.webp' }),
   }),
   qinglan: Object.freeze({
-    trait: Object.freeze({ label: '洒脱', mark: '洒', color: '#a9d8d0' }),
+    trait: Object.freeze({ label: '洒脱', description: '随性而不随波，坦然向前。', mark: '洒', color: '#a9d8d0' }),
     reportLead: '不妨换个角度。',
     character: QINGLAN,
     backdrop: Object.freeze({ wide: './art/qinglan-room-wide.webp', mobile: './art/qinglan-room-mobile.webp' }),
   }),
   xingling: Object.freeze({
-    trait: Object.freeze({ label: '魅惑', mark: '魅', color: '#d4b7f2' }),
+    trait: Object.freeze({ label: '魅惑', description: '自有吸引力，懂得欣赏生活。', mark: '魅', color: '#d4b7f2' }),
     reportLead: '细看，线索藏在这里。',
     character: XINGLING,
     backdrop: Object.freeze({ wide: './art/xingling-room-wide.webp', mobile: './art/xingling-room-mobile.webp' }),
   }),
   luye: Object.freeze({
-    trait: Object.freeze({ label: '好奇', mark: '奇', color: '#e8c595' }),
+    trait: Object.freeze({ label: '好奇', description: '对新鲜事物，总想多看一眼。', mark: '奇', color: '#e8c595' }),
     reportLead: '发现一个有趣的起点。',
     character: LUYE,
     backdrop: Object.freeze({ wide: './art/luye-room-wide.webp', mobile: './art/luye-room-mobile.webp' }),
   }),
   suyan: Object.freeze({
-    trait: Object.freeze({ label: '自信', mark: '信', color: '#e8b4c1' }),
+    trait: Object.freeze({ label: '自信', description: '相信自己的眼光，敢于表达。', mark: '信', color: '#e8b4c1' }),
     reportLead: '先把重点抓出来。',
     character: SUYAN,
     backdrop: Object.freeze({ wide: './art/suyan-room-wide.webp', mobile: './art/suyan-room-mobile.webp' }),
   }),
   rongrong: Object.freeze({
-    trait: Object.freeze({ label: '可爱', mark: '萌', color: '#f0ad78' }),
+    trait: Object.freeze({ label: '可爱', description: '热情真诚，善于发现小美好。', mark: '萌', color: '#f0ad78' }),
     reportLead: '把复杂的事拆小，也给自己一点暖意。',
     character: RONGRONG,
     backdrop: Object.freeze({ wide: './art/rongrong-room-wide.webp', mobile: './art/rongrong-room-mobile.webp' }),
   }),
   zhiya: Object.freeze({
-    trait: Object.freeze({ label: '天真', mark: '真', color: '#f0dc90' }),
+    trait: Object.freeze({ label: '天真', description: '保有想象力，也相信惊喜。', mark: '真', color: '#f0dc90' }),
     reportLead: '带着好奇出发，答案会慢慢展开。',
     character: ZHIYA,
     backdrop: Object.freeze({ wide: './art/zhiya-room-wide.webp', mobile: './art/zhiya-room-mobile.webp' }),
@@ -235,6 +235,12 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     const checkBackdrop = guardImage(backdrop, () => window.matchMedia('(max-aspect-ratio: 4/5)').matches ? theme.backdrop.mobile : theme.backdrop.wide);
     selected = id;
     document.documentElement.dataset.homeTheme = id;
+    const summary = document.getElementById('homeTraitSummary');
+    if (summary) {
+      document.getElementById('homeTraitLabel').textContent = theme.trait.label;
+      document.getElementById('homeTraitDescription').textContent = theme.trait.description;
+      summary.hidden = false;
+    }
     applyTraitAccent(theme.trait.color);
     if (source) source.srcset = theme.backdrop.mobile;
     if (backdrop) backdrop.src = theme.backdrop.wide;

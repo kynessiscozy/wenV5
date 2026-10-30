@@ -5,16 +5,16 @@ import { HOME_THEMES } from '../src/ui/home-theme.js';
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173/';
 const THEMES = {
-  wenwen: { trait: '温柔', portrait: 'wenwen-reimagined.webp', lead: '别急，我们慢慢看。' },
-  moonfox: { trait: '神秘', portrait: 'moon-fox-reimagined.webp', lead: '有意思，线索已经浮现。' },
-  diyan: { trait: '威严', portrait: 'earthfire-sovereign.webp', lead: '先定根基，再看全局。' },
-  yuchen: { trait: '从容', portrait: 'yuchen-empress.webp', lead: '静下心，先看这一处。' },
-  qinglan: { trait: '洒脱', portrait: 'qinglan-renewed.webp', lead: '不妨换个角度。' },
-  xingling: { trait: '魅惑', portrait: 'xingling-renewed.webp', lead: '细看，线索藏在这里。' },
-  luye: { trait: '好奇', portrait: 'luye.webp', lead: '发现一个有趣的起点。' },
-  suyan: { trait: '自信', portrait: 'suyan.webp', lead: '先把重点抓出来。' },
-  rongrong: { trait: '可爱', portrait: 'rongrong.webp', lead: '把复杂的事拆小，也给自己一点暖意。' },
-  zhiya: { trait: '天真', portrait: 'zhiya.webp', lead: '带着好奇出发，答案会慢慢展开。' },
+  wenwen: { trait: '温柔', portrait: 'wenwen-cinema3d.webp', lead: '别急，我们慢慢看。' },
+  moonfox: { trait: '神秘', portrait: 'moonfox-cinema3d.webp', lead: '有意思，线索已经浮现。' },
+  diyan: { trait: '威严', portrait: 'diyan-cinema3d.webp', lead: '先定根基，再看全局。' },
+  yuchen: { trait: '从容', portrait: 'yuchen-cinema3d.webp', lead: '静下心，先看这一处。' },
+  qinglan: { trait: '洒脱', portrait: 'qinglan-cinema3d.webp', lead: '不妨换个角度。' },
+  xingling: { trait: '魅惑', portrait: 'xingling-cinema3d.webp', lead: '细看，线索藏在这里。' },
+  luye: { trait: '好奇', portrait: 'luye-cinema3d.webp', lead: '发现一个有趣的起点。' },
+  suyan: { trait: '自信', portrait: 'suyan-cinema3d.webp', lead: '先把重点抓出来。' },
+  rongrong: { trait: '可爱', portrait: 'rongrong-cinema3d.webp', lead: '把复杂的事拆小，也给自己一点暖意。' },
+  zhiya: { trait: '天真', portrait: 'zhiya-cinema3d.webp', lead: '带着好奇出发，答案会慢慢展开。' },
 };
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 const errors = [];
