@@ -11,8 +11,8 @@ const THEMES = {
   yuchen: { trait: '从容', portrait: 'yuchen-cinema3d.webp', lead: '静下心，先看这一处。' },
   qinglan: { trait: '洒脱', portrait: 'qinglan-cinema3d.webp', lead: '不妨换个角度。' },
   xingling: { trait: '魅惑', portrait: 'xingling-cinema3d.webp', lead: '细看，线索藏在这里。' },
-  luye: { trait: '好奇', portrait: 'luye-cinema3d.webp', lead: '发现一个有趣的起点。' },
-  suyan: { trait: '自信', portrait: 'suyan-cinema3d.webp', lead: '先把重点抓出来。' },
+  luye: { trait: '好奇', portrait: 'luye-fullbody.webp', lead: '发现一个有趣的起点。' },
+  suyan: { trait: '自信', portrait: 'suyan-fullbody.webp', lead: '先把重点抓出来。' },
   rongrong: { trait: '可爱', portrait: 'rongrong-cinema3d.webp', lead: '把复杂的事拆小，也给自己一点暖意。' },
   zhiya: { trait: '天真', portrait: 'zhiya-cinema3d.webp', lead: '带着好奇出发，答案会慢慢展开。' },
 };
@@ -240,7 +240,7 @@ try {
     const hint = await page.$eval('#characterResultHint .sys-eastern', el => el.textContent);
     assert.ok(hint.startsWith(config.lead), `${id} 应使用自己的提示语气`);
     assert.ok(hint.includes(result.actualDay) && hint.includes(result.actualUseful), '角色提示应引用实际计算结果');
-    assert.ok(await page.$('#characterResultHero .result-character-speaking'), '展开提示时应触发当前人物的表情');
+    assert.equal(!!(await page.$('#characterResultHero .result-character-speaking')), !['luye', 'suyan'].includes(id), '只显示与人物对应的说话表情');
     await page.click('.result-character-hint-button');
     assert.equal(await page.$eval('#characterResultHint', el => el.hidden), true);
     await assertNoHorizontalOverflow(page, `${id} 命盘`);
@@ -406,7 +406,7 @@ try {
   // checking that the new illustrations exist.
   {
     const { page, context } = await openRealReport('suyan', { width: 390, height: 844, reduced: true });
-    assert.equal(await page.$eval('#characterResultHero .result-character-blink', el => getComputedStyle(el).animationName), 'none', '减少动态时不能眨眼');
+    assert.equal(await page.$('#characterResultHero .result-character-blink'), null, '无同源表情时不应显示旧眨眼');
     assert.equal(await page.$eval('#characterResultHero .qr-title', el => el.textContent), '收起');
     assert.equal(await page.$eval('#characterResultHero .qr-head', el => el.getAttribute('aria-label')), '收起命盘速读');
     const head = '#s-ming .qr-card .qr-head';

@@ -56,12 +56,12 @@ async function offlineCalculation(page, id, assetName = '') {
   }, { timeout: 10000 }, id);
   await new Promise(resolve => setTimeout(resolve, 400));
   await page.click('.result-character-hint-button');
-  await page.waitForFunction(() => {
+  await page.waitForFunction(theme => {
     const hint = document.getElementById('characterResultHint');
     const speaking = document.querySelector('#characterResultHero .result-character-speaking');
     return !hint.hidden && hint.textContent.includes(window._ctx.dg + window._ctx.dw) &&
-      speaking?.complete && speaking.naturalWidth > 0;
-  }, { timeout: 10000 });
+      (['luye', 'suyan'].includes(theme) ? !speaking : speaking?.complete && speaking.naturalWidth > 0);
+  }, { timeout: 10000 }, id);
   if (id === 'wenwen') {
     // The assistant's artwork and local answer both work on the first offline open.
     await page.click('#aiFab');
@@ -152,7 +152,7 @@ async function choose(page, id, width, room) {
     const images = [...document.querySelectorAll('.character-expression')];
     return window._tools2Ready === true && document.documentElement.dataset.homeTheme === theme &&
       document.getElementById('traitSelection').hidden && portrait.complete && portrait.naturalWidth === size &&
-      images.every(image => !image.hidden && image.complete && image.naturalWidth === size) &&
+      images.every(image => ['luye', 'suyan'].includes(theme) ? image.hidden : !image.hidden && image.complete && image.naturalWidth === size) &&
       document.querySelector('.character-backdrop img').currentSrc.endsWith('/' + backdrop);
   }, { timeout: 15000 }, id, width, room);
   assert.equal(await page.$eval('#characterScene', el => el.dataset.cameraShot), 'close');
@@ -179,7 +179,7 @@ try {
   // None of the roles are chosen online; all scenes must still work offline.
   // A clean visitor must install the worker without a test-side register call.
   await page.waitForFunction(async () => (await navigator.serviceWorker.getRegistrations()).length === 1 &&
-    !!navigator.serviceWorker.controller && (await caches.keys()).includes('wenda-cache-v43') &&
+    !!navigator.serviceWorker.controller && (await caches.keys()).includes('wenda-cache-v47') &&
     !(await caches.keys()).some(key => /^wenda-cache-v(17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39)$/.test(key)), { timeout: 30000 });
   assert.ok(await page.evaluate(async () => (await caches.keys()).includes('unrelated-app-cache')), '更新不能删除其他应用的缓存');
   await page.reload({ waitUntil: 'domcontentloaded' });
@@ -190,6 +190,7 @@ try {
     './icon-twins-192.png', './icon-twins-512.png', './icon-twins-maskable-192.png', './icon-twins-maskable-512.png',
     './art/master-twin-indigo.webp', './art/master-twin-rose.webp',
     './art/master-twin-indigo-avatar.webp', './art/master-twin-rose-avatar.webp',
+    './art/luye-fullbody.webp', './art/luye-fullbody-avatar.webp', './art/suyan-fullbody.webp', './art/suyan-fullbody-avatar.webp',
     './art/wenwen-cinema3d-blink-v2.webp', './art/moonfox-cinema3d-blink-v2.webp', './art/diyan-cinema3d-blink-v2.webp', './art/yuchen-cinema3d-blink-v2.webp', './art/qinglan-cinema3d-blink-v2.webp', './art/xingling-cinema3d-blink-v2.webp', './art/luye-cinema3d-blink-v2.webp', './art/suyan-cinema3d-blink-v2.webp', './art/rongrong-cinema3d-blink-v2.webp', './art/zhiya-cinema3d-blink-v2.webp',
     './art/wenwen-cinema3d.webp', './art/wenwen-cinema3d-avatar.webp', './art/wenwen-cinema3d-blink.webp', './art/wenwen-cinema3d-speak.webp',
     './art/moonfox-cinema3d.webp', './art/moonfox-cinema3d-avatar.webp', './art/moonfox-cinema3d-blink.webp', './art/moonfox-cinema3d-speak.webp',
@@ -227,7 +228,9 @@ try {
   ];
   const resources = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name).filter(url => url.startsWith(location.origin + '/demo/')));
   await page.waitForFunction(async urls => (await Promise.all(urls.map(url => caches.match(url)))).every(Boolean), { timeout: 15000 }, [...required, ...resources]);
-  await page.setOfflineMode(true);
+  const offlineSession = await page.createCDPSession();
+  await offlineSession.send('Network.enable');
+  await offlineSession.send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
 
   // The installed app, Apple home screen and tab icon must still resolve from
   // the production subpath without a network connection.
@@ -288,8 +291,8 @@ try {
     ['yuchen', 896, 'yuchen-hall-mobile.webp', 'awakening-phoenix-wing.webp'],
     ['qinglan', 848, 'qinglan-room-mobile.webp', 'qinglan-sword.webp'],
     ['xingling', 768, 'xingling-room-mobile.webp', 'xingling-fan.webp'],
-    ['luye', 848, 'luye-room-mobile.webp', 'luye-turntable.svg'],
-    ['suyan', 848, 'suyan-room-mobile.webp', 'suyan-camera.svg'],
+    ['luye', 864, 'luye-room-mobile.webp', 'luye-turntable.svg'],
+    ['suyan', 864, 'suyan-room-mobile.webp', 'suyan-camera.svg'],
     ['rongrong', 848, 'rongrong-room-mobile.webp', 'rongrong-pawbell.webp'],
     ['zhiya', 848, 'zhiya-room-mobile.webp', 'zhiya-crane.webp'],
   ];

@@ -79,7 +79,7 @@ async function newPage(width, height, options = {}) {
   await page.waitForFunction(() => {
     const images = [...document.querySelectorAll('.character-portrait img, .character-prop img')].filter(image => !image.hidden);
     images.push(document.querySelector('.character-backdrop img'));
-    return images.length >= 4 && images.every(image => image?.complete && image.naturalWidth > 0);
+    return images.length >= 2 && images.every(image => image?.complete && image.naturalWidth > 0);
   }, { timeout: 15000 });
   return { page, context };
 }
@@ -213,7 +213,7 @@ try {
     assert.ok(choiceNames.some(name => name?.includes('转一转')), '屏幕阅读器可以操作随机转轮');
     assert.ok(!choiceNames.some(name => /姜姜|问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言|绒绒|纸鸢/.test(name || '')), '屏幕阅读器也不暴露角色名');
     const fetched = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name));
-    assert.ok(!fetched.some(name => /(?:wenwen|moonfox|diyan|yuchen|qinglan|xingling|luye|suyan|rongrong|zhiya)-cinema3d\.webp/.test(name)), '未选择前不应预加载任何主图');
+    assert.ok(!fetched.some(name => /(?:(?:wenwen|moonfox|diyan|yuchen|qinglan|xingling|luye|suyan|rongrong|zhiya)-cinema3d|(?:luye|suyan)-fullbody)\.webp/.test(name)), '未选择前不应预加载任何主图');
     await page.keyboard.press('Tab');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'traitSpin', '老虎机可以用键盘操作');
     await page.keyboard.press('Escape');
@@ -344,7 +344,7 @@ try {
     let reference;
     for (const [id, config] of Object.entries(roles)) {
       const { page, context } = await newPage(width, height, { homeTheme: id });
-      const state = await page.evaluate((portraitSrc, roomName, role, hitPoint) => {
+      const state = await page.evaluate((portraitSrc, roomName, role, hitPoint, hasExpression) => {
         const scene = document.getElementById('characterScene');
         const portrait = scene.querySelector('[data-character-asset="portrait"]');
         const bg = document.querySelector('.character-backdrop img');
@@ -381,12 +381,12 @@ try {
           controls,
           subjectZ: getComputedStyle(subject.parentElement).zIndex, sceneryZ: getComputedStyle(scenery).zIndex,
           props: [...scene.querySelectorAll('[data-character-scene-optional]')].filter(el => !el.hidden).map(el => el.dataset.characterAsset),
-          expressionAligned: [...scene.querySelectorAll('.character-expression')].every(el => !el.hidden && el.naturalWidth === portrait.naturalWidth && el.naturalHeight === portrait.naturalHeight),
+          expressionAligned: [...scene.querySelectorAll('.character-expression')].every(el => hasExpression ? !el.hidden && el.naturalWidth === portrait.naturalWidth && el.naturalHeight === portrait.naturalHeight : el.hidden),
           labels: [document.getElementById('characterPortraitButton').getAttribute('aria-label'), role], alt: portrait.alt,
         };
-      }, config.character.assets.portrait.src, config.room, HOME_THEMES[id].trait.label, config.hit);
-      assert.ok(state.image && state.bg && state.shot === 'close' && state.scale > 1.2, `${id}: 所选角色和近景应一致`);
-      const landscapeBoost = width > height && height <= 550 ? 1.35 : 1;
+      }, config.character.assets.portrait.src, config.room, HOME_THEMES[id].trait.label, config.hit, !!config.character.assets.blink);
+      assert.ok(state.image && state.bg && state.shot === 'close' && state.scale > .9, `${id}: 所选角色和近景应一致`);
+      const landscapeBoost = width > height && height <= 550 && !config.character.camera.fullBody ? 1.35 : 1;
       assert.ok(Math.abs(state.scale - config.character.camera.closeScale * landscapeBoost) < .01, `${id}: 横屏与竖屏都应使用角色自己的近景比例`);
       assert.deepEqual(state.controls, ['homeMenuBtn', 'homeCtaMain', 'homeCtaCal'], `${id}: 放大人物不能遮挡菜单或操作按钮`);
       if (landscapeBoost > 1) {
@@ -424,7 +424,7 @@ try {
       await context.close();
     }
   }
-  console.log('✓ 十角色相同近景画幅、透明人物、专属道具与五种视口');
+  console.log('✓ 十角色共享画幅、透明人物、专属道具与五种视口');
 
   // Extremely short landscape screens must still show both complete actions.
   for (const [width, height] of [[320, 240], [480, 270]]) {
@@ -474,8 +474,6 @@ try {
     yuchen: { blink: [404, 191, 492, 244], speak: [417, 220, 479, 261] },
     qinglan: { blink: [307, 226, 410, 297], speak: [325, 272, 398, 315] },
     xingling: { blink: [350, 226, 453, 286], speak: [364, 273, 430, 319] },
-    luye: { blink: [315, 199, 496, 307], speak: [370, 275, 482, 328] },
-    suyan: { blink: [304, 168, 447, 246], speak: [331, 221, 426, 274] },
     rongrong: { blink: [374, 143, 477, 207], speak: [384, 178, 457, 221] },
     zhiya: { blink: [322, 285, 399, 356], speak: [350, 312, 434, 361] },
   })) {
@@ -568,7 +566,7 @@ try {
     }
     await context.close();
   }
-  console.log('✓ 十角色的眨眼与嘴型对齐且实际可见');
+  console.log('✓ 已有眨眼与嘴型对齐且实际可见');
 
   // The new and redrawn silhouettes must cover the actual portrait without
   // turning a large transparent area of the room into an invisible target.

@@ -1,6 +1,6 @@
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-/** Keep the same close-up on every entry, with a role-specific prop-safe anchor. */
+/** Frame each character using its own scale, full-body preference and prop-safe anchor. */
 export function initCharacterCamera() {
   const scene = document.getElementById('characterScene');
   const camera = scene?.querySelector('.character-camera');
@@ -18,7 +18,8 @@ export function initCharacterCamera() {
     // shot. Keep the same close-up and recalculate the prop-safe anchor using
     // the actual displayed scale, rather than just magnifying the CSS layer.
     const compactLandscape = window.matchMedia('(orientation: landscape) and (max-height: 550px)').matches;
-    const scale = baseScale * (compactLandscape ? 1.35 : 1);
+    const fullBody = scene.dataset.cameraFullBody === 'true';
+    const scale = baseScale * (compactLandscape && !fullBody ? 1.35 : 1);
     const safeX = Number(scene.dataset.cameraSafeX);
     let shiftX = 0;
     if (scene.dataset.cameraSafeX != null && Number.isFinite(safeX) && scale > 1) {
@@ -30,7 +31,7 @@ export function initCharacterCamera() {
     }
     camera.style.setProperty('--camera-scale', scale.toFixed(4));
     camera.style.setProperty('--camera-shift-x', `${shiftX.toFixed(2)}px`);
-    camera.style.setProperty('--camera-shift-y', '12%');
+    camera.style.setProperty('--camera-shift-y', fullBody ? (compactLandscape ? '0%' : '2%') : '12%');
     backdrop?.style.setProperty('--camera-room-scale', '1.105');
   }
 

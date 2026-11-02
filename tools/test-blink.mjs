@@ -14,6 +14,10 @@ try {
     if (index) await page.click('#homeTraitReset');
     await spinFor(page, id);
     await page.waitForFunction(id => document.documentElement.dataset.homeTheme === id && document.getElementById('traitSelection').hidden, {}, id);
+    if (!HOME_THEMES[id].character.assets.blink) {
+      assert.equal(await page.$eval('.character-blink', el => el.hidden), true, `${id}: 无表情素材时不能显示旧表情`);
+      continue;
+    }
     await page.waitForFunction(() => {
       const eye = document.querySelector('.character-blink');
       return !eye.hidden && eye.complete && eye.naturalWidth > 0;
@@ -52,5 +56,5 @@ try {
     });
   });
   assert.ok(timing.includes(0) && timing.includes(1) && timing.every(opacity => opacity === 0 || opacity === 1), `眨眼不应把睁眼和闭眼半透明混合: ${timing}`);
-  console.log('✓ 十位人物的双眼均有完整闭眼图层，眨眼切换无半透明重影');
+  console.log('✓ 有表情素材的人物双眼均完整闭合，无素材时不显示旧表情');
 } finally { await browser.close(); }
