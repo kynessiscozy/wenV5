@@ -1,0 +1,13 @@
+import puppeteer from 'puppeteer';
+const b=await puppeteer.launch({args:['--no-sandbox','--autoplay-policy=no-user-gesture-required']});
+const pg=await b.newPage();
+await pg.emulate({viewport:{width:390,height:844,isMobile:true,hasTouch:true},userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15'});
+await pg.goto('http://127.0.0.1:8905/funnel.html',{waitUntil:'networkidle0',timeout:60000});
+await new Promise(r=>setTimeout(r,1500));
+const v1=await pg.evaluate(()=>{const v=document.querySelector('video.portrait');return v?{readyState:v.readyState,t:v.currentTime,paused:v.paused,dur:v.duration}:null;});
+await pg.screenshot({path:'video-takes/qc/entry-video-a.png'});
+await new Promise(r=>setTimeout(r,2500));
+const v2=await pg.evaluate(()=>{const v=document.querySelector('video.portrait');return {t:v.currentTime,paused:v.paused};});
+await pg.screenshot({path:'video-takes/qc/entry-video-b.png'});
+console.log('video state:',JSON.stringify(v1),JSON.stringify(v2));
+await b.close();

@@ -406,6 +406,7 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
   }
 
   function openPicker(trigger = document.activeElement) {
+    return false; /* 特质选择功能已移除：不再打开轮盘 */
     if (!selected || !selection.hidden || state !== 'idle') return false;
     returnFocus = trigger;
     draft = selected;
@@ -447,12 +448,31 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     }
   });
 
-  renderReel('');
-  if (status) status.textContent = '';
-  focusSafely(selection);
-  shieldBackground();
   machine.dataset.ready = 'true';
-  spin.disabled = false;
-  lever.disabled = false;
+  // 漏斗交接：从 funnel.html 进来的访客已在门外选定引路人（如地炎君），
+  // 直接开启对应场景，不再转动特质轮盘；普通访客仍走轮盘流程。
+  let funnelTheme = '';
+  try {
+    const payload = JSON.parse(localStorage.getItem('wen_funnel_v1') || 'null');
+    if (payload && payload.trait && Object.prototype.hasOwnProperty.call(HOME_THEMES, payload.trait)) funnelTheme = payload.trait;
+  } catch (error) { /* 漏斗数据不可用时回退轮盘 */ }
+  /* 特质选择功能已移除：所有访客直接进入，默认引路人地炎君；
+     漏斗访客仍按其在门外选定的引路人开启对应场景。 */
+  const directTheme = funnelTheme || 'diyan';
+  selection.hidden = true; /* 先同步藏起老虎机，避免资产加载期间闪现 */
+  shieldBackground(); /* 记录各区块初始状态，apply 后由 restoreBackground 放行主页（首开特例） */
+  (async () => {
+    try {
+      await prepareTheme(directTheme);
+      apply(directTheme);
+      selection.hidden = true;
+      delete selection.dataset.reselect;
+      restoreBackground();
+    } catch (error) {
+      selection.hidden = true;
+      if (status) status.textContent = imageError;
+      restoreBackground();
+    }
+  })();
   return { getSelected: () => selected, open: openPicker };
 }
