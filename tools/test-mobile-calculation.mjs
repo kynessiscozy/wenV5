@@ -29,7 +29,7 @@ async function setup({ width = 390, height = 844, oldHasOwn = false, oldFocus = 
     document.getElementById('traitMachine')?.dataset.ready === 'true', { timeout: 15000 });
   await spinFor(page, 'wenwen');
   await page.waitForFunction(() => document.getElementById('traitSelection').hidden);
-  await page.tap('#homeCtaMain');
+  await page.evaluate(() => window.TJOpenForm?.());
   await page.waitForSelector('#formModal.open');
   return { page, context };
 }

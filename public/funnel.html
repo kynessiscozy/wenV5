@@ -390,6 +390,7 @@
       +'<h1 style="font-size:20px;margin-bottom:12px">漏斗步数（本机计数）</h1>'
       +Object.keys(s).sort().map(function(k){return '<div>'+k+'：<b style="color:#d8a24a">'+s[k]+'</b></div>';}).join('')
       +'<p style="margin-top:16px;font-size:13px;color:#c9bba6">只统计次数，不含任何个人信息；数字只存在这台设备的浏览器里。</p></div>';
+    window.__wenStatsMode=true;
     return;
   }
   bump('entry_view');
@@ -399,7 +400,7 @@
 
   /* 入口 → 过场 */
   var storyTimer=null;
-  $('#btnMenu').addEventListener('click',function(){ fmToggle(true); });
+  $('#btnMenu').addEventListener('click',function(){ window.fmToggle?.(true); });
   $('#btnStart').addEventListener('click',function(){
     bump('quiz_start');
     show('immersion');
@@ -512,11 +513,13 @@
   /* 题目滑动切换：旧题向左滑出淡去，新题从右侧滑入（返回时方向相反） */
   var qAnimating=false,pendingNav=null;
   var interShown=false;
+  var flowLocked=false; /* 中段过场期间不接受上一题 / 下一题，避免定时器与动画互相抢状态 */
   function showInter(target){
+    flowLocked=true;pendingNav=null;qAnimating=false;
     show('inter');
     var v=document.querySelector('#s-inter .inter-video');
     if(v){try{v.currentTime=0;}catch(e){}var pr=v.play();if(pr)pr.catch(function(){});}
-    setTimeout(function(){show('quiz');qi=target;renderQ();},2300);
+    setTimeout(function(){flowLocked=false;show('quiz');qi=target;renderQ();},2300);
   }
   function transitionTo(target,dir){
     if(target>=QUESTIONS.length){finish();return;}
@@ -543,17 +546,25 @@
       });});
     },190);
   }
-  function next(){transitionTo(qi+1,1);}
-  $('#btnBack').addEventListener('click',function(){if(qi>0)transitionTo(qi-1,-1);});
+  function next(){if(flowLocked)return;transitionTo(qi+1,1);}
+  $('#btnBack').addEventListener('click',function(){if(flowLocked)return;if(qi>0)transitionTo(qi-1,-1);});
 
   /* 加载仪式 → 交接 */
   var LINES_BY_PERSONA={diyan:['地炎君正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，君再看一眼…'],yuchen:['玉宸正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，再看一眼…'],moonfox:['月白正在为你翻册…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一页，月白再替你看一眼…'],xiyao:['夕瑶正在为你看盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一局，夕瑶再替你看一眼…']};
-  var LINES=LINES_BY_PERSONA.diyan;
-  try{var _lp=localStorage.getItem('wen_funnel_persona');if(_lp&&LINES_BY_PERSONA[_lp])LINES=LINES_BY_PERSONA[_lp];}catch(e){}
+  /* 引路人可以在问卷途中切换，加载文案必须在提交那一刻重新读取，
+     不能沿用页面加载时缓存的 LINES。 */
+  function personaKey(){
+    try{var k=localStorage.getItem('wen_funnel_persona');return LINES_BY_PERSONA[k]?k:'diyan';}catch(e){return 'diyan';}
+  }
+  var finished=false;
   function finish(){
+    if(finished)return; finished=true; /* 最后一题双击不能提交两次 */
     bump('quiz_done');
+    var LINES=LINES_BY_PERSONA[personaKey()];
+    /* 上一次点档案留下的载入意图会盖过本次问卷交接，先清掉。 */
+    try{localStorage.removeItem('wen_load_profile_v1');}catch(e){}
     try{localStorage.setItem('wen_funnel_v1',JSON.stringify({
-      v:1,trait:(function(){try{return localStorage.getItem('wen_funnel_persona')||'diyan';}catch(e){return 'diyan';}})(),who:A.who,bd:A.bd,timeStr:A.timeStr||'',cityName:A.cityName||'',
+      v:1,applied:0,trait:personaKey(),who:A.who,bd:A.bd,timeStr:A.timeStr||'',cityName:A.cityName||'',
       gen:A.gen,name:A.name||'',concerns:A.concerns,ts:Date.now()
     }));}catch(e){}
     show('loading');
@@ -568,6 +579,10 @@
   }
 })();
 
+/* 统计页已替换整个 body：跳过所有菜单/角色绑定，避免 null.addEventListener。 */
+(function(){
+  "use strict";
+  if(window.__wenStatsMode)return;
 /* 首屏菜单抽屉：与原首页菜单同源（档案读同一 IndexedDB），在本页打开，不跳页 */
 var fmLoaded=false;
 var fm$=function(s){return document.querySelector(s)};
@@ -578,6 +593,7 @@ function fmToggle(open){
   if(open)dw.removeAttribute('inert');else dw.setAttribute('inert','');
   if(open&&!fmLoaded){fmLoaded=true;fmRender();}
 }
+window.fmToggle=fmToggle; /* 入口按钮的监听器在另一个 IIFE 里 */
 function fmEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function fmCard(p,meta){
   return '<button type="button" class="fm-card" data-pid="'+Number(p.id)+'"><span class="fm-ava">'+fmEsc(String(p.name||'未').charAt(0))+'</span><span class="fm-info"><span class="fm-name">'+fmEsc(p.name||'未命名')+'</span><span class="fm-meta" style="display:block">'+fmEsc(meta)+'</span></span><span class="fm-arrow">›</span></button>';
@@ -713,6 +729,7 @@ document.querySelectorAll('.persona-switch button').forEach(function(b){
   b.addEventListener('click',function(){ fmApplyPersona(b.getAttribute('data-persona')); });
 });
 fmApplyPersona(fmPersona());
+})();
 </script>
 </body>
 </html>

@@ -37,7 +37,7 @@ async function newPage({ theme = 'wenwen', width = 390, height = 844, motion = '
   return { page, context };
 }
 async function openForm(page) {
-  await page.click('#homeCtaMain');
+  await page.evaluate(() => window.TJOpenForm?.());
   await page.waitForSelector('#formModal.open');
 }
 async function waitForResultScene(page, theme) {

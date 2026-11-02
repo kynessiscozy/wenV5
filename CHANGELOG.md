@@ -4,6 +4,18 @@
 
 格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/),版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased] - 2026-11-02
+
+### 变更（交互逻辑梳理：全免费漏斗并入后）
+
+- **漏斗成为唯一入口**：`funnel.html` 也是 PWA `start_url`；原首页与特质轮盘保留 DOM 但由唯一的 `html[data-entry="funnel"]` 开关隐藏，不再有双入口、特质轮盘或报告「重新选择特质」。四位引路人到主应用角色的映射集中到 `src/ui/entry-personas.js`，修复「夕瑶」静默回退成地炎君、「月白」素材与主题不一致的问题。
+- **单一状态机取代轮询与强制跳转**：删除 `index.html` 尾部三段各自 `setInterval` 抢屏的内联脚本，改由 `src/ui/entry-plan.js`（纯决策）+ `src/ui/entry-flow.js`（界面状态）在 `tj:app-ready` 后一次性判定「深链意图 / 档案载入 / 问卷交接 / 待机入口卡」。新增可操作的待机入口卡；关闭表单不再 60ms 后静默跳回 `funnel.html`，报告「重新推演」→ 表单 → 关闭后回到报告，报告菜单另有明确「返回入口页」。
+- **交接不再盲点推进**：问卷答案一次性消费（`applied` 标记），自由填写的城市由 `applyEntryPayload()` 解析，识别不了回退默认并提示，避免遮罩后隐藏的校验错误；演算场景只在漏斗交接时、且展示真实四柱结果后才自动确认一次，其他所有路径仍必须显式点「查看报告」。遮罩在报告就绪 / 失败 / 20 秒兜底时揭开。
+- **预告页可退出**：保留 `applied && !teasered` 触发方式（含载入档案与重算），新增关闭按钮、跳过、Esc、焦点约束、背景 inert 与关闭后焦点归还；显示期间后台全局快捷键被隔离。
+- **漏斗页细节**：`?stats` 统计页不再因替换 body 后绑定空元素而抛错；中段过场期间锁定上/下一题；最后一题双击只提交一次；提交时动态读取当前引路人（问卷途中可切换），并清除上一次残留的档案载入意图。
+- **离线 / PWA**：`wenda-cache-v48` 把 `funnel.html` 作为独立导航页缓存，导航按自身 URL 缓存而非一律写回 `BASE`，预缓存四位引路人立绘；`manifest.start_url` 改为 `./funnel.html`。
+- **测试**：新增 `tools/test-entry-flow.mjs`（`npm run test:flow`，51 项纯函数 + 静态不变量）；重写 `tools/test-home-offline.mjs` 与 `tools/test-service-worker-upgrade.mjs` 以覆盖漏斗单一入口的离线与升级链路；`tools/test-entry.mjs` / `tools/trait-picker-helper.mjs` 兼容隐藏轮盘，`test:e2e` 全绿。旧版逐一转动特质轮盘的 `test:character` / `test:trait-picker` 等脚本保留为历史套件，不随漏斗单一入口执行。
+
 ## [5.1.0-beta.1] - 2026-10-13
 
 ### 新增

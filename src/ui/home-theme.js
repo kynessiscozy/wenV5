@@ -1,5 +1,6 @@
 import { focusSafely } from './focus.js';
 import { syncBrowserThemeColor } from './theme-color.js';
+import { themeForPersona } from './entry-personas.js';
 import { JIANGJIANG } from '../character/wenwen.js';
 import { MOON_FOX } from '../character/moon-fox.js';
 import { EARTHFIRE_SOVEREIGN } from '../character/earthfire-sovereign.js';
@@ -133,7 +134,6 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
   const lever = document.getElementById('traitLever');
   const confirm = document.getElementById('traitConfirm');
   const cancel = document.getElementById('traitCancel');
-  const reselect = document.getElementById('homeTraitReset');
   if (!home || !selection || !track || !machine || !spin || !lever || !confirm || !cancel) return null;
 
   const entries = Object.entries(HOME_THEMES);
@@ -159,7 +159,10 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     // focus/visibility states, and neither should be changed by cancelling.
     background = [];
     const shield = element => {
-      if (element.nodeType !== 1 || element === selection || ['SCRIPT', 'STYLE', 'LINK'].includes(element.tagName) || background.some(item => item.element === element)) return;
+      // The funnel-only fallback surface stays operable while theme assets load;
+      // shielding it here would make its primary button briefly inert.
+      if (element.nodeType !== 1 || element === selection || element.id === 'entryFallback' ||
+          ['SCRIPT', 'STYLE', 'LINK'].includes(element.tagName) || background.some(item => item.element === element)) return;
       background.push({ element, inert: element.hasAttribute('inert'), aria: element.getAttribute('aria-hidden') });
       element.setAttribute('inert', '');
       element.setAttribute('aria-hidden', 'true');
@@ -405,23 +408,11 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
     focusReturn();
   }
 
-  function openPicker(trigger = document.activeElement) {
-    return false; /* 特质选择功能已移除：不再打开轮盘 */
-    if (!selected || !selection.hidden || state !== 'idle') return false;
-    returnFocus = trigger;
-    draft = selected;
-    renderReel(selected);
-    confirm.hidden = true;
-    delete confirm.dataset.result;
-    spin.querySelector('span').textContent = '转一转';
-    if (status) status.textContent = '';
-    cancel.hidden = false;
-    selection.dataset.reselect = 'true';
-    selection.hidden = false;
-    selection.scrollTop = 0;
-    focusSafely(selection);
-    shieldBackground();
-    return true;
+  /* 漏斗为唯一入口：引路人在 funnel.html 选定，特质轮盘不再是可交互界面。
+     保留返回 false 的 open() 契约，报告里的「换特质」按钮与旧版集成不会报错，
+     但不会出现一个永远打不开的对话框。 */
+  function openPicker() {
+    return false;
   }
 
   motion.addEventListener?.('change', event => {
@@ -431,7 +422,6 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
   lever.addEventListener('click', randomSpin);
   confirm.addEventListener('click', choose);
   cancel.addEventListener('click', closePicker);
-  reselect?.addEventListener('click', event => openPicker(event.currentTarget));
 
   selection.addEventListener('keydown', event => {
     // Do not allow global Escape/shortcuts to operate the page underneath.
@@ -449,18 +439,21 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
   });
 
   machine.dataset.ready = 'true';
-  // 漏斗交接：从 funnel.html 进来的访客已在门外选定引路人（如地炎君），
-  // 直接开启对应场景，不再转动特质轮盘；普通访客仍走轮盘流程。
-  let funnelTheme = '';
+  /* 漏斗问卷选定的引路人直接决定主应用角色；未知/缺失时回退地炎君。
+     映射表在 entry-personas.js，避免「夕瑶」等没有同名主题的人物静默变成
+     地炎君。普通访客（无问卷数据）也使用同一个默认角色。 */
+  let requestedTrait = '';
   try {
     const payload = JSON.parse(localStorage.getItem('wen_funnel_v1') || 'null');
-    if (payload && payload.trait && Object.prototype.hasOwnProperty.call(HOME_THEMES, payload.trait)) funnelTheme = payload.trait;
-  } catch (error) { /* 漏斗数据不可用时回退轮盘 */ }
-  /* 特质选择功能已移除：所有访客直接进入，默认引路人地炎君；
-     漏斗访客仍按其在门外选定的引路人开启对应场景。 */
-  const directTheme = funnelTheme || 'diyan';
+    if (payload && payload.trait) requestedTrait = payload.trait;
+  } catch (error) { /* 数据不可用时回退默认角色 */ }
+  const requestedTheme = Object.prototype.hasOwnProperty.call(HOME_THEMES, requestedTrait)
+    ? requestedTrait : themeForPersona(requestedTrait);
+  const directTheme = Object.prototype.hasOwnProperty.call(HOME_THEMES, requestedTheme)
+    ? requestedTheme : 'diyan';
+
   selection.hidden = true; /* 先同步藏起老虎机，避免资产加载期间闪现 */
-  shieldBackground(); /* 记录各区块初始状态，apply 后由 restoreBackground 放行主页（首开特例） */
+  shieldBackground(); /* 记录各区块初始状态，apply 后由 restoreBackground 放行 */
   (async () => {
     try {
       await prepareTheme(directTheme);

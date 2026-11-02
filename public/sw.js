@@ -1,6 +1,6 @@
 /* 问问大师 PWA：离线可用 + 秒开的缓存策略。
    静态资源带 hash，可长期缓存；HTML 走 network-first 保证更新及时。 */
-const CACHE = 'wenda-cache-v47';
+const CACHE = 'wenda-cache-v48';
 const BASE = './';
 
 const OPTIONAL_ASSETS = [
@@ -45,6 +45,10 @@ const OPTIONAL_ASSETS = [
   'art/zhiya.webp', 'art/zhiya-avatar.webp', 'art/zhiya-blink.webp', 'art/zhiya-speak.webp',
   'art/zhiya-room-wide.webp', 'art/zhiya-room-mobile.webp', 'art/zhiya-crane.webp',
   'art/awakening-scroll.webp', 'art/awakening-fox-fan.webp', 'art/awakening-phoenix-wing.webp',
+  // Funnel entry: posters/lords keep the four personas readable offline even
+  // when their (large) MP4s are not cached.
+  'art/diyan-lord.webp', 'art/yuchen-lord.webp', 'art/yuebai-lord.webp', 'art/xiyao-lord.webp',
+  'art/diyan-entry2-poster.webp', 'art/diyan-ritual-poster.webp',
 ];
 
 self.addEventListener('install', (e) => {
@@ -52,6 +56,9 @@ self.addEventListener('install', (e) => {
     const cache = await caches.open(CACHE);
     // Never replace a working offline version unless the new HTML is available.
     await cache.add(BASE);
+    // funnel.html is a separate navigation target (the fallback surface links
+    // back to it). Keep its own cached copy instead of serving index.html.
+    try { await cache.add(BASE + 'funnel.html'); } catch (_) { /* older builds */ }
     // Production emits a manifest of hashed application chunks. Fetch them at
     // install time so a first visit can be used offline after activation.
     try {
@@ -96,17 +103,20 @@ self.addEventListener('fetch', (e) => {
 
   // HTML: never replace a usable offline page with an error response.
   if (req.mode === 'navigate') {
+    const isRoot = url.pathname === new URL(BASE, self.location.href).pathname;
     const network = fetch(req);
     e.waitUntil(network.then((res) => {
       if (res.ok) {
-        const copy = res.clone();
-        return caches.open(CACHE).then((cache) => cache.put(BASE, copy));
+        // Cache each navigation under its own URL: caching funnel.html under
+        // BASE would make offline visits to the app root open the funnel page.
+        return caches.open(CACHE).then((cache) => cache.put(isRoot ? BASE : req, res.clone()));
       }
     }).catch(() => {}));
+    const offline = () => caches.match(req).then((hit) => hit || caches.match(BASE));
     e.respondWith(network.then((res) => {
       if (res.ok) return res;
-      return caches.match(BASE).then((hit) => hit || res);
-    }).catch(() => caches.match(BASE)));
+      return offline().then((hit) => hit || res);
+    }).catch(offline));
     return;
   }
 

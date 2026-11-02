@@ -2,7 +2,7 @@
   "name": "问问大师 · 东方人生决策系统",
   "short_name": "问问大师",
   "description": "八字推演与决策工具：把命理提示转化为当下可执行的选择。",
-  "start_url": "./",
+  "start_url": "./funnel.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
