@@ -32,13 +32,15 @@ export function initCharacterCompanion({
       if (scene) {
         // Camera composition belongs to the character, not to a particular view.
         for (const [key, value, min, max] of [
-          ['cameraCloseScale', nextCharacter.camera?.closeScale, 1.1, 2.2],
+          ['cameraCloseScale', nextCharacter.camera?.closeScale, .8, 2.2],
           ['cameraSafeX', nextCharacter.camera?.safeX, 0, 1],
           ['cameraSafeInset', nextCharacter.camera?.safeInset, 0, .25],
         ]) {
           if (Number.isFinite(value) && value >= min && value <= max) scene.dataset[key] = String(value);
           else delete scene.dataset[key];
         }
+        if (nextCharacter.camera?.fullBody) scene.dataset.cameraFullBody = 'true';
+        else delete scene.dataset.cameraFullBody;
         scene.dispatchEvent?.(new CustomEvent('character-assets-changed'));
       }
     }
@@ -68,8 +70,27 @@ export function initCharacterCompanion({
   }
 
   // The portrait and the primary action lead to the same real exploration flow.
-  portrait?.addEventListener('click', openForm);
-  document.getElementById('homeCtaMain')?.addEventListener('click', openForm);
+  // Let the brief acknowledgement be visible before the form covers the scene.
+  // Reduced-motion users proceed immediately.
+  let feedbackTimer = 0;
+  portrait?.addEventListener('click', () => {
+    if (feedbackTimer) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { openForm(); return; }
+    scene?.classList.add('character-responding');
+    feedbackTimer = window.setTimeout(() => {
+      feedbackTimer = 0;
+      scene?.classList.remove('character-responding');
+      openForm();
+    }, 240);
+  });
+  document.getElementById('homeCtaMain')?.addEventListener('click', () => {
+    if (feedbackTimer) {
+      window.clearTimeout(feedbackTimer);
+      feedbackTimer = 0;
+      scene?.classList.remove('character-responding');
+    }
+    openForm();
+  });
 
   return {
     setHomeCharacter(nextCharacter, traitLabel = '') {

@@ -77,6 +77,7 @@ assert.equal(new Set(Object.values(HOME_THEMES).map(theme => theme.trait.label))
 for (const theme of Object.values(HOME_THEMES)) {
   assert.ok(theme.trait.mark && theme.trait.color && theme.character.assets.portrait && theme.backdrop.mobile && theme.backdrop.wide);
   for (const expression of ['blink', 'speaking']) {
+    if (!theme.character.assets[expression]) { assert.ok(theme.character.camera.fullBody); continue; }
     assert.equal(theme.character.assets[expression].forPortrait, theme.character.assets.portrait.src, '表情必须来自对应重绘人物');
     assert.equal(theme.character.assets[expression].width, theme.character.assets.portrait.width);
     assert.equal(theme.character.assets[expression].height, theme.character.assets.portrait.height);
@@ -298,10 +299,12 @@ assert.equal(nodes.get('characterScene').dataset.cameraSafeX, '0.885');
 for (const character of [QINGLAN, XINGLING, LUYE, SUYAN]) {
   adapter.setHomeCharacter(character);
   assert.equal(homePortrait.src, character.assets.portrait.src);
-  assert.equal(homeBlink.src, character.assets.blink.src);
-  assert.equal(homeBlink.hidden, false, '新角色应使用自己的同源表情');
-  assert.equal(character.assets.blink.forPortrait, character.assets.portrait.src);
-  assert.equal(character.assets.speaking.forPortrait, character.assets.portrait.src);
+  if (character.assets.blink) {
+    assert.equal(homeBlink.src, character.assets.blink.src);
+    assert.equal(homeBlink.hidden, false, '新角色应使用自己的同源表情');
+    assert.equal(character.assets.blink.forPortrait, character.assets.portrait.src);
+    assert.equal(character.assets.speaking.forPortrait, character.assets.portrait.src);
+  } else assert.equal(homeBlink.hidden, true, '没有对齐表情时不能沿用上一位人物的表情');
   assert.equal(nodes.get('characterPortraitButton').getAttribute('aria-label'), `点击${character.name}，开启探索`);
 }
 adapter.setHomeCharacter(QINGLAN, '洒脱');

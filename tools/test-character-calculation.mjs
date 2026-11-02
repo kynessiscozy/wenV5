@@ -10,8 +10,8 @@ const THEMES = {
   yuchen: { trait: '从容', portrait: 'yuchen-cinema3d.webp', art: 'awakening-phoenix-wing.webp', selector: '.calculation-wing--left', animation: 'calculation-wing-left' },
   qinglan: { trait: '洒脱', portrait: 'qinglan-cinema3d.webp', art: 'qinglan-sword.webp', selector: '.calculation-sword', animation: 'calculation-sword-draw' },
   xingling: { trait: '魅惑', portrait: 'xingling-cinema3d.webp', art: 'xingling-fan.webp', selector: '.calculation-star-fan', animation: 'calculation-fan-unfold' },
-  luye: { trait: '好奇', portrait: 'luye-cinema3d.webp', art: 'luye-turntable.svg', selector: '.calculation-turntable', animation: 'calculation-turntable-enter', detail: '.calculation-vinyl', detailAnimation: 'calculation-vinyl-spin' },
-  suyan: { trait: '自信', portrait: 'suyan-cinema3d.webp', art: 'suyan-camera.svg', selector: '.calculation-camera-prop', animation: 'calculation-camera-focus', detail: '.calculation-camera-iris', detailAnimation: 'calculation-iris-focus' },
+  luye: { trait: '好奇', portrait: 'luye-fullbody.webp', art: 'luye-turntable.svg', selector: '.calculation-turntable', animation: 'calculation-turntable-enter', detail: '.calculation-vinyl', detailAnimation: 'calculation-vinyl-spin' },
+  suyan: { trait: '自信', portrait: 'suyan-fullbody.webp', art: 'suyan-camera.svg', selector: '.calculation-camera-prop', animation: 'calculation-camera-focus', detail: '.calculation-camera-iris', detailAnimation: 'calculation-iris-focus' },
   rongrong: { trait: '可爱', portrait: 'rongrong-cinema3d.webp', art: 'rongrong-pawbell.webp', selector: '.calculation-pawbell', animation: 'calculation-pawbell-swing' },
   zhiya: { trait: '天真', portrait: 'zhiya-cinema3d.webp', art: 'zhiya-crane.webp', selector: '.calculation-crane', animation: 'calculation-crane-flight' },
 };
