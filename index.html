@@ -84,6 +84,7 @@
 @media(max-width:520px){.result-style-options{gap:5px}.result-style-option{font-size:.72em;letter-spacing:0;white-space:nowrap}}
 @media(max-width:360px){.result-style-options{gap:3px}.result-style-option{font-size:.66em}}
 </style>
+<style>#page1{display:none!important}</style>
 </head>
 <body class="home">
 
@@ -514,7 +515,6 @@
               </button>
             </div>
             <div class="character-text-actions">
-              <button class="character-reselect" id="homeTraitReset" type="button" aria-haspopup="dialog" aria-controls="traitSelection">重新选择特质 <span aria-hidden="true">↻</span></button>
               <button class="character-guide-link" type="button" onclick="openNoviceGuide()">使用指南 ↗</button>
             </div>
           </div>
@@ -1020,6 +1020,132 @@
   })();
 </script>
 
+<script>
+/* 漏斗菜单入口：从 funnel.html 带 ?menu=1 / ?panel= 进入时，等主应用就绪后打开原菜单抽屉或对应面板。 */
+(function () {
+  var params = null;
+  try { params = new URLSearchParams(location.search); } catch (e) {}
+  if (!params) return;
+  var wantMenu = params.get('menu') === '1';
+  var panel = params.get('panel');
+  if (!wantMenu && !panel) return;
+  window.__wenIntent = true; /* 告诉后续自动开表单脚本：本次是意图跳转，不要抢屏 */
+  try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
+  var panelFns = { guide: 'openNoviceGuide', about: 'openAboutModal', disclaimer: 'openDisclaimerModal' };
+  var n = 0;
+  var iv = setInterval(function () {
+    n++;
+    if (wantMenu && typeof window.toggleHomeMenu === 'function' && document.getElementById('homeMenuDrawer')) {
+      try { window.toggleHomeMenu(true); } catch (e) {}
+      wantMenu = false;
+    }
+    if (panel && panelFns[panel] && typeof window[panelFns[panel]] === 'function') {
+      try { window[panelFns[panel]](); } catch (e) {}
+      panel = null;
+    }
+    if ((!wantMenu && !panel) || n > 80) clearInterval(iv);
+  }, 150);
+})();
+</script>
+
+<script>
+/* 原首页已移除：普通访客进入即打开推演表单；漏斗交接流程优先，本脚本跳过；
+   若带有档案载入意图（漏斗菜单点选档案），载入该档案并直接推演。 */
+(function () {
+  if (window.__wenIntent) return; /* 从漏斗菜单带意图进入时，不自动打开表单 */
+  var raw = null;
+  try { raw = localStorage.getItem('wen_funnel_v1'); } catch (e) {}
+  if (raw) {
+    try { var p = JSON.parse(raw); if (p && !p.applied && p.bd) return; } catch (e) {}
+  }
+  var loadId = null;
+  try { loadId = localStorage.getItem('wen_load_profile_v1'); } catch (e) {}
+  var n = 0;
+  var iv = setInterval(function () {
+    n++;
+    var ready = typeof window.TJOpenForm === 'function' && document.documentElement.dataset.homeTheme;
+    if (ready) {
+      clearInterval(iv);
+      try { window.TJOpenForm(); } catch (e) {}
+      if (loadId && typeof window.loadProfile === 'function') {
+        try { localStorage.removeItem('wen_load_profile_v1'); } catch (e) {}
+        setTimeout(function () { try { window.loadProfile(Number(loadId)); } catch (e) {} }, 350);
+      }
+    } else if (n > 80) clearInterval(iv);
+  }, 150);
+})();
+</script>
+
+<script>
+/* 漏斗交接：funnel.html 收集的生辰答案在此带入表单，并直接打开推演表单。
+   一次性消费（applied 标记防刷新重复打开），数据只存本机 localStorage。 */
+(function () {
+  var raw;
+  try { raw = localStorage.getItem('wen_funnel_v1'); } catch (e) { return; }
+  if (!raw) return;
+  var p;
+  try { p = JSON.parse(raw); } catch (e) { return; }
+  if (!p || p.applied || !p.bd) return;
+  /* 直达结果：先罩住主应用（不让访客看到特质老虎机与主页），
+     表单自动填、自动提交、演算场景自动推进，直到预告/报告出现才揭开。 */
+  var veil = document.createElement('div');
+  veil.id = 'funnelVeil';
+  var _vp = p.trait === 'yuchen' ? { img: './art/yuchen-lord.webp', name: '玉宸神后' } : p.trait === 'moonfox' ? { img: './art/yuebai-lord.webp', name: '月白' } : p.trait === 'xiyao' ? { img: './art/xiyao-lord.webp', name: '夕瑶' } : { img: './art/diyan-lord.webp', name: '地炎君' };
+  veil.setAttribute('style', 'position:fixed;inset:0;z-index:200000;background:#0c0908 url(' + _vp.img + ') center 18%/cover no-repeat;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 30px calc(52px + env(safe-area-inset-bottom));transition:opacity .5s ease;');
+  veil.innerHTML = '<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,9,8,.45),rgba(12,9,8,.25) 40%,rgba(12,9,8,.92) 82%)"></div>'
+    + '<p style="position:relative;font-family:\'Noto Serif SC\',\'Songti SC\',serif;font-size:19px;letter-spacing:.14em;color:#f3e9dc;text-shadow:0 2px 16px rgba(0,0,0,.8)">' + _vp.name + '正在为你排盘…</p>'
+    + '<p style="position:relative;margin-top:10px;font-size:12px;letter-spacing:.34em;color:#c9bba6">问 问 大 师</p>';
+  document.body.appendChild(veil);
+  function removeVeil() {
+    if (!veil || !veil.parentNode) return;
+    veil.style.opacity = '0';
+    setTimeout(function () { if (veil.parentNode) veil.parentNode.removeChild(veil); }, 520);
+  }
+  setTimeout(removeVeil, 45000); /* 兜底：任何异常 45 秒后揭开，绝不困住访客 */
+  var tries = 0;
+  var timer = setInterval(function () {
+    tries++;
+    var bd = document.getElementById('bDate');
+    if (!bd || typeof window.TJOpenForm !== 'function') { if (tries > 40) clearInterval(timer); return; }
+    clearInterval(timer);
+    function set(id, value) {
+      var el = document.getElementById(id);
+      if (!el || !value) return;
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    set('bDate', p.bd);
+    set('bTime', p.timeStr);
+    set('bGen', p.gen);
+    set('cInp', p.cityName);
+    try { p.applied = 1; localStorage.setItem('wen_funnel_v1', JSON.stringify(p)); } catch (e) {}
+    try {
+      var s = JSON.parse(localStorage.getItem('wen_funnel_stats_v1') || '{}');
+      s.app_arrive = (s.app_arrive || 0) + 1;
+      localStorage.setItem('wen_funnel_stats_v1', JSON.stringify(s));
+    } catch (e) {}
+    window.TJOpenForm();
+    /* 自动提交 + 自动推进演算场景，直到预告（推演结果）出现 */
+    var flowTries = 0, calcClicked = false;
+    var flow = setInterval(function () {
+      flowTries++;
+      if (document.getElementById('funnelTeaser')) { clearInterval(flow); removeVeil(); return; }
+      var fm = document.getElementById('formModal');
+      if (!calcClicked && fm && fm.classList.contains('open')) {
+        var bs = fm.querySelectorAll('button');
+        for (var i = 0; i < bs.length; i++) {
+          if (bs[i].textContent.indexOf('开始推演') > -1) { bs[i].click(); calcClicked = true; break; }
+        }
+      }
+      var c = document.getElementById('calculationContinue');
+      if (c && c.offsetParent !== null) { c.click(); }
+      else { var sk = document.getElementById('calculationSkip'); if (sk && sk.offsetParent !== null) { sk.click(); } }
+      if (flowTries > 75) { clearInterval(flow); removeVeil(); }
+    }, 400);
+  }, 150);
+})();
+</script>
 <script type="module" src="/src/home.js"></script>
 </body>
 </html>

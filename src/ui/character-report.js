@@ -38,6 +38,7 @@ function makePortrait(character, className, withBlink = false) {
 }
 
 function animateSpeaking(character, figure) {
+  if (figure && figure.querySelector('video')) return; /* 视频头图不叠说话静帧 */
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const speech = character.assets.speaking;
   const portrait = character.assets.portrait;
@@ -115,7 +116,7 @@ function addPortraitToggle(host, figure, section) {
 function portraitHit(host, x, y) {
   const figure = host.querySelector('.result-character-figure, .result-chapter-figure');
   const image = figure?.querySelector('.result-character-portrait');
-  if (!figure || !image || !figure.getClientRects().length) return false;
+  if (!figure || !image || image.tagName === 'VIDEO' || !figure.getClientRects().length) return false;
   const rect = figure.getBoundingClientRect(), frame = host.getBoundingClientRect();
   const ratio = Number(image.getAttribute('width')) / Number(image.getAttribute('height'));
   if (!ratio) return false;

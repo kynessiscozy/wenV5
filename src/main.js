@@ -1,4 +1,5 @@
 import { showToast } from './ui/toast.js';
+import { showFunnelTeaserIfNeeded } from './ui/funnel-teaser.js';
 import { focusSafely } from './ui/focus.js';
 import { CURR_YEAR, TG, DZ, SS, ZHI_CHONG } from './engines/shared.js';
 import { CD, CG } from './engines/cities.js';
@@ -255,8 +256,7 @@ let aboutReturnFocus=null;
 
 function refreshCharacterReport(isDemo=!!window._ctx?.isDemoPreview){
   try{
-    mountCharacterReport({ctx:window._ctx,western:window.__w3dData,isDemo,
-      onReselect:trigger=>homeThemePicker?.open(trigger)});
+    mountCharacterReport({ctx:window._ctx,western:window.__w3dData,isDemo});
   }catch(error){
     // A missing optional character asset must not prevent the report itself.
     console.warn('[report] 角色导览暂不可用',error);
@@ -413,6 +413,8 @@ async function calc(isDemoPreview=false){
     }
     showPage2();
     characterCompanion.onReportReady({isDemo:isDemoPreview});
+    // 漏斗访客先看地炎君预告页（真排盘+三钩子+目录），再进入完整报告。
+    try { showFunnelTeaserIfNeeded(); } catch (e) { console.warn('[funnel] 预告页失败', e); }
     document.querySelectorAll('.tab-item')[0].click();
     formReturnFocus=null;
     focusSafely(document.getElementById('p2MenuBtn'));
@@ -470,6 +472,16 @@ window.TJCloseForm=function(){
   closeCityDropdown();
   document.body.classList.remove('form-open');
   restoreFormFocus();
+  /* 原首页已移除：关掉表单后若无任何界面在场（不在报告/演算/弹窗中），回到漏斗入口，避免空屏死路 */
+  setTimeout(()=>{
+    const p2=document.getElementById('page2');
+    const inReport=p2&&(p2.classList.contains('active')||!p2.classList.contains('hidden'));
+    const calc=document.getElementById('calculationOverlay');
+    const inCalc=calc&&!calc.hidden;
+    const anyModal=document.querySelector('.modal.open');
+    const veiled=document.getElementById('funnelVeil');
+    if(!inReport&&!inCalc&&!anyModal&&!veiled)location.href='./funnel.html';
+  },60);
 };
 // Clear stale feedback only when the user edits an input; an error otherwise remains visible.
 document.getElementById('formModal')?.addEventListener('input',clearFormError);

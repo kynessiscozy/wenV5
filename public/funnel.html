@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>问问大师 · 地炎君命盘厅</title>
+<meta name="description" content="地炎君在此。不用注册，回答几个小问题，为你起一盘完整的命格报告，全程免费。">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-twins-192.png">
+<style>
+  :root{
+    --bg:#0c0908; --panel:rgba(20,14,12,.82); --line:rgba(216,162,74,.35);
+    --gold:#d8a24a; --gold-soft:#e8c595; --red:#c8452c; --ink:#f3e9dc; --ink-dim:#c9bba6;
+    --card:#1a1210; --card-on:#2a1812;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--ink);font-family:"Noto Serif SC","Songti SC",serif;overflow:hidden}
+  .bg{position:fixed;inset:0;background:url('./art/earthfire-hall-mobile.webp') center/cover no-repeat;filter:brightness(.55)}
+  .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,9,8,.55),rgba(12,9,8,.25) 40%,rgba(12,9,8,.88))}
+  @media (min-aspect-ratio:4/5){.bg{background-image:url('./art/earthfire-hall-wide.webp')}}
+  /* 整屏交叉淡入：所有页面同层叠放，切换时旧页淡出、新页淡入并轻微回正 */
+  .screen{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;overflow-y:auto;
+    padding:28px 22px calc(28px + env(safe-area-inset-bottom));
+    opacity:0;visibility:hidden;transform:scale(1.018);pointer-events:none;
+    transition:opacity .45s cubic-bezier(.22,.9,.24,1),transform .45s cubic-bezier(.22,.9,.24,1),visibility 0s linear .45s}
+  .screen.active{opacity:1;visibility:visible;transform:none;pointer-events:auto;
+    transition:opacity .45s cubic-bezier(.22,.9,.24,1),transform .45s cubic-bezier(.22,.9,.24,1),visibility 0s}
+  /* 入口元素层叠升起 */
+  @keyframes riseIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  #s-entry .rise{opacity:0}
+  #s-entry.active .rise{animation:riseIn .8s cubic-bezier(.22,.9,.24,1) forwards;animation-delay:var(--d,0s)}
+  .brand{align-self:flex-start;letter-spacing:.42em;font-size:11px;color:var(--gold-soft);opacity:.92}
+  .brand b{color:var(--gold);font-weight:600}
+  /* 入口门：视频全屏铺底，文字与按钮压在画面上 */
+  #s-entry{padding:0;text-align:center}
+  #s-entry .entry-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+  #s-entry .entry-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,9,8,.62) 0%,rgba(12,9,8,0) 26%,rgba(12,9,8,0) 42%,rgba(12,9,8,.66) 68%,rgba(12,9,8,.94) 100%)}
+  #s-entry .entry-inner{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;
+    padding:calc(26px + env(safe-area-inset-top)) 22px calc(24px + env(safe-area-inset-bottom))}
+  #s-entry .entry-bottom{margin-top:auto;width:100%;display:flex;flex-direction:column;align-items:center}
+  #s-entry h1{font-size:clamp(30px,8.8vw,46px);line-height:1.32;font-weight:700;margin-top:8px;text-shadow:0 2px 18px rgba(0,0,0,.6)}
+  #s-entry h1 .hl{color:var(--gold)}
+  #s-entry .sub{margin-top:12px;font-size:15px;line-height:1.8;color:var(--ink-dim);max-width:34em}
+  #s-entry .lead{font-size:13px;letter-spacing:.34em;color:var(--gold-soft)}
+  #s-entry .menu-btn{position:absolute;top:max(14px,env(safe-area-inset-top));left:14px;z-index:6;width:42px;height:42px;border-radius:50%;border:1px solid rgba(233,207,160,.45);background:rgba(10,6,6,.42);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;cursor:pointer}
+  #s-entry .brand{margin-left:52px}
+  #s-entry .menu-btn span{display:block;width:18px;height:2px;border-radius:1px;background:#ecdfc0}
+  .fm-overlay{position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .3s ease}
+  .fm-overlay.open{opacity:1;pointer-events:auto}
+  .fm-drawer{position:fixed;top:0;left:0;bottom:0;z-index:901;width:min(340px,85vw);background:#f7f2e9;color:#2b2118;transform:translateX(-102%);transition:transform .32s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:4px 0 24px rgba(0,0,0,.25);font-family:inherit}
+  .fm-drawer.open{transform:translateX(0)}
+  .fm-header{display:flex;align-items:center;gap:10px;padding:16px;border-bottom:1px solid #e3d9c6}
+  .fm-icon{width:40px;height:40px;border-radius:10px;flex-shrink:0}
+  .fm-title{font-weight:800;font-size:17px;flex:1}
+  .fm-close{width:36px;height:36px;border-radius:50%;border:1px solid #e3d9c6;background:#fff;font-size:19px;line-height:1;cursor:pointer;color:#2b2118}
+  .fm-body{flex:1;overflow-y:auto;padding:6px 16px 16px}
+  .fm-section{margin-top:16px}
+  .fm-hd{font-size:13px;font-weight:700;color:#8a6d3b;letter-spacing:.06em;margin-bottom:8px}
+  .fm-empty{color:#9b8b74;font-size:13px;text-align:center;padding:12px 0}
+  .fm-card{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #eadfca;border-radius:14px;padding:11px 12px;margin-bottom:9px;cursor:pointer;text-align:left;width:100%;font-family:inherit}
+  .fm-ava{width:38px;height:38px;border-radius:50%;background:#8a2015;color:#f5efe2;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .fm-info{flex:1;min-width:0}
+  .fm-name{font-size:14.5px;font-weight:700;color:#2b2118}
+  .fm-meta{font-size:12px;color:#9b8b74;margin-top:2px;line-height:1.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fm-arrow{color:#c3b091;font-size:18px}
+  .fm-footer{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #e3d9c6;display:flex;flex-direction:column;gap:8px}
+  .fm-footer button{width:100%;padding:10px;font-size:13px;border-radius:10px;border:1px solid #e3d9c6;background:#fff;color:#2b2118;cursor:pointer;font-family:inherit}
+  #fmPanels .modal{position:fixed;inset:0;z-index:960;display:none;font-family:inherit}
+  #fmPanels .modal.open{display:block}
+  #fmPanels .modal-bg{position:absolute;inset:0;background:rgba(8,4,4,.55)}
+  #fmPanels .modal-sheet{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,92vw);max-height:84vh;overflow-y:auto;background:#fbf7ee;color:#2b2118;border-radius:18px;padding:26px 22px;box-shadow:0 18px 50px rgba(0,0,0,.4)}
+  #fmPanels .modal-close{position:absolute;top:10px;right:14px;font-size:22px;line-height:1;cursor:pointer;color:#8a6d3b;background:none;border:none;z-index:2}
+  #fmPanels .modal-title{font-size:19px;font-weight:800}
+  #fmPanels .about-kicker{font-size:11px;letter-spacing:.28em;color:#8a6d3b}
+  #fmPanels .about-sheet h2{font-size:22px;margin:8px 0 6px}
+  #fmPanels .about-lead{color:#8a6d3b;margin-bottom:14px}
+  #fmPanels .about-section{margin-bottom:14px}
+  #fmPanels .about-section h3{font-size:15px;margin-bottom:5px}
+  #fmPanels .about-section p,#fmPanels .about-note p{font-size:13.5px;line-height:1.8;color:#4a3b2c}
+  #fmPanels .about-note{background:#f3e8d2;border-radius:12px;padding:12px 14px}
+  #fmPanels .about-note b{font-size:13.5px}
+  .fm-guide-title{font-size:21px;font-weight:800}
+  .persona-switch{position:absolute;top:max(14px,env(safe-area-inset-top));right:14px;z-index:6;display:flex;gap:4px;background:rgba(8,4,4,.5);border:1px solid rgba(216,178,106,.4);border-radius:999px;padding:4px;backdrop-filter:blur(6px)}
+  .persona-switch button{border:none;background:transparent;color:#d8c9a8;font-size:12.5px;letter-spacing:.08em;padding:7px 13px;border-radius:999px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .persona-switch button.on{background:linear-gradient(180deg,#8a2015,#5f130d);color:#f5efe2;box-shadow:inset 0 0 0 1px rgba(216,178,106,.55)}
+  .fm-guide-sub{color:#8a6d3b;font-size:13px;margin:4px 0 14px}
+  .fm-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+  .fm-tabs button{padding:7px 13px;border-radius:999px;border:1px solid #e3d9c6;background:#fff;font-size:13px;cursor:pointer;color:#2b2118;font-family:inherit}
+  .fm-tabs button.on{background:#8a2015;color:#f5efe2;border-color:#8a2015}
+  .fm-gbody .ng-kicker{font-size:11px;letter-spacing:.24em;color:#b3452f}
+  .fm-gbody .ng-title{font-size:19px;font-weight:800;margin:5px 0 4px}
+  .fm-gbody .ng-desc{font-size:13px;color:#8a7a5f;line-height:1.7;margin-bottom:12px}
+  .fm-gbody .ng-step-card{display:flex;gap:11px;background:#fff;border:1px solid #eadfca;border-radius:14px;padding:12px;margin-bottom:9px}
+  .fm-gbody .step-num{font-weight:800;color:#b3452f;font-size:13px}
+  .fm-gbody .step-content h4{font-size:14.5px;margin-bottom:3px}
+  .fm-gbody .step-content p,.fm-gbody .term-desc,.fm-gbody .faq-a{font-size:13px;line-height:1.75;color:#4a3b2c}
+  .fm-gbody .ng-glossary-item,.fm-gbody .ng-faq-item{background:#fff;border:1px solid #eadfca;border-radius:14px;padding:12px;margin-bottom:9px}
+  .fm-gbody .term-hd{display:flex;justify-content:space-between;margin-bottom:4px}
+  .fm-gbody .term-name{font-weight:700;font-size:14.5px}
+  .fm-gbody .term-tag{font-size:11px;color:#8a6d3b}
+  .fm-gbody .faq-q{font-size:14.5px;margin-bottom:3px}
+  #s-entry .cta{align-self:stretch;max-width:440px;margin-left:auto;margin-right:auto;width:100%}
+  /* 问卷与过场压暗背景，聚焦内容 */
+  .dim{position:absolute;inset:0;background:rgba(9,6,5,.36);pointer-events:none}
+  #s-quiz .qhead,#s-quiz .qbody{position:relative;z-index:1}
+  /* 加载页视频延续 */
+  #s-loading .load-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.42)}
+  #s-immersion .imm-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  #s-immersion .imm-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,7,6,.42),rgba(10,7,6,.22) 40%,rgba(10,7,6,.7))}
+  #s-immersion .line{position:relative;z-index:1}
+  #s-immersion .skip{z-index:2}
+  #s-inter .inter-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.55)}
+  #s-inter .inter-line{position:relative;z-index:1;margin:auto;text-align:center;padding:0 30px;font-size:clamp(21px,6vw,28px);line-height:1.9;letter-spacing:.14em;color:var(--ink);text-shadow:0 2px 18px rgba(0,0,0,.85)}
+  /* 问卷：人物全屏底图 + 黑渐变，无进度条（仿参考） */
+  #s-quiz .quiz-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 6%}
+  #s-quiz .quiz-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,7,6,.38) 0%,rgba(10,7,6,.04) 30%,rgba(10,7,6,.52) 56%,rgba(10,7,6,.94) 84%)}
+  #s-quiz .dim{display:none}
+  #s-quiz .progress,#s-quiz .qcount{display:none}
+  #s-quiz .qwho{display:none}
+  #s-quiz .qbody{justify-content:flex-end;padding-bottom:8px}
+  #s-quiz .qtitle{text-align:center}
+  #s-quiz .qhint{text-align:center}
+  #s-quiz .back{color:var(--ink);font-size:24px;text-shadow:0 1px 10px rgba(0,0,0,.85)}
+  .opt.sel,.opt:active{background:#f5efe2;border-color:#f5efe2;color:#1d140d}
+  .opt.sel small,.opt:active small{color:#5c4c38}
+  /* 沉浸过场选项（仿参考：视频后底部浅色圆角选项） */
+  #s-immersion .story-choices{position:relative;z-index:1;margin-top:36px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .6s ease,transform .6s ease}
+  #s-immersion .story-choices.show{opacity:1;transform:none;pointer-events:auto}
+  #s-immersion .story-choices button{appearance:none;border:none;cursor:pointer;font:inherit;font-size:15.5px;letter-spacing:.08em;color:#2a1c10;background:rgba(243,233,220,.93);padding:13px 26px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+  #s-loading img{display:none}
+  #s-loading .load-shade{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(12,9,8,.25),rgba(12,9,8,.78))}
+  #s-loading .load-inner{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .cta{margin-top:26px;appearance:none;border:1px solid #c89b5a;background:linear-gradient(180deg,#8a2015,#5f130d);color:#fff;
+       font:inherit;font-size:17px;letter-spacing:.3em;text-indent:.3em;padding:16px 44px;border-radius:8px;cursor:pointer;
+       box-shadow:inset 0 0 0 3px rgba(20,8,5,.55),inset 0 0 0 4px rgba(200,155,90,.45),0 12px 34px rgba(0,0,0,.5);
+       transition:transform .15s ease;animation:ctaPulse 2.8s ease-in-out 1.2s infinite alternate}
+  @keyframes ctaPulse{from{box-shadow:0 0 0 rgba(216,162,74,0)}to{box-shadow:0 0 26px rgba(216,162,74,.28)}}
+  .cta:active{transform:scale(.98)}
+  .fineprint{margin-top:auto;padding-top:22px;font-size:12px;line-height:1.9;color:rgba(201,187,166,.75);text-align:center}
+  /* 沉浸过场 */
+  #s-immersion{align-items:center;justify-content:center;text-align:center}
+  #s-immersion .line{position:relative;z-index:1}
+  #s-immersion .skip{z-index:2}
+  #s-immersion .line{font-size:clamp(20px,5.6vw,28px);line-height:2;opacity:0;transform:translateY(10px);transition:opacity .8s cubic-bezier(.22,.9,.24,1),transform .8s cubic-bezier(.22,.9,.24,1)}
+  #s-immersion .line.show{opacity:1;transform:none}
+  #s-immersion .line .hl{color:var(--gold)}
+  .skip{position:absolute;top:calc(18px + env(safe-area-inset-top));right:20px;background:none;border:1px solid var(--line);color:var(--ink-dim);
+        font:inherit;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer}
+  /* 问卷 */
+  .qhead{display:flex;align-items:center;gap:12px}
+  .back{background:none;border:none;color:var(--ink-dim);font:inherit;font-size:20px;cursor:pointer;padding:6px 4px;visibility:hidden}
+  .back.on{visibility:visible}
+  .progress{flex:1;height:3px;background:rgba(243,233,220,.14);border-radius:2px;overflow:hidden}
+  .progress i{display:block;height:100%;background:var(--gold);width:0;transition:width .5s cubic-bezier(.22,.9,.24,1)}
+  /* 问卷选项层叠入场 */
+  .stag{opacity:0;transform:translateY(12px)}
+  .stag.in{opacity:1;transform:none;transition:opacity .4s cubic-bezier(.22,.9,.24,1),transform .4s cubic-bezier(.22,.9,.24,1)}
+  .qcount{font-size:12px;color:var(--ink-dim);letter-spacing:.15em}
+  .qbody{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:560px;width:100%;margin:0 auto}
+  .qwho{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .qwho img{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);object-fit:cover;background:#000}
+  .qwho span{font-size:13px;color:var(--gold-soft);letter-spacing:.12em}
+  .qtitle{font-size:clamp(25px,7vw,34px);line-height:1.45;font-weight:700}
+  .qhint{margin-top:8px;font-size:14px;color:var(--ink-dim);line-height:1.7}
+  .opts{margin-top:28px;display:grid;gap:12px}
+  .opt{appearance:none;text-align:left;background:var(--panel);border:1px solid var(--line);color:var(--ink);font:inherit;
+       font-size:17.5px;padding:19px 20px;border-radius:14px;cursor:pointer;backdrop-filter:blur(4px)}
+  .opt:active,.opt.sel{background:var(--card-on);border-color:var(--gold)}
+  .opt small{display:block;margin-top:4px;font-size:13px;color:var(--ink-dim)}
+  .field{margin-top:28px;display:grid;gap:12px}
+  .field input{background:var(--panel);border:1px solid var(--line);color:var(--ink);font:inherit;font-size:18px;
+       padding:16px 18px;border-radius:14px;width:100%;color-scheme:dark;backdrop-filter:blur(4px)}
+  .field input::placeholder{color:rgba(201,187,166,.5)}
+  .rowbtns{display:flex;gap:12px;margin-top:4px}
+  .btn{flex:1;appearance:none;font:inherit;font-size:16px;letter-spacing:.12em;padding:15px 10px;border-radius:999px;cursor:pointer}
+  .btn.primary{background:var(--red);border:1px solid #e0654a;color:#fff}
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--ink-dim)}
+  .btn:active{transform:scale(.98)}
+  .err{min-height:22px;font-size:13px;color:#ff9d86;margin-top:10px}
+  /* 加载 */
+  #s-loading{align-items:center;justify-content:center;text-align:center}
+  #s-loading img{width:110px;height:110px;border-radius:50%;border:1px solid var(--line);object-fit:cover;animation:pulse 2.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.045);opacity:1}}
+  #s-loading .ltext{margin-top:26px;font-size:18px;line-height:2;min-height:64px;color:var(--ink);transition:opacity .18s ease}
+  #s-loading .ltext.fadeout{opacity:0}
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01s !important;transition-duration:.01s !important}
+  }
+  #s-loading .lsub{font-size:13px;color:var(--ink-dim);letter-spacing:.2em}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+
+<!-- 入口门 -->
+<section class="screen active" id="s-entry">
+  <video class="entry-video" id="entryVideo" autoplay muted loop playsinline preload="auto"
+         poster="./art/diyan-entry2-poster.webp" src="./art/diyan-entry2.mp4" aria-label="地炎君"></video>
+  <div class="entry-shade"></div>
+  <div class="persona-switch" role="tablist" aria-label="切换角色">
+    <button type="button" data-persona="diyan" class="on" role="tab" aria-selected="true">地炎君</button>
+    <button type="button" data-persona="yuchen" role="tab" aria-selected="false">玉宸神后</button>
+    <button type="button" data-persona="moonfox" role="tab" aria-selected="false">月白</button>
+    <button type="button" data-persona="xiyao" role="tab" aria-selected="false">夕瑶</button>
+  </div>
+  <div class="entry-inner">
+    <button class="menu-btn" id="btnMenu" type="button" aria-label="打开菜单" title="菜单"><span></span><span></span><span></span></button>
+    <div class="entry-bottom">
+      <button class="cta rise" style="--d:.35s" id="btnStart">进入命盘厅</button>
+      <p class="fineprint rise" style="--d:.5s">出生信息只保存在你的设备上，不上传、不注册<br>命理推演仅供文化研究与娱乐参考</p>
+    </div>
+  </div>
+</section>
+
+<!-- 沉浸过场 -->
+<section class="screen" id="s-immersion">
+  <video class="imm-video" id="immVideo" muted loop playsinline preload="auto" src="./art/diyan-ritual.mp4" aria-hidden="true"></video>
+  <div class="imm-shade"></div>
+  <div class="dim"></div>
+  <button class="skip" id="btnSkipStory">跳过</button>
+  <p class="line" data-line>命盘厅的灯，已经为你亮了。</p>
+  <p class="line" data-line>你心里压着的那件事，<span class="hl">不必先说出口</span>。</p>
+  <p class="line" data-line>报上生辰，剩下的，交给盘面。</p>
+  <div class="story-choices" id="storyChoices">
+    <button type="button" data-act="look">环顾四周</button>
+    <button type="button" data-act="sit">坐下来</button>
+  </div>
+</section>
+
+<!-- 问卷 -->
+<section class="screen" id="s-quiz">
+  <video class="quiz-bg" src="./art/diyan-quiz.mp4" poster="./art/diyan-lord.webp" autoplay muted loop playsinline aria-hidden="true"></video>
+  <div class="quiz-shade"></div>
+  <div class="qhead">
+    <button class="back" id="btnBack" aria-label="上一题">‹</button>
+    <div class="progress"><i id="pbar"></i></div>
+    <div class="qcount" id="pcount"></div>
+  </div>
+  <div class="qbody">
+    <div class="qwho"><img id="qwhoImg" src="./art/diyan-lord.webp" alt=""><span id="qwhoName">地炎君 问</span></div>
+    <h2 class="qtitle" id="qtitle"></h2>
+    <p class="qhint" id="qhint"></p>
+    <div id="qmount"></div>
+    <p class="err" id="qerr"></p>
+  </div>
+</section>
+
+<!-- 问卷中段过场 -->
+<section class="screen" id="s-inter">
+  <video class="inter-video" muted loop playsinline preload="auto" src="./art/diyan-quiz.mp4" aria-hidden="true"></video>
+  <p class="inter-line">根基已定。<br>君，再问你几句。</p>
+</section>
+
+<!-- 加载仪式 -->
+<section class="screen" id="s-loading">
+  <video class="load-video" autoplay muted loop playsinline preload="auto"
+         poster="./art/diyan-ritual-poster.webp" src="./art/diyan-ritual.mp4" aria-hidden="true"></video>
+  <div class="load-shade"></div>
+  <div class="load-inner">
+    <img id="loadAvatar" src="./art/diyan-lord.webp" alt="">
+    <p class="ltext" id="ltext">地炎君正在为你排盘…</p>
+    <p class="lsub">问 问 大 师</p>
+  </div>
+</section>
+
+<div id="fmPanels">
+<div class="modal fm-guide" id="fmGuide" aria-hidden="true">
+  <div class="modal-bg" data-fmclose></div>
+  <div class="modal-sheet fm-guide-sheet" role="dialog" aria-modal="true" aria-labelledby="fmGuideTitle">
+    <button class="modal-close" type="button" data-fmclose aria-label="关闭指南">×</button>
+    <h2 id="fmGuideTitle" class="fm-guide-title">使用指南</h2>
+    <p class="fm-guide-sub">从进门，到读懂报告</p>
+    <div class="fm-tabs" role="tablist" aria-label="指引目录">
+      <button type="button" class="on" data-gtab="tour">开始</button>
+      <button type="button" data-gtab="eastern">东方</button>
+      <button type="button" data-gtab="western">西方</button>
+      <button type="button" data-gtab="glossary">术语</button>
+      <button type="button" data-gtab="faq">问答</button>
+    </div>
+    <div class="fm-gbody" id="fmGuideBody"></div>
+  </div>
+</div>
+<div class="modal" id="aboutModal">
+  <div class="modal-bg" data-fmclose></div>
+  <div class="modal-sheet glass about-sheet" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" tabindex="0">
+    <button class="modal-close" type="button" data-fmclose aria-label="关闭关于">×</button>
+    <p class="about-kicker">ABOUT · 问问大师</p>
+    <h2 id="aboutTitle">关于问问大师</h2>
+    <p class="about-lead">用不同的视角，给自己一点思考的空间。</p>
+    <div class="about-section">
+      <h3>在这里，你可以</h3>
+      <p>选择一位同行形象，填写出生信息，探索东方命盘、西方星盘和其他主题工具。报告中的图形与文字来自各自的计算和解读框架。</p>
+    </div>
+    <div class="about-section">
+      <h3>关于问问与数据</h3>
+      <p>同行特质只改变角色与演出，不改变计算。档案和部分偏好可保存在本机浏览器；使用 AI 时，问题及相关上下文会发送给所选服务商。请避免输入敏感信息，并留意其隐私政策。</p>
+      <p>打开菜单、穿搭或风水工具时，应用会尝试定位并联网查询天气或地点；未授权定位时，天气会尝试使用北京默认值。风水周边查询也需要网络。</p>
+    </div>
+    <div class="about-note"><b>请理性看待</b><p>内容仅供文化体验与自我反思，不保证准确，也不能替代医疗、法律、财务等专业建议。重要选择请结合实际情况独立判断。</p></div>
+  </div>
+</div>
+<div class="modal" id="disclaimerModal">
+  <div class="modal-bg" data-fmclose></div>
+  <div class="modal-sheet glass" style="max-width:440px;max-height:80vh;overflow-y:auto;text-align:left">
+    <div class="modal-close" data-fmclose>×</div>
+    <div class="modal-title" style="text-align:center;margin-bottom:16px">免责声明</div>
+    <div style="font-size:.82em;line-height:1.85;color:var(--c-text)">
+      <p style="margin-bottom:12px">欢迎使用问问大师（V5.0）。在使用本应用前，请仔细阅读以下免责声明。使用本应用即表示您已充分理解并同意本声明的全部内容。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">一、内容性质与文化体验定位</div>
+      <p style="margin-bottom:10px">问问大师提供的内容包括东方命理、西方星相与生命灵数，以及塔罗、摇签、答案之书等工具；这些体验采用不同的传统文化、计算或随机呈现方式，仅供<b>文化体验、娱乐消遣与自我反思参考</b>，不构成任何形式的专业建议（包括但不限于法律、医疗、金融、心理咨询、职业规划等领域）。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">二、不构成决策依据</div>
+      <p style="margin-bottom:10px">本应用的推演结果不应作为人生重大决策（如投资、择业、婚恋、医疗、法律事务等）的唯一或主要依据。命盘与星盘是传统解读框架，不对人生事件作出确定预测。用户在做出任何重要决定前，应结合实际情况、咨询相关领域专业人士并独立判断。因依赖本应用内容而产生的任何直接或间接损失，本应用及开发者不承担任何责任。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">三、AI 生成内容说明</div>
+      <p style="margin-bottom:10px">报告中的本地计算和模板解读无需 AI；使用联网 AI 对话或工具解读时，回答由所选外部服务生成，可能不准确、不完整或过时。请核对重要信息，不要将回答当作专业意见。</p>
+      <p style="margin-bottom:10px">星座运势的文字与分值按日期和星座生成，六维图使用星座模板；它们不是实时天象、科学测量或对现实事件的预测。当前西方星盘按 UTC+8 计算，其他时区及历史夏令时可能有偏差。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">四、隐私保护</div>
+      <p style="margin-bottom:10px">出生信息用于本地计算；你保存的档案、部分偏好、工具记录及自进化记忆保存在本机浏览器中。清理浏览器数据或更换设备可能导致这些内容丢失，请自行备份并保护设备。</p>
+      <p style="margin-bottom:10px">使用外部 AI 时，API Key、问题、近期对话及相关命盘或工具上下文可能发送给所选服务商；连接检测也会发送 Key。自进化偏好保存在本机，外部服务对请求内容的处理以其隐私政策为准，请勿输入不愿分享的敏感信息。</p>
+      <p style="margin-bottom:10px">打开菜单、穿搭或风水工具会尝试获取定位。授权后，坐标可能发送给 OpenStreetMap Nominatim 和 Open-Meteo 用于地点及天气查询；未授权时天气会尝试使用北京默认坐标。生成风水结果时，已授权坐标可能发送给 Overpass 查询周边。使用系统分享或导出时，所选内容会交给设备上的分享或保存功能。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">五、知识产权</div>
+      <p style="margin-bottom:10px">本应用的界面设计、算法逻辑、3D 星象场景、星座配图、图标素材及所有原创内容的知识产权归开发者所有。本应用基于 Three.js 等开源库构建，并遵守相应开源协议。未经书面许可，不得复制、修改、传播或用于商业目的。</p>
+
+      <div style="font-weight:700;font-size:1.05em;margin:16px 0 8px;color:var(--c-text-hi)">六、免责范围</div>
+      <p style="margin-bottom:10px">在法律允许的最大范围内，本应用及开发者对以下情况不承担责任：</p>
+      <ul style="padding-left:18px;margin-bottom:10px">
+        <li style="margin-bottom:4px">用户因依赖推演结果而做出的任何决策及其后果</li>
+        <li style="margin-bottom:4px">AI 生成内容的不准确、遗漏或误导</li>
+        <li style="margin-bottom:4px">3D 场景在不同设备上的渲染差异或性能波动</li>
+        <li style="margin-bottom:4px">因设备故障、网络问题等不可抗力导致的服务中断</li>
+        <li style="margin-bottom:4px">用户数据因设备丢失、损坏或未授权访问导致的泄露</li>
+      </ul>
+
+      <div style="margin-top:4px;padding:12px 14px;border-radius:12px;background:var(--c-surface-3);border:1px solid var(--c-border);font-size:.9em;color:var(--c-text-2);line-height:1.7">
+        <b style="color:var(--c-text-hi)">如您不同意以上声明：</b>请立即停止使用本应用。继续使用即视为您已仔细阅读并完全接受本声明的全部条款。
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="fm-overlay" id="fmOverlay"></div>
+<aside class="fm-drawer" id="fmDrawer" aria-label="菜单面板" aria-hidden="true" inert>
+  <div class="fm-header">
+    <img src="./icon.svg?v=35" alt="" class="fm-icon">
+    <span class="fm-title">问问大师</span>
+    <button class="fm-close" id="fmClose" type="button" aria-label="关闭">×</button>
+  </div>
+  <div class="fm-body">
+    <div class="fm-section">
+      <div class="fm-hd">每日建议</div>
+      <div class="fm-empty">暂无建议，推演后可查看每日运势提示</div>
+    </div>
+    <div class="fm-section">
+      <div class="fm-hd">最近推演</div>
+      <div id="fmRecent"></div>
+      <div class="fm-empty" id="fmRecentEmpty">暂无推演记录</div>
+    </div>
+    <div class="fm-section">
+      <div class="fm-hd">命盘档案</div>
+      <div id="fmProfiles"></div>
+      <div class="fm-empty" id="fmProfilesEmpty">暂无档案</div>
+    </div>
+  </div>
+  <div class="fm-footer">
+    <button type="button" data-panel="guide">使用指南</button>
+    <button type="button" data-panel="about">关于问问大师</button>
+    <button type="button" data-panel="disclaimer">免责声明</button>
+  </div>
+</aside>
+<script>
+(function(){
+  "use strict";
+  var $=function(s){return document.querySelector(s)};
+  /* 步数埋点：只记次数、不记任何个人信息，存本机 localStorage。
+     打开 funnel.html?stats 可查看本机计数。 */
+  function bump(key){
+    try{
+      var s=JSON.parse(localStorage.getItem('wen_funnel_stats_v1')||'{}');
+      s[key]=(s[key]||0)+1;
+      localStorage.setItem('wen_funnel_stats_v1',JSON.stringify(s));
+    }catch(e){}
+  }
+  if(/[?&]stats\b/.test(location.search)){
+    var s={};try{s=JSON.parse(localStorage.getItem('wen_funnel_stats_v1')||'{}');}catch(e){}
+    document.body.innerHTML='<div style="position:relative;z-index:2;max-width:520px;margin:0 auto;padding:40px 22px;font-size:16px;line-height:2.1">'
+      +'<h1 style="font-size:20px;margin-bottom:12px">漏斗步数（本机计数）</h1>'
+      +Object.keys(s).sort().map(function(k){return '<div>'+k+'：<b style="color:#d8a24a">'+s[k]+'</b></div>';}).join('')
+      +'<p style="margin-top:16px;font-size:13px;color:#c9bba6">只统计次数，不含任何个人信息；数字只存在这台设备的浏览器里。</p></div>';
+    return;
+  }
+  bump('entry_view');
+  var screens={entry:$('#s-entry'),immersion:$('#s-immersion'),quiz:$('#s-quiz'),inter:$('#s-inter'),loading:$('#s-loading')};
+  function show(name){Object.keys(screens).forEach(function(k){screens[k].classList.toggle('active',k===name)});window.scrollTo(0,0);}
+  var A={who:'self',bd:'',timeStr:'',cityName:'',gen:'male',name:'',concerns:[]};
+
+  /* 入口 → 过场 */
+  var storyTimer=null;
+  $('#btnMenu').addEventListener('click',function(){ fmToggle(true); });
+  $('#btnStart').addEventListener('click',function(){
+    bump('quiz_start');
+    show('immersion');
+    var iv=$('#immVideo');if(iv){try{iv.currentTime=0;}catch(e){}var ipr=iv.play();if(ipr)ipr.catch(function(){});}
+    var lines=[].slice.call(document.querySelectorAll('[data-line]'));
+    lines.forEach(function(el,i){setTimeout(function(){el.classList.add('show')},500+i*1250);});
+    storyTimer=setTimeout(function(){$('#storyChoices').classList.add('show');},500+lines.length*1250+350);
+  });
+  $('#btnSkipStory').addEventListener('click',function(){if(storyTimer)clearTimeout(storyTimer);startQuiz();});
+  [].slice.call(document.querySelectorAll('#storyChoices button')).forEach(function(b){
+    b.addEventListener('click',function(){if(storyTimer)clearTimeout(storyTimer);bump('story_'+b.getAttribute('data-act'));startQuiz();});
+  });
+
+  /* 问卷定义 */
+  var QUESTIONS=[
+    {key:'who',title:'这一盘，是为谁起的？',hint:'',type:'opts',options:[
+      {v:'self',t:'为我自己',s:'盘随人走，看得最真'},
+      {v:'other',t:'为别人',s:'填对方的生辰即可'}]},
+    {key:'bd',title:'出生日期是哪一天？',hint:'按公历填写，盘面会自己换算农历与节气。',type:'date'},
+    {key:'timeStr',title:'出生时间呢？',hint:'时辰定命宫与时柱。不知道也没关系，可以先跳过，报告会注明时柱待校。',type:'time',skip:true},
+    {key:'cityName',title:'出生在哪座城市？',hint:'用于真太阳时校正——这是问问大师比别家细的地方。填城市名即可，如「北京市」。',type:'text',ph:'如：北京市',skip:true,skipLabel:'稍后再填'},
+    {key:'gen',title:'性别是？',hint:'大运顺逆按性别排布，需要这一项。',type:'opts',options:[
+      {v:'male',t:'男'},{v:'female',t:'女'}]},
+    {key:'name',title:'怎么称呼？',hint:'报告里会这样称呼你（或对方）。不填也可以。',type:'text',ph:'名字或昵称',skip:true},
+    {key:'concerns',title:'最近心里压着的是什么事？',hint:'可多选。会在报告里先看这几处。',type:'multi',options:[
+      {v:'career',t:'事业与金钱'},{v:'love',t:'感情与婚姻'},{v:'health',t:'健康状态'},
+      {v:'family',t:'家人关系'},{v:'direction',t:'人生方向'}],skip:true}
+  ];
+  var qi=-1;
+  function startQuiz(){var iv=$('#immVideo');if(iv)iv.pause();show('quiz');qi=0;renderQ();}
+  /* 选项层叠入场：问卷挂载区内的直接子元素逐个升起 */
+  function staggerIn(){
+    var nodes=document.querySelectorAll('#qmount .opts .opt, #qmount .field, #qmount .rowbtns');
+    nodes.forEach(function(el,i){
+      el.classList.add('stag');
+      el.style.transitionDelay=(i*45)+'ms';
+    });
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      nodes.forEach(function(el){el.classList.add('in');});
+      setTimeout(function(){nodes.forEach(function(el){el.classList.remove('stag','in');el.style.transitionDelay='';});},700);
+    });});
+  }
+  function renderQ(){
+    bump('step_'+(qi+1));
+    var q=QUESTIONS[qi];
+    $('#pcount').textContent=(qi+1)+' / '+QUESTIONS.length;
+    $('#pbar').style.width=((qi)/QUESTIONS.length*100)+'%';
+    $('#btnBack').classList.toggle('on',qi>0);
+    $('#qerr').textContent='';
+    if(q.key==='name'&&A.who==='other'){$('#qtitle').textContent='对方怎么称呼？';}
+    else{$('#qtitle').textContent=q.title;}
+    $('#qhint').textContent=q.hint||'';
+    var m=$('#qmount');m.innerHTML='';
+    if(q.type==='opts'){
+      var box=document.createElement('div');box.className='opts';
+      q.options.forEach(function(o){
+        var b=document.createElement('button');b.className='opt';b.innerHTML=o.t+(o.s?'<small>'+o.s+'</small>':'');
+        b.addEventListener('click',function(){A[q.key]=o.v;next();});
+        box.appendChild(b);
+      });
+      m.appendChild(box);
+    }else if(q.type==='multi'){
+      var box2=document.createElement('div');box2.className='opts';
+      var picked=new Set(A.concerns);
+      q.options.forEach(function(o){
+        var b=document.createElement('button');b.className='opt'+(picked.has(o.v)?' sel':'');b.textContent=o.t;
+        b.addEventListener('click',function(){
+          if(picked.has(o.v)){picked.delete(o.v);b.classList.remove('sel');}
+          else{picked.add(o.v);b.classList.add('sel');}
+        });
+        box2.appendChild(b);
+      });
+      m.appendChild(box2);
+      m.appendChild(btnRow('继续',function(){A.concerns=Array.from(picked);next();},'跳过',function(){A.concerns=[];next();}));
+    }else{
+      var f=document.createElement('div');f.className='field';
+      var inp=document.createElement('input');
+      inp.type=q.type==='date'?'date':(q.type==='time'?'time':'text');
+      if(q.ph)inp.placeholder=q.ph;
+      if(q.key==='bd'&&A.bd)inp.value=A.bd;
+      if(q.key==='timeStr'&&A.timeStr)inp.value=A.timeStr;
+      if(q.key==='cityName'&&A.cityName)inp.value=A.cityName;
+      if(q.key==='name'&&A.name)inp.value=A.name;
+      f.appendChild(inp);m.appendChild(f);
+      var confirm=function(){
+        var v=(inp.value||'').trim();
+        if(q.key==='bd'){
+          if(!v){$('#qerr').textContent='先选一个出生日期，才好起盘。';return;}
+          A.bd=v;
+        }else if(q.key==='timeStr'){A.timeStr=v;}
+        else if(q.key==='cityName'){A.cityName=v;}
+        else if(q.key==='name'){A.name=v;}
+        next();
+      };
+      inp.addEventListener('keydown',function(e){if(e.key==='Enter')confirm();});
+      m.appendChild(btnRow('确认',confirm,q.skip?(q.skipLabel||'跳过'):null,function(){
+        if(q.key==='timeStr')A.timeStr='';if(q.key==='cityName')A.cityName='';if(q.key==='name')A.name='';
+        next();
+      }));
+      setTimeout(function(){try{inp.focus({preventScroll:true});}catch(e){}},80);
+    }
+    staggerIn();
+  }
+  function btnRow(primary,fn,skipLabel,skipFn){
+    var r=document.createElement('div');r.className='rowbtns';
+    var p=document.createElement('button');p.className='btn primary';p.textContent=primary;p.addEventListener('click',fn);r.appendChild(p);
+    if(skipLabel){var s=document.createElement('button');s.className='btn ghost';s.textContent=skipLabel;s.addEventListener('click',skipFn);r.appendChild(s);}
+    return r;
+  }
+  /* 题目滑动切换：旧题向左滑出淡去，新题从右侧滑入（返回时方向相反） */
+  var qAnimating=false,pendingNav=null;
+  var interShown=false;
+  function showInter(target){
+    show('inter');
+    var v=document.querySelector('#s-inter .inter-video');
+    if(v){try{v.currentTime=0;}catch(e){}var pr=v.play();if(pr)pr.catch(function(){});}
+    setTimeout(function(){show('quiz');qi=target;renderQ();},2300);
+  }
+  function transitionTo(target,dir){
+    if(target>=QUESTIONS.length){finish();return;}
+    if(dir>0&&qi===3&&target===4&&!interShown){interShown=true;showInter(target);return;}
+    if(qAnimating){pendingNav=[target,dir];return;}
+    qAnimating=true;
+    var body=document.querySelector('.qbody');
+    body.style.transition='opacity .18s ease,transform .18s ease';
+    body.style.opacity='0';
+    body.style.transform='translateX('+(dir>0?-20:20)+'px)';
+    setTimeout(function(){
+      qi=target;renderQ();
+      body.style.transition='none';
+      body.style.opacity='0';
+      body.style.transform='translateX('+(dir>0?24:-24)+'px)';
+      requestAnimationFrame(function(){requestAnimationFrame(function(){
+        body.style.transition='opacity .32s cubic-bezier(.22,.9,.24,1),transform .32s cubic-bezier(.22,.9,.24,1)';
+        body.style.opacity='1';
+        body.style.transform='none';
+        setTimeout(function(){
+          qAnimating=false;
+          if(pendingNav){var p=pendingNav;pendingNav=null;transitionTo(p[0],p[1]);}
+        },340);
+      });});
+    },190);
+  }
+  function next(){transitionTo(qi+1,1);}
+  $('#btnBack').addEventListener('click',function(){if(qi>0)transitionTo(qi-1,-1);});
+
+  /* 加载仪式 → 交接 */
+  var LINES_BY_PERSONA={diyan:['地炎君正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，君再看一眼…'],yuchen:['玉宸正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，再看一眼…'],moonfox:['月白正在为你翻册…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一页，月白再替你看一眼…'],xiyao:['夕瑶正在为你看盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一局，夕瑶再替你看一眼…']};
+  var LINES=LINES_BY_PERSONA.diyan;
+  try{var _lp=localStorage.getItem('wen_funnel_persona');if(_lp&&LINES_BY_PERSONA[_lp])LINES=LINES_BY_PERSONA[_lp];}catch(e){}
+  function finish(){
+    bump('quiz_done');
+    try{localStorage.setItem('wen_funnel_v1',JSON.stringify({
+      v:1,trait:(function(){try{return localStorage.getItem('wen_funnel_persona')||'diyan';}catch(e){return 'diyan';}})(),who:A.who,bd:A.bd,timeStr:A.timeStr||'',cityName:A.cityName||'',
+      gen:A.gen,name:A.name||'',concerns:A.concerns,ts:Date.now()
+    }));}catch(e){}
+    show('loading');
+    var lt=$('#ltext');
+    var i=0;lt.textContent=LINES[0];
+    var t=setInterval(function(){
+      i++;if(i>=LINES.length)return;
+      lt.classList.add('fadeout');
+      setTimeout(function(){lt.textContent=LINES[i];lt.classList.remove('fadeout');},190);
+    },1900);
+    setTimeout(function(){clearInterval(t);location.href='./index.html';},1900*LINES.length+500);
+  }
+})();
+
+/* 首屏菜单抽屉：与原首页菜单同源（档案读同一 IndexedDB），在本页打开，不跳页 */
+var fmLoaded=false;
+var fm$=function(s){return document.querySelector(s)};
+function fmToggle(open){
+  var dw=fm$('#fmDrawer'),ov=fm$('#fmOverlay');
+  dw.classList.toggle('open',open);ov.classList.toggle('open',open);
+  dw.setAttribute('aria-hidden',String(!open));
+  if(open)dw.removeAttribute('inert');else dw.setAttribute('inert','');
+  if(open&&!fmLoaded){fmLoaded=true;fmRender();}
+}
+function fmEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fmCard(p,meta){
+  return '<button type="button" class="fm-card" data-pid="'+Number(p.id)+'"><span class="fm-ava">'+fmEsc(String(p.name||'未').charAt(0))+'</span><span class="fm-info"><span class="fm-name">'+fmEsc(p.name||'未命名')+'</span><span class="fm-meta" style="display:block">'+fmEsc(meta)+'</span></span><span class="fm-arrow">›</span></button>';
+}
+function fmRender(){
+  var req;
+  try{ req=indexedDB.open('TJ_Bazi',2); }catch(e){ return; }
+  req.onsuccess=function(){
+    var db=req.result;
+    if(!db.objectStoreNames.contains('profiles'))return;
+    var get=db.transaction('profiles','readonly').objectStore('profiles').getAll();
+    get.onsuccess=function(){
+      var list=(get.result||[]).slice().sort(function(a,b){return (b.updatedAt||0)-(a.updatedAt||0);});
+      if(!list.length)return;
+      fm$('#fmRecentEmpty').style.display='none';
+      fm$('#fmProfilesEmpty').style.display='none';
+      fm$('#fmRecent').innerHTML=list.slice(0,3).map(function(p){return fmCard(p,'最近关注：'+(p.q||'综合'));}).join('');
+      fm$('#fmProfiles').innerHTML=list.slice(0,8).map(function(p){return fmCard(p,(p.bd||'')+' · '+(p.gen==='female'?'女':'男'));}).join('');
+      document.querySelectorAll('.fm-card').forEach(function(el){
+        el.addEventListener('click',function(){
+          try{ localStorage.setItem('wen_load_profile_v1',el.getAttribute('data-pid')); }catch(e){}
+          location.href='./index.html';
+        });
+      });
+    };
+  };
+}
+fm$('#fmClose').addEventListener('click',function(){ fmToggle(false); });
+fm$('#fmOverlay').addEventListener('click',function(){ fmToggle(false); });
+document.querySelectorAll('.fm-footer button').forEach(function(b){
+  b.addEventListener('click',function(){ fmToggle(false); fmOpenPanel(b.getAttribute('data-panel')); });
+});
+
+/* 三个面板改为本页弹出（内容与原应用一致） */
+var FM_GUIDE={
+  tour:{k:'从这里开始',t:'一起看看，慢慢探索',d:'从自己的问题出发。',steps:[
+    ['填写出生信息','点开入口，填写日期、时间和地点后开始推演。结果出现后会停留，点击「查看报告」继续。'],
+    ['阅读报告','先看同行卡中的命盘信息；用顶部切换东方与西方，底部切换命盘、运势和关系。卡片里的按钮可继续查看细节。'],
+    ['继续探索','工具页有不同主题的体验。问问对话使用外部 AI 服务前，需要在设置中配置服务。']]},
+  eastern:{k:'东方命理',t:'先看一览，再看依据',d:'四柱和五行是一套传统的解读方式，不是对人生的定论。',steps:[
+    ['日主与四柱','四柱由出生的年、月、日、时组成。日柱的天干称为日主，是阅读其余干支关系的起点。'],
+    ['五行与用神','一览显示日主、强弱、用神和格局。打开「五行结构」可查看分布；不同方法的判断可能不同。'],
+    ['时间与关系','在运势页查看大运、流年等时间线，在关系页阅读相处角度；结合现实处境判断，不必照单全收。']]},
+  western:{k:'西方星相',t:'从太阳、月亮和上升开始',d:'出生时间和地点会影响结果。星盘按出生地时区及历史夏令时计算；夏令时切换时的重复或不存在的时间可能产生偏差。',steps:[
+    ['认识三个起点','太阳、月亮和上升分别是占星解读中常用的三个视角。继续阅读可查看行星、宫位和相位。'],
+    ['与星盘互动','拖动场景可旋转视角，点击人物可收起立绘，再用「显示立绘」恢复。鼠标滚轮可缩放，复位按钮可返回初始视角。设备不支持 3D 时仍可阅读文字报告。'],
+    ['查看星座参考','星座运势文字和分值按日期与星座生成，不是实时天象或现实事件预测；六维图也是星座模板，并非科学测量。'],
+    ['探索灵数','关系页也提供基于出生日期的生命灵数体验。它是另一种解读框架，并非科学测量。']]},
+  glossary:{k:'常用术语',t:'遇到生词，先看这里',d:'这些解释帮助你理解报告里的基本概念。',terms:[
+    ['四柱','东方','出生年、月、日、时对应的四组干支。'],
+    ['日主','东方','日柱的天干，是四柱解读的参照。'],
+    ['用神','东方','传统命理中用于分析命局平衡的要素。'],
+    ['大运 / 流年','东方','分别指较长阶段与单年的时间线索。'],
+    ['上升','西方','出生时东方地平线升起的星座，受时间和地点影响。'],
+    ['相位','西方','星盘中天体之间的特定角度关系。']]},
+  faq:{k:'常见问题',t:'使用前，了解这些',d:'信息越准确，越方便你理解这份报告的计算前提。',faqs:[
+    ['不记得出生时间怎么办？','请尽量核实。表单默认时间是 09:00；如果不确定，结果只是按所填时间计算，时柱和上升等内容可能不同。'],
+    ['引路人会影响命盘吗？','不会。引路人只决定形象与演出，不参与命盘计算。'],
+    ['信息会保存或发送吗？','档案和部分偏好可保存在本机浏览器。使用 AI 时，问题及相关上下文会发送给所选服务商；请避免输入敏感信息并留意其隐私政策。'],
+    ['天气和定位如何使用？','打开菜单、穿搭或风水工具会尝试定位并联网查询。未授权时天气会尝试使用北京默认值；风水周边查询也会向外部服务发送坐标。'],
+    ['结果可以用来做决定吗？','报告和 AI 回答可能不准确，仅供文化体验与自我反思。医疗、法律、财务等重要决定请结合现实情况并咨询专业人士。']]}
+};
+function fmGuideRender(key){
+  var c=FM_GUIDE[key];if(!c)return;
+  var h='<div class="ng-kicker">'+c.k+'</div><h3 class="ng-title">'+c.t+'</h3><p class="ng-desc">'+c.d+'</p>';
+  if(c.steps)h+=c.steps.map(function(s,i){return '<div class="ng-step-card"><span class="step-num">'+String(i+1).padStart(2,'0')+'</span><div class="step-content"><h4>'+s[0]+'</h4><p>'+s[1]+'</p></div></div>';}).join('');
+  if(c.terms)h+=c.terms.map(function(s){return '<div class="ng-glossary-item"><div class="term-hd"><span class="term-name">'+s[0]+'</span><span class="term-tag">'+s[1]+'</span></div><p class="term-desc">'+s[2]+'</p></div>';}).join('');
+  if(c.faqs)h+=c.faqs.map(function(s){return '<div class="ng-faq-item"><h4 class="faq-q">'+s[0]+'</h4><p class="faq-a">'+s[1]+'</p></div>';}).join('');
+  fm$('#fmGuideBody').innerHTML=h;
+  document.querySelectorAll('.fm-tabs button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-gtab')===key);});
+}
+document.querySelectorAll('.fm-tabs button').forEach(function(b){
+  b.addEventListener('click',function(){ fmGuideRender(b.getAttribute('data-gtab')); });
+});
+function fmOpenPanel(name){
+  var el=name==='guide'?fm$('#fmGuide'):name==='about'?fm$('#aboutModal'):fm$('#disclaimerModal');
+  if(!el)return;
+  if(name==='guide')fmGuideRender('tour');
+  el.classList.add('open');el.setAttribute('aria-hidden','false');
+}
+document.querySelectorAll('#fmPanels [data-fmclose]').forEach(function(el){
+  el.addEventListener('click',function(){
+    var m=el.closest('.modal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}
+  });
+});
+
+/* 首屏右上角角色切换：地炎君 / 玉宸神后，全漏斗换人 */
+var PERSONAS={
+  diyan:{name:'地炎君',entry:'./art/diyan-entry2.mp4',entryPoster:'./art/diyan-entry2-poster.webp',
+    ritual:'./art/diyan-ritual.mp4',ritualPoster:'./art/diyan-ritual-poster.webp',
+    quiz:'./art/diyan-quiz.mp4',poster:'./art/diyan-lord.webp',firstLine:'地炎君正在为你排盘…'},
+  yuchen:{name:'玉宸神后',entry:'./art/yuchen-entry.mp4',entryPoster:'./art/yuchen-lord.webp',
+    ritual:'./art/yuchen-ritual.mp4',ritualPoster:'./art/yuchen-lord.webp',
+    quiz:'./art/yuchen-quiz.mp4',poster:'./art/yuchen-lord.webp',firstLine:'玉宸正在为你排盘…'},
+  moonfox:{name:'月白',entry:'./art/yuebai-entry.mp4',entryPoster:'./art/yuebai-lord.webp',
+    ritual:'./art/yuebai-ritual.mp4',ritualPoster:'./art/yuebai-lord.webp',
+    quiz:'./art/yuebai-quiz.mp4',poster:'./art/yuebai-lord.webp',firstLine:'月白正在为你翻册…'},
+  xiyao:{name:'夕瑶',entry:'./art/xiyao-entry.mp4',entryPoster:'./art/xiyao-lord.webp',
+    ritual:'./art/xiyao-ritual.mp4',ritualPoster:'./art/xiyao-lord.webp',
+    quiz:'./art/xiyao-quiz.mp4',poster:'./art/xiyao-lord.webp',firstLine:'夕瑶正在为你看盘…'}
+};
+function fmSetVideo(sel,src,poster){
+  var v=fm$(sel);if(!v)return;
+  if(poster)v.setAttribute('poster',poster);
+  if(v.getAttribute('src')!==src){
+    v.setAttribute('src',src);v.load();
+    var p=v.play();if(p&&p.catch)p.catch(function(){});
+  }
+}
+function fmPersona(){
+  try{var p=localStorage.getItem('wen_funnel_persona');return PERSONAS[p]?p:'diyan';}catch(e){return 'diyan';}
+}
+function fmApplyPersona(key){
+  var P=PERSONAS[key];if(!P)return;
+  try{localStorage.setItem('wen_funnel_persona',key);}catch(e){}
+  fmSetVideo('#entryVideo',P.entry,P.entryPoster);
+  var bn=fm$('#brandName');if(bn)bn.textContent=P.name;
+  var ev=fm$('#entryVideo');if(ev)ev.setAttribute('aria-label',P.name);
+  fmSetVideo('#immVideo',P.ritual,P.ritualPoster);
+  fmSetVideo('.quiz-bg',P.quiz,P.poster);
+  fmSetVideo('.inter-video',P.quiz,P.poster);
+  fmSetVideo('.load-video',P.ritual,P.ritualPoster);
+  var qi=fm$('#qwhoImg');if(qi)qi.src=P.poster;
+  var qn=fm$('#qwhoName');if(qn)qn.textContent=P.name+' 问';
+  var la=fm$('#loadAvatar');if(la)la.src=P.poster;
+  var lt=fm$('#ltext');if(lt)lt.textContent=P.firstLine;
+  document.querySelectorAll('.persona-switch button').forEach(function(b){
+    var on=b.getAttribute('data-persona')===key;
+    b.classList.toggle('on',on);b.setAttribute('aria-selected',String(on));
+  });
+}
+document.querySelectorAll('.persona-switch button').forEach(function(b){
+  b.addEventListener('click',function(){ fmApplyPersona(b.getAttribute('data-persona')); });
+});
+fmApplyPersona(fmPersona());
+</script>
+</body>
+</html>
