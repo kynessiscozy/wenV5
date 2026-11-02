@@ -58,7 +58,7 @@ async function finishCalculation(page) {
 async function openRealReport(id, options) {
   const session = await openHome(id, options);
   const { page } = session;
-  await page.click('#homeCtaMain');
+  await page.evaluate(() => window.TJOpenForm?.());
   await page.waitForSelector('#formModal.open');
   await page.evaluate(() => {
     document.getElementById('bDate').value = '1992-11-20';

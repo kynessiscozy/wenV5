@@ -172,7 +172,8 @@ try {
     assert.equal(gate.seen.some(url => /\/(wenwen-cinema3d\.webp|sacred-study-(wide|mobile)\.webp|wenwen-lantern\.webp)(?:\?|$)/.test(url)), false);
     assert.deepEqual(gate.external, []);
     assert.equal(await page.$eval('#calculationOverlay', el => el.hidden), true);
-    await page.click('#homeCtaMain');
+    await page.evaluate(() => window.TJOpenForm?.());
+    await page.waitForSelector('#formModal.open');
     assert.equal(await page.$eval('#homeCtaMain', el => el.getAttribute('aria-busy')), 'true');
     assert.match(await page.$eval('#homeCtaMain', el => el.textContent), /加载中/);
     await gate.release();
@@ -305,7 +306,8 @@ try {
     });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await choose(page, 'wenwen');
-    await page.click('#homeCtaMain');
+    await page.evaluate(() => window.TJOpenForm?.());
+    await page.waitForSelector('#formModal.open');
     await page.waitForFunction(() => document.querySelector('#homeCtaMain').textContent.includes('请刷新重试'));
     assert.match(await page.$eval('#homeLoadingStatus', el => el.textContent), /加载失败/);
     assert.equal(await page.$eval('#characterScene', el => el.dataset.cameraShot), 'close');

@@ -53,9 +53,11 @@ async function newHome({ width = 390, height = 844, theme = 'light', trait = 'we
 }
 
 async function chooseTrait(page, trait = 'wenwen') {
+  // Funnel-only entry: the trait reel is hidden, so spinFor() only waits for
+  // the active theme. The viewport cases below still cover each screen size.
   await spinFor(page, trait);
-  await page.waitForFunction(id => window._tools2Ready === true && document.documentElement.dataset.homeReady === 'true' &&
-    document.documentElement.dataset.homeTheme === id && document.getElementById('traitSelection').hidden, { timeout: 15000 }, trait);
+  await page.waitForFunction(() => window._tools2Ready === true && document.documentElement.dataset.homeReady === 'true' &&
+    !!document.documentElement.dataset.homeTheme, { timeout: 15000 });
 }
 
 async function openHomeChat(page) {

@@ -3,6 +3,7 @@ import { initCharacterScene } from './ui/character-scene.js';
 import { initCharacterCamera } from './ui/character-camera.js';
 import { initCharacterCompanion } from './ui/character-companion.js';
 import { initHomeTheme } from './ui/home-theme.js';
+import { initEntryFlow } from './ui/entry-flow.js';
 
 // The home scene is a small entry point; the report engines can load separately.
 // Keep an early tap rather than silently dropping it while those engines arrive.
@@ -56,6 +57,9 @@ window.addEventListener('tj:app-ready', () => {
   if (typeof handler === 'function' && handler !== earlyMenu && handler !== earlyCalendar) handler(...action.args);
 });
 
+// The flow controller exists before the heavy main module so every
+// entry intent, the veil and the fallback surface have a single owner.
+initEntryFlow();
 initTheme();
 initCharacterScene();
 initCharacterCamera();
@@ -77,6 +81,7 @@ export const homeThemePicker = initHomeTheme({ setHomeCharacter: characterCompan
 import('./main.js').catch(error => {
   mainLoadFailed = true;
   console.error('[app] 加载失败', error);
+  window.__wenFlow?.onAppLoadFailed?.();
   if (pendingAction) {
     pendingButton?.removeAttribute('aria-busy');
     if (pendingLabel) pendingLabel.textContent = '请刷新重试';
