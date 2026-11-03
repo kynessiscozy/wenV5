@@ -61,6 +61,7 @@ npm run size       # 构建并统计产物大小
 npm run test:unit           # 单元测试与数据验证
 npm run test:flow           # 入口状态机与漏斗交接
 npm run test:funnel-exit    # 采集流程退出与未提交数据保护
+npm run test:funnel-report  # 问卷、预告与报告的浏览器交接
 npm run test:guide-perspective:e2e # 引路人视角与排盘结果一致性
 npm run test:first-entry-pwa # 首访、离线问卷与档案升级（自动构建）
 npm run test:e2e            # Puppeteer 浏览器回归
@@ -69,7 +70,7 @@ npm run test:cache-upgrade  # Service Worker 缓存升级
 npm run test:a11y           # 对比度检查
 ```
 
-`test:e2e`、`test:funnel-exit` 和 `test:guide-perspective:e2e` 需要先启动开发服务器。报告测试默认访问 `http://localhost:5173/index.html`，可通过 `BASE_URL` 指定地址；退出测试可通过 `FUNNEL_URL` 指定漏斗页地址。浏览器测试需要可用的 Chrome。`test:home-offline` 会自行提供构建后的测试站点，不需要另行启动服务器。
+`test:e2e`、`test:funnel-exit`、`test:funnel-report` 和 `test:guide-perspective:e2e` 需要先启动开发服务器。报告测试默认访问 `http://localhost:5173/index.html`，可通过 `BASE_URL` 指定地址；交接测试的 `BASE_URL` 为站点根路径；退出测试可通过 `FUNNEL_URL` 指定漏斗页地址。浏览器测试需要可用的 Chrome。`test:home-offline` 会自行提供构建后的测试站点，不需要另行启动服务器。
 
 算法和数据变更可运行对应验证：
 

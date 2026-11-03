@@ -1,6 +1,8 @@
 /* 漏斗单一入口：原首页（含特质轮盘）保留 DOM 供报告复用，但不再是可交互界面。
    这一条规则是唯一入口开关，取代此前写在 index.html 里的 !important 内联样式。 */
 html[data-entry="funnel"] #page1 { display: none; }
+/* Keep the retired reel hidden even if an older cached script unhides it. */
+html[data-entry="funnel"] #traitSelection { display: none !important; }
 
 /* 交接遮罩：funnel.html 问卷结束 → index.html 真排盘之间的一层，
    由 entry-flow.js 在报告就绪 / 失败 / 超时三种情况下揭开。 */
