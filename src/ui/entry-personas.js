@@ -60,7 +60,7 @@ export const FUNNEL_PERSONAS = Object.freeze({
     name: '雷兹',
     theme: 'leizi',
     poster: './art/leizi-lord.webp',
-    video: './art/leizi-invite.mp4?v=63',
+    video: './art/leizi-invite.mp4?v=64',
     lead: '先看天势，再定落子。',
     circle: '是雷兹先替你圈出来的',
     hooksTitle: '雷 兹 先 说 三 句',
