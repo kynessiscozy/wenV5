@@ -1,5 +1,4 @@
 import { getCtx } from '../state/context.js';
-import { goToFunnel } from './funnel-link.js';
 import { KB } from '../ai/kb.js';
 import { KBSearch, smartAnswer, extractIntents, buildBaziContext, buildWesternContext } from '../ai/index.js';
 import { getWesternProfile } from '../engines/western-context.js';
@@ -141,8 +140,8 @@ function _personalChart() {
 }
 function _goFillChart() {
   closeAsk();
-  // 出生信息只在漏斗问卷里填写，应用内不再有第二套表单。
-  goToFunnel();
+  if (document.body.classList.contains('report-active')) window.goBack?.();
+  window.TJOpenForm?.();
 }
 
 /** Neutral status, not a simulated response: the user can chat without a chart. */

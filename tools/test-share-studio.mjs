@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
-import { applyThemeFor, submitBirth } from './theme-helper.mjs';
+import { spinFor } from './trait-picker-helper.mjs';
 import { HOME_THEMES } from '../src/ui/home-theme.js';
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173/';
@@ -30,10 +30,14 @@ async function openReport(page, id) {
     }}});
   });
   await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window._tools2Ready === true);
-  await applyThemeFor(page, id);
-  await page.evaluate(() => { window.__testBirth = { bd: '1989-03-29', timeStr: '11:23' }; });
-  await submitBirth(page);
+  await page.waitForFunction(() => window._tools2Ready && document.getElementById('traitMachine')?.dataset.ready === 'true');
+  await spinFor(page, id);
+  await page.waitForFunction(() => document.getElementById('traitSelection').hidden);
+  await page.evaluate(() => window.TJOpenForm?.());
+  await page.waitForSelector('#formModal.open');
+  await page.$eval('#bDate', el => { el.value = '1989-03-29'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+  await page.$eval('#bTime', el => { el.value = '11:23'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+  await page.click('.character-form-submit');
   await page.waitForFunction(() => document.getElementById('calculationOverlay')?.dataset.calculationState === 'ready');
   await page.click('#calculationContinue');
   await page.waitForFunction(() => document.body.classList.contains('report-active'));
@@ -138,13 +142,9 @@ try {
   const colors = new Set();
   for (const [id, theme] of Object.entries(HOME_THEMES)) {
     if (id !== 'qinglan' || await page.$eval('html', el => el.dataset.homeTheme) !== id) {
-      // 报告内老虎机重选已删除；原地换主题与 home-theme 应用新主题的可观测效果一致。
-      await page.evaluate(theme => {
-        document.documentElement.dataset.homeTheme = theme;
-        window.dispatchEvent(new CustomEvent('tj:trait-change'));
-        window.dispatchEvent(new CustomEvent('wen:home-theme', { detail: { id: theme } }));
-      }, id);
-      await page.waitForFunction(expected =>
+      await page.click('#reportTraitReselect');
+      await spinFor(page, id);
+      await page.waitForFunction(expected => document.getElementById('traitSelection').hidden &&
         document.getElementById('characterResultHero')?.dataset.reportCharacter === expected, {}, id);
     }
     await openPoster(page);
@@ -160,7 +160,7 @@ try {
     await page.click('#shareStudio .share-studio-close');
   }
   assert.ok(colors.size >= 7, '各人物的海报底色和场景应有区别');
-  console.log('✓ 十种真实特质的角色海报、真实数据及主题切换');
+  console.log('✓ 十种真实特质的角色海报、真实数据及角色重选');
 
   // Contextual entries should use the already-rendered daily/week data.
   for (const [kind, expected] of [['today', ['宜', '忌']], ['week', ['相对顺利', '多留余量']], ['year', ['事业', '财运']]]) {

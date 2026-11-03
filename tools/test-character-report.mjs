@@ -1,4 +1,4 @@
-import { applyThemeFor, submitBirth } from './theme-helper.mjs';
+import { spinFor } from './trait-picker-helper.mjs';
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 import { HOME_THEMES } from '../src/ui/home-theme.js';
@@ -38,9 +38,10 @@ async function openHome(id, { width = 390, height = 844, mode = 'light', reduced
     localStorage.setItem('tj_theme', theme);
     document.documentElement.dataset.theme = theme;
   }, mode);
-  await applyThemeFor(page, id);
+  await page.waitForSelector('#traitMachine[data-ready="true"]');
+  await spinFor(page, id);
   await page.waitForFunction(theme => window._tools2Ready === true &&
-    document.documentElement.dataset.homeTheme === theme,
+    document.documentElement.dataset.homeTheme === theme && document.getElementById('traitSelection').hidden,
   { timeout: 15000 }, id);
   return { page, context };
 }
@@ -57,22 +58,15 @@ async function finishCalculation(page) {
 async function openRealReport(id, options) {
   const session = await openHome(id, options);
   const { page } = session;
+  await page.evaluate(() => window.TJOpenForm?.());
+  await page.waitForSelector('#formModal.open');
   await page.evaluate(() => {
-    window.__testBirth = { ...(window.__testBirth || {}), bd: '1992-11-20' };
-    window.__testBirth = { ...(window.__testBirth || {}), timeStr: '11:30' };
+    document.getElementById('bDate').value = '1992-11-20';
+    document.getElementById('bTime').value = '11:30';
   });
-  await submitBirth(page);
+  await page.click('.character-form-submit');
   await finishCalculation(page);
   return session;
-}
-
-/** 报告内老虎机换主题已删除；原地换主题等价于 home-theme 应用新主题时的可观测效果。 */
-async function switchThemeInPlace(page, id) {
-  await page.evaluate(theme => {
-    document.documentElement.dataset.homeTheme = theme;
-    window.dispatchEvent(new CustomEvent('tj:trait-change'));
-    window.dispatchEvent(new CustomEvent('wen:home-theme', { detail: { id: theme } }));
-  }, id);
 }
 
 async function showSection(page, section) {
@@ -123,9 +117,9 @@ async function themeColors(page) {
       pageBg: root.backgroundColor, bodyBg: getComputedStyle(document.body).backgroundColor,
       headerBg: getComputedStyle(document.querySelector('.p2-top')).backgroundColor,
       chapterBg: getComputedStyle(document.querySelector('#s-yun .result-character-chapter')).backgroundColor,
-      formBg: getComputedStyle(document.querySelector('#entryFallback .ef-card')).backgroundColor,
+      formBg: getComputedStyle(document.querySelector('.form-modal-sheet')).backgroundColor,
       browserTheme: document.querySelector('meta[name="theme-color"]')?.content,
-      submit: getComputedStyle(document.querySelector('#entryFallback .ef-primary')).backgroundColor,
+      submit: getComputedStyle(document.querySelector('.character-form-submit')).backgroundColor,
       saveGradient: getComputedStyle(document.querySelector('.save-btn')).backgroundImage,
     };
     probe.remove();
@@ -201,7 +195,7 @@ try {
     const light = await themeColors(page);
     assert.equal(light.trait, HOME_THEMES[id].trait.color, `${id} 全站配色源自特质专属色`);
     assert.deepEqual(light.graphLight.split(',').map(Number), light.accent.match(/\d+/g).slice(0, 3).map(Number), `${id} 图表与可读的强调色应一致`);
-    assert.equal(light.submit, light.accent, '入口主按钮也跟随特质色');
+    assert.equal(light.submit, light.accent, '表单主按钮也跟随特质色');
     assert.ok(light.saveGradient.includes(light.accent), '保存按钮的渐变也跟随特质色');
     assert.ok(contrast(light.on, light.accent) >= 4.5 && contrast(light.text, light.bg) >= 4.5 && contrast(light.text, light.surface) >= 4.5 &&
       contrast(light.foreground, light.bg) >= 4.5 && contrast(light.muted, light.bg2) >= 4.5 && contrast(light.muted, light.surface3) >= 4.5,
@@ -257,13 +251,13 @@ try {
   assert.equal(darkBackgrounds.size, Object.keys(THEMES).length, '十种特质的深色页面底色各不相同');
   assert.equal(chapterBackgrounds.size, Object.keys(THEMES).length, '同行场景背景也跟随各自的特质色');
   assert.equal(headerBackgrounds.size, Object.keys(THEMES).length, '报告顶栏的实际背景跟随特质色');
-  assert.equal(formBackgrounds.size, Object.keys(THEMES).length, '待机卡的实际背景跟随特质色');
+  assert.equal(formBackgrounds.size, Object.keys(THEMES).length, '输入表单的实际背景跟随特质色');
   assert.ok(colorDistance(backgrounds.get('moonfox'), backgrounds.get('diyan')) >= 28 &&
     colorDistance(backgrounds.get('moonfox'), backgrounds.get('xingling')) >= 18,
     '蓝、红、紫主题的实际大面积背景应有明显区别');
   console.log('✓ 十种特质的实际页面/场景底色、浅深对比与三处合并阅读；数据及问问 AI 身份不变');
 
-  // Switching the theme inside an existing real report changes only the companion.
+  // Reselecting inside an existing real report changes only the companion.
   {
     const { page, context } = await openRealReport('wenwen', { width: 390, height: 844, reduced: true });
     const before = await page.evaluate(() => {
@@ -272,7 +266,7 @@ try {
       return { color: getComputedStyle(document.documentElement).getPropertyValue('--c-accent').trim(),
         pageBg: getComputedStyle(document.body).backgroundColor,
         chapterBg: getComputedStyle(document.querySelector('#s-yun .result-character-chapter')).backgroundColor,
-        date: window._ctx.input.bd_raw, day: window._ctx.dg + window._ctx.dw,
+        date: document.getElementById('bDate').value, day: window._ctx.dg + window._ctx.dw,
         summary: ['s-ming', 's-yun', 's-rel'].map(id => document.querySelector(`#${id} .qr-summary`).textContent),
         guide: document.querySelector('#characterReportGuide .character-prompt-action').textContent };
     });
@@ -282,11 +276,17 @@ try {
       assert.equal(await page.$eval(`#${section} .qr-card`, el => el.classList.contains('qr-collapsed')), true);
       assert.equal(await page.$eval(`#${section} .qr-body`, el => el.hasAttribute('inert') && el.getAttribute('aria-hidden') === 'true'), true);
     }
-    await switchThemeInPlace(page, 'suyan');
-    await page.waitForFunction(() => document.querySelector('#characterResultHero')?.dataset.reportCharacter === 'suyan');
+    await page.click('#reportTraitReselect');
+    assert.equal(await page.$eval('#page2', el => el.inert), true, '重选时报告背景不可操作');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'wenwen');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'reportTraitReselect');
+    await page.click('#reportTraitReselect');
+    await spinFor(page, 'suyan');
+    await page.waitForFunction(() => document.getElementById('traitSelection').hidden && document.querySelector('#characterResultHero')?.dataset.reportCharacter === 'suyan');
     const after = await page.evaluate(() => ({ sameContext: window._ctx === window.__savedTraitCtx,
       report: document.body.classList.contains('report-active'), inert: document.getElementById('page2').inert,
-      date: window._ctx.input.bd_raw, day: window._ctx.dg + window._ctx.dw,
+      date: document.getElementById('bDate').value, day: window._ctx.dg + window._ctx.dw,
       summary: ['s-ming', 's-yun', 's-rel'].map(id => document.querySelector(`#${id} .qr-summary`).textContent),
       visuals: ['s-ming', 's-yun', 's-rel'].map(id => [...document.querySelectorAll(`#${id} [data-report-character]`)].map(el => el.dataset.reportCharacter)),
       labels: [...document.querySelectorAll('.result-chapter-kicker')].map(el => el.textContent),
@@ -303,12 +303,13 @@ try {
     assert.deepEqual(after.summary, before.summary, '原速读内容不应被替换');
     assert.ok(after.visuals.flat().every(id => id === 'suyan'));
     assert.ok(after.labels.every(label => label === '自信 · 同行解读'));
-    assert.deepEqual(after.cardsKept, [true, true, true], '换主题保留三个原速读节点');
+    assert.deepEqual(after.cardsKept, [true, true, true], '重选保留三个原速读节点');
     assert.deepEqual(after.collapsed, [true, true, true], '三处阅读折叠状态应保留');
-    assert.notEqual(after.color, before.color, '换主题后全站强调色同步更新');
-    assert.notEqual(after.pageBg, before.pageBg, '换主题后实际页面大背景也同步更新');
-    assert.notEqual(after.chapterBg, before.chapterBg, '换主题后同行场景背景同步更新');
+    assert.notEqual(after.color, before.color, '重选后全站强调色同步更新');
+    assert.notEqual(after.pageBg, before.pageBg, '重选后实际页面大背景也同步更新');
+    assert.notEqual(after.chapterBg, before.chapterBg, '重选后同行场景背景同步更新');
     assert.equal(after.guide, before.guide, '问问对话身份不变');
+    assert.equal(after.focus, 'reportTraitReselect', '重建报告后焦点返回新的重选按钮');
     await page.click('#modeWestern');
     await page.waitForFunction(() => window._w3d?.built?.astro?.container === document.getElementById('w3d-astro') && document.querySelector('#w3d-astro canvas'), { timeout: 15000 });
     await page.$eval('#w3d-astro', el => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
@@ -372,10 +373,11 @@ try {
         connected: window.__savedCanvas.isConnected };
     });
     assert.deepEqual(recovered, { overview: true, canvas: true, connected: true }, '可选人物构建失败也不能丢失真实一览或星盘');
-    await switchThemeInPlace(page, 'moonfox');
-    await page.waitForFunction(() => document.querySelector('#characterResultHero')?.dataset.reportCharacter === 'moonfox');
+    await page.click('#reportTraitReselect');
+    await spinFor(page, 'moonfox');
+    await page.waitForFunction(() => document.getElementById('traitSelection').hidden && document.querySelector('#characterResultHero')?.dataset.reportCharacter === 'moonfox');
     assert.equal(await page.$eval('html', el => el.dataset.systemMode), 'western');
-    assert.equal(await page.$eval('#characterResultHero .result-portrait-toggle', el => el.getAttribute('aria-expanded')), 'false', '换主题后保留西方立绘收起状态');
+    assert.equal(await page.$eval('#characterResultHero .result-portrait-toggle', el => el.getAttribute('aria-expanded')), 'false', '重选后保留西方立绘收起状态');
     assert.equal(await page.evaluate(() => window._ctx === window.__savedTraitCtx), true);
     await page.waitForFunction(() => window._w3d.built.astro.scene.background.getHexString() !== window.__savedAstroStage,
       { timeout: 10000 });
@@ -384,7 +386,7 @@ try {
       canvas: document.querySelector('#w3d-astro canvas') === window.__savedCanvas,
       lost: window.__savedCanvas.getContext('webgl2')?.isContextLost(),
       connected: window.__savedCanvas.isConnected,
-    })), { scene: true, canvas: true, lost: false, connected: true }, '换主题应保留同一个可用的 WebGL 场景');
+    })), { scene: true, canvas: true, lost: false, connected: true }, '重选应保留同一个可用的 WebGL 场景');
     assert.notEqual(await page.$eval('#characterResultHero .sys-western', el => getComputedStyle(el).display), 'none');
     await showSection(page, 's-yun');
     await page.waitForFunction(color => window._w3d.built.horo?.accent === color, { timeout: 10000 }, HOME_THEMES.moonfox.trait.color);
@@ -394,10 +396,10 @@ try {
       material: '#' + window._w3d.built.horo.mats.accent[1].color.getHexString(),
       stageMatches: window._w3d.built.horo.scene.background.getHexString() === window._w3d.built.astro.scene.background.getHexString() })),
       { scene: true, canvas: true, orbit: .35, material: HOME_THEMES.moonfox.trait.color, stageMatches: true },
-      '换主题后黄道天球和星空原地换色且保留视角');
-    await assertNoHorizontalOverflow(page, '换主题后西方报告');
+      '重选后黄道天球和星空原地换色且保留视角');
+    await assertNoHorizontalOverflow(page, '重选后西方报告');
     await context.close();
-    console.log('✓ 报告内换主题保留输入、真实计算、折叠状态、体系与问问身份');
+    console.log('✓ 报告内重选保留输入、真实计算、折叠状态、体系与问问身份');
   }
 
   // Exercise navigation and the original report controls instead of only
@@ -555,7 +557,8 @@ try {
     const previousDay = await page.evaluate(() => window._ctx.dg + window._ctx.dw);
     await page.evaluate(async () => {
       document.getElementById('toolModal').classList.add('cal-fullscreen');
-      window.__testBirth = { ...(window.__testBirth || {}), bd: '1995-01-15' };
+      document.getElementById('formModal').classList.add('open');
+      document.getElementById('bDate').value = '1995-01-15';
       await window.calc(false);
     });
     const updated = await page.evaluate(() => ({ id: document.querySelector('#characterResultHero')?.dataset.reportCharacter,

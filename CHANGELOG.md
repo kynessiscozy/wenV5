@@ -4,15 +4,7 @@
 
 格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/),版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased] - 2026-11-03
-
-### 变更（入口再收敛：删老虎机与旧表单，首屏月白优先）
-
-- **彻底移除老虎机与旧表单**：删除首页特质老虎机（`#traitSelection`、`src/trait-selection.css`、选角状态机）与出生信息表单（`#formModal`、`window.TJOpenForm/TJCloseForm`、城市下拉、结果风格选择器、未保存离开确认）及其全部样式。主应用内出生信息改为单一状态对象 `birthInput`，只由漏斗交接 / 档案载入写入；`applyEntryPayload()` 新增 `resolveCityByName()` 按名称解析自由填写城市。原「打开表单」的各处意图（待机卡、报告重推、日历补全命盘、问问补全、指引主行动、点人物）统一经 `src/ui/funnel-link.js` 的 `goToFunnel()` 回唯一入口录入。报告内从未渲染过的「重新选择特质」一并删除。
-- **首屏月白优先 + 主题色跟随人物**：`funnel.html` 静态首屏即月白（立绘/视频/文案预渲染，无闪烁），每次打开都从月白开始；四位引路人各有 `html[data-persona]` 调色板，首屏主按钮、选中态与全页强调色随所选人物切换；主应用默认与回退主题同样改为月白（`DEFAULT_PERSONA='moonfox'`）。
-- **首屏人物选择可折叠**：人物列表默认收起（只显示当前引路人），点「换一位引路人」展开；**新的填表互动新增关闭按钮**：答题任意一步点关闭即回首屏，已答内容保留、待触发的过场计时作废（`flowGen` 代次守卫），可继续或换人重答。
-- **离线缓存**升级到 `wenda-cache-v49`；SW 接管重载守卫改为按「报告 / 推演中 / 未消费交接」判定忙碌，不再依赖表单或选择器状态。
-- **测试**：新增 `tools/test-funnel-firstscreen.mjs`（并入 `test:unit`）锁定月白首屏、调色板、折叠选人、随时关闭与旧入口已删等不变量；`tools/trait-picker-helper.mjs` 改为 `tools/theme-helper.mjs`（`applyThemeFor` / `submitBirth` 走真实交接通道），删除 `tools/test-trait-picker.mjs`，重写 `tools/test-character-home.mjs` 与 `tools/test-mobile-calculation.mjs`，其余浏览器回归同步迁移。
+## [Unreleased] - 2026-11-02
 
 ### 变更（交互逻辑梳理：全免费漏斗并入后）
 

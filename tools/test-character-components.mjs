@@ -244,7 +244,7 @@ document.querySelectorAll = selector => selector === '[data-character-name]' ? n
 let formOpened = 0, chatOpened = 0;
 const adapter = initCharacterCompanion({
   character: custom,
-  onExplore: () => { formOpened++; },
+  openForm: () => { formOpened++; },
   openAsk: () => { chatOpened++; },
 });
 assert.ok(names.every(el => el.textContent === '小星'));

@@ -48,7 +48,8 @@ try {
   await page.select('#aiProviderSelect','deepseek');
   assert.equal(await page.evaluate(()=>window.requests.length),0, '切换服务商不应自动发送密钥');
   await page.evaluate(()=>window.closeAISettingsModal());
-  await page.evaluate(()=>window.applyEntryPayload?.({bd:'1990-06-15',timeStr:'09:00',cityName:'上海市',gen:'male'}));
+  await page.evaluate(()=>window.TJOpenForm());
+  await page.waitForSelector('#formModal.open');
   await page.evaluate(()=>void window.calc());
   await continueCalculation(page);
   await page.evaluate(()=>window.openAsk());

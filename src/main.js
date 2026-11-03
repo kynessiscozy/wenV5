@@ -2,7 +2,7 @@ import { showToast } from './ui/toast.js';
 import { showFunnelTeaserIfNeeded } from './ui/funnel-teaser.js';
 import { focusSafely } from './ui/focus.js';
 import { CURR_YEAR, TG, DZ, SS, ZHI_CHONG } from './engines/shared.js';
-import { CD } from './engines/cities.js';
+import { CD, CG } from './engines/cities.js';
 import { jqDate, solarTermDutyDay, resolveBirthDateTime, getDayPillarIndex } from './engines/calendar.js';
 import { mkBazi, mkWx, mkSs, mkShenSha, mkDy, mkLn, getLiuYue } from './engines/bazi.js';
 import { mkZw } from './engines/ziwei.js';
@@ -28,7 +28,7 @@ import { runZodiacTool } from './tools/zodiac.js';
 import { runRelationTool } from './tools/relation.js';
 import { openPosterShare as showPosterShare, openCanvasShare } from './share/studio.js';
 import { initTools3DRingCarousel } from './render/tools-ring.js';
-import { characterCompanion } from './home.js';
+import { characterCompanion, homeThemePicker } from './home.js';
 import { mountCharacterReport } from './ui/character-report.js';
 import { beginCharacterCalculation, warmCharacterCalculation } from './ui/character-calculation.js';
 import { getResultStyle } from './state/result-style.js';
@@ -46,7 +46,23 @@ window.openNoviceGuide = openNoviceGuide;
 window.closeNoviceGuide = closeNoviceGuide;
 window.switchNoviceGuideTab = switchNoviceGuideTab;
 
-
+window.selectResultStyle=function(value){
+  const hidden=document.getElementById('bResultStyle');
+  const hint=document.getElementById('resultStyleHint');
+  if(hidden)hidden.value=value;
+  document.querySelectorAll('.result-style-option').forEach(btn=>{
+    const active=btn.dataset.style===value;
+    btn.classList.toggle('active',active);
+    btn.setAttribute('aria-checked',active?'true':'false');
+  });
+  if(hint)hint.textContent=getResultStyle(value).intro;
+  window._formDirty=true;
+};
+// 捕获阶段兜底：即使局部表单监听未初始化，按钮仍能切换风格。
+document.addEventListener('click',e=>{
+  const btn=e.target.closest?.('.result-style-option');
+  if(btn)window.selectResultStyle(btn.dataset.style);
+},true);
 import { calcYearScores } from './state/scoring.js';
 import { buildContext } from './state/context.js';
 import {
@@ -124,7 +140,7 @@ let aboutReturnFocus=null;
   window.runRelationTool=runRelationTool;
 
   // 3. 之前已暴露的函数（保持不变）
-  window.calc=calc;window.loadProfile=loadProfile;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.openArchiveModal=openArchiveModal;window.closeArchiveModal=closeArchiveModal;window.loadProfileFromArchive=loadProfileFromArchive;window.deleteProfileFromArchive=deleteProfileFromArchive;window.confirmSaveProfile=confirmSaveProfile;window.quickSaveName=quickSaveName;window.updateSaveNameCount=updateSaveNameCount;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){const m=document.getElementById('aboutModal');if(!m)return;aboutReturnFocus=document.activeElement;m.classList.add('open');focusSafely(m.querySelector('.modal-close'));};window.closeAboutModal=function(){const m=document.getElementById('aboutModal');if(!m?.classList.contains('open'))return;m.classList.remove('open');if(aboutReturnFocus?.isConnected&&aboutReturnFocus.getClientRects().length)focusSafely(aboutReturnFocus);aboutReturnFocus=null;};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};
+  window.calc=calc;window.loadProfile=loadProfile;window.selChip=selChip;window.exportProfiles=exportProfiles;window.handleImport=handleImport;window.openAsk=openAsk;window.closeAsk=closeAsk;window.goBack=goBack;window.switchTab=switchTab;window.showPage2=showPage2;window.openSaveModal=openSaveModal;window.closeSaveModal=closeSaveModal;window.openArchiveModal=openArchiveModal;window.closeArchiveModal=closeArchiveModal;window.loadProfileFromArchive=loadProfileFromArchive;window.deleteProfileFromArchive=deleteProfileFromArchive;window.confirmSaveProfile=confirmSaveProfile;window.quickSaveName=quickSaveName;window.updateSaveNameCount=updateSaveNameCount;window.deleteProfile=deleteProfile;window.openMonthModal=openMonthModal;window.closeMonthModal=closeMonthModal;window.openCalendarMode=openCalendarMode;window.openAboutModal=function(){const m=document.getElementById('aboutModal');if(!m)return;aboutReturnFocus=document.activeElement;m.classList.add('open');focusSafely(m.querySelector('.modal-close'));};window.closeAboutModal=function(){const m=document.getElementById('aboutModal');if(!m?.classList.contains('open'))return;m.classList.remove('open');if(aboutReturnFocus?.isConnected&&aboutReturnFocus.getClientRects().length)focusSafely(aboutReturnFocus);aboutReturnFocus=null;};window.openDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.add('open');};window.closeDisclaimerModal=function(){document.getElementById('disclaimerModal').classList.remove('open');};
 
   // Report and contextual share buttons all open the same preview studio.
   window.TJShareReport=()=>window.openPosterShare('year');
@@ -252,54 +268,91 @@ window.addEventListener('tj:trait-change',()=>{
   if(window._ctx && document.getElementById('s-ming'))refreshCharacterReport();
 });
 
-/* 出生信息是 calc() 的唯一输入状态，旧表单 DOM 已彻底移除。
-   数据只来自两处：漏斗交接（applyEntryPayload）与档案载入（loadProfile）。
-   默认值与旧表单完全一致（时间 09:00、上海、陪伴型风格），保证问卷跳过
-   可选项时计算前提不变。 */
-const DEFAULT_BIRTH_INPUT=Object.freeze({
-  bd:'',timeStr:'09:00',bp:'shanghai',gen:'male',q:'',
-  useTrueSolar:false,resultStyle:'companion',
-});
-let birthInput={...DEFAULT_BIRTH_INPUT};
-function setBirthInput(patch){
-  birthInput={...birthInput,...patch};
-  return birthInput;
+// A visible, persistent error is actionable on a small screen, unlike a short toast.
+function clearFormError(){
+  const error=document.getElementById('formError');
+  if(error){error.hidden=true;error.textContent='';}
+  document.querySelectorAll('#formModal [aria-invalid="true"]').forEach(el=>el.removeAttribute('aria-invalid'));
+}
+function showFormError(message,field){
+  const modal=document.getElementById('formModal');
+  if(!modal?.classList.contains('open'))window.TJOpenForm?.();
+  const error=document.getElementById('formError');
+  if(modal?.classList.contains('open')&&error){
+    clearFormError();
+    error.textContent=message;error.hidden=false;
+    if(field){
+      field.setAttribute('aria-invalid','true');
+      // TJOpenForm may have queued focus on the heading; the invalid field wins.
+      requestAnimationFrame(()=>{if(modal.classList.contains('open')&&field.getAttribute('aria-invalid')==='true')field.focus();});
+    }
+  }else showToast(message,{type:'error',duration:6000});
 }
 
-/* 把自由填写的城市名解析成城市 id：只接受精确名/id/无歧义拼音，
-   绝不从部分或歧义输入里猜（例如 sz = 深圳 / 苏州)。 */
-function resolveCityByName(text){
-  const value=String(text||'').trim();
-  if(!value)return null;
-  const key=value.toLowerCase().replace(/市$/,'');
+const CITY_SELECTION_MESSAGE='请从候选列表选择出生地点；找不到时可选择附近城市。';
+function closeCityDropdown(){
+  const dd=document.getElementById('cDD'),inp=document.getElementById('cInp');
+  dd?.classList.remove('show');
+  inp?.setAttribute('aria-expanded','false');
+  inp?.removeAttribute('aria-activedescendant');
+}
+function selectBirthCity(id){
+  const city=CD[id],inp=document.getElementById('cInp'),hid=document.getElementById('bPlace');
+  if(!city||!inp||!hid)return;
+  if(hid.value!==id||inp.value!==city.n)window._formDirty=true;
+  hid.value=id;inp.value=city.n;
+  closeCityDropdown();clearFormError();
+}
+function resolveBirthCity(){
+  const inp=document.getElementById('cInp'),hid=document.getElementById('bPlace');
+  const text=(inp?.value||'').trim();
+  if(!text)return null;
+  const selected=CD[hid?.value];
+  if(selected&&text===selected.n)return {id:hid.value,city:selected};
+  // Exact names, ids and unambiguous abbreviations are safe to accept even
+  // when the user pressed submit instead of tapping a suggestion. Never guess
+  // from a partial or ambiguous query (e.g. sz = 深圳 / 苏州).
+  const key=text.toLowerCase().replace(/市$/,'');
   const matches=Object.entries(CD).filter(([id,city])=>
     id.toLowerCase()===key||city.n.toLowerCase().replace(/市$/,'')===key||(city.p||'').toLowerCase()===key);
   if(matches.length!==1)return null;
   const [id,city]=matches[0];
+  selectBirthCity(id);
   return {id,city};
 }
-/* funnel.html 的问卷允许自由填写甚至跳过出生城市。统一在这里解析：
-   识别不了就回退默认城市并提示，绝不让访客在交接后无声无息地算错。 */
+/* funnel.html 的问卷允许自由填写甚至跳过出生城市，而表单要求一个已选中的
+   城市 id。统一在这里解析：识别不了就回退默认城市并提示，绝不让访客困在
+   遮罩后面看一条看不见的校验错误。 */
 window.applyEntryPayload = function(payload){
+  const set=(id,value)=>{
+    const el=document.getElementById(id);
+    if(!el || value===undefined || value===null) return;
+    el.value=value;
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    el.dispatchEvent(new Event('change',{bubbles:true}));
+  };
+  const cityInput=document.getElementById('cInp');
+  const placeInput=document.getElementById('bPlace');
+  const defaults={city:cityInput?.value||'',place:placeInput?.value||''};
+  set('bDate',payload.bd);
+  if(payload.timeStr)set('bTime',payload.timeStr); // 跳过时保留默认 09:00
+  if(payload.gen)set('bGen',payload.gen);
   let warning='';
-  let bp=DEFAULT_BIRTH_INPUT.bp;
   if(payload.cityName){
-    const place=resolveCityByName(payload.cityName);
-    if(place)bp=place.id;
-    else{
-      warning='出生地点没能识别，已按上海计算；可以重新填写并写全城市名。';
+    set('cInp',payload.cityName);
+    if(placeInput)placeInput.value=''; // 强制按新文本重新解析
+    if(!resolveBirthCity()){
+      set('cInp',defaults.city);
+      if(placeInput)placeInput.value=defaults.place;
+      warning='出生地点没能识别，已按默认城市计算；可在表单里修改。';
       showToast(warning,{duration:6000});
     }
+  }else if(placeInput&&!CD[placeInput.value]){
+    set('cInp',defaults.city);
+    placeInput.value=defaults.place;
   }
-  setBirthInput({
-    bd:typeof payload.bd==='string'?payload.bd:'',
-    timeStr:payload.timeStr||DEFAULT_BIRTH_INPUT.timeStr, // 问卷跳过时沿用默认 09:00
-    bp,
-    gen:payload.gen==='female'?'female':'male',
-    q:'',
-    useTrueSolar:false,
-    resultStyle:DEFAULT_BIRTH_INPUT.resultStyle,
-  });
+  clearFormError();
+  window._formDirty=false;
   return {ok:true,warning};
 };
 
@@ -316,28 +369,32 @@ let calculationInProgress=false;
 async function calc(isDemoPreview=false){
   if(calculationInProgress)return;
   window.__wenFlow?.onCalcStart?.();
-  const validationError=(message)=>{
-    window.__wenFlow?.onCalcFailed?.();
-    showToast(message,{type:'error',duration:6000});
+  const formModal=document.getElementById('formModal');
+  const fromForm=!!(formModal&&formModal.classList.contains('open'))&&!isDemoPreview;
+  const dateField=document.getElementById('bDate'),timeField=document.getElementById('bTime');
+  const bd=dateField.value;
+  const validationError=(message,field)=>{
+    window.__wenFlow?.onCalcFailed?.({formOpen:!!formModal?.classList.contains('open')});
+    return showFormError(message,field);
   };
-  const bd=birthInput.bd;
-  if(!validBirthDate(bd))return validationError(bd?'出生日期无效，请回入口页重新填写。':'还没有出生信息，请先回入口页填写。');
-  const timeStr=birthInput.timeStr||'09:00';
-  if(!/^([01]\d|2[0-3]):[0-5]\d(?::00(?:\.0{1,3})?)?$/.test(timeStr)){
-    return validationError('出生时间无效，请回入口页重新填写。');
+  if(!validBirthDate(bd))return validationError(bd?'请输入有效的出生日期。':'请选择出生日期。',dateField);
+  const timeStr=timeField.value||'09:00';
+  if(timeField.validity?.badInput||!/^([01]\d|2[0-3]):[0-5]\d(?::00(?:\.0{1,3})?)?$/.test(timeStr)){
+    return validationError('请输入有效的出生时间。',timeField);
   }
   const [hh,mm]=timeStr.split(':').map(Number);
-  const city=CD[birthInput.bp];
-  if(!city)return validationError('出生地点无效，请回入口页重新填写。');
-  const bp=birthInput.bp;
-  const gen=birthInput.gen==='female'?'female':'male';
-  const q=birthInput.q||'';
-  const resultStyleId=birthInput.resultStyle||'companion';
+  const place=resolveBirthCity();
+  if(!place)return validationError(CITY_SELECTION_MESSAGE,document.getElementById('cInp'));
+  const {id:bp,city}=place;
+  const gen=document.getElementById('bGen').value;
+  const q=document.getElementById('bQ').value;
+  const resultStyleId=document.getElementById('bResultStyle')?.value||'companion';
   const resultStyle=getResultStyle(resultStyleId);
-  const useTrueSolar=!!birthInput.useTrueSolar;
+  const useTrueSolar=document.getElementById('swTrueSolar').classList.contains('on');
   const[y,m,d]=bd.split('-').map(Number);
+  clearFormError();closeCityDropdown();
 
-  // 纯计算与渲染。失败抛错，由外层统一处理界面回退。
+  // 纯计算与渲染。失败抛错，由两条过渡路径各自处理界面。
   function doCompute(){
     const resolved=resolveBirthDateTime(y,m,d,hh,mm,useTrueSolar,city.o,city.tz);
     const b=mkBazi(resolved.year,resolved.month,resolved.day,resolved.hourZhi,resolved.hour,resolved.minute,resolved.instant);
@@ -347,6 +404,7 @@ async function calc(isDemoPreview=false){
     const _input={by:y,bm:m,bd:d,bd_raw:bd,timeStr,bp,gen,q,useTrueSolar,resultStyle:resultStyleId,resultStyleLabel:resultStyle.label};
     const _preCtx=buildContext({b,wx,ss,dy,ln,zw,qm,mh,si,shensha,liuyue,P:null,gen,q,city,input:_input});
     window._ctx=_preCtx;window._baziData=_preCtx;window._reportData=_preCtx;
+    window._formDirty=false; // 已推演应用，表单修改视为已保存
     applyTheme(wx.ys);
     renderAll(b,wx,ss,dy,ln,zw,qm,mh,si,gen,q,city,y,shensha,liuyue,_preCtx);
     // 让问问大师与报告顶部共享“示例报告”状态。
@@ -357,49 +415,129 @@ async function calc(isDemoPreview=false){
       const reportInner=document.getElementById('p2Inner');
       if(reportInner)reportInner.insertAdjacentHTML('afterbegin','<div class="demo-report-note" role="status"><span>示例</span><b>当前为体验用示例报告</b><em>内容基于默认示例信息生成，请勿用于个人判断。</em></div>');
     }
-    // The chosen character accompanies the real report.
+    // The chosen home character accompanies the real report, including when
+    // a calendar update recalculates it without immediately opening the page.
     refreshCharacterReport(!!isDemoPreview);
   }
 
-  const previous={ctx:window._ctx,bazi:window._baziData,report:window._reportData,
+  // 日历录入只更新档案并留在日历；所有真正打开报告的入口共享同一推演场景。
+  const calModal=document.getElementById('toolModal');
+  const fromCalendar=fromForm&&!!(calModal&&calModal.classList.contains('cal-fullscreen'));
+  const previous={ctx:window._ctx,bazi:window._baziData,report:window._reportData,dirty:window._formDirty,
     yongShen:document.documentElement.getAttribute('data-yongshen')};
   calculationInProgress=true;
   let scene=null,completed=false;
   try{
-    // Only an in-flight funnel handoff may auto-acknowledge the result;
-    // every other visit keeps the explicit "查看报告" confirmation.
-    scene=beginCharacterCalculation({autoAdvance:!!window.__wenFlow?.isAutoAdvance?.()});
-    if(scene)await scene.paint(); // 让角色场景先绘制，再执行同步排盘
+    if(!fromCalendar){
+      // Only an in-flight funnel handoff may auto-acknowledge the result;
+      // every other visit keeps the explicit "查看报告" confirmation.
+      scene=beginCharacterCalculation({autoAdvance:!!window.__wenFlow?.isAutoAdvance?.()});
+      if(scene)await scene.paint(); // 让角色场景先绘制，再执行同步排盘
+    }
     doCompute();
+    if(fromCalendar){
+      formModal.classList.remove('open');
+      document.body.classList.remove('form-open');
+      const mb=document.getElementById('homeMenuBtn');if(mb)mb.style.display='';
+      window.dispatchEvent(new CustomEvent('tj:profile-ready'));
+      // Calendar re-renders after receiving the profile, replacing its button.
+      if(!formReturnFocus?.isConnected)formReturnFocus=calModal.querySelector('[data-fill]');
+      restoreFormFocus();
+      completed=true;
+      window.__wenFlow?.onCalcFailed?.({formOpen:false});
+      return;
+    }
     scene?.showResult(window._ctx?.b);
     if(scene)await scene.wait();
     scene?.close();
+    if(formModal&&formModal.classList.contains('open')){
+      formModal.classList.remove('open');
+      document.body.classList.remove('form-open');
+      const mb=document.getElementById('homeMenuBtn');if(mb)mb.style.display='';
+    }
     showPage2();
     characterCompanion.onReportReady({isDemo:isDemoPreview});
     // 预告页的触发条件保持不变（applied && !teasered），但现在是罩层之上
     // 的最后一层，可以关闭、可以用 Esc 退出，也不会再被后台快捷键穿透。
     try { showFunnelTeaserIfNeeded(); } catch (e) { console.warn('[funnel] 预告页失败', e); }
     window.__wenFlow?.onReportReady?.();
-    // 日历等工具靠这个事件感知新命盘并刷新个性化内容。
-    window.dispatchEvent(new CustomEvent('tj:profile-ready'));
     document.querySelectorAll('.tab-item')[0].click();
+    formReturnFocus=null;
     focusSafely(document.getElementById('p2MenuBtn'));
     completed=true;
   }catch(e){
-    // Keep the last successful context available;输入保留在 birthInput 里可重试。
+    // Keep the original form and last successful context available for retry.
     window._ctx=previous.ctx;window._baziData=previous.bazi;window._reportData=previous.report;
+    window._formDirty=previous.dirty;
     if(previous.yongShen===null)document.documentElement.removeAttribute('data-yongshen');
     else document.documentElement.setAttribute('data-yongshen',previous.yongShen);
     scene?.close({restoreFocus:true});
     console.error(e);
-    window.__wenFlow?.onCalcFailed?.();
+    window.__wenFlow?.onCalcFailed?.({formOpen:!!formModal?.classList.contains('open')});
     const detail=e?.message||String(e);
+    if(fromForm)showFormError('推演未完成：'+detail+'。出生信息已保留，请检查后重试。');
     showToast('推演出错：'+detail+'。出生信息已保留，请检查后重试。',{type:'error',duration:6000});
   }finally{
     scene?.close({restoreFocus:!completed});
     calculationInProgress=false;
   }
 }
+
+/* 表单弹窗开关：操作按钮在对话框内，首页和日历共用。 */
+let formReturnFocus = null;
+function restoreFormFocus(){
+  let target=formReturnFocus;
+  formReturnFocus=null;
+  if(!target?.isConnected || !target.getClientRects().length){
+    target=window.__wenFlow?.focusTarget?.() ||
+      document.getElementById(document.body.classList.contains('report-active')?'p2MenuBtn':'homeCtaMain');
+  }
+  if(target && target.isConnected && target.getClientRects().length && typeof target.focus==='function'){
+    focusSafely(target);
+  }
+}
+window.TJOpenForm=function(){
+  const m=document.getElementById('formModal');
+  if(!m || m.classList.contains('open'))return;
+  window.__wenFlow?.onFormOpen?.();
+  formReturnFocus=document.activeElement;
+  m.classList.add('open');
+  document.body.classList.add('form-open');
+  // Non-blocking: the chosen character's props can arrive while the form is filled.
+  if(!document.getElementById('toolModal')?.classList.contains('cal-fullscreen')){
+    try{warmCharacterCalculation();}catch(error){console.warn('[calculation] 道具预加载失败',error);}
+  }
+
+  // The weather location is not necessarily the user's birthplace. Do not
+  // overwrite a selected or partially entered city when the form is reopened.
+
+  requestAnimationFrame(()=>{
+    if(m.classList.contains('open'))focusSafely(document.getElementById('formModalTitle'));
+  });
+};
+window.TJCloseForm=function(){
+  const m=document.getElementById('formModal');
+  if(m)m.classList.remove('open');
+  closeCityDropdown();
+  document.body.classList.remove('form-open');
+  // 单一状态机决定下一屏：回到刚才的报告，或显示可操作的兜底入口卡。
+  // 不再用 setTimeout 猜 DOM、不再静默跳回 funnel.html。
+  window.__wenFlow?.onFormClosed?.();
+  restoreFormFocus();
+};
+// Clear stale feedback only when the user edits an input; an error otherwise remains visible.
+document.getElementById('formModal')?.addEventListener('input',clearFormError);
+document.getElementById('formModal')?.addEventListener('change',clearFormError);
+// Keep keyboard focus inside the modal until it is closed.
+document.getElementById('formModal')?.addEventListener('keydown',e=>{
+  if(e.key!=='Tab')return;
+  const controls=[...e.currentTarget.querySelectorAll('button:not([disabled]),input:not([type="hidden"]):not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+    .filter(el=>el.getClientRects().length);
+  if(!controls.length)return;
+  const first=controls[0],last=controls[controls.length-1];
+  if(e.shiftKey && (document.activeElement===first || !controls.includes(document.activeElement))){e.preventDefault();last.focus();}
+  else if(!e.shiftKey && document.activeElement===last){e.preventDefault();first.focus();}
+});
 
 function renderRiQian(){
   const now=new Date();const y=now.getFullYear(),m=now.getMonth()+1,d=now.getDate();
@@ -466,6 +604,8 @@ function openMonthModal(idx,name,gz,jq,ss){
 }
 function closeMonthModal(){document.getElementById('monthModal').classList.remove('open');}
 
+function selChip(el){const wrap=document.getElementById('qChips');wrap.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('bQ').value=el.dataset.q;}
+
 const profileEscape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const DB_NAME='TJ_Bazi',DB_VER=2;
 let _db=null;
@@ -487,7 +627,7 @@ async function renderProfiles(){try{const list=await dbGetAll();const zone=docum
   if(recentZone){recentZone.style.display='block';recentGrid.innerHTML=list.slice(0,3).map(p=>{const _bd=(p.bd||'1990-1-1').split('-').map(Number);/* 用保存的出生时间推时辰（无则按子时），避免档案星级一律按子时失真 */const _hm=String(p.timeStr||'').split(':');const _hh=Number(_hm[0]);const _hz=(Number.isFinite(_hh))?Math.floor(((_hh+1)%24)/2):0;const _b=mkBazi(_bd[0],_bd[1],_bd[2],_hz,Number.isFinite(_hh)?_hh:12);const dg=_b.D.g;const dy=mkDy(_b,p.gen||'male',_bd[0],_bd[1]||1,_bd[2]||1);const age=TJ.calcAge(_bd[0],_bd[1]||1,_bd[2]||1);const cDy=TJ.findDaYun(dy,age)||dy.ds[0];const cLn=mkLn(CURR_YEAR);let stars='★★★☆☆';try{const wx=mkWx(_b),ss=mkSs(_b);const sc=calcYearScores(_b,wx,ss,SS[dg][cDy.g],SS[dg][cLn.g],null,cDy,cLn);const avgv=(sc.career+sc.wealth+sc.love+sc.health)/4;const n=Math.max(1,Math.min(5,Math.round(avgv/20)));stars='★'.repeat(n)+'☆'.repeat(5-n);}catch(e){}return`<div class="r-card" onclick="loadProfile(${Number(p.id)})"><div class="r-ava">${profileEscape(String(p.name||'未').charAt(0))}</div><div class="r-info"><div class="r-name">${profileEscape(p.name||'未命名')}</div><div class="r-meta">当前大运：${cDy.g}${cDy.z} · ${CURR_YEAR}运势：${stars}<br>最近关注：${profileEscape(p.q||'综合')}</div></div><div class="r-arrow">›</div></div>`;}).join('');}
   if(grid)grid.innerHTML=list.slice(0,8).map(p=>{const city=CD[p.bp]||{n:'未知'};return`<div class="r-card" onclick="loadProfile(${Number(p.id)})"><div class="r-ava">${profileEscape(String(p.name||'未').charAt(0))}</div><div class="r-info"><div class="r-name">${profileEscape(p.name||'未命名')}</div><div class="r-meta">${profileEscape(p.bd||'')} · ${city.n} · ${p.gen==='male'?'男':'女'}${p.useTrueSolar?'·真':''}</div></div><div style="position:absolute;top:6px;right:8px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9em;color:var(--c-text-4);cursor:pointer;transition:all .15s;z-index:2" onclick="event.stopPropagation();deleteProfile(${Number(p.id)})">×</div></div>`;}).join('');
 }catch(e){console.log('renderProfiles',e);}}
-async function loadProfile(id){try{const list=await dbGetAll();const p=list.find(x=>x.id===id);if(!p)return;setBirthInput({bd:p.bd||'',timeStr:p.timeStr||'09:00',bp:CD[p.bp]?p.bp:DEFAULT_BIRTH_INPUT.bp,gen:p.gen||'male',q:p.q||'',useTrueSolar:!!p.useTrueSolar,resultStyle:p.resultStyle||'companion'});calc();}catch(e){console.log('loadProfile',e);}}
+async function loadProfile(id){try{const list=await dbGetAll();const p=list.find(x=>x.id===id);if(!p)return;document.getElementById('bDate').value=p.bd||'';document.getElementById('bTime').value=p.timeStr||'09:00';document.getElementById('bPlace').value=p.bp||'';document.getElementById('cInp').value=(CD[p.bp]||{n:''}).n;document.getElementById('bGen').value=p.gen||'male';const styleEl=document.getElementById('bResultStyle');if(styleEl){styleEl.value=p.resultStyle||'companion';document.querySelectorAll('.result-style-option').forEach(btn=>{const on=btn.dataset.style===styleEl.value;btn.classList.toggle('active',on);btn.setAttribute('aria-checked',on?'true':'false');});const loadedStyle=getResultStyle(styleEl.value);const loadedHint=document.getElementById('resultStyleHint');if(loadedHint)loadedHint.textContent=loadedStyle.intro;}document.getElementById('bQ').value=p.q||'';const sw=document.getElementById('swTrueSolar');if(sw){if(p.useTrueSolar)sw.classList.add('on');else sw.classList.remove('on');sw.setAttribute('aria-checked',String(sw.classList.contains('on')));document.getElementById('swText').textContent=(sw.classList.contains('on')?'开启':'关闭')+'真太阳时（按时区、经度和均时差估算）';}const chips=document.getElementById('qChips');if(chips){chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.q===p.q));}calc();}catch(e){console.log('loadProfile',e);}}
 async function deleteProfile(id){try{await dbDel(id);renderProfiles();}catch(e){console.log('deleteProfile',e);}}
 function openSaveModal(){
   const m=document.getElementById('saveModal');
@@ -606,6 +746,101 @@ function quickSaveName(name){
 function confirmSaveProfile(){const name=document.getElementById('saveName').value.trim();if(!name){showToast('请输入档案名称');return;}saveCurrentProfile(name).then(()=>{closeSaveModal();renderProfiles();showToast('已保存到档案库');}).catch(e=>showToast('保存失败：'+e));}
 async function exportProfiles(){try{const list=await dbGetAll();const blob=new Blob([JSON.stringify(list,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='问问大师档案_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}catch(e){showToast('导出失败');}}
 async function handleImport(input){const file=input.files[0];if(!file)return;try{const text=await file.text();const arr=JSON.parse(text);if(!Array.isArray(arr))throw new Error('格式错误');let count=0;for(const p of arr){if(p && typeof p === 'object' && typeof p.bd === 'string' && /^\d{1,4}-\d{1,2}-\d{1,2}$/.test(p.bd) && typeof p.bp === 'string' && Object.prototype.hasOwnProperty.call(CD,p.bp) && (p.gen === 'male' || p.gen === 'female')){const rec={bd:p.bd,bp:p.bp,gen:p.gen,timeStr:typeof p.timeStr==='string'?p.timeStr.slice(0,16):'',q:typeof p.q==='string'?p.q.slice(0,500):'',name:typeof p.name==='string'?p.name.slice(0,100):'',useTrueSolar:p.useTrueSolar===true,resultStyle:typeof p.resultStyle==='string'?p.resultStyle.slice(0,40):'companion',createdAt:Date.now(),updatedAt:Date.now()};await dbPut(rec);count++;}}renderProfiles();renderArchiveList();showToast(`成功导入 ${count} 条档案`);}catch(e){showToast('导入失败：'+e.message);}input.value='';}
+
+(function(){
+  const inp=document.getElementById('cInp'),hid=document.getElementById('bPlace'),dd=document.getElementById('cDD');
+  if(!inp||!hid||!dd)return;
+  let ai=-1,blurTimer=null;
+  // Escape overflow clipping, while keeping the list anchored to the input.
+  document.body.appendChild(dd);dd.classList.add('cdd-floating');
+  function placeDropdown(){
+    const r=inp.getBoundingClientRect(),viewport=window.visualViewport;
+    const top=viewport?.offsetTop||0;
+    const bottom=top+(viewport?.height||window.innerHeight);
+    const submit=document.querySelector('#formModal .character-form-submit')?.getBoundingClientRect();
+    const error=document.getElementById('formError');
+    const feedback=!error?.hidden?error?.getBoundingClientRect():null;
+    // Keep the submit button and any validation feedback tappable and visible.
+    const lowerEdge=Math.min(bottom-8,
+      submit&&submit.top>r.bottom?submit.top-8:bottom-8,
+      feedback&&feedback.top>r.bottom?feedback.top-8:bottom-8);
+    const spaceBelow=Math.max(0,lowerEdge-r.bottom-4);
+    const spaceAbove=Math.max(0,r.top-top-8);
+    const below=spaceBelow>=120||spaceBelow>=spaceAbove;
+    const maxHeight=Math.min(260,below?spaceBelow:spaceAbove);
+    dd.style.left=Math.round(r.left)+'px';
+    dd.style.width=Math.round(r.width)+'px';
+    dd.style.bottom='auto';
+    dd.style.maxHeight=Math.round(maxHeight)+'px';
+    if(below){dd.style.top=Math.round(r.bottom+4)+'px';}
+    else{
+      // A short list should touch the input instead of floating maxHeight away.
+      const height=dd.getBoundingClientRect().height;
+      dd.style.top=Math.round(Math.max(top+4,r.top-4-height))+'px';
+    }
+  }
+  function rdd(f){
+    let h='',n=0;const q=(f||'').trim().toLowerCase();
+    CG.forEach(g=>{
+      const m=g.c.filter(c=>!q||c.n.includes(q)||c.i.includes(q)||g.g.includes(q)||(c.p&&c.p.toLowerCase().includes(q)));
+      if(!m.length)return;
+      h+=`<div class="cg" role="presentation">${g.g}</div>`;
+      m.forEach(c=>{h+=`<button type="button" class="co" role="option" aria-selected="false" tabindex="-1" id="city-option-${c.i}" data-i="${c.i}"><span>${c.n}</span><span class="cp">${g.g}</span></button>`;n++;});
+    });
+    if(!n)h='<div class="cg" role="presentation">未找到城市，请选择附近城市</div>';
+    dd.innerHTML=h;ai=-1;inp.removeAttribute('aria-activedescendant');
+  }
+  function openDD(){
+    if(!document.getElementById('formModal')?.classList.contains('open'))return;
+    dd.classList.add('show');inp.setAttribute('aria-expanded','true');placeDropdown();
+  }
+  function updateActive(opts){
+    opts.forEach((option,index)=>{
+      const active=index===ai;option.classList.toggle('act',active);
+      option.setAttribute('aria-selected',String(active));
+    });
+    if(opts[ai]){
+      inp.setAttribute('aria-activedescendant',opts[ai].id);
+      opts[ai].scrollIntoView({block:'nearest'});
+    }else inp.removeAttribute('aria-activedescendant');
+  }
+  inp.addEventListener('focus',()=>{clearTimeout(blurTimer);rdd(inp.value===(CD[hid.value]||{}).n?'':inp.value);openDD();});
+  inp.addEventListener('input',()=>{hid.value='';rdd(inp.value);openDD();});
+  inp.addEventListener('blur',()=>{blurTimer=setTimeout(closeCityDropdown,200);});
+  // mousedown prevents an early blur; click also fires reliably for touch and
+  // assistive technology on the semantic button, including older iOS Safari.
+  dd.addEventListener('mousedown',e=>{if(e.target.closest('.co'))e.preventDefault();});
+  dd.addEventListener('click',e=>{const option=e.target.closest('.co');if(option){clearTimeout(blurTimer);selectBirthCity(option.dataset.i);}});
+  const reposition=()=>{
+    if(!dd.classList.contains('show'))return;
+    const r=inp.getBoundingClientRect(),sheet=document.querySelector('#formModal .form-modal-sheet')?.getBoundingClientRect();
+    const viewport=window.visualViewport,top=viewport?.offsetTop||0,bottom=top+(viewport?.height||window.innerHeight);
+    if(r.bottom<=Math.max(top,sheet?.top??top)||r.top>=Math.min(bottom,sheet?.bottom??bottom))closeCityDropdown();
+    else placeDropdown();
+  };
+  window.addEventListener('resize',reposition);
+  window.addEventListener('scroll',reposition,true);
+  window.visualViewport?.addEventListener('resize',reposition);
+  window.visualViewport?.addEventListener('scroll',reposition);
+  inp.addEventListener('keydown',e=>{
+    // Enter/Escape may belong to the Chinese input method, not the picker.
+    if(e.isComposing||e.keyCode===229)return;
+    const opts=dd.querySelectorAll('.co');
+    if(e.key==='ArrowDown'){e.preventDefault();if(!dd.classList.contains('show'))openDD();ai=Math.min(ai+1,opts.length-1);updateActive(opts);}
+    else if(e.key==='ArrowUp'){e.preventDefault();ai=Math.max(ai-1,0);updateActive(opts);}
+    else if(e.key==='Enter'){
+      e.preventDefault();
+      if(ai>=0&&opts[ai])selectBirthCity(opts[ai].dataset.i);
+      else{
+        const match=resolveBirthCity();
+        if(match)selectBirthCity(match.id);
+        else showFormError(CITY_SELECTION_MESSAGE,inp);
+      }
+    }
+    else if(e.key==='Escape'&&dd.classList.contains('show')){e.stopPropagation();closeCityDropdown();}
+  });
+  window.rdd=rdd;window.sel=selectBirthCity;
+})();
 
 /* 首页汉堡菜单 */
 function toggleHomeMenu(force){
@@ -752,6 +987,7 @@ onDomReady(()=>{
       const ask=document.getElementById('aiSheet');if(ask&&ask.classList.contains('open')){closeAsk();return;}
       const save=document.getElementById('saveModal');if(save&&save.classList.contains('open')){closeSaveModal();return;}
       const arch=document.getElementById('archiveModal');if(arch&&arch.classList.contains('open')){closeArchiveModal();return;}
+      const fm=document.getElementById('formModal');if(fm&&fm.classList.contains('open')){window.TJCloseForm&&window.TJCloseForm();return;}
       const rq=document.getElementById('rqModal');if(rq&&rq.classList.contains('open')){closeRq();return;}
       const p2=document.getElementById('page2');if(p2&&(p2.classList.contains('active')||!p2.classList.contains('hidden'))){window.goBack();return;}
     }
@@ -1589,6 +1825,69 @@ else window.addEventListener('load',scheduleTools2,{once:true});
 installSelectionGloss();
 
 /* ============================================================
+   表单未推演保护：修改输入后未推演，点击「重新推演」弹窗确认
+   ============================================================ */
+(function(){
+  /* 轻量确认弹窗（移动端友好，非原生 confirm） */
+  window.showConfirm=function(opts){
+    document.getElementById('tjConfirm')?.remove();
+    const box=document.createElement('div');
+    box.className='tj-confirm';box.id='tjConfirm';
+    box.innerHTML=
+      '<div class="tj-confirm-bg"></div>'+
+      '<div class="tj-confirm-card" role="alertdialog" aria-modal="true" aria-label="'+(opts.title||'提示')+'">'+
+        '<div class="tt">'+(opts.title||'提示')+'</div>'+
+        '<div class="tx">'+(opts.text||'')+'</div>'+
+        '<div class="acts">'+
+          '<button type="button" class="ghost" data-act="cancel">'+(opts.cancelText||'取消')+'</button>'+
+          '<button type="button" class="primary" data-act="ok">'+(opts.okText||'确定')+'</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(box);
+    const done=(act)=>{box.remove();if(act==='ok'&&opts.onOk)opts.onOk();if(act==='cancel'&&opts.onCancel)opts.onCancel();};
+    box.querySelector('[data-act="ok"]').addEventListener('click',()=>done('ok'));
+    box.querySelector('[data-act="cancel"]').addEventListener('click',()=>done('cancel'));
+    box.querySelector('.tj-confirm-bg').addEventListener('click',()=>done('cancel'));
+    return box;
+  };
+
+  /* 表单字段变化 → 标记「已修改未推演」 */
+  window._formDirty=false;
+  ['bDate','bTime','cInp','bGen','bResultStyle'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.addEventListener('input',()=>{window._formDirty=true;});
+    el.addEventListener('change',()=>{window._formDirty=true;});
+  });
+  const styleSelect=document.getElementById('bResultStyle'),styleHint=document.getElementById('resultStyleHint');
+  const styleButtons=document.querySelectorAll('.result-style-option');
+  styleButtons.forEach(btn=>btn.addEventListener('click',()=>{
+    const value=btn.dataset.style;
+    if(styleSelect)styleSelect.value=value;
+    styleButtons.forEach(x=>{const on=x===btn;x.classList.toggle('active',on);x.setAttribute('aria-checked',on?'true':'false');});
+    if(styleHint)styleHint.textContent=getResultStyle(value).intro;
+    window._formDirty=true;
+  }));
+  const sw=document.getElementById('swTrueSolar');
+  if(sw)sw.addEventListener('click',()=>{window._formDirty=true;});
+
+  /* 拦截「重新推演」：有未推演修改时弹窗确认 */
+  const _origGoBack=window.goBack;
+  window.goBack=function(){
+    if(window._formDirty&&window._ctx){
+      window.showConfirm({
+        title:'尚未推演',
+        text:'你修改了出生信息，但还没有重新推演。返回后修改会保留在表单里，下次打开即可继续。',
+        okText:'继续返回',cancelText:'取消',
+        onOk:()=>{window._formDirty=false;_origGoBack();},
+      });
+      return;
+    }
+    _origGoBack();
+  };
+})();
+
+/* ============================================================
    彩蛋：长按「关于问问大师」播放图标绘制动画
    ============================================================ */
 (function(){
@@ -1632,5 +1931,3 @@ installSelectionGloss();
 // Replay a home action made while the larger application modules were loading.
 window.__wenAppReady=true;
 queueMicrotask(()=>window.dispatchEvent(new Event('tj:app-ready')));
-// Non-blocking: warm the calculation scene's props while the entry flow runs.
-try{warmCharacterCalculation();}catch(error){console.warn('[calculation] 道具预加载失败',error);}

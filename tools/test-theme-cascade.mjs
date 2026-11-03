@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import puppeteer from 'puppeteer';
-import { applyThemeFor, submitBirth } from './theme-helper.mjs';
+import { spinFor } from './trait-picker-helper.mjs';
 import { HOME_THEMES } from '../src/ui/home-theme.js';
 
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
@@ -33,8 +33,9 @@ try {
     const snapshots = new Map();
     const ids = Object.keys(HOME_THEMES);
     for (const id of [...ids, ...ids]) {
-      await applyThemeFor(page,id);
-      await page.waitForFunction(id => document.documentElement.dataset.homeTheme === id,{},id);
+      if (snapshots.size) await page.click('#homeTraitReset');
+      await spinFor(page,id);
+      await page.waitForFunction(id => document.documentElement.dataset.homeTheme === id && document.getElementById('traitSelection').hidden,{},id);
       const values = await page.evaluate(() => {
         const root=getComputedStyle(document.documentElement), page=getComputedStyle(document.getElementById('page1'));
         return Object.fromEntries(['--trait-color','--accent-h','--accent-s','--accent-l','--c-bg','--c-surface','--c-accent','--c-accent-text','--ac','--ac1','--glass-border','--glass-shadow'].map(k=>[k,root.getPropertyValue(k).trim()]).concat([['--home-bg',page.getPropertyValue('--home-bg').trim()]]));
@@ -57,8 +58,9 @@ try {
     await page.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);
     await page.goto(process.env.BASE_URL || 'http://localhost:5173/', {waitUntil:'domcontentloaded'});
     for (const [index,id] of Object.keys(HOME_THEMES).entries()) {
-      await applyThemeFor(page,id);
-      await page.waitForFunction(id => document.documentElement.dataset.homeTheme === id,{},id);
+      if (index) await page.click('#homeTraitReset');
+      await spinFor(page,id);
+      await page.waitForFunction(id => document.documentElement.dataset.homeTheme === id && document.getElementById('traitSelection').hidden,{},id);
       const layout = await page.evaluate(() => {
         document.querySelector('#page1 .p1-scroll').scrollTop = 0;
         const box = selector => document.querySelector(selector).getBoundingClientRect();

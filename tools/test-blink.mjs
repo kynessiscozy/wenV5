@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
-import { applyThemeFor, submitBirth } from './theme-helper.mjs';
+import { spinFor } from './trait-picker-helper.mjs';
 import { HOME_THEMES } from '../src/ui/home-theme.js';
 
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
@@ -11,8 +11,9 @@ try {
   await page.setBypassServiceWorker(true);
   await page.goto(process.env.BASE_URL || 'http://localhost:5173/', { waitUntil: 'domcontentloaded' });
   for (const [index, id] of Object.keys(HOME_THEMES).entries()) {
-    await applyThemeFor(page, id);
-    await page.waitForFunction(id => document.documentElement.dataset.homeTheme === id, {}, id);
+    if (index) await page.click('#homeTraitReset');
+    await spinFor(page, id);
+    await page.waitForFunction(id => document.documentElement.dataset.homeTheme === id && document.getElementById('traitSelection').hidden, {}, id);
     if (!HOME_THEMES[id].character.assets.blink) {
       assert.equal(await page.$eval('.character-blink', el => el.hidden), true, `${id}: 无表情素材时不能显示旧表情`);
       continue;

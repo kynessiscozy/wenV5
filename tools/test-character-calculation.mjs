@@ -1,4 +1,4 @@
-import { applyThemeFor, submitBirth } from './theme-helper.mjs';
+import { spinFor } from './trait-picker-helper.mjs';
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 
@@ -26,7 +26,8 @@ async function newPage({ theme = 'wenwen', width = 390, height = 844, motion = '
   await page.setViewport({ width, height });
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: motion }]);
   await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 15000 });
-  await applyThemeFor(page, theme);
+  await page.waitForSelector('#traitMachine[data-ready="true"]');
+  await spinFor(page, theme);
   await page.waitForFunction((id, portrait) => {
     const image = document.querySelector('[data-character-asset="portrait"]');
     return window._tools2Ready === true && document.documentElement.dataset.homeReady === 'true' &&
@@ -35,9 +36,9 @@ async function newPage({ theme = 'wenwen', width = 390, height = 844, motion = '
   }, { timeout: 15000 }, theme, THEMES[theme].portrait);
   return { page, context };
 }
-async function readyToSubmit(page) {
-  // 旧表单已删除：推演道具在应用就绪时预热；这里只等提交通道可用。
-  await page.waitForFunction(() => typeof window.applyEntryPayload === 'function' && typeof window.calc === 'function');
+async function openForm(page) {
+  await page.evaluate(() => window.TJOpenForm?.());
+  await page.waitForSelector('#formModal.open');
 }
 async function waitForResultScene(page, theme) {
   await page.waitForFunction(id => {
@@ -61,11 +62,11 @@ try {
       assert.equal(await page.$eval('#calculationOverlay', el => el.hidden), true, '未推演时不显示场景');
       assert.equal(await page.$$eval('.calculation-props img[src]', images => images.length), 0, '推演道具不参与首屏加载');
       assert.equal(await page.evaluate(() => performance.getEntriesByType('resource').filter(e => /awakening-(scroll|fox-fan|phoenix-wing)\.webp/.test(e.name)).length), 0);
-      await readyToSubmit(page);
-      assert.ok(await page.$$eval(`.calculation-props--${id} img`, images => images.length > 0 && images.every(image => image.hasAttribute('src'))), '应用就绪时应已预热当前角色的道具');
+      await openForm(page);
+      assert.ok(await page.$$eval(`.calculation-props--${id} img`, images => images.length > 0 && images.every(image => image.hasAttribute('src'))), '填写表单时应后台预取当前角色的道具');
       await page.evaluate(() => {
-        window.__testBirth = { ...(window.__testBirth || {}), bd: '1988-02-24' };
-        window.__testBirth = { ...(window.__testBirth || {}), timeStr: '14:30' };
+        document.getElementById('bDate').value = '1988-02-24';
+        document.getElementById('bTime').value = '14:30';
         window.__sceneStates = [];
         const scene = document.getElementById('calculationOverlay');
         new MutationObserver(() => {
@@ -74,7 +75,7 @@ try {
             report: document.body.classList.contains('report-active') });
         }).observe(scene, { attributes: true, attributeFilter: ['data-calculation-state', 'hidden'] });
       });
-      await submitBirth(page);
+      await page.click('.character-form-submit');
       await waitForResultScene(page, id);
       await page.waitForFunction((theme, art) => {
         const images = [...document.querySelectorAll(`.calculation-props--${theme} img`)];
@@ -97,8 +98,8 @@ try {
           inactiveLoaded: [...scene.querySelectorAll('.calculation-props')].filter(el => !el.classList.contains(`calculation-props--${theme}`)).some(el => el.querySelector('img[src]')),
           values: [...scene.querySelectorAll('[data-calculation-pillar]')].map(el => el.textContent),
           actual: ['Y', 'M', 'D', 'H'].map(key => window._ctx.b[key].g + window._ctx.b[key].z),
-          focus: document.activeElement.id, formGone: !document.getElementById('formModal'),
-          pageInert: document.getElementById('page1').inert,
+          focus: document.activeElement.id, formOpen: document.getElementById('formModal').classList.contains('open'),
+          formInert: document.getElementById('formModal').inert, pageInert: document.getElementById('page1').inert,
           report: document.body.classList.contains('report-active'),
           portraitZ: Number(getComputedStyle(scene.querySelector('.calculation-portrait')).zIndex),
           rects, viewport: [innerWidth, innerHeight], scroll: [document.documentElement.scrollWidth, document.documentElement.clientWidth],
@@ -115,7 +116,7 @@ try {
       assert.equal(state.inactive, true);
       assert.equal(state.inactiveLoaded, false, '不应加载其他角色的演出道具');
       assert.equal(state.focus, 'calculationContinue');
-      assert.ok(state.formGone && state.pageInert && !state.report, '计算期间锁住背景（旧表单已删除）');
+      assert.ok(state.formOpen && state.formInert && state.pageInert && !state.report, '计算期间锁住背景并保留表单');
       assert.equal(state.portraitZ, 2, '人物位于火座、符印和其他道具前方');
       assert.ok(state.rects.every(rect => rect.left >= 0 && rect.right <= width && rect.top >= 0 && rect.bottom <= height), `${id} ${width}x${height}: 提示及跳过按钮应完整可见`);
       assert.equal(state.scroll[0], state.scroll[1]);
@@ -158,7 +159,7 @@ try {
       await page.waitForFunction(() => document.body.classList.contains('report-active'), { timeout: 10000 });
       assert.deepEqual(await page.evaluate(() => ({
         overlay: document.getElementById('calculationOverlay').hidden,
-        form: !!document.getElementById('formModal'),
+        form: document.getElementById('formModal').classList.contains('open'),
         inert: document.getElementById('page1').inert,
         focus: document.activeElement.id,
         camera: document.getElementById('characterScene').dataset.cameraShot,
@@ -170,7 +171,7 @@ try {
       await context.close();
     }
   }
-  console.log('✓ 十角色真实推演：专属动作、真实四柱、景别保留、键盘及五种横竖屏幕');
+  console.log('✓ 十角色真实表单推演：专属动作、真实四柱、景别保留、键盘及五种横竖屏幕');
 
   // Another tab can change the home theme while computation is running;
   // this performance must stay on the character selected when it began.
@@ -181,8 +182,8 @@ try {
     await page.evaluate(async () => Promise.all(['./art/yuchen-cinema3d.webp', './art/yuchen-hall-mobile.webp'].map(src => {
       const image = new Image(); image.src = src; return image.decode();
     })));
-    await readyToSubmit(page);
-    await submitBirth(page);
+    await openForm(page);
+    await page.click('.character-form-submit');
     await waitForResultScene(page, 'moonfox');
     await page.evaluate(() => window.dispatchEvent(new StorageEvent('storage', { key: 'tj_home_character', newValue: 'yuchen' })));
     await delay(300);
@@ -228,48 +229,53 @@ try {
   }
   console.log('✓ 示例与档案也走真实推演场景');
 
-  // 旧表单已删除：日历里的「填写信息」改跳唯一入口 funnel.html 录入。
+  // Calendar profile entry is not report navigation and must stay in the calendar.
   {
     const { page, context } = await newPage();
     await page.click('#homeCtaCal');
     await page.waitForSelector('#toolModal.open.cal-fullscreen');
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
-      page.click('#toolModal [data-fill]'),
-    ]);
-    assert.ok(page.url().includes('funnel.html'), '应跳转唯一入口录入出生信息');
+    await page.click('#toolModal [data-fill]');
+    await page.waitForSelector('#formModal.open');
+    await page.click('.character-form-submit');
+    await page.waitForFunction(() => !document.getElementById('formModal').classList.contains('open'));
+    assert.equal(await page.$eval('#calculationOverlay', el => el.hidden), true);
+    assert.equal(await page.$eval('#toolModal', el => el.classList.contains('open') && el.classList.contains('cal-fullscreen')), true);
+    assert.equal(await page.evaluate(() => document.body.classList.contains('report-active')), false);
+    assert.equal(await page.evaluate(() => document.activeElement.matches('#toolModal [data-fill]')), true);
     await context.close();
   }
-  console.log('✓ 日历录入改跳漏斗首屏');
+  console.log('✓ 日历录入保持在日历并恢复焦点');
 
-  // Failing synchronous report rendering must remove the overlay, return to
-  // the idle surface, preserve the previous context and the submitted birth
-  // input, and permit retry.
+  // Failing synchronous report rendering must remove the overlay, restore focus,
+  // preserve the user's form and previous context, and permit retry.
   {
     const { page, context } = await newPage();
-    await readyToSubmit(page);
+    await openForm(page);
     await page.evaluate(() => {
       window.__previousContext = { marker: 'previous' };
       window._ctx = window.__previousContext;
-      window.__testBirth = { ...(window.__testBirth || {}), bd: '1992-09-21' };
+      window._formDirty = true;
+      document.getElementById('bDate').value = '1992-09-21';
       document.getElementById('p2Inner').id = 'p2Inner-for-test';
     });
-    await submitBirth(page);
+    await page.click('.character-form-submit');
     await page.waitForFunction(() => document.querySelector('.tj-toast')?.textContent.includes('推演出错'));
     assert.deepEqual(await page.evaluate(() => ({
-      form: !!document.getElementById('formModal'),
+      open: document.getElementById('formModal').classList.contains('open'),
+      inert: document.getElementById('formModal').inert,
       hidden: document.getElementById('calculationOverlay').hidden,
-      fallback: !document.getElementById('entryFallback').hidden,
+      focus: document.activeElement.classList.contains('character-form-submit'),
+      date: document.getElementById('bDate').value,
       previous: window._ctx === window.__previousContext,
-    })), { form: false, hidden: true, fallback: true, previous: true });
+      dirty: window._formDirty,
+    })), { open: true, inert: false, hidden: true, focus: true, date: '1992-09-21', previous: true, dirty: true });
     await page.evaluate(() => { document.getElementById('p2Inner-for-test').id = 'p2Inner'; });
-    await submitBirth(page);
+    await page.click('.character-form-submit');
     await waitForResultScene(page, 'wenwen');
-    assert.equal(await page.evaluate(() => window._ctx.input.bd_raw), '1992-09-21', '重试沿用上次提交的出生信息');
     await continueToReport(page);
     await context.close();
   }
-  console.log('✓ 计算失败回待机卡并保留旧上下文与出生信息，可重试');
+  console.log('✓ 计算失败恢复表单、焦点与旧上下文，可重试');
 
   // An optional prop can fail and later retry; it must not block the report.
   {
@@ -281,16 +287,16 @@ try {
       if (request.url().endsWith('/awakening-scroll.webp') && failures++ < 2) request.abort('failed').catch(() => {});
       else request.continue().catch(() => {});
     });
-    await readyToSubmit(page);
+    await openForm(page);
     await page.waitForFunction(() => { const image = document.querySelector('.calculation-scroll img'); return image.hasAttribute('src') && image.complete && !image.naturalWidth; });
-    await submitBirth(page);
+    await page.click('.character-form-submit');
     await waitForResultScene(page, 'wenwen');
     await page.waitForFunction(() => { const image = document.querySelector('.calculation-scroll img'); return image.complete && !image.naturalWidth; });
     assert.equal(await page.$eval('.calculation-scroll img', image => getComputedStyle(image).visibility), 'hidden', '失败道具不能留下破图轮廓');
     await continueToReport(page);
     await page.evaluate(() => window.goBack()); await delay(550);
-    await readyToSubmit(page);
-    await submitBirth(page);
+    await openForm(page);
+    await page.click('.character-form-submit');
     await waitForResultScene(page, 'wenwen');
     await page.waitForFunction(() => document.querySelector('.calculation-scroll img').naturalWidth > 0, { timeout: 5000 });
     assert.equal(await page.$eval('.calculation-scroll img', image => getComputedStyle(image).visibility), 'visible', '重试成功后恢复显示道具');
@@ -313,8 +319,8 @@ try {
       if (request.url().endsWith('/awakening-scroll.webp')) { held.push(request); notify(); }
       else request.continue().catch(() => {});
     });
-    await readyToSubmit(page);
-    await submitBirth(page);
+    await openForm(page);
+    await page.click('.character-form-submit');
     await Promise.race([started, delay(5000).then(() => { throw new Error('慢网道具请求未开始'); })]);
     await waitForResultScene(page, 'wenwen');
     assert.ok(held.length > 0);
@@ -334,8 +340,8 @@ try {
   // can advance the cinematic, but can never dismiss the actual result.
   {
     const { page, context } = await newPage({ theme: 'moonfox' });
-    await readyToSubmit(page);
-    await submitBirth(page);
+    await openForm(page);
+    await page.click('.character-form-submit');
     await page.waitForFunction(() => document.getElementById('calculationOverlay').dataset.calculationState === 'computing');
     await page.click('#calculationSkip span'); // The nested arrow must not bubble into result confirmation.
     await waitForResultScene(page, 'moonfox');
@@ -360,7 +366,7 @@ try {
   // Reduced-motion users should not be made to wait for the cinematic.
   {
     const { page, context } = await newPage({ theme: 'yuchen', motion: 'reduce' });
-    await readyToSubmit(page);
+    await openForm(page);
     assert.equal(await page.$$eval('.calculation-props img[src]', images => images.length), 0, '减动态时不额外下载短暂演出的道具');
     await page.evaluate(() => {
       const scene = document.getElementById('calculationOverlay');
@@ -391,8 +397,8 @@ try {
   // a stray line when the optional image is not requested, loading or failed.
   {
     const { page, context } = await newPage({ theme: 'rongrong', motion: 'reduce' });
-    await readyToSubmit(page);
-    await submitBirth(page);
+    await openForm(page);
+    await page.click('.character-form-submit');
     await waitForResultScene(page, 'rongrong');
     assert.equal(await page.$eval('.calculation-pawbell-rope', el => getComputedStyle(el).visibility), 'hidden');
     await continueToReport(page);
@@ -400,7 +406,7 @@ try {
   }
   {
     const { page, context } = await newPage({ theme: 'rongrong' });
-    await readyToSubmit(page);
+    await openForm(page);
     await page.waitForFunction(() => document.querySelector('.calculation-pawbell img')?.naturalWidth > 0);
     assert.equal(await page.$eval('.calculation-pawbell-rope', el => getComputedStyle(el).visibility), 'visible');
     await page.$eval('.calculation-pawbell img', el => el.classList.add('is-calculation-image-loading'));
@@ -411,8 +417,8 @@ try {
   // A live preference change skips the animation, never the result.
   {
     const { page, context } = await newPage({ theme: 'diyan' });
-    await readyToSubmit(page);
-    await submitBirth(page);
+    await openForm(page);
+    await page.click('.character-form-submit');
     await page.waitForFunction(() => document.querySelector('#calculationOverlay').dataset.calculationState === 'computing');
     const start = Date.now();
     await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
@@ -430,8 +436,8 @@ try {
     const { page, context } = await newPage();
     const client = await page.createCDPSession();
     await client.send('Emulation.setEmulatedMedia', { features: [{ name: 'forced-colors', value: 'active' }, { name: 'prefers-reduced-motion', value: 'no-preference' }] });
-    await readyToSubmit(page);
-    await submitBirth(page);
+    await openForm(page);
+    await page.click('.character-form-submit');
     await page.waitForFunction(() => document.querySelector('#calculationOverlay').dataset.calculationState === 'computing');
     await page.keyboard.press('Escape');
     await waitForResultScene(page, 'wenwen');
