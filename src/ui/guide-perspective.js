@@ -7,6 +7,8 @@ const GUIDES = Object.freeze({
     prompt: '看看现在有哪些支持与空间：安排下一步时，也给休息和调整留出余地。' }),
   moonfox: Object.freeze({ name: '月白', focus: '线索与依据',
     prompt: '先比较这些线索，再打开报告中的详细依据；哪些描述与你的实际经历相符？' }),
+  leizi: Object.freeze({ name: '雷兹', focus: '格局与决断',
+    prompt: '先看整体格局再谈细节：眼下这一局，哪一步是决定走向的关键落子？' }),
   xingling: Object.freeze({ name: '夕瑶', focus: '关系与沟通',
     prompt: '结合自己的实际关系想一想：有什么需要可以更清楚地表达或商量？' }),
 });
@@ -39,6 +41,10 @@ export function buildGuidePerspective(themeId, ctx = {}, western = {}) {
     case 'xingling':
       eastern = [fact('日支', text(ctx?.b?.D?.z)), fact('日主', day)];
       westernFacts = [fact('月亮', moon), fact('上升', asc)];
+      break;
+    case 'leizi':
+      eastern = [fact('年柱', pillar(ctx?.b?.Y)), fact('当前大运', pillar(ctx?.cDy))];
+      westernFacts = [fact('太阳', sun), fact('上升', asc)];
       break;
   }
   return {

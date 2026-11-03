@@ -55,6 +55,17 @@ export const FUNNEL_PERSONAS = Object.freeze({
     hooksTitle: '夕 瑶 先 说 三 句',
     byline: '夕瑶正在为你看盘…',
   }),
+  leizi: Object.freeze({
+    key: 'leizi',
+    name: '雷兹',
+    theme: 'leizi',
+    poster: './art/leizi-lord.webp',
+    video: './art/leizi-invite.mp4',
+    lead: '先看天势，再定落子。',
+    circle: '是雷兹先替你圈出来的',
+    hooksTitle: '雷 兹 先 说 三 句',
+    byline: '雷兹正在为你排盘…',
+  }),
 });
 
 export function personaFor(trait) {

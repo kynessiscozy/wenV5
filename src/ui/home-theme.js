@@ -11,6 +11,7 @@ import { LUYE } from '../character/luye.js';
 import { SUYAN } from '../character/suyan.js';
 import { RONGRONG } from '../character/rongrong.js';
 import { ZHIYA } from '../character/zhiya.js';
+import { LEIZI } from '../character/leizi.js';
 
 // One registry supplies the reel, scenes and report styling.
 // New characters need only add another entry; choices remain page-local.
@@ -26,6 +27,12 @@ export const HOME_THEMES = Object.freeze({
     reportLead: '有意思，线索已经浮现。',
     character: MOON_FOX,
     backdrop: Object.freeze({ wide: './art/moon-fox-study-wide.webp', mobile: './art/moon-fox-study-mobile.webp' }),
+  }),
+  leizi: Object.freeze({
+    trait: Object.freeze({ label: '决断', description: '看清大势，敢于落子定局。', mark: '雷', color: '#f2c14e' }),
+    reportLead: '先看天势，再定落子。',
+    character: LEIZI,
+    backdrop: Object.freeze({ wide: './art/leizi-hall-wide.webp', mobile: './art/leizi-hall-mobile.webp' }),
   }),
   diyan: Object.freeze({
     trait: Object.freeze({ label: '威严', description: '坚定果断，敢于为选择担当。', mark: '威', color: '#ec8278' }),
