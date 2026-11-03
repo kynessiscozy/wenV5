@@ -978,10 +978,11 @@ html[data-theme="dark"] .character-portrait img[data-character-asset="portrait"]
   font: 700 12px/1.4 var(--sf);
   cursor: pointer;
 }
-.character-companion-next[hidden] { display: none; }
+.character-companion-next[hidden], .character-form-focus[hidden] { display: none; }
 .character-text-actions { display: flex; align-items: center; justify-content: center; gap: 18px; }
-.character-guide-link { position: relative; isolation: isolate; min-height: 44px; margin-top: 4px; padding: 0 2px; border: 0; color: var(--home-muted); background: transparent; font: 600 12px/1 var(--sf); cursor: pointer; }
-.character-guide-link::before {
+.character-guide-link, .character-reselect { position: relative; isolation: isolate; min-height: 44px; margin-top: 4px; padding: 0 2px; border: 0; color: var(--home-muted); background: transparent; font: 600 12px/1 var(--sf); cursor: pointer; }
+.character-reselect { color: var(--home-text); }
+.character-guide-link::before, .character-reselect::before {
   content: '';
   position: absolute;
   z-index: -1;
@@ -989,24 +990,25 @@ html[data-theme="dark"] .character-portrait img[data-character-asset="portrait"]
   pointer-events: none;
   background: radial-gradient(ellipse closest-side at center, rgba(27, 14, 26, .84), rgba(27, 14, 26, .65) 55%, transparent 100%);
 }
-html[data-home-theme="moonfox"] .character-guide-link::before {
+html[data-home-theme="moonfox"] .character-guide-link::before,
+html[data-home-theme="moonfox"] .character-reselect::before {
   background: radial-gradient(ellipse closest-side at center, rgba(4, 16, 32, .86), rgba(4, 16, 32, .66) 55%, transparent 100%);
 }
 html[data-home-theme="moonfox"] .character-footer { color: #eff9ff; }
 html[data-home-theme="moonfox"] .character-footer::before {
   background: radial-gradient(ellipse 150px 28px at 130px 50%, rgba(4, 16, 32, .75), rgba(4, 16, 32, .57) 55%, transparent 100%);
 }
-.character-guide-link:hover, .character-companion-next:hover { text-decoration: underline; }
+.character-guide-link:hover, .character-reselect:hover, .character-companion-next:hover { text-decoration: underline; }
 .character-companion-option:focus-visible, .character-companion-next:focus-visible,
-.character-guide-link:focus-visible, .character-portrait:focus-visible,
+.character-guide-link:focus-visible, .character-reselect:focus-visible, .character-portrait:focus-visible,
 .character-btn:focus-visible, .character-header .home-menu-btn:focus-visible,
 .character-header .theme-toggle-home:focus-visible { outline: 2px solid var(--home-focus); outline-offset: 3px; }
 .character-companion-option:focus-visible, .character-companion-next:focus-visible,
-.character-guide-link:focus-visible, .character-btn:focus-visible { border-radius: 999px; }
+.character-guide-link:focus-visible, .character-reselect:focus-visible, .character-btn:focus-visible { border-radius: 999px; }
 /* The scene's focused-action badge supplies the focus indicator without a portrait frame. */
 .character-scene .character-portrait:focus-visible { border-radius: 0; outline: none; }
 .character-prompt button:focus-visible { outline: 2px solid var(--c-accent-text); outline-offset: 3px; }
-/* Reusable avatar and prompt in the report. */
+/* Reusable avatar and prompt in the form and report. */
 .character-prompt { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .character-prompt-avatar { flex: 0 0 42px; width: 42px; height: 42px; overflow: hidden; border-radius: 50%; background: #fcebd7; }
 .character-avatar-image { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -1016,9 +1018,91 @@ html[data-home-theme="moonfox"] .character-footer::before {
 .character-prompt-action:hover { text-decoration: underline; }
 .character-prompt-dismiss { width: 36px; height: 36px; border-radius: 50%; color: var(--c-text-2); font-size: 21px; line-height: 1; }
 .character-prompt-dismiss:hover { background: var(--c-surface-3); }
+.character-form-focus { margin: -8px 0 16px; }
+.character-prompt--form { padding: 8px 10px; border: 1px solid var(--c-border); border-radius: 14px; background: var(--c-surface-2); }
+.character-prompt--form .character-prompt-avatar { flex-basis: 34px; width: 34px; height: 34px; }
 .character-report-guide { margin-bottom: 14px; }
 .character-prompt--report { padding: 11px 12px; border: 1px solid var(--c-border); border-radius: 16px; background: var(--c-surface-2); }
 
+/* A complete dialog is reachable from both the landing page and calendar. */
+#formModal.form-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  width: 100%;
+  transform: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  pointer-events: none;
+}
+#formModal.form-modal.open { display: flex; pointer-events: auto; }
+.form-modal-backdrop { position: absolute; inset: 0; background: rgba(43, 32, 37, .48); backdrop-filter: blur(5px); }
+html[data-theme] body[data-glass] #formModal .form-modal-sheet {
+  position: relative;
+  width: min(100%, 530px);
+  max-height: calc(100vh - 40px); /* Safari before dynamic viewport units */
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto !important;
+  padding: 30px 30px 24px;
+  border: 1px solid var(--c-border) !important;
+  border-radius: 26px;
+  background: var(--c-surface) !important;
+  box-shadow: 0 24px 80px rgba(47, 31, 37, .22) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.form-modal-kicker { margin-bottom: 9px; color: var(--c-accent-text); font-size: 9px; font-weight: 700; letter-spacing: .16em; }
+#formModal .form-modal-tt { margin: 0 0 7px; font-size: 23px; letter-spacing: .03em; }
+.form-modal-intro { margin-bottom: 22px; color: var(--c-text-3); font-size: 12px; line-height: 1.6; }
+#formModal .switch { padding: 0; border: 0; }
+#formModal .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+#formModal .fd, #formModal .cw { min-width: 0; }
+#formModal .fd input:not([type="hidden"]), #formModal .fd select { width: 100%; min-width: 0; max-width: 100%; }
+.character-form-error {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(155, 66, 50, .1);
+  border: 1px solid rgba(155, 66, 50, .35);
+  color: var(--c-text-hi);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.character-form-error[hidden] { display: none; }
+#formModal [aria-invalid="true"] { outline: 2px solid #b54f3f; outline-offset: 2px; }
+.cdd .co {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+}
+.cdd .co:focus-visible { outline: 2px solid var(--c-accent-text); outline-offset: -2px; }
+.character-form-submit {
+  width: 100%;
+  min-height: 49px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  cursor: pointer;
+  box-shadow: 0 7px 18px hsla(var(--accent-h), var(--accent-s), 34%, .2);
+}
+.character-form-submit:hover { background: var(--c-accent-hover); }
+.character-form-defaults { margin-top: 10px; color: var(--c-text-2); font-size: 12px; line-height: 1.6; }
+.character-form-privacy { margin-top: 12px; color: var(--c-text-3); text-align: center; font-size: 11px; line-height: 1.5; }
 
 @media (max-width: 900px) {
   #page1 .p1-inner { padding-right: 28px; padding-left: 28px; }
@@ -1045,8 +1129,17 @@ html[data-home-theme="moonfox"] .character-footer::before {
   .character-prop--cloud { width: 76%; right: 0; bottom: 17%; opacity: .22; }
   .scene-sparkles--left { width: 20%; left: 0; bottom: 15%; }
   .scene-sparkles--right { width: 26%; right: 0; top: 18%; }
+  html[data-theme] body[data-glass] #formModal .form-modal-sheet { padding: 26px 20px 21px; border-radius: 22px; }
+  #formModal .form-modal-tt { font-size: 20px; }
+  /* iOS zooms the page when a focused input is smaller than 16px. */
+  #formModal .fd input:not([type="hidden"]), #formModal .fd select {
+    font-size: 16px !important;
+    font-size: max(16px, calc(14px * var(--font-scale, 1))) !important;
+  }
 }
 @media (max-width: 360px) {
+  /* Native date/time controls need more room than half a narrow phone. */
+  #formModal .form-grid > .fd:nth-child(-n+2) { grid-column: 1 / -1; }
   #page1 .p1-inner { padding-right: 16px; padding-left: 16px; }
   .character-scene { width: calc(100% + 32px); height: min(clamp(280px, 62vh, 500px), calc(150vw - 24px)); }
 }

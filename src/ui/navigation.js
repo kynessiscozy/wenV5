@@ -1,5 +1,4 @@
 import { KB } from '../ai/kb.js';
-import { goToFunnel } from './funnel-link.js';
 
 export function jumpTo(secId,cardKey){
   // 关 AI 面板
@@ -66,11 +65,14 @@ export function applyTheme(yongShen){
 
 export function showPage2(){document.body.classList.add('report-active');document.getElementById('page1').classList.add('hidden');const p2=document.getElementById('page2');p2.classList.remove('hidden');p2.classList.add('active');document.getElementById('tabBar').classList.add('show');document.getElementById('p2Scroll').scrollTop=0;if(typeof window.resetGlossaryState==='function')window.resetGlossaryState();requestAnimationFrame(()=>{if(typeof window._rebindTilt==='function')window._rebindTilt();if(typeof window._injectCardToggles==='function')window._injectCardToggles();const a=document.querySelector('.tab-item.active');if(a&&typeof moveTabIndicator==='function')moveTabIndicator(a);});}
 
-export function goBack(){
-  /* 漏斗单一入口没有首页可回，旧表单也已移除：「重新推演」直接回到
-     funnel.html 的问卷重新填写，交接后生成新的报告。 */
-  goToFunnel();
+export function goBack(){document.body.classList.remove('report-active');applyTheme('土');['page2'].forEach(id=>{document.getElementById(id).classList.remove('active');document.getElementById(id).classList.add('hidden');});document.getElementById('tabBar').classList.remove('show');document.getElementById('lgPanel').classList.remove('open');
+  /* 漏斗单一入口没有首页可回：「重新推演」打开表单，并记录报告为返回目标。
+     关闭表单时由 entry-flow.js 恢复报告，而不是把访客重定向到 funnel.html。 */
+  if(window.__wenFlow?.onReportBack)window.__wenFlow.onReportBack();
+  else if(typeof window.TJOpenForm==='function')window.TJOpenForm();
 }
+
+export function scrollToForm(){document.getElementById('formCard').scrollIntoView({behavior:'smooth',block:'center'});}
 
 export function switchTab(el){
   document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active','tab-pop'));el.classList.add('active');

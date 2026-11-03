@@ -1,7 +1,6 @@
 /* A compact, always-available guide to the current experience. */
 import { getWesternSvgIcon } from './render/western-view.js';
 import { focusSafely } from './ui/focus.js';
-import { goToFunnel } from './ui/funnel-link.js';
 
 const tabs = [
   ['tour', '开始', 'sparkle'],
@@ -26,9 +25,9 @@ const steps = items => `<div class="ng-steps-flow">${items.map(([title, text], i
   </div>`).join('')}</div>`;
 
 const content = {
-  tour: () => header('从这里开始', '一起看看，慢慢探索', '选一位引路人，再从自己的问题出发。') + steps([
-    ['选择引路人', '首屏默认是月白，右上角的人物选择可以展开切换；主题色会跟着所选人物走。引路人只决定形象与演出，不改变计算结果。'],
-    ['回答问卷', '进入命盘厅后依次回答出生日期、时间、城市等问题，最后一题完成即开始推演。中途点右上角 × 可随时回首屏。'],
+  tour: () => header('从这里开始', '一起看看，慢慢探索', '选择一种同行特质，再从自己的问题出发。') + steps([
+    ['转动特质轮', '转一转，确认结果或再转一次。进入后也可以重新选择；更换特质不会改变已输入的信息或计算结果。'],
+    ['填写出生信息', '填写日期、时间和地点后开始推演。结果出现后会停留，点击「查看报告」继续。'],
     ['阅读报告', '先看同行卡中的命盘信息；用顶部切换东方与西方，底部切换命盘、运势和关系。卡片里的按钮可继续查看细节。'],
     ['继续探索', '工具页有不同主题的体验。问问对话使用外部 AI 服务前，需要在设置中配置服务。'],
   ]),
@@ -61,8 +60,8 @@ const content = {
   },
   faq: () => {
     const faqs = [
-      ['不记得出生时间怎么办？', '请尽量核实。问卷里跳过时间时按 09:00 计算；如果不确定，时柱和上升等内容可能不同，报告会注明时柱待校。'],
-      ['引路人会影响命盘吗？', '不会。引路人决定同行形象、演出和主题色，不参与命盘计算；在首屏展开人物选择即可更换。'],
+      ['不记得出生时间怎么办？', '请尽量核实。表单默认时间是 09:00；如果不确定，结果只是按所填时间计算，时柱和上升等内容可能不同。'],
+      ['特质会影响命盘吗？', '不会。特质决定同行形象和演出，不参与命盘计算；可以随时重选，也可以取消。'],
       ['信息会保存或发送吗？', '档案和部分偏好可保存在本机浏览器。使用 AI 时，问题及相关上下文会发送给所选服务商；请避免输入敏感信息并留意其隐私政策。'],
       ['天气和定位如何使用？', '打开菜单、穿搭或风水工具会尝试定位并联网查询。未授权时天气会尝试使用北京默认值；风水周边查询也会向外部服务发送坐标。'],
       ['结果可以用来做决定吗？', '报告和 AI 回答可能不准确，仅供文化体验与自我反思。医疗、法律、财务等重要决定请结合现实情况并咨询专业人士。'],
@@ -92,7 +91,7 @@ export function openNoviceGuide(initialTab = 'tour') {
         </div>
         <div class="ng-body" id="ngBodyContent" role="tabpanel" tabindex="0"></div>
         <div class="ng-footer">
-          <button class="ng-act-btn primary" type="button" onclick="closeNoviceGuide(); window.TJGoFunnel && window.TJGoFunnel();">填写出生信息</button>
+          <button class="ng-act-btn primary" type="button" onclick="closeNoviceGuide(); window.TJOpenForm && window.TJOpenForm();">填写出生信息</button>
           <button class="ng-act-btn ghost" type="button" onclick="closeNoviceGuide()">稍后再看</button>
         </div>
       </div>`;
@@ -157,6 +156,5 @@ export function initGlobalNoviceGuide() {
   window.openNoviceGuide = openNoviceGuide;
   window.closeNoviceGuide = closeNoviceGuide;
   window.switchNoviceGuideTab = switchNoviceGuideTab;
-  window.TJGoFunnel = goToFunnel;
 }
 export function initOnboarding() { initGlobalNoviceGuide(); }

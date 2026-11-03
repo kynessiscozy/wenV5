@@ -71,8 +71,8 @@ export function openTool(id) {
   saveHistory(id);
   _focusTimer = setTimeout(() => {
     _focusTimer = null;
-    if (_current !== id || !modal.classList.contains('open')) return;
-    // Respect a user who already moved focus.
+    if (_current !== id || !modal.classList.contains('open') || document.getElementById('formModal')?.classList.contains('open')) return;
+    // Respect a user who already moved focus (including returning from the calendar form).
     if (document.activeElement !== previousFocus && document.activeElement !== document.body) return;
     const first = content.querySelector('input, select, textarea, button');
     if (first && first.focus && !first.disabled) first.focus({ preventScroll: true });

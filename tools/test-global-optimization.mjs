@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import puppeteer from 'puppeteer';
-import { applyThemeFor, submitBirth } from './theme-helper.mjs';
+import { spinFor } from './trait-picker-helper.mjs';
 import { calcWesternChart } from '../src/engines/western.js';
 
 // Exercise the built app at a non-root deployment. All external services are
@@ -124,11 +124,15 @@ async function createPage({ desktop = false, reduced = true, failMotionInMain = 
 }
 
 async function choose(page) {
-  await applyThemeFor(page, 'wenwen');
+  await spinFor(page, 'wenwen');
+  await page.waitForFunction(() => document.getElementById('traitSelection').hidden);
 }
 async function showReport(page, birthDate = '1995-06-15') {
   await page.evaluate(date => {
-    window.applyEntryPayload?.({ bd: date, timeStr: '00:30', cityName: '上海市', gen: 'male' });
+    document.getElementById('bDate').value = date;
+    document.getElementById('bTime').value = '00:30';
+    document.getElementById('cInp').value = '上海';
+    document.getElementById('bPlace').value = 'shanghai';
     void window.calc();
   }, birthDate);
   await page.waitForFunction(() => document.getElementById('calculationOverlay')?.dataset.calculationState === 'ready', { timeout: 20000 });

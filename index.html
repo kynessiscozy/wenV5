@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-twins.png">
 
 <script>
-  /* 用系统字体及应用主题；人物与主题色由漏斗选定的引路人决定。 */
+  /* 用系统字体及应用主题，选择特质后再加载对应角色。 */
   (function () {
     try {
       var p = localStorage.getItem('tj_theme') || 'system';
@@ -26,22 +26,20 @@
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       var previousController = navigator.serviceWorker.controller;
       var reloadingForUpdate = false;
-      function reloadUpdatedApp() {
-        var overlay = document.getElementById('calculationOverlay');
-        // Never interrupt an in-flight handoff, calculation, or a live report.
-        if (!reloadingForUpdate &&
-            !document.body.classList.contains('report-active') &&
-            (!overlay || overlay.hidden) &&
-            document.documentElement.dataset.handoff !== 'pending') {
+      function reloadUpdatedSelection() {
+        var selection = document.getElementById('traitSelection');
+        // Never interrupt an in-progress character session or form.
+        if (!reloadingForUpdate && selection && !selection.hidden &&
+            !document.documentElement.dataset.homeTheme && selection.getAttribute('aria-busy') !== 'true') {
           reloadingForUpdate = true;
           window.location.reload();
         }
       }
       navigator.serviceWorker.addEventListener('controllerchange', function () {
         if (reloadingForUpdate || !navigator.serviceWorker.controller || navigator.serviceWorker.controller === previousController) return;
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', reloadUpdatedApp, { once: true });
-        } else reloadUpdatedApp();
+        if (!document.getElementById('traitSelection') && document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', reloadUpdatedSelection, { once: true });
+        } else reloadUpdatedSelection();
       });
       navigator.serviceWorker.getRegistration().then(function (registration) {
         if (registration) return registration.update();
@@ -52,16 +50,11 @@
         navigator.serviceWorker.register('./sw.js').catch(function () {});
       }, { once: true });
     }
-    // If the small entry module itself cannot load, don't leave a silent screen.
+    // If the small entry module itself cannot load, don't leave a silent spinner.
     window.setTimeout(function () {
-      if (document.documentElement.dataset.homeReady === 'true') return;
-      var desc = document.querySelector('#entryFallback .ef-desc');
-      if (desc) { desc.textContent = '加载较慢，请检查网络后刷新重试'; return; }
-      var notice = document.createElement('p');
-      notice.textContent = '加载较慢，请检查网络后刷新重试';
-      notice.setAttribute('role', 'status');
-      notice.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:200001;margin:0;padding:12px 16px;border-radius:12px;background:#262624;color:#faf9f5;font:14px/1.5 system-ui,sans-serif;text-align:center';
-      document.body.appendChild(notice);
+      var machine = document.getElementById('traitMachine');
+      var status = document.getElementById('traitStatus');
+      if (machine && status && machine.dataset.ready !== 'true') status.textContent = '加载较慢，请检查网络后刷新重试';
     }, 12000);
   })();
 </script>
@@ -99,12 +92,61 @@
 <link rel="stylesheet" href="/src/character-theme.css">
 <link rel="stylesheet" href="/src/chat-master.css">
 <link rel="stylesheet" href="/src/character-calculation.css">
+<link rel="stylesheet" href="/src/trait-selection.css">
 <link rel="stylesheet" href="/src/character-report.css">
 <link rel="stylesheet" href="/src/guide.css">
 <link rel="stylesheet" href="/src/share-studio.css">
 <link rel="stylesheet" href="/src/entry-flow.css">
+<style>
+.result-style-heading{display:flex;align-items:baseline;gap:8px;margin-bottom:7px;min-width:0}
+.result-style-label{font-size:.72em;font-weight:500;color:var(--c-text-2);white-space:nowrap}
+.result-style-heading .result-style-hint{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result-style-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
+.result-style-option{display:flex;align-items:center;justify-content:center;min-height:38px;width:100%;padding:10px 4px;border:1px solid var(--c-border-2);border-radius:12px;background:var(--c-surface-3);color:var(--c-text-hi);font:600 .82em var(--sf);cursor:pointer;appearance:none;-webkit-appearance:none}
+.result-style-option.active{border-color:var(--c-accent);background:var(--c-accent);color:var(--c-on-accent);font-weight:700}
+@media(max-width:520px){.result-style-options{gap:5px}.result-style-option{font-size:.72em;letter-spacing:0;white-space:nowrap}}
+@media(max-width:360px){.result-style-options{gap:3px}.result-style-option{font-size:.66em}}
+</style>
 </head>
 <body class="home">
+
+<!-- Choose a trait before entering; the same selector can be reopened later. -->
+<section class="trait-selection" id="traitSelection" role="dialog" aria-modal="true" aria-labelledby="traitTitle" aria-describedby="traitHint" tabindex="-1">
+  <div class="trait-atmosphere" aria-hidden="true">
+    <span class="trait-orbit trait-orbit--outer"></span><span class="trait-orbit trait-orbit--inner"></span>
+    <svg class="trait-stars" viewBox="0 0 1000 680" preserveAspectRatio="xMidYMid slice" focusable="false">
+      <path d="M118 181l3 10 10 3-10 3-3 10-3-10-10-3 10-3zm730 60l2 7 7 2-7 2-2 7-2-7-7-2 7-2zM777 470l3 10 10 3-10 3-3 10-3-10-10-3 10-3zM239 515l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/>
+      <circle cx="284" cy="140" r="1.5"/><circle cx="675" cy="122" r="1.5"/><circle cx="90" cy="370" r="1.4"/><circle cx="909" cy="393" r="1.4"/>
+    </svg>
+  </div>
+  <div class="trait-content">
+    <button class="trait-cancel" id="traitCancel" type="button" hidden>返回</button>
+    <p class="trait-eyebrow">心性相逢 <span aria-hidden="true">✦</span> 一念启程</p>
+    <h1 class="trait-sr-only" id="traitTitle">选择同行特质</h1>
+    <div class="trait-machine" id="traitMachine">
+      <div class="trait-machine-aura" aria-hidden="true"></div>
+      <div class="trait-machine-body">
+        <div class="trait-machine-crown" aria-hidden="true"><span>✦</span><b>心 性 之 轮</b><span>✦</span></div>
+        <div class="trait-machine-lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="trait-machine-window" aria-hidden="true">
+          <div class="trait-side-reel trait-side-reel--left"><i></i><b></b><i></i></div>
+          <div class="trait-center-reel"><div class="trait-reel-track" id="traitReelTrack"></div></div>
+          <div class="trait-side-reel trait-side-reel--right"><i></i><b></b><i></i></div>
+        </div>
+        <div class="trait-machine-foot">
+          <span class="trait-foot-ornament" aria-hidden="true">✧</span>
+          <button class="trait-spin" id="traitSpin" type="button" disabled><span>转一转</span><span aria-hidden="true">↻</span></button>
+          <span class="trait-foot-ornament" aria-hidden="true">✧</span>
+        </div>
+      </div>
+      <button class="trait-lever" id="traitLever" type="button" disabled aria-label="随机转动特质"><span class="trait-lever-arm" aria-hidden="true"></span><span class="trait-lever-knob" aria-hidden="true"></span></button>
+    </div>
+    <button class="trait-confirm" id="traitConfirm" type="button" hidden>选择这个特质</button>
+    <p class="trait-status" id="traitStatus" role="status" aria-live="polite">正在准备…</p>
+    <p class="trait-hint" id="traitHint">转动后确认，或再转一次</p>
+    <noscript><p class="trait-noscript">请启用 JavaScript 后选择特质。</p></noscript>
+  </div>
+</section>
 
 <div class="mesh"></div>
 <canvas class="particles" id="tjParticles"></canvas>
@@ -380,7 +422,7 @@
                     <span class="character-prop character-rune character-rune--four" hidden><img data-character-asset="runes" data-character-scene-optional fetchpriority="low" alt="" width="512" height="512" decoding="async" hidden></span>
                   </div>
                 </div>
-                <button class="character-portrait" id="characterPortraitButton" type="button" aria-label="点击同行形象，开启探索" title="开启探索">
+                <button class="character-portrait" id="characterPortraitButton" type="button" aria-label="点击同行形象，开启探索" aria-controls="formModal" aria-haspopup="dialog" title="开启探索">
                   <span class="character-camera-subject">
                     <span class="character-aura" aria-hidden="true"></span>
                     <span class="character-puppet">
@@ -506,6 +548,32 @@
   </div>
 </div>
 
+<!-- 出生信息表单：自包含对话框，也可从日历中打开 -->
+<div class="form-modal" id="formModal" role="dialog" aria-modal="true" aria-labelledby="formModalTitle" aria-describedby="formPrivacy">
+  <div class="form-modal-backdrop" onclick="TJCloseForm()"></div>
+  <div class="form-modal-sheet">
+    <button class="form-modal-close" type="button" onclick="TJCloseForm()" aria-label="关闭表单">×</button>
+    <div class="home-card" id="formCard">
+      <div class="form-modal-kicker">A LITTLE ABOUT YOU &nbsp; ✦</div>
+      <h2 class="form-modal-tt" id="formModalTitle" tabindex="-1">让我们从认识你开始</h2>
+      <p class="form-modal-intro">填写出生信息，生成一份专属命盘。</p>
+      <div class="form-grid">
+        <div class="fd"><label for="bDate">出生日期</label><input type="date" id="bDate" value="1990-06-15" aria-describedby="formDefaults formError"></div>
+        <div class="fd"><label for="bTime">出生时间</label><input type="time" id="bTime" value="09:00" aria-describedby="formDefaults formError" style="font-family:var(--sf)"></div>
+        <div class="fd"><label for="cInp">出生地点</label><div class="cw"><input type="text" id="cInp" placeholder="搜索并选择城市…" autocomplete="off" value="上海" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="cDD" aria-describedby="formDefaults formError"><input type="hidden" id="bPlace" value="shanghai"><div class="cdd" id="cDD" role="listbox" aria-label="出生城市候选"></div></div></div>
+        <div class="fd"><label for="bGen">性别</label><select id="bGen"><option value="male">男（乾造）</option><option value="female">女（坤造）</option></select></div>
+        <div class="fd full result-style-field"><div class="result-style-heading"><div class="result-style-label">选择你希望的风格</div><small class="result-style-hint" id="resultStyleHint">先接住当下感受，再一起把问题拆小。</small></div><input type="hidden" id="bResultStyle" value="companion"><div class="result-style-options" id="resultStyleOptions" role="radiogroup" aria-label="结果风格"><button type="button" class="result-style-option active" data-style="companion" role="radio" aria-checked="true" onclick="selectResultStyle('companion')">陪伴型</button><button type="button" class="result-style-option" data-style="rigorous" role="radio" aria-checked="false" onclick="selectResultStyle('rigorous')">严谨型</button><button type="button" class="result-style-option" data-style="traditional" role="radio" aria-checked="false" onclick="selectResultStyle('traditional')">传统型</button><button type="button" class="result-style-option" data-style="advisory" role="radio" aria-checked="false" onclick="selectResultStyle('advisory')">建议型</button></div></div>
+      </div>
+      <input type="hidden" id="bQ" value="">
+      <p class="character-form-defaults" id="formDefaults">首次打开时预填示例日期和地点，请核对；时间默认 09:00，不确定时相关结果可能有偏差。</p>
+      <div class="switch-row" style="margin-top:6px"><button type="button" class="switch" id="swTrueSolar" role="switch" aria-checked="false" aria-labelledby="swText" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'));document.getElementById('swText').textContent=(this.classList.contains('on')?'开启':'关闭')+'真太阳时（按时区、经度和均时差估算）'"></button><span id="swText">关闭真太阳时（按时区、经度和均时差估算）</span></div>
+      <p class="character-form-error" id="formError" role="alert" hidden></p>
+      <button class="character-form-submit" type="button" onclick="calc()">开始推演 <span aria-hidden="true">↗</span></button>
+      <p class="character-form-privacy" id="formPrivacy">✧ &nbsp; 保存的档案存放在本机，可随时管理</p>
+    </div>
+  </div>
+</div>
+
 <div class="page hidden" id="page2">
   <div class="p2-top">
     <button class="p2-menu-btn" id="p2MenuBtn" type="button" onclick="toggleP2Menu()" aria-label="菜单" title="菜单">
@@ -627,6 +695,10 @@
     <button type="button" class="p2-menu-item" onclick="toggleP2Menu(false);goBack()">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8"/><path d="M3 3v5h5"/></svg>
       <span>重新推演</span>
+    </button>
+    <button type="button" class="p2-menu-item" onclick="toggleP2Menu(false);location.href='./funnel.html'">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span>返回入口页</span>
     </button>
     <button type="button" class="p2-menu-item" onclick="toggleP2Menu(false);openSaveModal()">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -977,14 +1049,13 @@
 <!-- 交接遮罩：静态骨架先于模块出现，避免模块加载期间闪屏；
      文案与立绘由 entry-flow.js 按所选引路人补齐。 -->
 <div id="funnelVeil" aria-hidden="true">
-  <img data-veil-portrait src="./art/yuebai-lord.webp" alt="">
+  <img data-veil-portrait src="./art/diyan-lord.webp" alt="">
   <div class="fv-shade"></div>
   <div class="fv-copy">
-    <p class="fv-line" data-veil-line>月白正在为你翻册…</p>
+    <p class="fv-line" data-veil-line>地炎君正在为你排盘…</p>
     <p class="fv-brand">问 问 大 师</p>
   </div>
 </div>
-<noscript><p class="ef-noscript" role="status" style="position:fixed;left:16px;right:16px;bottom:16px;z-index:200001;margin:0;padding:12px 16px;border-radius:12px;background:#262624;color:#faf9f5;font:14px/1.5 system-ui,sans-serif;text-align:center">需要启用 JavaScript 才能开始探索。</p></noscript>
 <script type="module" src="/src/home.js"></script>
 </body>
 </html>

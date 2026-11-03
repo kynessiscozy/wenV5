@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
-import { applyThemeFor, submitBirth } from './theme-helper.mjs';
+import { spinFor } from './trait-picker-helper.mjs';
 
 const browser = await puppeteer.launch({headless:true,args:['--no-sandbox','--disable-setuid-sandbox']});
 try {
@@ -11,8 +11,9 @@ try {
     await page.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);
     await page.goto(process.env.BASE_URL || 'http://localhost:5173/',{waitUntil:'domcontentloaded'});
     for (const [i,id] of ['luye','suyan'].entries()) {
-      await applyThemeFor(page,id);
-      await page.waitForFunction(id=>document.documentElement.dataset.homeTheme===id,{},id);
+      if (i) await page.click('#homeTraitReset');
+      await spinFor(page,id);
+      await page.waitForFunction(id=>document.documentElement.dataset.homeTheme===id&&document.getElementById('traitSelection').hidden,{},id);
       const view=await page.evaluate(async () => {
         document.querySelector('#page1 .p1-scroll').scrollTop=0;
         const img=document.querySelector('[data-character-asset="portrait"]'); await img.decode();

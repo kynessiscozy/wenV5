@@ -13,8 +13,7 @@ function mediaQuery(query) {
 
 function selectedThemeId() {
   const requested = document.documentElement.dataset.homeTheme;
-  // 与首屏默认一致：主题尚未应用时按月白（moonfox）准备场景。
-  return Object.prototype.hasOwnProperty.call(HOME_THEMES, requested) ? requested : 'moonfox';
+  return Object.prototype.hasOwnProperty.call(HOME_THEMES, requested) ? requested : 'wenwen';
 }
 function setImage(image, src) {
   if (!image || !src) return;
@@ -40,7 +39,7 @@ function requestRoleProps(overlay, themeId) {
     .forEach((image) => setImage(image, image.dataset.calculationSrc || assets?.[image.dataset.calculationAsset]?.src));
 }
 
-/** Start fetching the chosen role's optional props ahead of the calculation scene. */
+/** Start fetching the chosen role's optional props while the user fills the form. */
 export function warmCharacterCalculation() {
   if (mediaQuery('(prefers-reduced-motion: reduce)').matches) return;
   const overlay = document.getElementById('calculationOverlay');

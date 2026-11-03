@@ -12,9 +12,13 @@ page.on('pageerror', err => console.error('BROWSER ERROR:', err));
 await page.goto('http://127.0.0.1:4173', { waitUntil: 'networkidle0' });
 
 console.log('Page loaded');
-// The old form is gone: birth input goes through the funnel handoff channel.
+// Fill in form if needed
 await page.evaluate(() => {
-  window.applyEntryPayload?.({ bd: '1995-06-15', timeStr: '09:00', cityName: '北京市', gen: 'male', who: '事业' });
+  document.getElementById('bDate').value = '1995-06-15';
+  document.getElementById('bTime').value = '09:00';
+  document.getElementById('bPlace').value = 'beijing';
+  document.getElementById('bGen').value = 'male';
+  document.getElementById('bQ').value = '事业';
 });
 
 console.log('Calling calc()...');

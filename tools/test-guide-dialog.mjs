@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
-import { applyThemeFor, submitBirth } from './theme-helper.mjs';
+import { spinFor } from './trait-picker-helper.mjs';
 import { KB } from '../src/ai/kb.js';
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173/';
@@ -15,7 +15,7 @@ try {
     await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
     await page.evaluateOnNewDocument(theme => localStorage.setItem('tj_theme', theme), theme);
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await applyThemeFor(page, 'wenwen');
+    await spinFor(page, 'wenwen');
     // Funnel-only entry: the guide link lives on the idle fallback card.
     await page.waitForFunction(() => document.getElementById('entryFallback') && typeof window.openNoviceGuide === 'function');
     await page.click('#entryFallback [data-panel="guide"]');
@@ -56,15 +56,17 @@ try {
     assert.equal(await page.evaluate(() => document.activeElement.dataset.panel), 'about');
 
     await page.click('#entryFallback [data-panel="guide"]');
-    // 指引主行动 = 去唯一入口填写（旧表单与其默认说明/真太阳时开关已删除）。
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
-      page.click('.ng-act-btn.primary'),
-    ]);
-    assert.ok(page.url().includes('funnel.html'), '指引主行动应去漏斗填写');
-    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => document.getElementById('entryFallback') && typeof window.openNoviceGuide === 'function');
+    await page.click('.ng-act-btn.primary');
+    await page.waitForSelector('#formModal.open');
+    assert.match(await page.$eval('#formDefaults', el => el.innerText), /示例日期和地点.*09:00/);
+    assert.match(await page.$eval('#bTime', el => el.getAttribute('aria-describedby')), /formDefaults/);
+    const solarLabel = '真太阳时（按时区、经度和均时差估算）';
+    assert.equal(await page.$eval('#swText', el => el.innerText), '关闭' + solarLabel);
+    await page.click('#swTrueSolar');
+    assert.equal(await page.$eval('#swText', el => el.innerText), '开启' + solarLabel);
     assert.equal(await page.evaluate(() => window.__TJ_GLOSSARY__['真太阳时']), KB.terms.find(term => term.t === '真太阳时').d);
+    await page.click('#swTrueSolar');
+    await page.evaluate(() => window.TJCloseForm());
     await page.evaluate(() => { void window.calc(true); });
     await page.waitForFunction(() => document.getElementById('calculationOverlay').dataset.calculationState === 'ready');
     await page.click('#calculationContinue');

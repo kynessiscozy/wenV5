@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
-import { applyThemeFor, submitBirth } from './theme-helper.mjs';
+import { spinFor } from './trait-picker-helper.mjs';
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173/';
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
@@ -53,9 +53,9 @@ async function newHome({ width = 390, height = 844, theme = 'light', trait = 'we
 }
 
 async function chooseTrait(page, trait = 'wenwen') {
-  // Funnel-only entry: the trait reel is hidden, so applyThemeFor() only waits for
+  // Funnel-only entry: the trait reel is hidden, so spinFor() only waits for
   // the active theme. The viewport cases below still cover each screen size.
-  await applyThemeFor(page, trait);
+  await spinFor(page, trait);
   await page.waitForFunction(() => window._tools2Ready === true && document.documentElement.dataset.homeReady === 'true' &&
     !!document.documentElement.dataset.homeTheme, { timeout: 15000 });
 }
