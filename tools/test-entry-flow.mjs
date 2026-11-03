@@ -77,6 +77,9 @@ const flowCss = await read('src/entry-flow.css');
 
 ok(html.includes('data-entry="funnel"') && flowCss.includes('html[data-entry="funnel"] #page1'),
   '首页隐藏由唯一的入口开关控制');
+ok(/<section hidden class="trait-selection" id="traitSelection"/.test(html) &&
+  flowCss.includes('html[data-entry="funnel"] #traitSelection { display: none !important; }'),
+  '旧老虎机从静态首屏开始隐藏，即使旧脚本误打开也不显示');
 ok(!html.includes('#page1{display:none!important}'), '不再有 !important 内联覆盖');
 ok(!html.includes('setInterval'), '入口页不再用轮询抢屏');
 ok(html.includes('window.__wenEntryIntent') && html.includes('id="funnelVeil"'), '只采集一次意图 + 静态遮罩骨架');
@@ -96,7 +99,7 @@ ok(calcJs.includes('autoAdvance') && calcJs.includes("'tj:calculation-ready'"),
 ok(!calcJs.includes('setInterval'), '演算场景不靠定时器反复点击');
 ok(themeJs.includes('themeForPersona'), '角色主题使用共享映射表');
 
-ok(teaserJs.includes('p.applied && !p.teasered'), '预告页触发条件保持不变');
+ok(teaserJs.includes('p.applied && !p.teasered') && mainJs.includes('if(isFunnelHandoff)try { showFunnelTeaserIfNeeded(); }'), '仅当前问卷交接展示未读预告，档案和重推不会串场');
 ok(teaserJs.includes("event.key === 'Escape'") && teaserJs.includes("class=\"ft-close\""),
   '预告页可用 Esc / 关闭按钮退出');
 ok(teaserJs.includes('onTeaserOpen') && teaserJs.includes('onTeaserClosed'), '预告页向状态机报告开合');

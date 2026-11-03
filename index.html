@@ -39,10 +39,17 @@
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       var previousController = navigator.serviceWorker.controller;
       var reloadingForUpdate = false;
+      var userInteracted = false;
+      ['pointerdown', 'keydown', 'input'].forEach(function (type) {
+        document.addEventListener(type, function (event) { if (event.isTrusted) userInteracted = true; }, true);
+      });
       function reloadUpdatedSelection() {
         var selection = document.getElementById('traitSelection');
         // Never interrupt an in-progress character session or form.
-        if (!reloadingForUpdate && selection && !selection.hidden &&
+        var flowState = window.__wenFlow && window.__wenFlow.state;
+        if (!reloadingForUpdate && !userInteracted && selection &&
+            document.documentElement.dataset.handoff !== 'pending' &&
+            (!flowState || flowState === 'boot' || flowState === 'idle') &&
             !document.documentElement.dataset.homeTheme && selection.getAttribute('aria-busy') !== 'true') {
           reloadingForUpdate = true;
           window.location.reload();
@@ -123,8 +130,8 @@
 </head>
 <body class="home">
 
-<!-- Choose a trait before entering; the same selector can be reopened later. -->
-<section class="trait-selection" id="traitSelection" role="dialog" aria-modal="true" aria-labelledby="traitTitle" aria-describedby="traitHint" tabindex="-1">
+<!-- 旧版选择器保留给兼容代码，但漏斗入口不再展示它。 -->
+<section hidden class="trait-selection" id="traitSelection" role="dialog" aria-modal="true" aria-labelledby="traitTitle" aria-describedby="traitHint" tabindex="-1">
   <div class="trait-atmosphere" aria-hidden="true">
     <span class="trait-orbit trait-orbit--outer"></span><span class="trait-orbit trait-orbit--inner"></span>
     <svg class="trait-stars" viewBox="0 0 1000 680" preserveAspectRatio="xMidYMid slice" focusable="false">

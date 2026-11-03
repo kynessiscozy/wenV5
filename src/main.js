@@ -427,11 +427,14 @@ async function calc(isDemoPreview=false){
     yongShen:document.documentElement.getAttribute('data-yongshen')};
   calculationInProgress=true;
   let scene=null,completed=false;
+  // Only the calculation belonging to this handoff may present its teaser.
+  // A saved profile or a manual recalculation must never inherit an old one.
+  const isFunnelHandoff=!!window.__wenFlow?.isAutoAdvance?.();
   try{
     if(!fromCalendar){
       // Only an in-flight funnel handoff may auto-acknowledge the result;
       // every other visit keeps the explicit "查看报告" confirmation.
-      scene=beginCharacterCalculation({autoAdvance:!!window.__wenFlow?.isAutoAdvance?.()});
+      scene=beginCharacterCalculation({autoAdvance:isFunnelHandoff});
       if(scene)await scene.paint(); // 让角色场景先绘制，再执行同步排盘
     }
     doCompute();
@@ -457,9 +460,8 @@ async function calc(isDemoPreview=false){
     }
     showPage2();
     characterCompanion.onReportReady({isDemo:isDemoPreview});
-    // 预告页的触发条件保持不变（applied && !teasered），但现在是罩层之上
-    // 的最后一层，可以关闭、可以用 Esc 退出，也不会再被后台快捷键穿透。
-    try { showFunnelTeaserIfNeeded(); } catch (e) { console.warn('[funnel] 预告页失败', e); }
+    // 只显示这次问卷对应的预告，避免旧问卷串到档案或手动推演。
+    if(isFunnelHandoff)try { showFunnelTeaserIfNeeded(); } catch (e) { console.warn('[funnel] 预告页失败', e); }
     window.__wenFlow?.onReportReady?.();
     document.querySelectorAll('.tab-item')[0].click();
     formReturnFocus=null;

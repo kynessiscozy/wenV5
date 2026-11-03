@@ -180,6 +180,12 @@ try {
   await step(7, '#qmount .btn.ghost');
   await page.waitForFunction(() => location.pathname.endsWith('/index.html') &&
     document.body.classList.contains('report-active'), { timeout: 30000 });
+  await page.waitForSelector('#funnelTeaser .ft-cta', { visible: true, timeout: 30000 });
+  assert.equal(await page.$eval('#traitSelection', el => getComputedStyle(el).display), 'none');
+  await page.click('#funnelTeaser .ft-cta');
+  assert.equal(await page.$eval('#page2', el => el.inert), false, '离线预告退出后报告必须可操作');
+  await page.click('#p2MenuBtn');
+  assert.equal(await page.$eval('#p2MenuDrawer', el => el.classList.contains('open')), true);
   assert.ok(await page.$eval('#characterResultHero [data-report-value="day-master"]', el => el.textContent.trim()));
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('wen_funnel_v1')).trait), 'moonfox');
   assert.equal(await page.$eval('html', el => el.dataset.homeTheme), 'moonfox');
@@ -224,7 +230,7 @@ try {
     await tab.click('#btnMenu');
     await tab.waitForFunction(() => document.querySelector('#fmDrawer.open'));
     if (withProfile) {
-      await tab.waitForFunction(() => document.querySelector('#fmProfiles')?.textContent.includes('保留的档案'));
+      await tab.waitForFunction(() => document.querySelector('#fmProfiles')?.textContent.includes('保留的档案') && Math.abs(new DOMMatrix(getComputedStyle(document.querySelector('#fmDrawer')).transform).m41) < 1);
       await Promise.all([tab.waitForNavigation({ waitUntil: 'domcontentloaded' }), tab.click('#fmProfiles .fm-card')]);
       await tab.waitForFunction(() => document.documentElement.dataset.homeTheme === 'yuchen', { timeout: 20000 });
     } else await tab.goto(base + 'index.html', { waitUntil: 'domcontentloaded' });

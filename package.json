@@ -41,7 +41,8 @@
     "test:mobile-calculation": "node tools/test-mobile-calculation.mjs",
     "test:share": "node tools/test-share-studio.mjs",
     "test:security": "node tools/test-security-fixes.mjs",
-    "test:theme": "node tools/test-theme-cascade.mjs"
+    "test:theme": "node tools/test-theme-cascade.mjs",
+    "test:funnel-report": "node tools/test-funnel-report-handoff.mjs"
   },
   "devDependencies": {
     "astronomy-engine": "^2.1.19",

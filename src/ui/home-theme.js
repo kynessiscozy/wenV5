@@ -442,35 +442,30 @@ export function initHomeTheme({ setHomeCharacter = () => {} } = {}) {
   /* 漏斗问卷选定的引路人直接决定主应用角色；未知/缺失时回退月白。
      映射表在 entry-personas.js，避免「夕瑶」等没有同名主题的人物静默回退。
      普通访客（无问卷数据）也使用同一个默认角色。 */
-  let requestedTrait = '';
-  try {
-    const selectedPersona = localStorage.getItem('wen_funnel_persona') || '';
-    const loadingProfile = !!localStorage.getItem('wen_load_profile_v1');
-    const payload = JSON.parse(localStorage.getItem('wen_funnel_v1') || 'null');
-    // A profile selected from the funnel should use the current guide, not an
-    // older questionnaire's guide. Otherwise preserve the handoff identity.
-    requestedTrait = loadingProfile && selectedPersona ? selectedPersona :
-      (payload?.trait || selectedPersona);
-  } catch (error) { /* 数据不可用时回退默认角色 */ }
+  let selectedPersona = '';
+  let loadingProfile = false;
+  let payload = null;
+  try { selectedPersona = localStorage.getItem('wen_funnel_persona') || ''; } catch (_) {}
+  try { loadingProfile = !!localStorage.getItem('wen_load_profile_v1'); } catch (_) {}
+  try { payload = JSON.parse(localStorage.getItem('wen_funnel_v1') || 'null'); } catch (_) {}
+  // A profile selected from the funnel uses the current guide rather than a
+  // previous questionnaire. A corrupt payload must not erase that choice.
+  const requestedTrait = loadingProfile && selectedPersona ? selectedPersona :
+    (payload?.trait || selectedPersona);
   const requestedTheme = Object.prototype.hasOwnProperty.call(HOME_THEMES, requestedTrait)
     ? requestedTrait : themeForPersona(requestedTrait);
   const directTheme = Object.prototype.hasOwnProperty.call(HOME_THEMES, requestedTheme)
     ? requestedTheme : 'moonfox';
 
-  selection.hidden = true; /* 先同步藏起老虎机，避免资产加载期间闪现 */
-  shieldBackground(); /* 记录各区块初始状态，apply 后由 restoreBackground 放行 */
-  (async () => {
-    try {
-      await prepareTheme(directTheme);
-      apply(directTheme);
-      selection.hidden = true;
-      delete selection.dataset.reselect;
-      restoreBackground();
-    } catch (error) {
-      selection.hidden = true;
-      if (status) status.textContent = imageError;
-      restoreBackground();
-    }
-  })();
+  selection.hidden = true;
+  // The funnel already chose the guide: there is no modal to shield. Shielding
+  // while images load can race the teaser and leave its report inert forever.
+  // Apply identity synchronously so the first calculation cannot use another
+  // guide; guardImage keeps unready art hidden as it loads in the background.
+  try { apply(directTheme); }
+  catch (error) {
+    console.warn('[home] 角色素材初始化失败', error);
+    if (status) status.textContent = imageError;
+  }
   return { getSelected: () => selected, open: openPicker };
 }
