@@ -24,14 +24,14 @@ export const FUNNEL_PERSONAS = Object.freeze({
   }),
   yuchen: Object.freeze({
     key: 'yuchen',
-    name: '倪克斯神谕',
+    name: '祢玉',
     theme: 'yuchen',
     poster: './art/yuchen-lord.webp',
     video: './art/yuchen-invite.mp4',
     lead: '静下心，先看这一处。',
-    circle: '是倪克斯神谕先替你圈出来的',
+    circle: '是祢玉先替你圈出来的',
     hooksTitle: '倪 克 斯 神 谕 先 说 三 句',
-    byline: '倪克斯神谕正在为你排盘…',
+    byline: '祢玉正在为你排盘…',
   }),
   moonfox: Object.freeze({
     key: 'moonfox',
