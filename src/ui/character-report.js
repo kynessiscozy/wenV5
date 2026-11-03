@@ -302,10 +302,13 @@ function makeGuidePerspective(id, ctx, western, isDemo) {
   card.setAttribute('aria-label', `${perspective.name}的阅读视角`);
   card.append(element('p', 'guide-perspective-kicker', `${perspective.name} · 引路人视角${isDemo ? ' · 示例' : ''}`));
   card.append(element('h2', 'guide-perspective-title', perspective.focus));
-  card.append(element('p', 'guide-perspective-facts sys-eastern',
-    perspective.eastern ? `命盘线索：${perspective.eastern}` : '命盘线索暂不可用，请查看完整报告。'));
-  card.append(element('p', 'guide-perspective-facts sys-western',
-    perspective.western ? `星盘线索：${perspective.western}` : '星盘线索暂不可用，请查看完整报告。'));
+  const easternEl = element('p', 'guide-perspective-facts sys-eastern',
+    perspective.eastern ? `命盘线索：${perspective.eastern}` : '命盘线索暂不可用，请查看完整报告。');
+  const westernEl = element('p', 'guide-perspective-facts sys-western',
+    perspective.western ? `星盘线索：${perspective.western}` : '星盘线索暂不可用，请查看完整报告。');
+  // 西方系引路人（雷兹、絮羽）以西方星象为主视角在先，东方命盘退为辅助；其余引路人维持命盘在先。
+  if (id === 'leizi' || id === 'muse') card.append(westernEl, easternEl);
+  else card.append(easternEl, westernEl);
   card.append(element('p', 'guide-perspective-prompt', perspective.prompt));
   card.append(element('p', 'guide-perspective-note', '引路人只改变阅读角度，不改变排盘或评分。'));
   return card;
