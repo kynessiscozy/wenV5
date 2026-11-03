@@ -102,7 +102,7 @@
 .calculation-tail--right img { clip-path: polygon(66% 0,100% 0,100% 100%,50% 100%,50% 75%,60% 54%,66% 36%); animation: calculation-tail-right 1.8s cubic-bezier(.2,.7,.2,1) both; }
 .calculation-tail--center img { clip-path: polygon(34% 0,66% 0,66% 36%,60% 54%,50% 75%,50% 100%,50% 75%,40% 54%,34% 36%); animation: calculation-tail-center 1.8s ease-out both; }
 
-/* 地炎君：火座升起、符印次第燃亮，人物始终在前层。 */
+/* 焱绒：火座升起、符印次第燃亮，人物始终在前层。 */
 .calculation-fire-seat { position: absolute; left: -19%; bottom: 8%; width: 138% !important; height: 58% !important; filter: drop-shadow(0 0 22px rgba(255,62,17,.35)); animation: calculation-fire-seat 1.75s ease-out both; }
 .calculation-fire-seal { position: absolute; left: -15%; bottom: -7%; width: 130% !important; height: 48% !important; filter: drop-shadow(0 0 12px #e94d1b); animation: calculation-fire-seal 1.8s ease-out both; }
 .calculation-rune { position: absolute; overflow: hidden; width: 18%; aspect-ratio: 1; filter: drop-shadow(0 0 10px #fa5d25); animation: calculation-rune 1.7s ease-out both; }

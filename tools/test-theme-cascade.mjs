@@ -28,7 +28,7 @@ try {
     await page.setViewport({width:390,height:844});
     await page.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);
     await page.evaluateOnNewDocument(mode => localStorage.setItem('tj_theme', mode),mode);
-    await page.goto(process.env.BASE_URL || 'http://localhost:5173/', {waitUntil:'domcontentloaded'});
+    await page.goto(process.env.BASE_URL || 'http://localhost:5173/index.html', {waitUntil:'domcontentloaded'});
     assert.equal(await page.$eval('#homeTraitSummary', el => el.hidden), true, '选择之前不显示说明');
     const snapshots = new Map();
     const ids = Object.keys(HOME_THEMES);
@@ -56,7 +56,7 @@ try {
     const page = await context.newPage();
     await page.setViewport({width,height});
     await page.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);
-    await page.goto(process.env.BASE_URL || 'http://localhost:5173/', {waitUntil:'domcontentloaded'});
+    await page.goto(process.env.BASE_URL || 'http://localhost:5173/index.html', {waitUntil:'domcontentloaded'});
     for (const [index,id] of Object.keys(HOME_THEMES).entries()) {
       if (index) await page.click('#homeTraitReset');
       await spinFor(page,id);

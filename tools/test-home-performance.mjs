@@ -103,7 +103,7 @@ try {
     });
     await page.setRequestInterception(true);
     const gate = gateRequests(page, url => /\/assets\/index-[^/]+\.js(?:\?|$)/.test(url));
-    const navigation = page.goto(base, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    const navigation = page.goto(base + 'index.html', { waitUntil: 'domcontentloaded', timeout: 15000 });
     await waitForHeld(gate, '/assets/index-');
     await page.waitForFunction(() => document.querySelector('#traitStatus')?.textContent.includes('请检查网络'), { timeout: 5000 });
     assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
@@ -123,7 +123,7 @@ try {
     const { page, context, errors } = await openContext(id);
     await page.setRequestInterception(true);
     const gate = gateRequests(page, () => false);
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.goto(base + 'index.html', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#traitMachine[data-ready="true"]');
     const portraits = Object.values(HOME_THEMES).map(item => item.character.assets.portrait.src.split('/').at(-1));
     assert.ok(!gate.seen.some(url => portraits.some(file => url.endsWith('/' + file))), '选择之前不应下载人物主图');
@@ -165,7 +165,7 @@ try {
     const { page, context, errors } = await openContext('yuchen');
     await page.setRequestInterception(true);
     const gate = gateRequests(page, url => /\/assets\/engines-[^/]+\.js(?:\?|$)/.test(url));
-    await page.goto(base, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    await page.goto(base + 'index.html', { waitUntil: 'domcontentloaded', timeout: 15000 });
     await waitForHeld(gate, '/assets/engines-');
     await choose(page, 'yuchen');
     assert.equal(await page.evaluate(() => typeof window.TJOpenForm), 'undefined');
@@ -199,7 +199,7 @@ try {
       else if (url.startsWith('http') && !url.startsWith(base)) request.abort().catch(() => {});
       else request.continue().catch(() => {});
     });
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.goto(base + 'index.html', { waitUntil: 'domcontentloaded' });
     await choose(page, 'wenwen');
     await page.click('#homeCtaCal');
     assert.match(await page.$eval('#homeCtaCal', el => el.textContent), /加载中/);
@@ -227,7 +227,7 @@ try {
     const { page, context, errors } = await openContext();
     await page.setRequestInterception(true);
     const gate = gateRequests(page, url => /\/assets\/tools2-[^/]+\.js(?:\?|$)/.test(url));
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.goto(base + 'index.html', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => typeof window.runWealthTool === 'function', { timeout: 15000 });
     await waitForHeld(gate, '/assets/tools2-');
     assert.notEqual(await page.evaluate(() => window._tools2Ready), true);
@@ -260,7 +260,7 @@ try {
     const { page, context, errors } = await openContext();
     await page.setRequestInterception(true);
     const gate = gateRequests(page, url => heldPattern.test(url));
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.goto(base + 'index.html', { waitUntil: 'domcontentloaded' });
     await choose(page, id);
     await waitForHeld(gate, filename);
     assert.equal(await page.$eval(selector, image => image.complete && image.naturalWidth > 0), false);
@@ -279,7 +279,7 @@ try {
     const { page, context } = await openContext();
     await page.setRequestInterception(true);
     const gate = gateRequests(page, url => url.endsWith('/yuchen-cinema3d.webp'));
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.goto(base + 'index.html', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#traitMachine[data-ready="true"]');
     await spinFor(page, 'yuchen');
     await waitForHeld(gate, '/yuchen-cinema3d.webp');
@@ -304,7 +304,7 @@ try {
       else if (request.url().startsWith('http') && !request.url().startsWith(base)) request.abort().catch(() => {});
       else request.continue().catch(() => {});
     });
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.goto(base + 'index.html', { waitUntil: 'domcontentloaded' });
     await choose(page, 'wenwen');
     await page.evaluate(() => window.TJOpenForm?.());
     await page.waitForSelector('#formModal.open');
@@ -319,7 +319,7 @@ try {
   {
     const { page, context } = await openContext();
     await page.setJavaScriptEnabled(false);
-    await page.goto(base, { waitUntil: 'load' });
+    await page.goto(base + 'index.html', { waitUntil: 'load' });
     const fallback = await page.evaluate(() => ({
       message: document.querySelector('.trait-noscript')?.textContent,
       overlay: getComputedStyle(document.getElementById('calculationOverlay')).display,
@@ -337,7 +337,7 @@ try {
     const { page, context } = await openContext('moonfox');
     const responses = [];
     page.on('response', response => responses.push({ url: response.url(), cached: response.fromCache() }));
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.goto(base + 'index.html', { waitUntil: 'domcontentloaded' });
     await choose(page, 'moonfox');
     await page.reload({ waitUntil: 'domcontentloaded' });
     assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
@@ -358,7 +358,7 @@ try {
     await client.send('Network.enable');
     await client.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 200 * 1024, uploadThroughput: 200 * 1024 });
     await client.send('Emulation.setCPUThrottlingRate', { rate: 4 });
-    await page.goto(base, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(base + 'index.html', { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.waitForSelector('#traitMachine[data-ready="true"]', { timeout: 30000 });
     const start = Date.now();
     await choose(page, id);

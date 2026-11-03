@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 import { selectHomeTrait } from './test-entry.mjs';
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173/';
+const BASE = process.env.BASE_URL || 'http://localhost:5173/index.html';
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
 try {
   const page = await browser.newPage();

@@ -9,7 +9,7 @@ try {
     const page=await context.newPage();
     await page.setViewport({width,height});
     await page.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);
-    await page.goto(process.env.BASE_URL || 'http://localhost:5173/',{waitUntil:'domcontentloaded'});
+    await page.goto(process.env.BASE_URL || 'http://localhost:5173/index.html',{waitUntil:'domcontentloaded'});
     for (const [i,id] of ['luye','suyan'].entries()) {
       if (i) await page.click('#homeTraitReset');
       await spinFor(page,id);

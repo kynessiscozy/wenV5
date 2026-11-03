@@ -50,7 +50,7 @@ try {
   const page = await browser.newPage();
   await page.setViewport({ width: 390, height: 844 });
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  await page.goto(base + 'index.html', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => !!window.__wenFlow && typeof window.TJOpenForm === 'function' &&
     document.getElementById('entryFallback') && !document.getElementById('entryFallback').hidden, { timeout: 20000 });
   console.log('✓ 在线首屏显示可操作的待机入口卡');
@@ -133,7 +133,7 @@ try {
   // never replaced by a silent redirect.
   await page.evaluate(() => window.goBack());
   await page.waitForFunction(() => document.getElementById('formModal').classList.contains('open'));
-  assert.equal(await page.evaluate(() => location.pathname), new URL(base).pathname);
+  assert.equal(await page.evaluate(() => location.pathname), new URL(base + 'index.html').pathname);
   await page.evaluate(() => window.TJCloseForm());
   await page.waitForFunction(() => document.body.classList.contains('report-active'));
   console.log('✓ 离线返回 / 关闭表单不会强制跳页');

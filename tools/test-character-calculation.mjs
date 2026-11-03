@@ -2,7 +2,7 @@ import { spinFor } from './trait-picker-helper.mjs';
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173/';
+const BASE = process.env.BASE_URL || 'http://localhost:5173/index.html';
 const THEMES = {
   wenwen: { trait: '温柔', portrait: 'wenwen-cinema3d.webp', art: 'awakening-scroll.webp', selector: '.calculation-scroll', animation: 'calculation-scroll' },
   moonfox: { trait: '神秘', portrait: 'moonfox-cinema3d.webp', art: 'awakening-fox-fan.webp', selector: '.calculation-tail--left img', animation: 'calculation-tail-left' },
@@ -206,7 +206,7 @@ try {
     assert.ok(await page.$('.demo-report-note'));
     // Open a saved profile from an already visible report, not just from home.
     const id = await page.evaluate(() => new Promise((resolve, reject) => {
-      const request = indexedDB.open('TJ_Bazi', 2);
+      const request = indexedDB.open('TJ_Bazi', 3);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         const db = request.result;

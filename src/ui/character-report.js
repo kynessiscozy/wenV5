@@ -1,4 +1,5 @@
 import { HOME_THEMES } from './home-theme.js';
+import { buildGuidePerspective } from './guide-perspective.js';
 
 // The report uses the same page-lifetime choice as the home and calculation
 // scene. No character identity or chart data is stored or sent anywhere here.
@@ -291,6 +292,25 @@ function makeChapter(id, theme, section, westernText, theatreContainer, overview
   return aside;
 }
 
+// A guide highlights existing chart facts and offers a distinct reflection.
+// This is presentation only: neither the input nor calculated context is changed.
+function makeGuidePerspective(id, ctx, western, isDemo) {
+  const perspective = buildGuidePerspective(id, ctx, western);
+  if (!perspective) return null;
+  const card = element('aside', 'guide-perspective');
+  card.dataset.guidePerspective = id;
+  card.setAttribute('aria-label', `${perspective.name}的阅读视角`);
+  card.append(element('p', 'guide-perspective-kicker', `${perspective.name} · 引路人视角${isDemo ? ' · 示例' : ''}`));
+  card.append(element('h2', 'guide-perspective-title', perspective.focus));
+  card.append(element('p', 'guide-perspective-facts sys-eastern',
+    perspective.eastern ? `命盘线索：${perspective.eastern}` : '命盘线索暂不可用，请查看完整报告。'));
+  card.append(element('p', 'guide-perspective-facts sys-western',
+    perspective.western ? `星盘线索：${perspective.western}` : '星盘线索暂不可用，请查看完整报告。'));
+  card.append(element('p', 'guide-perspective-prompt', perspective.prompt));
+  card.append(element('p', 'guide-perspective-note', '引路人只改变阅读角度，不改变排盘或评分。'));
+  return card;
+}
+
 /** Rebuild the selected character's result surfaces after each actual calculation. */
 export function mountCharacterReport({ ctx, western = {}, isDemo = false, onReselect } = {}) {
   const selected = selectedTheme();
@@ -312,9 +332,10 @@ export function mountCharacterReport({ ctx, western = {}, isDemo = false, onRese
   const originals = [overview, luckOverview, relationOverview, astro, horo, num].filter(Boolean).map(node => ({
     node, parent: node.parentNode, next: node.nextSibling,
   }));
-  let hero, luckChapter, relationChapter;
+  let hero, luckChapter, relationChapter, perspective;
   try {
     hero = makeHero(id, theme, ctx, western, isDemo, onReselect, overview, astro);
+    perspective = makeGuidePerspective(id, ctx, western, isDemo);
     luckChapter = makeChapter(id, theme, 'yun',
       [isDemo ? '示例星象' : '星象一览', '拖动星象，探索十二星座示意。'], horo, luckOverview, isDemo);
     relationChapter = makeChapter(id, theme, 'rel',
@@ -328,7 +349,9 @@ export function mountCharacterReport({ ctx, western = {}, isDemo = false, onRese
     throw error;
   }
   [ming, yun, rel].forEach(section => section.querySelector(':scope > .result-character-hero, :scope > .result-character-chapter')?.remove());
+  ming.querySelector(':scope > .guide-perspective')?.remove();
   ming.prepend(hero);
+  if (perspective) hero.after(perspective);
   yun.prepend(luckChapter);
   rel.prepend(relationChapter);
   installPortraitInteraction();

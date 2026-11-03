@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>问问大师</title>
 
+<script>
+/* The directory URL is the public entrance. Explicit index.html remains the
+   app target for questionnaire handoffs, saved profiles and direct links. */
+(function () {
+  if (!location.pathname.endsWith('/') || location.search || location.hash) return;
+  try {
+    var payload = JSON.parse(localStorage.getItem('wen_funnel_v1') || 'null');
+    if ((payload && !payload.applied && payload.bd) || localStorage.getItem('wen_load_profile_v1')) return;
+  } catch (_) { /* Storage may be unavailable; the entrance still works. */ }
+  location.replace('./funnel.html');
+})();
+</script>
+
 <meta name="theme-color" content="#faf9f5">
 <meta name="description" content="和 2.5D 星光向导问问一起，从命盘与星象出发，探索更了解自己的方式。">
 <link rel="manifest" href="./manifest.webmanifest">
@@ -1052,7 +1065,7 @@
   <img data-veil-portrait src="./art/diyan-lord.webp" alt="">
   <div class="fv-shade"></div>
   <div class="fv-copy">
-    <p class="fv-line" data-veil-line>地炎君正在为你排盘…</p>
+    <p class="fv-line" data-veil-line>焱绒正在为你排盘…</p>
     <p class="fv-brand">问 问 大 师</p>
   </div>
 </div>

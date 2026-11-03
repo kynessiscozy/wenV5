@@ -118,7 +118,7 @@ async function createPage({ desktop = false, reduced = true, failMotionInMain = 
       return realFetch(url, init);
     };
   }, { desktopPointer: desktop, failMotionInMain });
-  await page.goto(base, { waitUntil: 'load', timeout: 20000 });
+  await page.goto(base + 'index.html', { waitUntil: 'load', timeout: 20000 });
   await page.waitForFunction(() => window._tools2Ready && typeof window.calc === 'function', { timeout: 20000 });
   return { page, context };
 }

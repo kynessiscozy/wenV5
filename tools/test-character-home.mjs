@@ -14,7 +14,7 @@ import { ZHIYA } from '../src/character/zhiya.js';
 import { HOME_THEMES } from '../src/ui/home-theme.js';
 import { CHAT_MASTER } from '../src/character/chat-master.js';
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173/';
+const BASE = process.env.BASE_URL || 'http://localhost:5173/index.html';
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 const errors = [];
 

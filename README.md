@@ -1,208 +1,141 @@
-# 问问大师 V5.0 BETA
+# 问问大师
 
 [![CI / Deploy](https://github.com/kynessiscozy/wenV5/actions/workflows/deploy.yml/badge.svg)](https://github.com/kynessiscozy/wenV5/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 ![Version](https://img.shields.io/badge/version-5.0.0--beta.1-blue)
 
-> 融汇东方命理与西方星象的智能推演 Web 应用 —— 四柱八字、紫微斗数、奇门遁甲、梅花易数 × 西方占星、生命灵数，配以 Three.js 3D 星象剧场与 AI 智能问答。
+问问大师是一个探索东方命理与西方星象的 Web 应用。输入出生信息后，可以查看八字、紫微斗数和西方星盘等报告，也可以使用决策工具、角色向导和可选的 AI 问答。
 
-**🔮 在线演示**：<https://kynessiscozy.github.io/wenV5/>（GitHub Pages，随 `main` 分支自动部署）
+**[在线体验](https://kynessiscozy.github.io/wenV5/funnel.html)** · [更新日志](./CHANGELOG.md) · [贡献指南](./CONTRIBUTING.md)
 
-V5.0 是一次彻底的体系化升级：在东方命理之外引入完整的**西方星象与生命灵数体系**，并以 **Three.js 3D 星象剧场** 重构西方模式的视觉表达。当前为 Beta 版本。
+> 本项目处于 Beta 阶段。推演结果仅供文化研究与娱乐参考，不构成医疗、投资或其他重大决策建议。
 
----
+## 功能概览
 
-## 入口与交互状态机（漏斗单一入口）
+- **东方命理**：四柱八字、五行十神、紫微斗数、梅花易数、流日与双人合盘；支持节气和真太阳时校正。
+- **西方星象**：本命星盘、行星落座与宫位、相位、生命灵数，以及可交互的 Three.js 星象场景。
+- **工具中心**：塔罗、MBTI、择日、合盘、起名、答案之书、日签等工具。
+- **角色与分享**：选择引路人，获得不同的阅读线索与反思问题；引路人不改变排盘或评分。可在本机预览、生成分享海报。
+- **AI 问答**：可配置 DeepSeek 或 OpenRouter，结合命盘上下文进行追问；未配置 API Key 时提供本地知识库和离线回答。
+- **PWA**：支持安装到主屏幕；资源缓存完成后，部分入口和推演功能可离线使用。
 
-`public/funnel.html` 是**唯一入口**，PWA 的 `start_url` 也指向它。原首页（含特质轮盘）仍保留 DOM 供报告渲染复用，但由 `html[data-entry="funnel"]` 统一隐藏；不再有双入口、特质轮盘或报告里的「重新选择特质」。引路人在漏斗页四位中选一位（地炎君 / 玉宸神后 / 月白 / 夕瑶），其到主应用角色的映射集中在 `src/ui/entry-personas.js`（夕瑶 → `xingling`，月白 → `moonfox`）。
+## 如何使用
 
-`src/ui/entry-flow.js` 是唯一的界面状态机，`src/ui/entry-plan.js` 是纯决策函数。一次访问只做一次判定，优先级为：
+1. 打开[入口页](https://kynessiscozy.github.io/wenV5/funnel.html)，首次展示月白；点击右上角可展开或收起引路人选择，再填写问卷。
+2. 根据提示填写出生信息，完成推演并查看报告；填写途中可选择退出，未完成的内容不会保存。报告中可切换东方和西方内容。
+3. 按需使用工具、保存档案、生成分享海报，或在 AI 设置中配置自己的服务商和 API Key。
 
-1. `?menu=1` / `?panel=guide|about|disclaimer` 深链意图；
-2. `wen_load_profile_v1`（漏斗菜单点选的档案）；
-3. `wen_funnel_v1` 中尚未 `applied` 的问卷交接；
-4. 默认停在**待机入口卡**（`#entryFallback`），由访客显式点「填写出生信息」。
+访问站点根路径会进入漏斗页；直接访问主应用 `index.html` 则会看到待机入口卡。PWA 的启动页同样为 `funnel.html`。
 
-状态迁移：`idle → form → calculating → report`，报告「重新推演」回到 `form`，关表单回到 `report`；没有报告时关表单回到 `idle`。任何时刻都不会出现空白屏，也不会被静默重定向；报告菜单里另有明确的「返回入口页」。待机入口卡同时提供使用指南 / 关于 / 免责声明，加载主模块失败时显示「重新加载」。
-
-漏斗交接只自动推进一次：表单字段由 `window.applyEntryPayload()` 统一解析（自由填写的城市识别不了会回退默认并提示，不会把访客困在校验错误后），演算场景先展示真实四柱结果再确认，遮罩在报告就绪 / 失败 / 20 秒兜底三种情况下揭开。普通访问、载入档案或重新推演都保留「查看报告」的显式确认。预告页触发条件仍为 `wen_funnel_v1` 的 `applied && !teasered`（含载入档案与重算），但它现在是可关闭的模态：支持关闭按钮、跳过、Esc、焦点约束与背景 inert，关闭后返回焦点到报告。
-
-离线：`public/sw.js` 把 `funnel.html` 作为独立导航页缓存（不再让所有离线导航都回落到 `index.html`），并预缓存四位引路人立绘；`tools/test-home-offline.mjs` 覆盖整条离线链路。
-
----
-
-## 核心特性
-
-### 2.5D 人物向导
-
-> 漏斗单一入口下，特质轮盘与「重新选择特质」已停用；引路人在 `funnel.html` 选定后由共享映射表决定主应用角色。原首页仅作为报告渲染容器保留，不再是可交互界面。
->
-> 历史实现（供旧版测试参考）：老虎机曾随机抽取温柔、神秘、威严、从容、洒脱、魅惑、好奇或自信八种特质，各对应一位古风或现代角色与独立场景；点击人物或「开启探索」进入出生信息表单，报告里可重选且切换不丢失输入与结果。报告内 AI 助手仍由问问陪伴。
-
-真实推演时播放角色专属的卷轴、狐尾、火焰符文、凤羽、剑风、星扇、唱机或相机对焦动画，四柱计算完成后显示实际结果，等待点击画面或「查看报告」继续。东方报告将命盘、运势和关系速读分别并入同行解读；西方人物与可拖拽、复位的星盘或星象场景同屏呈现，轻点立绘可收起，也可使用按钮恢复。全站背景、卡片、强调色和西方星空随所选特质变化，同时保留浅色、深色和跟随系统设置；重选时保留实际数据、阅读状态和场景视角。可展开角色语气的阅读提示，示例报告会明确标记；提示仅引用已有计算结果，不是另一段 AI 预测。跳过动画与减少动态不会跳过结果确认，减少动态下手动操作星盘仍会更新画面。
-
-各角色定义位于 `src/character/`，特质、角色、场景及其素材集中配置在 `src/ui/home-theme.js`；选择后只加载对应场景。要增加新角色，可新增角色定义及素材，再往 `HOME_THEMES` 添加带 `trait` 的配置（`trait.color` 使用六位 `#RRGGBB`，用于派生全站配色），并可选设置结果提示语气 `reportLead`；专属推演道具和动画分别在 `index.html` 与 `src/character-calculation.css` 扩展，并同步离线缓存和角色测试。人物点击轮廓可在 `src/character-theme.css` 中通过 `--character-hit-shape` 按素材调整；未指定时使用通用轮廓。眨眼与说话是可选透明表情层，须与人物尺寸一致，使用 `forPortrait` 绑定来源以防错叠。
-
-### 双体系命理引擎
-
-| 体系 | 引擎 | 说明 |
-|------|------|------|
-| 东方 | `src/engines/bazi.js` | 四柱八字、五行旺衰、十神格局、神煞、大运流年 |
-| 东方 | `src/engines/calendar.js` / `solar-terms.js` | 精确节气时刻（1900–2101）、真太阳时校正 |
-| 东方 | `src/engines/lunar.js` | 真实朔望历（1900–2100，含闰月与农历年干支）¹ |
-| 东方 | `src/engines/ziwei.js` | 紫微斗数**标准安星**（与 iztro 全量交叉验证一致）¹ |
-| 东方 | `src/engines/qimen.js` / `meihua.js` | 奇门遁甲（简化排盘 ²）· 梅花易数 |
-| 东方 | `src/engines/synastry.js` / `liuri.js` | 双人合盘 · 流日流周推演 |
-| 西方 | `src/engines/western.js` | 天体力学星历计算、本命星盘、十二宫位、几何相位、毕达哥拉斯生命灵数 |
-
-> ¹ **农历与紫微**:农历引擎经 `lunar-javascript`（MIT）**1901–2099 逐日全量比对一致**（72,691 项，`npm run verify:lunar`）；紫微斗数为标准安星——真实朔望历定农历月日、商数-借数法定紫微、天府寅申轴对称、禄存天马、羊陀禄位法、火铃年支双起点、生年四化含昌曲辅弼、闰月「上半月归前月、下半月归后月」——经 `iztro`（MIT）**10,378 盘 × 16 字段 = 166,048 项逐盘比对零失败**（`npm run verify:ziwei`）。暂未含：杂曜（天刑/天姚/红鸾/天喜等）、博士十二神、飞星四化、大限小限流年斗君、星曜亮度。
->
-> ² **奇门遁甲**当前为简化排盘（月支定阴阳遁、日柱折局、线性布宫），定位「九宫速览展示」；时家奇门完整转盘（三元定局、值符值使、天地盘三奇六仪）在路线图中。
-
-西方与东方模式一键切换；西方报告含三核本我（太阳/月亮/上升）、四象能量、十大星曜落座落宫、性格画像、黄道全览与灵数九宫。
-
-### 3D 星象剧场（V5.0 新增）
-
-基于 Three.js 的实时 WebGL 场景（`src/fx/western3d.js`）：
-
-- **命盘 · 金色罗盘** — 十大行星按真实落座经度排上黄道环，几何相位以光线织网，支持拖拽旋转、滚轮缩放
-- **运势 · 黄道天球** — 十二星座环 + 行星轨道实时运转
-- **关系 · 灵数粒子云** — 数字轮廓采样为 4200 颗粒子，从星尘汇聚成你的生命灵数（移植自 ASTRA threejs 版动画）
-- 环带配图采用**真实星座星表**绘制（`src/render/zodiac-art.js`，含主要恒星赤经/赤纬/星等与连线）
-- 懒加载：three 及后处理模块仅在西方模式激活时加载（独立 chunk）；仅当前分区渲染，切走即暂停；`prefers-reduced-motion` 自动降级单帧。离线未缓存模块或设备不支持 WebGL 时仍显示计算数据与可操作的立绘。
-
-### 分享海报
-
-- 报告分享以当前特质人物为主，可选择竖版或方形，展示东方或西方的少量真实摘要，也可关闭摘要只分享形象。
-- 海报在本机生成，不含姓名、出生时间和地点；确认预览后可使用系统分享、保存或复制，支持的方式由浏览器决定。
-- 工具结果卡同样先预览再导出；已缓存所需素材时，离线也可生成角色海报。
-
-### 工具中心
-
-13 款大师级决策工具：塔罗大师（22 大阿卡纳 · 5 大牌阵 · 3D 翻牌）、人格大师（MBTI 16 型）、事业大师、择日助手、合盘助手、生肖助手、智能起名、摇签问卜、答案之书、今日日签、双色球/大乐透等。
-
-### AI 智能问答与自进化
-
-- 支持 DeepSeek / OpenRouter 双提供方，东方命理 / 西方星相双依据切换
-- 结构化命盘上下文注入、多轮追问、意图识别与工具路由
-- 自进化系统：根据「有用 / 不准」反馈在本地调整语气与偏好，支持代数显示、导出与清空
-- 隐私：出生信息、档案和记忆默认保存在本机；使用 AI 问答时，问题、对话上下文及已生成的命盘摘要会发送给所选 AI 服务商
-
-### 其他
-
-- 真太阳时校正、全国城市数据库、命盘档案 JSON 导出导入、术语点击解释、分享卡生成
-- PWA：manifest + Service Worker，可安装到主屏幕
-- Claude 风格 UI：纸质/暗夜双主题、WCAG AA 对比度、360px–桌面多档响应式
-
----
-
-## 技术栈
-
-| 层 | 技术 |
-|----|------|
-| 构建 | Vite 8（Rolldown 压缩、手动分包） |
-| 前端 | 原生 ES Modules，无框架依赖 |
-| 3D | three@0.185（懒加载 chunk + EffectComposer Bloom 后处理） |
-| AI | DeepSeek API / OpenRouter API（Fetch Streaming） |
-| 测试 | Node.js 原生 + Puppeteer E2E |
-
----
-
-## 项目结构
-
-```
-src/
-├── engines/          # 命理计算引擎（东方八字/历法/紫微/奇门/梅花/合盘 + 西方星历/灵数）
-├── ai/               # AI 提供方门面 + 知识库 + 智能问答
-├── evolve/           # 自进化：基因组、经历记忆、个人知识蒸馏
-├── render/           # 报告渲染层（report / western-view / zodiac-art / tools-catalog）
-├── fx/               # 视觉特效（western3d 三场景 / armillary）
-├── tools/            # 工具中心（东方）
-├── tools2/           # 工具中心 V2（13 款大师工具，动态加载）
-├── ui/               # 导航、主题、标签页、Toast、天气
-├── state/            # 状态管理
-├── share/            # 分享卡片生成
-├── main.js           # 应用入口
-└── *.css             # 样式层（令牌 → 基础 → 组件 → 精修）
-
-tools/                # 测试与验证脚本（单元/E2E/审计，见 package.json scripts）
-```
-
----
-
-## 快速开始
+## 本地开发
 
 ### 环境要求
 
-- Node.js ≥ 24
-- npm
+- Node.js 24 或更高版本，以及 npm
+- 运行浏览器测试时需要 Puppeteer 可用的 Chrome 和相应系统依赖
 
-### 安装与开发
+### 安装与启动
 
 ```bash
-npm install
-npm run dev          # 启动开发服务器（默认 5173 端口）
+git clone https://github.com/kynessiscozy/wenV5.git
+cd wenV5
+npm ci
+npm run dev
 ```
+
+打开 <http://localhost:5173/funnel.html>。开发服务器默认监听 5173 端口，也可通过 `PORT` 环境变量指定端口。
 
 ### 构建与预览
 
 ```bash
-npm run build        # 生产构建 → dist/
-npm run size         # 构建并统计原始体积及逐文件 gzip 估算
-npm run preview      # 本地预览构建产物（默认 4173 端口）
+npm run build      # 输出到 dist/
+npm run preview    # 预览生产构建，默认端口 4173
+npm run size       # 构建并统计产物大小
 ```
 
-### 测试
+预览时访问 <http://localhost:4173/funnel.html>。应用使用相对基础路径，可以部署在静态站点的子路径下；PWA 和 Service Worker 需要 HTTPS 或 localhost 等安全上下文。
+
+## 测试与验证
 
 ```bash
-npm run test:unit    # 引擎单测(流日/合盘/塔罗/MBTI/西方星历/农历全量等)
-npm run test:flow      # 入口状态机 / 漏斗交接纯函数与静态不变量（无浏览器）
-npm run test:character # 旧版特质轮盘、十角色、推演、报告、指引及键盘交互（漏斗单一入口下为历史套件）
-npm run test:guide     # 指引与关于弹窗的内容、焦点及响应式
-npm run test:mobile-calculation # 手机、平板表单与推演回归
-node tools/test-home-offline.mjs     # 生产子路径与离线缓存（先运行 npm run build）
-node tools/test-home-performance.mjs # 生产首屏与弱网加载（先运行 npm run build）
-npm run test:cache-upgrade # 旧缓存升级、预览资源与离线回退
-npm run test:home-offline  # 漏斗入口、引路人素材与离线推演完整链路
-npm run test:e2e     # Puppeteer E2E 套件
-npm run test:a11y    # WCAG AA 对比度审计
-node tools/verify-bazi-v3.mjs     # 八字核心算法 123 项权威交叉验证
-node tools/verify-western-v1.mjs  # 西方星历 59 项验证
-npm run verify:lunar # 农历引擎 vs lunar-javascript:1901–2099 逐日全量(72,691 项)
-npm run verify:ziwei # 紫微标准安星 vs iztro:10,378 盘 × 16 字段(166,048 项,约 5 分钟)
-npm run gen:lunar    # 重新生成农历数据表(数据源:lunar-javascript,MIT)
-npm run audit:deep   # 全局数据深度审计(85 项:节气/农历/干支/四柱 vs oracle、城市、西方星历、星表、工具数据、静态引用、代码卫生)
-npm run verify:algo  # 全局算法验证(61 项:真太阳时/神煞/大运 vs oracle/梅花卦象正典/十天体黄经 vs astronomy-engine/灵数 KAT;加 :quick 抽样,报告见 docs/algo-verification-2026-10-13.md)
+npm run test:unit           # 单元测试与数据验证
+npm run test:flow           # 入口状态机与漏斗交接
+npm run test:funnel-exit    # 采集流程退出与未提交数据保护
+npm run test:guide-perspective:e2e # 引路人视角与排盘结果一致性
+npm run test:first-entry-pwa # 首访、离线问卷与档案升级（自动构建）
+npm run test:e2e            # Puppeteer 浏览器回归
+npm run test:home-offline   # 构建并测试离线入口和推演
+npm run test:cache-upgrade  # Service Worker 缓存升级
+npm run test:a11y           # 对比度检查
 ```
 
-浏览器测试需要先启动开发服务器；如使用其他地址，可通过 `BASE_URL` 指定。
+`test:e2e`、`test:funnel-exit` 和 `test:guide-perspective:e2e` 需要先启动开发服务器。报告测试默认访问 `http://localhost:5173/index.html`，可通过 `BASE_URL` 指定地址；退出测试可通过 `FUNNEL_URL` 指定漏斗页地址。浏览器测试需要可用的 Chrome。`test:home-offline` 会自行提供构建后的测试站点，不需要另行启动服务器。
 
----
+算法和数据变更可运行对应验证：
 
-## 部署
+```bash
+node tools/verify-bazi-v3.mjs
+npm run verify:lunar        # 农历 vs lunar-javascript
+npm run verify:ziwei        # 紫微 vs iztro，耗时较长
+npm run verify:western      # 西方星历验证
+npm run audit:deep:quick    # 数据审计抽样；去掉 :quick 运行全量
+npm run verify:algo:quick   # 算法验证抽样；去掉 :quick 运行全量
+```
 
-项目通过 GitHub Actions 自动部署到 GitHub Pages：推送 `main` 分支即触发 CI（构建 → 引擎单测 → 发布 Pages）。也可在 Actions 页手动触发。
+完整脚本列表见 [`package.json`](./package.json)。`test:character`、`test:trait-picker` 等包含旧版特质轮盘测试，当前漏斗单一入口下保留为历史套件。提交前的检查要求见[贡献指南](./CONTRIBUTING.md)。
 
----
+## 实现与限制
 
-## AI 配置
+项目使用原生 ES Modules 和 Vite 构建；Three.js 场景和部分工具按需加载。命理计算主要在浏览器中进行，Puppeteer 用于浏览器回归测试。
 
-应用支持 DeepSeek 与 OpenRouter 两种 AI 提供方，在设置页切换；API Key 仅存于浏览器本地。无 Key 时自动降级为离线模式（术语检索与命盘解读仍可用）。
+| 模块 | 实现与范围 |
+| --- | --- |
+| 八字与历法 | `src/engines/bazi.js`、`calendar.js`、`solar-terms.js`；支持节气和真太阳时校正 |
+| 农历 | `src/engines/lunar.js`；数据表覆盖 1900–2100 年，含闰月 |
+| 紫微斗数 | `src/engines/ziwei.js`；标准安星，尚不包含部分杂曜、飞星四化及大限等内容 |
+| 奇门遁甲 | `src/engines/qimen.js`；当前为简化排盘，用于九宫速览，不是完整时家转盘 |
+| 西方星象 | `src/engines/western.js`；包含星历、宫位、相位与生命灵数计算，部分天体计算使用近似模型 |
 
----
+历史交叉验证结果及计算范围见 [算法验证报告](./docs/algo-verification-2026-10-13.md)和[数据审计报告](./docs/audit-deep-2026-10-13.md)。这些验证不能保证所有日期、流派或使用场景下的结果完全一致。
 
-## 版本
+### 入口流程
 
-完整变更历史见 [CHANGELOG.md](./CHANGELOG.md)。
+`public/funnel.html` 是问卷入口；主应用由 `src/ui/entry-plan.js` 决定初始路径，由 `src/ui/entry-flow.js` 管理界面状态。直接访问、深链、档案载入和问卷交接使用同一套流程。旧首页和特质轮盘的 DOM 保留供报告等功能复用，但不再作为可交互入口。
 
-- **V5.0 BETA 1** — 西方星象体系 + Three.js 3D 星象剧场 + 十二星座真实星图配图 + 西方标签组交互
-- V4.3 — 工具中心 V2、西方星盘与灵数、CSS 样式体系
-- V2.x–V4.x — 东方命理核心、AI 问答、自进化、PWA
+## 隐私与外部服务
 
-## License
+- 出生信息、档案、API Key 和自进化偏好默认保存在浏览器本地；清除浏览器数据可能导致其丢失。档案可通过应用导出、导入，请妥善保管导出文件。
+- 使用外部 AI 时，API Key、问题、近期对话及相关命盘或工具上下文可能发送给所选服务商；连接检测也会发送 Key。请勿输入不愿与服务商分享的敏感信息，并留意其隐私政策和费用。
+- 天气功能使用定位及外部天气、地理编码服务；使用相关功能时，位置信息可能发送给这些服务。
+- 离线能力依赖浏览器和已缓存资源；外部 AI、天气等联网功能在离线时不可用。
 
-本项目基于 **MIT License** 开源，详见 [LICENSE](./LICENSE)。
+## 项目结构
 
-Copyright (c) 2026 kynessiscozy
+```text
+public/              漏斗入口、PWA 清单、Service Worker 与静态素材
+index.html           主应用页面
+src/
+├── engines/         东方与西方计算引擎、历法和数据
+├── ai/              AI 服务商、本地知识库与回答逻辑
+├── evolve/          本地反馈与偏好
+├── character/       角色定义
+├── fx/              Three.js 场景与特效
+├── render/          报告和工具展示
+├── share/           分享卡片与海报
+├── state/           应用状态与上下文
+├── tools/、tools2/  工具中心
+├── ui/              入口流程、导航和界面组件
+└── main.js          主应用入口
+tools/               测试、验证与审计脚本
+docs/                算法验证和数据审计报告
+```
 
-> 命理推演结果仅供文化研究与娱乐参考，不构成任何医疗、投资或人生决策建议。
+## 部署与贡献
+
+推送到 `main` 或手动触发 GitHub Actions 后，[部署工作流](./.github/workflows/deploy.yml)会先构建并运行单元测试，再将 `dist/` 发布到 GitHub Pages。其他静态托管环境也可发布该目录。
+
+欢迎提交问题和改进建议。开发规范、提交前检查及 PR 指南请参阅 [CONTRIBUTING.md](./CONTRIBUTING.md)；版本历史见 [CHANGELOG.md](./CHANGELOG.md)。
+
+## 许可证
+
+本项目采用 [MIT License](./LICENSE)。Copyright © 2026 kynessiscozy。

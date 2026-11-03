@@ -9,7 +9,7 @@ try {
   await page.setViewport({ width: 390, height: 844 });
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
   await page.setBypassServiceWorker(true);
-  await page.goto(process.env.BASE_URL || 'http://localhost:5173/', { waitUntil: 'domcontentloaded' });
+  await page.goto(process.env.BASE_URL || 'http://localhost:5173/index.html', { waitUntil: 'domcontentloaded' });
   for (const [index, id] of Object.keys(HOME_THEMES).entries()) {
     if (index) await page.click('#homeTraitReset');
     await spinFor(page, id);

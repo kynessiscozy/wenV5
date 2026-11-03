@@ -1,6 +1,6 @@
 /* 问问大师 PWA：离线可用 + 秒开的缓存策略。
    静态资源带 hash，可长期缓存；HTML 走 network-first 保证更新及时。 */
-const CACHE = 'wenda-cache-v48';
+const CACHE = 'wenda-cache-v53';
 const BASE = './';
 
 const OPTIONAL_ASSETS = [
@@ -58,7 +58,8 @@ self.addEventListener('install', (e) => {
     await cache.add(BASE);
     // funnel.html is a separate navigation target (the fallback surface links
     // back to it). Keep its own cached copy instead of serving index.html.
-    try { await cache.add(BASE + 'funnel.html'); } catch (_) { /* older builds */ }
+    await cache.add(BASE + 'funnel.html');
+    await cache.add(BASE + 'index.html');
     // Production emits a manifest of hashed application chunks. Fetch them at
     // install time so a first visit can be used offline after activation.
     try {
@@ -112,7 +113,15 @@ self.addEventListener('fetch', (e) => {
         return caches.open(CACHE).then((cache) => cache.put(isRoot ? BASE : req, res.clone()));
       }
     }).catch(() => {}));
-    const offline = () => caches.match(req).then((hit) => hit || caches.match(BASE));
+    const offline = () => caches.match(req).then(async (hit) => {
+      if (hit) return hit;
+      // Query strings (e.g. ?stats or ?panel=guide) do not change the shell.
+      // Never turn an offline funnel navigation into the app's index page.
+      const path = url.pathname.slice(new URL(BASE, self.location.href).pathname.length);
+      if (path === 'funnel.html') return caches.match(BASE + 'funnel.html');
+      if (isRoot || path === 'index.html') return (await caches.match(BASE + 'index.html')) || caches.match(BASE);
+      return caches.match(BASE);
+    });
     e.respondWith(network.then((res) => {
       if (res.ok) return res;
       return offline().then((hit) => hit || res);

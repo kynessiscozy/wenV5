@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer';
 import { getCompatibility } from '../src/engines/horoscope.js';
 import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173/';
+const BASE = process.env.BASE_URL || 'http://localhost:5173/index.html';
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
 
 async function checkLottery(page, type) {

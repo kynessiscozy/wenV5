@@ -1,3 +1,24 @@
+/* Guide perspectives are separate from the chart: same facts, different
+   reading priorities and reflective prompts, never a second prediction. */
+#page2 .guide-perspective {
+  margin: 0 0 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--c-border, #dedbd4);
+  border-left: 3px solid var(--c-accent, #d97757);
+  border-radius: 14px;
+  background: var(--c-surface, #fff);
+  color: var(--c-text, #3d3b37);
+}
+.guide-perspective-kicker { margin: 0 0 6px; color: var(--c-accent, #b6533a); font-size: 12px; font-weight: 700; }
+.guide-perspective-title { margin: 0 0 8px; color: var(--c-text-hi, #262624); font-size: 17px; line-height: 1.4; }
+.guide-perspective-facts, .guide-perspective-prompt { margin: 0 0 7px; font-size: 13px; line-height: 1.65; }
+.guide-perspective-facts { color: var(--c-text-2, #666); }
+.guide-perspective-note { margin: 9px 0 0; color: var(--c-text-2, #666); font-size: 11px; line-height: 1.5; }
+@media (forced-colors: active) {
+  #page2 .guide-perspective { color: CanvasText; background: Canvas; border-color: CanvasText; }
+  #page2 .guide-perspective :is(.guide-perspective-kicker, .guide-perspective-title, .guide-perspective-facts, .guide-perspective-prompt, .guide-perspective-note) { color: CanvasText; }
+}
+
 /* One continuous overview: the selected figure accompanies the actual chart. */
 #page2 .result-character-hero {
   --result-character-accent: #ecc1ae;

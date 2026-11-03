@@ -5,32 +5,32 @@
  * 跨页语义只在这里定义一次。新增引路人时，改这里 + funnel.html 的素材表即可。
  *
  * 注意 xiyao（夕瑶）在 HOME_THEMES 里没有同名条目：她的紫色星扇立绘就是
- * xingling（魅惑）那一套素材，因此映射到 xingling，而不是静默回退成地炎君。
+ * xingling（魅惑）那一套素材，因此映射到 xingling，而不是静默回退成焱绒。
  * 同理 yuebai（月白）是 moonfox 的素材，yuchen / diyan 与主题同名。
  */
-export const DEFAULT_PERSONA = 'diyan';
+export const DEFAULT_PERSONA = 'moonfox';
 
 export const FUNNEL_PERSONAS = Object.freeze({
   diyan: Object.freeze({
     key: 'diyan',
-    name: '地炎君',
+    name: '焱绒',
     theme: 'diyan',
     poster: './art/diyan-lord.webp',
     video: './art/diyan-invite.mp4',
     lead: '先定根基，再看全局。',
-    circle: '是君先替你圈出来的',
-    hooksTitle: '君 先 说 三 句',
-    byline: '地炎君正在为你排盘…',
+    circle: '是焱绒先替你圈出来的',
+    hooksTitle: '焱 绒 先 说 三 句',
+    byline: '焱绒正在为你排盘…',
   }),
   yuchen: Object.freeze({
     key: 'yuchen',
-    name: '玉宸神后',
+    name: '玉宸',
     theme: 'yuchen',
     poster: './art/yuchen-lord.webp',
     video: './art/yuchen-invite.mp4',
     lead: '静下心，先看这一处。',
-    circle: '是后先替你圈出来的',
-    hooksTitle: '后 先 说 三 句',
+    circle: '是玉宸先替你圈出来的',
+    hooksTitle: '玉 宸 先 说 三 句',
     byline: '玉宸正在为你排盘…',
   }),
   moonfox: Object.freeze({

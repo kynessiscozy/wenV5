@@ -33,7 +33,7 @@ const server = createServer((incoming, outgoing) => {
     outgoing.end(source);
     return;
   }
-  if ((phase === 'fault' && pathname === '/') || (failOneArtwork && pathname === '/art/wenwen-reimagined.webp')) {
+  if ((phase === 'fault' && (pathname === '/' || pathname === '/index.html')) || (failOneArtwork && pathname === '/art/wenwen-reimagined.webp')) {
     outgoing.writeHead(503, { 'Cache-Control': 'no-store' });
     outgoing.end('temporarily unavailable');
     return;
@@ -65,7 +65,7 @@ try {
   });
   page.on('framenavigated', frame => { if (frame === page.mainFrame()) navigations++; });
 
-  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  await page.goto(base + 'index.html', { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#traitMachine[data-ready="true"]');
   assert.ok(homeModule, '应观察到首页角色模块');
 
@@ -196,7 +196,7 @@ try {
   await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
   await page.waitForFunction(() => window.__controllerChanges > 0, { timeout: 15000 });
   assert.equal(navigations, before, '关闭表单后不能因更新重载');
-  assert.equal(await page.evaluate(() => location.pathname), new URL(base).pathname, '关闭表单没有被重定向到漏斗页');
+  assert.equal(await page.evaluate(() => location.pathname), new URL(base + 'index.html').pathname, '关闭表单没有被重定向到漏斗页');
   assert.equal(await page.$eval('#entryFallback', el => el.hidden), false);
   assert.equal(await page.$eval('#cInp', input => input.value), '尚未完成的输入');
   console.log('✓ 关闭表单后更新不会重载或丢失输入');
@@ -219,7 +219,7 @@ try {
   assert.equal(await page.$eval('#cInp', input => input.value), '尚未完成的输入');
   assert.equal(navigations, before, '失败的更新不能中断当前会话');
   const fallbackPage = await browser.newPage();
-  await fallbackPage.goto(base, { waitUntil: 'domcontentloaded' });
+  await fallbackPage.goto(base + 'index.html', { waitUntil: 'domcontentloaded' });
   await fallbackPage.waitForSelector('#entryFallback:not([hidden])', { timeout: 15000 });
   assert.equal(await fallbackPage.evaluate(() => {
     const veil = document.getElementById('funnelVeil');
