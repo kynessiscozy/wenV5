@@ -14,7 +14,7 @@
 <script>
   // Apply the saved palette before the page is painted, including in standalone PWA mode.
   (function () {
-    var backgrounds = { moonfox: '#090f17', diyan: '#130b0b', yuchen: '#10140e', xiyao: '#100c18', leizi: '#0a0e1a' };
+    var backgrounds = { moonfox: '#090f17', diyan: '#130b0b', yuchen: '#10140e', xiyao: '#100c18', leizi: '#0a0e1a', muse: '#10182b' };
     window.__wenSetFunnelTheme = function (key) {
       if (!Object.prototype.hasOwnProperty.call(backgrounds, key)) key = 'moonfox';
       document.documentElement.dataset.funnelPersona = key;
@@ -75,6 +75,14 @@
     --button-top:#a07d24; --button-bottom:#6b5316; --ink:#fdf6e0; --ink-dim:#ddd0ac;
     --card:#161a29; --card-on:#2e2a1a;
     --backdrop-mobile:url('./art/leizi-hall-mobile.webp'); --backdrop-wide:url('./art/leizi-hall-wide.webp');
+  }
+  html[data-funnel-persona="muse"]{
+    --bg:#10182b; --shade-rgb:16,24,43; --accent-rgb:230,207,154;
+    --panel:rgba(20,28,48,.84); --line:rgba(230,207,154,.38);
+    --gold:#e6cf9a; --gold-soft:#f4e7c3; --red:#6b5a2e;
+    --button-top:#a68d4e; --button-bottom:#77622f; --ink:#faf3e0; --ink-dim:#d8d0b8;
+    --card:#171f33; --card-on:#2c3350;
+    --backdrop-mobile:url('./art/muse-hall-mobile.webp'); --backdrop-wide:url('./art/muse-hall-wide.webp');
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
@@ -298,6 +306,7 @@
       <button type="button" data-persona="moonfox" class="on" aria-pressed="true"><span>月白<small>线索与依据</small></span></button>
       <button type="button" data-persona="xiyao" aria-pressed="false"><span>夕瑶<small>关系与沟通</small></span></button>
       <button type="button" data-persona="leizi" aria-pressed="false"><span>雷兹<small>格局与决断</small></span></button>
+      <button type="button" data-persona="muse" aria-pressed="false"><span>絮羽<small>灵感与表达</small></span></button>
     </div>
   </div>
   <div class="entry-inner">
@@ -699,7 +708,7 @@
   $('#btnBack').addEventListener('click',function(){if(flowLocked)return;if(qi>0)transitionTo(qi-1,-1);});
 
   /* 加载仪式 → 交接 */
-  var LINES_BY_PERSONA={diyan:['焱绒正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，焱绒再看一眼…'],yuchen:['玉宸正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，再看一眼…'],moonfox:['月白正在为你翻册…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一页，月白再替你看一眼…'],xiyao:['夕瑶正在为你看盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一局，夕瑶再替你看一眼…'],leizi:['雷兹正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处，雷兹再替你看一眼…']};
+  var LINES_BY_PERSONA={diyan:['焱绒正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，焱绒再看一眼…'],yuchen:['玉宸正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，再看一眼…'],moonfox:['月白正在为你翻册…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一页，月白再替你看一眼…'],xiyao:['夕瑶正在为你看盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一局，夕瑶再替你看一眼…'],leizi:['雷兹正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处，雷兹再替你看一眼…'],muse:['絮羽正在为你展翼…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处，絮羽再替你看一眼…']};
   /* 引路人可以在问卷途中切换，加载文案必须在提交那一刻重新读取，
      不能沿用页面加载时缓存的 LINES。 */
   function personaKey(){
@@ -866,7 +875,10 @@ var PERSONAS={
     quiz:'./art/xiyao-quiz.mp4?v=66',poster:'./art/xiyao-lord.webp',firstLine:'夕瑶正在为你看盘…'},
   leizi:{name:'雷兹',focus:'格局与决断',entry:'./art/leizi-entry.mp4?v=64',entryPoster:'./art/leizi-lord.webp',
     ritual:'./art/leizi-ritual.mp4?v=64',ritualPoster:'./art/leizi-lord.webp',
-    quiz:'./art/leizi-quiz.mp4?v=65',poster:'./art/leizi-lord.webp',firstLine:'雷兹正在为你排盘…'}
+    quiz:'./art/leizi-quiz.mp4?v=65',poster:'./art/leizi-lord.webp',firstLine:'雷兹正在为你排盘…'},
+  muse:{name:'絮羽',focus:'灵感与表达',entry:'./art/muse-entry.mp4?v=67',entryPoster:'./art/muse-lord.webp',
+    ritual:'./art/muse-ritual.mp4?v=67',ritualPoster:'./art/muse-lord.webp',
+    quiz:'./art/muse-quiz.mp4?v=67',poster:'./art/muse-lord.webp',firstLine:'絮羽正在为你展翼…'}
 };
 function fmSetVideo(sel,src,poster){
   var v=fm$(sel);if(!v)return;

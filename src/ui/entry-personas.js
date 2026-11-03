@@ -66,6 +66,17 @@ export const FUNNEL_PERSONAS = Object.freeze({
     hooksTitle: '雷 兹 先 说 三 句',
     byline: '雷兹正在为你排盘…',
   }),
+  muse: Object.freeze({
+    key: 'muse',
+    name: '絮羽',
+    theme: 'muse',
+    poster: './art/muse-lord.webp',
+    video: './art/muse-invite.mp4?v=67',
+    lead: '让灵感先落在你身上。',
+    circle: '是絮羽先替你圈出来的',
+    hooksTitle: '絮 羽 先 说 三 句',
+    byline: '絮羽正在为你展翼…',
+  }),
 });
 
 export function personaFor(trait) {

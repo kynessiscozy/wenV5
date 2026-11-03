@@ -9,6 +9,8 @@ const GUIDES = Object.freeze({
     prompt: '先比较这些线索，再打开报告中的详细依据；哪些描述与你的实际经历相符？' }),
   leizi: Object.freeze({ name: '雷兹', focus: '格局与决断',
     prompt: '先看整体格局再谈细节：眼下这一局，哪一步是决定走向的关键落子？' }),
+  muse: Object.freeze({ name: '絮羽', focus: '灵感与表达',
+    prompt: '先接住那个一闪而过的念头：最近哪件小事，让你最想把它说出来、写下来？' }),
   xingling: Object.freeze({ name: '夕瑶', focus: '关系与沟通',
     prompt: '结合自己的实际关系想一想：有什么需要可以更清楚地表达或商量？' }),
 });
@@ -24,6 +26,7 @@ export function buildGuidePerspective(themeId, ctx = {}, western = {}) {
   const day = [text(ctx?.dg), text(ctx?.dw)].join('');
   const chart = western?.astro || {};
   const sun = text(chart.sun?.name), moon = text(chart.moon?.name), asc = text(chart.asc?.name);
+  const mercury = text((chart.planets || []).find(p => p?.key === 'Mercury')?.sign?.name);
   let eastern, westernFacts;
   switch (themeId) {
     case 'diyan':
@@ -45,6 +48,10 @@ export function buildGuidePerspective(themeId, ctx = {}, western = {}) {
     case 'leizi':
       eastern = [fact('年柱', pillar(ctx?.b?.Y)), fact('当前大运', pillar(ctx?.cDy))];
       westernFacts = [fact('太阳', sun), fact('上升', asc)];
+      break;
+    case 'muse':
+      eastern = [fact('月柱', pillar(ctx?.b?.M)), fact('当前流年', pillar(ctx?.cLn))];
+      westernFacts = [fact('月亮', moon), fact('水星', mercury)];
       break;
   }
   return {

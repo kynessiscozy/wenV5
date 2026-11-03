@@ -12,6 +12,7 @@ import { SUYAN } from '../character/suyan.js';
 import { RONGRONG } from '../character/rongrong.js';
 import { ZHIYA } from '../character/zhiya.js';
 import { LEIZI } from '../character/leizi.js';
+import { MUSE } from '../character/muse.js';
 
 // One registry supplies the reel, scenes and report styling.
 // New characters need only add another entry; choices remain page-local.
@@ -33,6 +34,12 @@ export const HOME_THEMES = Object.freeze({
     reportLead: '先看天势，再定落子。',
     character: LEIZI,
     backdrop: Object.freeze({ wide: './art/leizi-hall-wide.webp', mobile: './art/leizi-hall-mobile.webp' }),
+  }),
+  muse: Object.freeze({
+    trait: Object.freeze({ label: '灵感', description: '念头落下之前，先接住它。', mark: '羽', color: '#e6cf9a' }),
+    reportLead: '让灵感先落在你身上。',
+    character: MUSE,
+    backdrop: Object.freeze({ wide: './art/muse-hall-wide.webp', mobile: './art/muse-hall-mobile.webp' }),
   }),
   diyan: Object.freeze({
     trait: Object.freeze({ label: '威严', description: '坚定果断，敢于为选择担当。', mark: '威', color: '#ec8278' }),

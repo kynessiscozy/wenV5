@@ -21,6 +21,7 @@
 .calculation-overlay[data-calculation-theme="luye"] { --ritual-ink: #ffe4bb; --ritual-muted: #eedac0; --ritual-glow: rgba(236, 184, 117, .35); background: #111a1c; }
 .calculation-overlay[data-calculation-theme="suyan"] { --ritual-ink: #ffe3eb; --ritual-muted: #f2d7de; --ritual-glow: rgba(225, 165, 188, .35); background: #211722; }
 .calculation-overlay[data-calculation-theme="leizi"] { --ritual-ink: #fdf0cd; --ritual-muted: #eee0b8; --ritual-glow: rgba(242, 193, 78, .38); background: #0a0e1a; }
+.calculation-overlay[data-calculation-theme="muse"] { --ritual-ink: #faf0d4; --ritual-muted: #eee1ba; --ritual-glow: rgba(230, 207, 154, .38); background: #10182b; }
 .calculation-backdrop { position: absolute; inset: 0; overflow: hidden; }
 .calculation-backdrop img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: .56; }
 .calculation-backdrop::after {
