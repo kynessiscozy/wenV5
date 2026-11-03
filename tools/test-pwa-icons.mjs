@@ -26,8 +26,10 @@ async function checkOpaquePng(src, size) {
   assert.ok(worker.includes(`'${src.slice(2)}'`), `${src} 未加入离线资源`);
 }
 
-assert.equal(manifest.start_url, './');
+// The funnel is the only entry, including for an installed PWA.
+assert.equal(manifest.start_url, './funnel.html');
 assert.equal(manifest.scope, './');
+assert.ok(worker.includes("BASE + 'funnel.html'"), '安装后的起点也必须加入离线缓存');
 assert.equal(manifest.display, 'standalone');
 for (const purpose of ['any', 'maskable']) {
   for (const size of [192, 512]) {

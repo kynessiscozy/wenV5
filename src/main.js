@@ -320,6 +320,42 @@ function resolveBirthCity(){
   selectBirthCity(id);
   return {id,city};
 }
+/* funnel.html 的问卷允许自由填写甚至跳过出生城市，而表单要求一个已选中的
+   城市 id。统一在这里解析：识别不了就回退默认城市并提示，绝不让访客困在
+   遮罩后面看一条看不见的校验错误。 */
+window.applyEntryPayload = function(payload){
+  const set=(id,value)=>{
+    const el=document.getElementById(id);
+    if(!el || value===undefined || value===null) return;
+    el.value=value;
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    el.dispatchEvent(new Event('change',{bubbles:true}));
+  };
+  const cityInput=document.getElementById('cInp');
+  const placeInput=document.getElementById('bPlace');
+  const defaults={city:cityInput?.value||'',place:placeInput?.value||''};
+  set('bDate',payload.bd);
+  if(payload.timeStr)set('bTime',payload.timeStr); // 跳过时保留默认 09:00
+  if(payload.gen)set('bGen',payload.gen);
+  let warning='';
+  if(payload.cityName){
+    set('cInp',payload.cityName);
+    if(placeInput)placeInput.value=''; // 强制按新文本重新解析
+    if(!resolveBirthCity()){
+      set('cInp',defaults.city);
+      if(placeInput)placeInput.value=defaults.place;
+      warning='出生地点没能识别，已按默认城市计算；可在表单里修改。';
+      showToast(warning,{duration:6000});
+    }
+  }else if(placeInput&&!CD[placeInput.value]){
+    set('cInp',defaults.city);
+    placeInput.value=defaults.place;
+  }
+  clearFormError();
+  window._formDirty=false;
+  return {ok:true,warning};
+};
+
 function validBirthDate(value){
   const match=/^(\d{4,})-(\d{2})-(\d{2})$/.exec(value);
   if(!match)return false;
@@ -332,18 +368,23 @@ function validBirthDate(value){
 let calculationInProgress=false;
 async function calc(isDemoPreview=false){
   if(calculationInProgress)return;
+  window.__wenFlow?.onCalcStart?.();
   const formModal=document.getElementById('formModal');
   const fromForm=!!(formModal&&formModal.classList.contains('open'))&&!isDemoPreview;
   const dateField=document.getElementById('bDate'),timeField=document.getElementById('bTime');
   const bd=dateField.value;
-  if(!validBirthDate(bd))return showFormError(bd?'请输入有效的出生日期。':'请选择出生日期。',dateField);
+  const validationError=(message,field)=>{
+    window.__wenFlow?.onCalcFailed?.({formOpen:!!formModal?.classList.contains('open')});
+    return showFormError(message,field);
+  };
+  if(!validBirthDate(bd))return validationError(bd?'请输入有效的出生日期。':'请选择出生日期。',dateField);
   const timeStr=timeField.value||'09:00';
   if(timeField.validity?.badInput||!/^([01]\d|2[0-3]):[0-5]\d(?::00(?:\.0{1,3})?)?$/.test(timeStr)){
-    return showFormError('请输入有效的出生时间。',timeField);
+    return validationError('请输入有效的出生时间。',timeField);
   }
   const [hh,mm]=timeStr.split(':').map(Number);
   const place=resolveBirthCity();
-  if(!place)return showFormError(CITY_SELECTION_MESSAGE,document.getElementById('cInp'));
+  if(!place)return validationError(CITY_SELECTION_MESSAGE,document.getElementById('cInp'));
   const {id:bp,city}=place;
   const gen=document.getElementById('bGen').value;
   const q=document.getElementById('bQ').value;
@@ -388,7 +429,9 @@ async function calc(isDemoPreview=false){
   let scene=null,completed=false;
   try{
     if(!fromCalendar){
-      scene=beginCharacterCalculation();
+      // Only an in-flight funnel handoff may auto-acknowledge the result;
+      // every other visit keeps the explicit "查看报告" confirmation.
+      scene=beginCharacterCalculation({autoAdvance:!!window.__wenFlow?.isAutoAdvance?.()});
       if(scene)await scene.paint(); // 让角色场景先绘制，再执行同步排盘
     }
     doCompute();
@@ -401,6 +444,7 @@ async function calc(isDemoPreview=false){
       if(!formReturnFocus?.isConnected)formReturnFocus=calModal.querySelector('[data-fill]');
       restoreFormFocus();
       completed=true;
+      window.__wenFlow?.onCalcFailed?.({formOpen:false});
       return;
     }
     scene?.showResult(window._ctx?.b);
@@ -413,8 +457,10 @@ async function calc(isDemoPreview=false){
     }
     showPage2();
     characterCompanion.onReportReady({isDemo:isDemoPreview});
-    // 漏斗访客先看地炎君预告页（真排盘+三钩子+目录），再进入完整报告。
+    // 预告页的触发条件保持不变（applied && !teasered），但现在是罩层之上
+    // 的最后一层，可以关闭、可以用 Esc 退出，也不会再被后台快捷键穿透。
     try { showFunnelTeaserIfNeeded(); } catch (e) { console.warn('[funnel] 预告页失败', e); }
+    window.__wenFlow?.onReportReady?.();
     document.querySelectorAll('.tab-item')[0].click();
     formReturnFocus=null;
     focusSafely(document.getElementById('p2MenuBtn'));
@@ -427,6 +473,7 @@ async function calc(isDemoPreview=false){
     else document.documentElement.setAttribute('data-yongshen',previous.yongShen);
     scene?.close({restoreFocus:true});
     console.error(e);
+    window.__wenFlow?.onCalcFailed?.({formOpen:!!formModal?.classList.contains('open')});
     const detail=e?.message||String(e);
     if(fromForm)showFormError('推演未完成：'+detail+'。出生信息已保留，请检查后重试。');
     showToast('推演出错：'+detail+'。出生信息已保留，请检查后重试。',{type:'error',duration:6000});
@@ -442,7 +489,8 @@ function restoreFormFocus(){
   let target=formReturnFocus;
   formReturnFocus=null;
   if(!target?.isConnected || !target.getClientRects().length){
-    target=document.getElementById(document.body.classList.contains('report-active')?'p2MenuBtn':'homeCtaMain');
+    target=window.__wenFlow?.focusTarget?.() ||
+      document.getElementById(document.body.classList.contains('report-active')?'p2MenuBtn':'homeCtaMain');
   }
   if(target && target.isConnected && target.getClientRects().length && typeof target.focus==='function'){
     focusSafely(target);
@@ -451,6 +499,7 @@ function restoreFormFocus(){
 window.TJOpenForm=function(){
   const m=document.getElementById('formModal');
   if(!m || m.classList.contains('open'))return;
+  window.__wenFlow?.onFormOpen?.();
   formReturnFocus=document.activeElement;
   m.classList.add('open');
   document.body.classList.add('form-open');
@@ -471,17 +520,10 @@ window.TJCloseForm=function(){
   if(m)m.classList.remove('open');
   closeCityDropdown();
   document.body.classList.remove('form-open');
+  // 单一状态机决定下一屏：回到刚才的报告，或显示可操作的兜底入口卡。
+  // 不再用 setTimeout 猜 DOM、不再静默跳回 funnel.html。
+  window.__wenFlow?.onFormClosed?.();
   restoreFormFocus();
-  /* 原首页已移除：关掉表单后若无任何界面在场（不在报告/演算/弹窗中），回到漏斗入口，避免空屏死路 */
-  setTimeout(()=>{
-    const p2=document.getElementById('page2');
-    const inReport=p2&&(p2.classList.contains('active')||!p2.classList.contains('hidden'));
-    const calc=document.getElementById('calculationOverlay');
-    const inCalc=calc&&!calc.hidden;
-    const anyModal=document.querySelector('.modal.open');
-    const veiled=document.getElementById('funnelVeil');
-    if(!inReport&&!inCalc&&!anyModal&&!veiled)location.href='./funnel.html';
-  },60);
 };
 // Clear stale feedback only when the user edits an input; an error otherwise remains visible.
 document.getElementById('formModal')?.addEventListener('input',clearFormError);
@@ -818,8 +860,9 @@ function toggleHomeMenu(force){
   dw.inert=!open;
   dw.setAttribute('aria-hidden',String(!open));
   if(open)focusSafely(dw.querySelector('.home-menu-close'));
-  else if(dw.contains(document.activeElement))focusSafely(btn);
+  else if(dw.contains(document.activeElement))focusSafely(window.__wenFlow?.focusTarget?.()||btn);
   document.body.style.overflow=open?'hidden':'';
+  window.__wenFlow?.onMenuToggle?.(open);
 }
 window.toggleHomeMenu=toggleHomeMenu;
 
@@ -929,7 +972,7 @@ onDomReady(()=>{
       if(controls.length&&(i<0||(!e.shiftKey&&i===controls.length-1)||(e.shiftKey&&i===0))){e.preventDefault();controls[e.shiftKey?controls.length-1:0].focus();}
     }
   });
-  initDB().then(()=>renderProfiles()).catch(e=>console.log('DB init',e));
+  window.__wenProfilesReady=initDB().then(()=>renderProfiles()).catch(e=>console.log('DB init',e));
   const ai=document.getElementById('askInput');
   if(ai){
     ai.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doAskCustom()}});
@@ -938,6 +981,7 @@ onDomReady(()=>{
     ai.addEventListener('blur',()=>setTimeout(()=>{const s=document.getElementById('aiSuggest');if(s)s.classList.remove('show');},200));
   }
   document.addEventListener('keydown',e=>{
+    if(document.getElementById('funnelTeaser'))return; // 预告罩层独占键盘
     if(e.key==='Escape'){
       const aiSettings=document.getElementById('aiSettingsModal');if(aiSettings&&aiSettings.classList.contains('open')){window.closeAISettingsModal();return;}
       const ask=document.getElementById('aiSheet');if(ask&&ask.classList.contains('open')){closeAsk();return;}
@@ -1885,4 +1929,5 @@ installSelectionGloss();
 })();
 
 // Replay a home action made while the larger application modules were loading.
+window.__wenAppReady=true;
 queueMicrotask(()=>window.dispatchEvent(new Event('tj:app-ready')));

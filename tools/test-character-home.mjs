@@ -734,7 +734,7 @@ try {
     assert.equal(await page.evaluate(() => document.activeElement.className), 'form-modal-close', 'Tab 应在表单内循环');
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'characterPortraitButton', '关闭表单应恢复人物焦点');
-    await page.click('#homeCtaMain');
+    await page.evaluate(() => window.TJOpenForm?.());
     await page.waitForSelector('#formModal.open');
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'homeCtaMain');
@@ -1130,7 +1130,7 @@ try {
   // Keep the report assistant and personalized tool calls connected to the existing engines.
   {
     const { page, context } = await newPage(390, 844, { mock: true, key: 'test-key-only', homeTheme: 'moonfox' });
-    await page.click('#homeCtaMain');
+    await page.evaluate(() => window.TJOpenForm?.());
     await page.waitForSelector('#formModal.open');
     await page.click('[data-style="rigorous"]');
     await page.click('#swTrueSolar');

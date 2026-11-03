@@ -154,38 +154,23 @@ try {
   await page.setOfflineMode(false);
   console.log('✓ 人物图片在线更新，离线仍可读取');
 
-  // A worker arriving during the initial committed choice must not reload the
-  // selection in the middle of its animation/image preparation either.
+  // Funnel-only entry: there is no trait reel to interrupt. A worker arriving
+  // during an idle session must still never reload the page.
   await page.evaluate(() => {
     window.__controllerChanges = 0;
     navigator.serviceWorker.addEventListener('controllerchange', () => { window.__controllerChanges++; });
-    window.__oldDecode = HTMLImageElement.prototype.decode;
-    HTMLImageElement.prototype.decode = function () {
-      if (this.src.endsWith('/wenwen-cinema3d.webp')) return new Promise(resolve => { window.__releaseBusyDecode = resolve; });
-      return window.__oldDecode.call(this);
-    };
-    window.__oldTimeout = window.setTimeout;
-    window.setTimeout = (fn, ms, ...args) => window.__oldTimeout(fn, ms === 2500 ? 15000 : ms, ...args);
   });
-  await spinFor(page, 'wenwen');
-  await page.waitForFunction(() => document.getElementById('traitSelection').getAttribute('aria-busy') === 'true' && window.__releaseBusyDecode);
   const beforeBusy = navigations;
   phase = 'busy';
   await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
   await page.waitForFunction(() => window.__controllerChanges > 0, { timeout: 15000 });
-  assert.equal(navigations, beforeBusy, '首次选择加载期间不能因更新重载');
-  assert.equal(await page.$eval('#traitSelection', element => element.getAttribute('aria-busy')), 'true');
-  await page.evaluate(() => {
-    HTMLImageElement.prototype.decode = window.__oldDecode;
-    window.setTimeout = window.__oldTimeout;
-    window.__releaseBusyDecode();
-  });
-  await page.waitForFunction(() => document.getElementById('traitSelection').hidden);
-  console.log('✓ 首次选择加载期间更新不会中断场景');
+  assert.equal(navigations, beforeBusy, '待机界面更新不能重载页面');
+  assert.equal(await page.$eval('#entryFallback', el => el.hidden), false, '更新不破坏待机入口卡');
+  console.log('✓ 待机期间更新不会重载或隐藏入口界面');
 
-  // A later update must never interrupt a selected character or an open form.
-  await page.click('#homeCtaMain');
-  await page.waitForSelector('#formModal.open', { timeout: 15000 });
+  // A later update must never interrupt an open form.
+  await page.evaluate(() => window.TJOpenForm?.());
+  await page.waitForSelector('#formModal.open');
   await page.$eval('#cInp', input => { input.value = '尚未完成的输入'; });
   await page.evaluate(() => {
     window.__controllerChanges = 0;
@@ -195,29 +180,26 @@ try {
   phase = 'newer';
   await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
   await page.waitForFunction(() => window.__controllerChanges > 0, { timeout: 15000 });
-  assert.equal(navigations, before, '不能因更新重载正在进行的角色会话');
+  assert.equal(navigations, before, '不能因更新重载正在进行的表单会话');
   assert.equal(await page.$eval('#cInp', input => input.value), '尚未完成的输入');
-  assert.equal(await page.$eval('html', element => element.dataset.homeTheme), 'wenwen');
+  assert.ok(await page.$eval('html', element => element.dataset.homeTheme), '角色主题仍然可用');
   assert.equal(await page.$eval('#formModal', element => element.classList.contains('open')), true);
   console.log('✓ 会话或表单进行中更新不会丢失输入');
 
-  // The same selector can be reopened after a character is chosen. A worker
-  // update here must not mistake it for the fresh, safe-to-reload entry page.
+  // Closing the form now shows the fallback surface instead of a forced
+  // redirect. A worker update here must not mistake it for a fresh entry page.
   await page.evaluate(() => window.TJCloseForm());
   await page.waitForFunction(() => !document.getElementById('formModal').classList.contains('open'));
-  await page.click('#homeTraitReset');
-  await page.waitForFunction(() => !document.getElementById('traitSelection').hidden);
+  await page.waitForFunction(() => !document.getElementById('entryFallback').hidden);
   await page.evaluate(() => { window.__controllerChanges = 0; });
   phase = 'reselect';
   await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
   await page.waitForFunction(() => window.__controllerChanges > 0, { timeout: 15000 });
-  assert.equal(navigations, before, '重选打开时不能因更新重载');
-  assert.equal(await page.$eval('#traitSelection', element => element.hidden), false);
+  assert.equal(navigations, before, '关闭表单后不能因更新重载');
+  assert.equal(await page.evaluate(() => location.pathname), new URL(base).pathname, '关闭表单没有被重定向到漏斗页');
+  assert.equal(await page.$eval('#entryFallback', el => el.hidden), false);
   assert.equal(await page.$eval('#cInp', input => input.value), '尚未完成的输入');
-  await spinFor(page, 'moonfox');
-  await page.waitForFunction(() => document.getElementById('traitSelection').hidden && document.documentElement.dataset.homeTheme === 'moonfox');
-  assert.equal(await page.$eval('#cInp', input => input.value), '尚未完成的输入');
-  console.log('✓ 重选特质期间更新不会丢失输入或打断选择');
+  console.log('✓ 关闭表单后更新不会重载或丢失输入');
 
   // A failed installation must leave the previous worker and its cache usable.
   await page.evaluate(async () => {
@@ -238,8 +220,11 @@ try {
   assert.equal(navigations, before, '失败的更新不能中断当前会话');
   const fallbackPage = await browser.newPage();
   await fallbackPage.goto(base, { waitUntil: 'domcontentloaded' });
-  await fallbackPage.waitForSelector('#traitMachine[data-ready="true"]', { timeout: 15000 });
-  assert.equal(await fallbackPage.$eval('#traitSelection', element => element.hidden), false, '服务错误时应回落到已缓存的页面');
+  await fallbackPage.waitForSelector('#entryFallback:not([hidden])', { timeout: 15000 });
+  assert.equal(await fallbackPage.evaluate(() => {
+    const veil = document.getElementById('funnelVeil');
+    return !veil || getComputedStyle(veil).display === 'none';
+  }), true, '服务错误时应回落到已缓存的页面且不显示交接遮罩');
   await fallbackPage.close();
   console.log('✓ 更新或页面请求异常时，旧缓存及当前会话仍可用');
 } finally {

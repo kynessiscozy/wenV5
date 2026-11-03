@@ -2,6 +2,8 @@ import { HOME_THEMES } from './home-theme.js';
 import { focusSafely } from './focus.js';
 
 const SCENE_DURATION = 2100;
+// A funnel handoff still shows the real result before acknowledging it.
+const RESULT_HOLD_MS = 900;
 
 // Presentation helpers must not make the calculation fail on older WebViews.
 function mediaQuery(query) {
@@ -45,7 +47,7 @@ export function warmCharacterCalculation() {
 }
 
 /** The scene remains in charge until the user explicitly continues from the real result. */
-export function beginCharacterCalculation() {
+export function beginCharacterCalculation({ autoAdvance = false } = {}) {
   const overlay = document.getElementById('calculationOverlay');
   const skip = document.getElementById('calculationSkip');
   const proceed = document.getElementById('calculationContinue');
@@ -61,6 +63,7 @@ export function beginCharacterCalculation() {
   let releaseAnimation = null;
   let releaseResult = null;
   let waitTimer = null;
+  let autoAdvanceTimer = null;
 
   const narrow = mediaQuery('(max-aspect-ratio: 4/5)').matches;
   setImage(overlay.querySelector('[data-calculation-backdrop]'), narrow ? theme.backdrop.mobile : theme.backdrop.wide);
@@ -163,6 +166,16 @@ export function beginCharacterCalculation() {
       skip.hidden = true;
       proceed.hidden = false;
       focusSafely(proceed);
+      window.dispatchEvent(new CustomEvent('tj:calculation-ready'));
+      // The funnel's loading ritual ends with the report, so its handoff may
+      // acknowledge the result automatically — but never before it is shown,
+      // never repeatedly, and never for an ordinary visit.
+      if (autoAdvance) {
+        autoAdvanceTimer = setTimeout(() => {
+          autoAdvanceTimer = null;
+          releaseResult?.();
+        }, RESULT_HOLD_MS);
+      }
       // No timer, visibility change, or motion preference may dismiss this result.
       await new Promise((resolve) => { releaseResult = resolve; });
       releaseResult = null;
@@ -171,6 +184,8 @@ export function beginCharacterCalculation() {
       if (finished) return;
       finished = true;
       clearTimeout(waitTimer);
+      clearTimeout(autoAdvanceTimer);
+      autoAdvanceTimer = null;
       releaseAnimation?.();
       releaseResult?.();
       skip.removeEventListener('click', onSkip);

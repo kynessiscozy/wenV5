@@ -33,7 +33,7 @@ async function openReport(page, id) {
   await page.waitForFunction(() => window._tools2Ready && document.getElementById('traitMachine')?.dataset.ready === 'true');
   await spinFor(page, id);
   await page.waitForFunction(() => document.getElementById('traitSelection').hidden);
-  await page.click('#homeCtaMain');
+  await page.evaluate(() => window.TJOpenForm?.());
   await page.waitForSelector('#formModal.open');
   await page.$eval('#bDate', el => { el.value = '1989-03-29'; el.dispatchEvent(new Event('input', { bubbles: true })); });
   await page.$eval('#bTime', el => { el.value = '11:23'; el.dispatchEvent(new Event('input', { bubbles: true })); });

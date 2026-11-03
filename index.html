@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-entry="funnel">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -58,6 +58,28 @@
     }, 12000);
   })();
 </script>
+<script>
+/* 入口意图只采集一次：不轮询、不打开界面。
+   真正的界面切换交给 src/ui/entry-flow.js，在 tj:app-ready 之后统一执行。 */
+(function () {
+  var root = document.documentElement, intent = {}, params = null;
+  try { params = new URLSearchParams(location.search); } catch (e) {}
+  if (params) {
+    if (params.get('menu') === '1') intent.menu = true;
+    var panel = params.get('panel');
+    if (panel) intent.panel = panel;
+  }
+  window.__wenEntryIntent = intent;
+  var hasIntent = !!(intent.menu || intent.panel);
+  if (hasIntent) { try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {} }
+  var pending = null;
+  try {
+    var raw = localStorage.getItem('wen_funnel_v1');
+    if (raw) { var p = JSON.parse(raw); if (p && !p.applied && p.bd) pending = p; }
+  } catch (e) {}
+  root.dataset.handoff = (pending && !hasIntent) ? 'pending' : 'none';
+})();
+</script>
 
 <link rel="stylesheet" href="/src/styles.css">
 <link rel="stylesheet" href="/src/theme-claude.css">
@@ -74,6 +96,7 @@
 <link rel="stylesheet" href="/src/character-report.css">
 <link rel="stylesheet" href="/src/guide.css">
 <link rel="stylesheet" href="/src/share-studio.css">
+<link rel="stylesheet" href="/src/entry-flow.css">
 <style>
 .result-style-heading{display:flex;align-items:baseline;gap:8px;margin-bottom:7px;min-width:0}
 .result-style-label{font-size:.72em;font-weight:500;color:var(--c-text-2);white-space:nowrap}
@@ -84,7 +107,6 @@
 @media(max-width:520px){.result-style-options{gap:5px}.result-style-option{font-size:.72em;letter-spacing:0;white-space:nowrap}}
 @media(max-width:360px){.result-style-options{gap:3px}.result-style-option{font-size:.66em}}
 </style>
-<style>#page1{display:none!important}</style>
 </head>
 <body class="home">
 
@@ -674,6 +696,10 @@
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8"/><path d="M3 3v5h5"/></svg>
       <span>重新推演</span>
     </button>
+    <button type="button" class="p2-menu-item" onclick="toggleP2Menu(false);location.href='./funnel.html'">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span>返回入口页</span>
+    </button>
     <button type="button" class="p2-menu-item" onclick="toggleP2Menu(false);openSaveModal()">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
       <span>保存命盘</span>
@@ -1020,132 +1046,16 @@
   })();
 </script>
 
-<script>
-/* 漏斗菜单入口：从 funnel.html 带 ?menu=1 / ?panel= 进入时，等主应用就绪后打开原菜单抽屉或对应面板。 */
-(function () {
-  var params = null;
-  try { params = new URLSearchParams(location.search); } catch (e) {}
-  if (!params) return;
-  var wantMenu = params.get('menu') === '1';
-  var panel = params.get('panel');
-  if (!wantMenu && !panel) return;
-  window.__wenIntent = true; /* 告诉后续自动开表单脚本：本次是意图跳转，不要抢屏 */
-  try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
-  var panelFns = { guide: 'openNoviceGuide', about: 'openAboutModal', disclaimer: 'openDisclaimerModal' };
-  var n = 0;
-  var iv = setInterval(function () {
-    n++;
-    if (wantMenu && typeof window.toggleHomeMenu === 'function' && document.getElementById('homeMenuDrawer')) {
-      try { window.toggleHomeMenu(true); } catch (e) {}
-      wantMenu = false;
-    }
-    if (panel && panelFns[panel] && typeof window[panelFns[panel]] === 'function') {
-      try { window[panelFns[panel]](); } catch (e) {}
-      panel = null;
-    }
-    if ((!wantMenu && !panel) || n > 80) clearInterval(iv);
-  }, 150);
-})();
-</script>
-
-<script>
-/* 原首页已移除：普通访客进入即打开推演表单；漏斗交接流程优先，本脚本跳过；
-   若带有档案载入意图（漏斗菜单点选档案），载入该档案并直接推演。 */
-(function () {
-  if (window.__wenIntent) return; /* 从漏斗菜单带意图进入时，不自动打开表单 */
-  var raw = null;
-  try { raw = localStorage.getItem('wen_funnel_v1'); } catch (e) {}
-  if (raw) {
-    try { var p = JSON.parse(raw); if (p && !p.applied && p.bd) return; } catch (e) {}
-  }
-  var loadId = null;
-  try { loadId = localStorage.getItem('wen_load_profile_v1'); } catch (e) {}
-  var n = 0;
-  var iv = setInterval(function () {
-    n++;
-    var ready = typeof window.TJOpenForm === 'function' && document.documentElement.dataset.homeTheme;
-    if (ready) {
-      clearInterval(iv);
-      try { window.TJOpenForm(); } catch (e) {}
-      if (loadId && typeof window.loadProfile === 'function') {
-        try { localStorage.removeItem('wen_load_profile_v1'); } catch (e) {}
-        setTimeout(function () { try { window.loadProfile(Number(loadId)); } catch (e) {} }, 350);
-      }
-    } else if (n > 80) clearInterval(iv);
-  }, 150);
-})();
-</script>
-
-<script>
-/* 漏斗交接：funnel.html 收集的生辰答案在此带入表单，并直接打开推演表单。
-   一次性消费（applied 标记防刷新重复打开），数据只存本机 localStorage。 */
-(function () {
-  var raw;
-  try { raw = localStorage.getItem('wen_funnel_v1'); } catch (e) { return; }
-  if (!raw) return;
-  var p;
-  try { p = JSON.parse(raw); } catch (e) { return; }
-  if (!p || p.applied || !p.bd) return;
-  /* 直达结果：先罩住主应用（不让访客看到特质老虎机与主页），
-     表单自动填、自动提交、演算场景自动推进，直到预告/报告出现才揭开。 */
-  var veil = document.createElement('div');
-  veil.id = 'funnelVeil';
-  var _vp = p.trait === 'yuchen' ? { img: './art/yuchen-lord.webp', name: '玉宸神后' } : p.trait === 'moonfox' ? { img: './art/yuebai-lord.webp', name: '月白' } : p.trait === 'xiyao' ? { img: './art/xiyao-lord.webp', name: '夕瑶' } : { img: './art/diyan-lord.webp', name: '地炎君' };
-  veil.setAttribute('style', 'position:fixed;inset:0;z-index:200000;background:#0c0908 url(' + _vp.img + ') center 18%/cover no-repeat;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 30px calc(52px + env(safe-area-inset-bottom));transition:opacity .5s ease;');
-  veil.innerHTML = '<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,9,8,.45),rgba(12,9,8,.25) 40%,rgba(12,9,8,.92) 82%)"></div>'
-    + '<p style="position:relative;font-family:\'Noto Serif SC\',\'Songti SC\',serif;font-size:19px;letter-spacing:.14em;color:#f3e9dc;text-shadow:0 2px 16px rgba(0,0,0,.8)">' + _vp.name + '正在为你排盘…</p>'
-    + '<p style="position:relative;margin-top:10px;font-size:12px;letter-spacing:.34em;color:#c9bba6">问 问 大 师</p>';
-  document.body.appendChild(veil);
-  function removeVeil() {
-    if (!veil || !veil.parentNode) return;
-    veil.style.opacity = '0';
-    setTimeout(function () { if (veil.parentNode) veil.parentNode.removeChild(veil); }, 520);
-  }
-  setTimeout(removeVeil, 45000); /* 兜底：任何异常 45 秒后揭开，绝不困住访客 */
-  var tries = 0;
-  var timer = setInterval(function () {
-    tries++;
-    var bd = document.getElementById('bDate');
-    if (!bd || typeof window.TJOpenForm !== 'function') { if (tries > 40) clearInterval(timer); return; }
-    clearInterval(timer);
-    function set(id, value) {
-      var el = document.getElementById(id);
-      if (!el || !value) return;
-      el.value = value;
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    set('bDate', p.bd);
-    set('bTime', p.timeStr);
-    set('bGen', p.gen);
-    set('cInp', p.cityName);
-    try { p.applied = 1; localStorage.setItem('wen_funnel_v1', JSON.stringify(p)); } catch (e) {}
-    try {
-      var s = JSON.parse(localStorage.getItem('wen_funnel_stats_v1') || '{}');
-      s.app_arrive = (s.app_arrive || 0) + 1;
-      localStorage.setItem('wen_funnel_stats_v1', JSON.stringify(s));
-    } catch (e) {}
-    window.TJOpenForm();
-    /* 自动提交 + 自动推进演算场景，直到预告（推演结果）出现 */
-    var flowTries = 0, calcClicked = false;
-    var flow = setInterval(function () {
-      flowTries++;
-      if (document.getElementById('funnelTeaser')) { clearInterval(flow); removeVeil(); return; }
-      var fm = document.getElementById('formModal');
-      if (!calcClicked && fm && fm.classList.contains('open')) {
-        var bs = fm.querySelectorAll('button');
-        for (var i = 0; i < bs.length; i++) {
-          if (bs[i].textContent.indexOf('开始推演') > -1) { bs[i].click(); calcClicked = true; break; }
-        }
-      }
-      var c = document.getElementById('calculationContinue');
-      if (c && c.offsetParent !== null) { c.click(); }
-      else { var sk = document.getElementById('calculationSkip'); if (sk && sk.offsetParent !== null) { sk.click(); } }
-      if (flowTries > 75) { clearInterval(flow); removeVeil(); }
-    }, 400);
-  }, 150);
-})();
-</script>
+<!-- 交接遮罩：静态骨架先于模块出现，避免模块加载期间闪屏；
+     文案与立绘由 entry-flow.js 按所选引路人补齐。 -->
+<div id="funnelVeil" aria-hidden="true">
+  <img data-veil-portrait src="./art/diyan-lord.webp" alt="">
+  <div class="fv-shade"></div>
+  <div class="fv-copy">
+    <p class="fv-line" data-veil-line>地炎君正在为你排盘…</p>
+    <p class="fv-brand">问 问 大 师</p>
+  </div>
+</div>
 <script type="module" src="/src/home.js"></script>
 </body>
 </html>

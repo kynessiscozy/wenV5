@@ -16,8 +16,9 @@ try {
     await page.evaluateOnNewDocument(theme => localStorage.setItem('tj_theme', theme), theme);
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await spinFor(page, 'wenwen');
-    await page.waitForFunction(() => document.getElementById('traitSelection').hidden && typeof window.openNoviceGuide === 'function');
-    await page.click('.character-guide-link');
+    // Funnel-only entry: the guide link lives on the idle fallback card.
+    await page.waitForFunction(() => document.getElementById('entryFallback') && typeof window.openNoviceGuide === 'function');
+    await page.click('#entryFallback [data-panel="guide"]');
     await page.waitForSelector('#noviceGuideModal.open');
     assert.equal(await page.evaluate(() => document.activeElement.className), 'ng-close-btn');
     assert.equal(await page.$eval('.ng-sheet', el => el.getAttribute('aria-modal')), 'true');
@@ -42,9 +43,9 @@ try {
     assert.ok(!/不上传任何服务器|绝不会.*泄露|绝对精准/.test(faq));
     await page.keyboard.press('Escape');
     assert.equal(await page.$eval('#noviceGuideModal', el => el.classList.contains('open')), false);
-    assert.equal(await page.evaluate(() => document.activeElement.className), 'character-guide-link');
+    assert.equal(await page.evaluate(() => document.activeElement.dataset.panel), 'guide', '关闭指引应把焦点还给待机入口卡的链接');
 
-    await page.focus('#homeCtaMain');
+    await page.focus('#entryFallback [data-panel="about"]');
     await page.evaluate(() => window.openAboutModal());
     assert.equal(await page.$eval('#aboutModal [role="dialog"]', el => el.getAttribute('aria-labelledby')), 'aboutTitle');
     const about = await page.$eval('#aboutModal', el => el.innerText);
@@ -52,9 +53,9 @@ try {
     assert.ok(!/所有数据.*不上传|绝对精准/.test(about));
     await page.keyboard.press('Escape');
     assert.equal(await page.$eval('#aboutModal', el => el.classList.contains('open')), false);
-    assert.equal(await page.evaluate(() => document.activeElement.id), 'homeCtaMain');
+    assert.equal(await page.evaluate(() => document.activeElement.dataset.panel), 'about');
 
-    await page.click('.character-guide-link');
+    await page.click('#entryFallback [data-panel="guide"]');
     await page.click('.ng-act-btn.primary');
     await page.waitForSelector('#formModal.open');
     assert.match(await page.$eval('#formDefaults', el => el.innerText), /示例日期和地点.*09:00/);

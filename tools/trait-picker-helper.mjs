@@ -5,6 +5,17 @@ export async function spinFor(page, id, { confirm = true, control = '#traitSpin'
   const ids = Object.keys(HOME_THEMES);
   const index = ids.indexOf(id);
   if (index < 0) throw new Error(`Unknown test trait: ${id}`);
+  // Funnel-only entry: the reel is intentionally hidden. Tests that still ask
+  // for a trait just wait until the entry controller picked the active theme.
+  const reelHidden = await page.evaluate(() => {
+    const selection = document.getElementById('traitSelection');
+    const home = document.getElementById('page1');
+    return !selection || selection.hidden || !home || getComputedStyle(home).display === 'none';
+  });
+  if (reelHidden) {
+    await page.waitForFunction(() => !!document.documentElement.dataset.homeTheme, { timeout });
+    return;
+  }
   await page.waitForSelector('#traitMachine[data-ready="true"]', { timeout });
   await page.evaluate(({ index, count }) => {
     const original = window.crypto.getRandomValues;

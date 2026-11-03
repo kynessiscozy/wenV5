@@ -1,7 +1,12 @@
 /* 漏斗预告页（P2）：从 funnel.html 进来的访客，推演完成后先看一页
    「地炎君预告」——真排盘 + 日主基调 + 三个引擎事实钩子 + 报告目录，
    再一键进入完整报告。全程免费，无任何锁定与收费元素。
-   所有数字与干支都取自 window._ctx 的真实推演结果，不另造解读。 */
+   所有数字与干支都取自 window._ctx 的真实推演结果，不另造解读。
+   触发条件保持 applied && !teasered（含载入档案 / 重新推演），但预告页本身
+   现在是可退出的模态：可关闭、可跳过、支持 Esc 与焦点约束，并隔离背景交互。 */
+
+import { focusSafely } from './focus.js';
+import { personaFor } from './entry-personas.js';
 
 const DAY_MASTER_TONE = {
   甲: '甲木参天，认准方向便不轻易回头，做事讲原则、有担当。',
@@ -53,6 +58,12 @@ function ensureStyle() {
   #${OVERLAY_ID} .ft-hook b{color:#d8a24a;}
   #${OVERLAY_ID} .ft-toc{list-style:none;font-size:15px;line-height:2.05;color:#e6dac6;}
   #${OVERLAY_ID} .ft-toc li::before{content:"·";color:#d8a24a;margin-right:8px;}
+  #${OVERLAY_ID} .ft-close{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:16px;z-index:3;
+    width:38px;height:38px;border-radius:50%;border:1px solid rgba(216,162,74,.55);cursor:pointer;
+    background:rgba(12,9,8,.82);color:#f3e9dc;font-size:22px;line-height:1;}
+  #${OVERLAY_ID} .ft-close:focus-visible,#${OVERLAY_ID} .ft-cta:focus-visible,#${OVERLAY_ID} .ft-skip:focus-visible{outline:2px solid #e8c595;outline-offset:3px;}
+  #${OVERLAY_ID} .ft-skip{display:block;width:100%;margin-top:10px;appearance:none;border:0;background:none;
+    color:#c9bba6;font:inherit;font-size:13.5px;letter-spacing:.1em;cursor:pointer;padding:10px;text-decoration:underline;text-underline-offset:4px;}
   #${OVERLAY_ID} .ft-cta{display:block;width:100%;margin-top:26px;appearance:none;border:1px solid #c89b5a;cursor:pointer;
     position:sticky;bottom:12px;z-index:2;background:linear-gradient(180deg,#8a2015,#5f130d);color:#fff;font:inherit;
     font-size:17px;letter-spacing:.3em;padding:16px;border-radius:8px;
@@ -149,23 +160,22 @@ export function showFunnelTeaserIfNeeded() {
     hookNextYear = `明年（${lnNext.y}）流年「${lnNext.g}${lnNext.z}」，十神为<b>${ctx.ssOf(lnNext.g) || '—'}</b>——这一年的主题词，已经替你标在报告里。`;
   }
 
-  const PERSONA = payload.trait === 'yuchen'
-    ? { name: '玉宸神后', video: './art/yuchen-invite.mp4', poster: './art/yuchen-lord.webp', lead: '静下心，先看这一处。', circle: '是后先替你圈出来的', hooksTitle: '后 先 说 三 句' }
-    : payload.trait === 'moonfox'
-    ? { name: '月白', video: './art/yuebai-invite.mp4', poster: './art/yuebai-lord.webp', lead: '别急，先看清这一处。', circle: '是月白先替你圈出来的', hooksTitle: '月 白 先 说 三 句' }
-    : payload.trait === 'xiyao'
-    ? { name: '夕瑶', video: './art/xiyao-invite.mp4', poster: './art/xiyao-lord.webp', lead: '别急，先看你这一局。', circle: '是夕瑶先替你圈出来的', hooksTitle: '夕 瑶 先 说 三 句' }
-    : { name: '地炎君', video: './art/diyan-invite.mp4', poster: './art/diyan-lord.webp', lead: '先定根基，再看全局。', circle: '是君先替你圈出来的', hooksTitle: '君 先 说 三 句' };
+  const PERSONA = personaFor(payload.trait);
   const hooks = [hookDayun, hookScore, hookNextYear].filter(Boolean);
   const toc = reportToc();
   const tone = DAY_MASTER_TONE[ctx.dg] || '';
 
   ensureStyle();
+  const previousFocus = document.activeElement;
+  const previousOverflow = document.body.style.overflow;
   const el = document.createElement('div');
   el.id = OVERLAY_ID;
   el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-modal', 'true');
   el.setAttribute('aria-label', PERSONA.name + '命盘预告');
+  el.tabIndex = -1;
   el.innerHTML = `
+  <button class="ft-close" type="button" aria-label="关闭预告">×</button>
   <div class="ft-wrap">
     <video class="ft-hero" autoplay muted loop playsinline preload="auto" poster="${PERSONA.poster}" src="${PERSONA.video}" aria-label="${PERSONA.name}"></video>
     <div class="ft-head">
@@ -190,15 +200,57 @@ export function showFunnelTeaserIfNeeded() {
     ${hooks.length ? `<div class="ft-card"><h3>${PERSONA.hooksTitle}</h3>${hooks.map(h => `<p class="ft-hook">${h}</p>`).join('')}</div>` : ''}
     ${toc.length ? `<div class="ft-card"><h3>完 整 报 告 目 录</h3><ul class="ft-toc">${toc.map(t => `<li><b>${t.label}</b> — ${t.head}${t.score ? `（${t.score}）` : ''}</li>`).join('')}</ul></div>` : ''}
     <button class="ft-cta" type="button">继续看完整报告</button>
+    <button class="ft-skip" type="button">跳过预告，直接看报告</button>
     <p class="ft-free">全程免费 · 无隐藏收费 · 报告已在下方备好</p>
   </div>`;
   document.body.appendChild(el);
+  document.body.style.overflow = 'hidden';
+  // A modal teaser must not leave the report behind it clickable or reachable
+  // by keyboard shortcuts. Snapshot and restore, like the calculation scene.
+  const background = Array.from(document.body.children)
+    .filter(node => node !== el && !['SCRIPT', 'STYLE', 'LINK'].includes(node.tagName))
+    .map(node => ({ node, inert: node.hasAttribute('inert'), aria: node.getAttribute('aria-hidden') }));
+  background.forEach(({ node }) => { node.setAttribute('inert', ''); node.setAttribute('aria-hidden', 'true'); });
+  window.__wenFlow?.onTeaserOpen?.();
   bumpStat('teaser_shown');
-  el.querySelector('.ft-cta').addEventListener('click', () => {
-    bumpStat('report_open');
+  focusSafely(el.querySelector('.ft-cta'));
+
+  let closed = false;
+  function dismiss(reason) {
+    if (closed) return;
+    closed = true;
+    bumpStat(reason === 'continue' ? 'report_open' : 'teaser_skip');
     markTeasered(payload);
+    background.forEach(({ node, inert, aria }) => {
+      if (!inert) node.removeAttribute('inert');
+      if (aria === null) node.removeAttribute('aria-hidden');
+      else node.setAttribute('aria-hidden', aria);
+    });
+    document.body.style.overflow = previousOverflow;
     el.remove();
+    const scroller = document.getElementById('p2Scroll');
+    if (scroller) scroller.scrollTop = 0;
     window.scrollTo(0, 0);
+    window.__wenFlow?.onTeaserClosed?.();
+    const restore = previousFocus?.isConnected && previousFocus.getClientRects().length
+      ? previousFocus : document.getElementById('p2MenuBtn');
+    focusSafely(restore);
+  }
+
+  el.querySelector('.ft-cta').addEventListener('click', () => dismiss('continue'));
+  el.querySelector('.ft-skip').addEventListener('click', () => dismiss('skip'));
+  el.querySelector('.ft-close').addEventListener('click', () => dismiss('skip'));
+  el.addEventListener('keydown', event => {
+    event.stopPropagation(); // 预告页独占 Escape 与报告的数字快捷键
+    if (event.key === 'Escape') { event.preventDefault(); dismiss('skip'); return; }
+    if (event.key !== 'Tab') return;
+    const controls = [...el.querySelectorAll('button:not(:disabled)')].filter(node => node.getClientRects().length);
+    if (!controls.length) { event.preventDefault(); focusSafely(el); return; }
+    const index = controls.indexOf(document.activeElement);
+    if (index < 0 || (!event.shiftKey && index === controls.length - 1) || (event.shiftKey && index === 0)) {
+      event.preventDefault();
+      focusSafely(controls[event.shiftKey ? controls.length - 1 : 0]);
+    }
   });
   return true;
 }
