@@ -165,7 +165,7 @@ function installPortraitInteraction() {
   }
 }
 
-function makeHero(id, theme, ctx, western, isDemo, onReselect, overview, astro) {
+function makeHero(id, theme, ctx, western, isDemo, overview, astro) {
   const hero = element('section', 'result-character-hero');
   hero.id = 'characterResultHero';
   hero.dataset.reportCharacter = id;
@@ -195,16 +195,6 @@ function makeHero(id, theme, ctx, western, isDemo, onReselect, overview, astro) 
   kicker.append(element('span', 'result-character-mark', theme.trait.mark),
     element('span', '', `${theme.trait.label} · 同行`));
   if (isDemo) kicker.append(element('span', 'result-character-demo', '示例'));
-  if (typeof onReselect === 'function') {
-    const change = element('button', 'result-character-reselect', '换特质 ↻');
-    change.id = 'reportTraitReselect';
-    change.type = 'button';
-    change.setAttribute('aria-label', '重新选择特质');
-    change.setAttribute('aria-haspopup', 'dialog');
-    change.setAttribute('aria-controls', 'traitSelection');
-    change.addEventListener('click', () => onReselect(change));
-    kicker.append(change);
-  }
   copy.append(kicker);
 
   const dayMaster = [ctx?.dg, ctx?.dw].filter(Boolean).join('');
@@ -292,7 +282,7 @@ function makeChapter(id, theme, section, westernText, theatreContainer, overview
 }
 
 /** Rebuild the selected character's result surfaces after each actual calculation. */
-export function mountCharacterReport({ ctx, western = {}, isDemo = false, onReselect } = {}) {
+export function mountCharacterReport({ ctx, western = {}, isDemo = false } = {}) {
   const selected = selectedTheme();
   if (!selected || !ctx) return;
   const [id, theme] = selected;
@@ -314,7 +304,7 @@ export function mountCharacterReport({ ctx, western = {}, isDemo = false, onRese
   }));
   let hero, luckChapter, relationChapter;
   try {
-    hero = makeHero(id, theme, ctx, western, isDemo, onReselect, overview, astro);
+    hero = makeHero(id, theme, ctx, western, isDemo, overview, astro);
     luckChapter = makeChapter(id, theme, 'yun',
       [isDemo ? '示例星象' : '星象一览', '拖动星象，探索十二星座示意。'], horo, luckOverview, isDemo);
     relationChapter = makeChapter(id, theme, 'rel',

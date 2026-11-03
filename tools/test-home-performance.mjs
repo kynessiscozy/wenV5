@@ -1,4 +1,4 @@
-import { spinFor } from './trait-picker-helper.mjs';
+import { applyThemeFor, submitBirth } from './theme-helper.mjs';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -74,19 +74,21 @@ async function openContext(homeTheme = 'wenwen') {
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
   await page.evaluateOnNewDocument(theme => {
     localStorage.setItem('tj_theme', 'light');
-    localStorage.setItem('tj_home_character', theme);
+    // 人物来自 funnel 的 wen_funnel_v1 交接（已消费态只带主题，不触发推演）。
+    localStorage.setItem('wen_funnel_v1', JSON.stringify({ v: 1, applied: 1, trait: theme }));
   }, homeTheme);
   return { page, context, errors };
 }
 
 async function choose(page, id) {
-  await page.waitForSelector('#traitMachine[data-ready="true"]', { timeout: 15000 });
-  await spinFor(page, id);
+  // openContext 已用交接记录种入主题时只等素材，不重复重载。
+  const current = await page.evaluate(() => document.documentElement.dataset.homeTheme).catch(() => null);
+  if (current !== id) await applyThemeFor(page, id);
   const theme = HOME_THEMES[id];
   await page.waitForFunction((role, portrait, room) => {
     const p = document.querySelector('[data-character-asset="portrait"]');
     const b = document.querySelector('.character-backdrop img');
-    return document.documentElement.dataset.homeTheme === role && document.getElementById('traitSelection').hidden &&
+    return document.documentElement.dataset.homeTheme === role &&
       p.complete && p.naturalWidth > 0 && p.currentSrc.endsWith(portrait.replace('./', '/')) &&
       b.complete && b.naturalWidth > 0 && b.currentSrc.endsWith(room.replace('./', '/'));
   }, { timeout: 15000 }, id, theme.character.assets.portrait.src, theme.backdrop.mobile);
@@ -105,14 +107,13 @@ try {
     const gate = gateRequests(page, url => /\/assets\/index-[^/]+\.js(?:\?|$)/.test(url));
     const navigation = page.goto(base, { waitUntil: 'domcontentloaded', timeout: 15000 });
     await waitForHeld(gate, '/assets/index-');
-    await page.waitForFunction(() => document.querySelector('#traitStatus')?.textContent.includes('请检查网络'), { timeout: 5000 });
-    assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
-    assert.equal(await page.$$eval('#traitSpin, #traitLever', buttons => buttons.every(button => button.disabled)), true, '模块未就绪时不能触发无效转动');
+    await page.waitForFunction(() => document.body.textContent.includes('请检查网络'), { timeout: 5000 });
+    assert.equal(await page.$('#traitSelection'), null, '老虎机已彻底移除');
+    assert.ok(await page.$('#funnelVeil'), '模块未就绪时只显示静态等待幕，不给无效操作');
     await gate.release();
     await navigation;
-    await page.waitForSelector('#traitMachine[data-ready="true"]', { timeout: 15000 });
-    assert.equal(await page.$eval('#traitSpin', el => el.disabled), false, '入口加载完成后可以转动');
-    assert.equal(await page.$eval('#traitStatus', el => el.textContent), '');
+    await page.waitForFunction(() => document.documentElement.dataset.homeReady === 'true' &&
+      !document.getElementById('entryFallback').hidden, { timeout: 15000 });
     assert.deepEqual(errors, []);
     await context.close();
   }
@@ -124,11 +125,9 @@ try {
     await page.setRequestInterception(true);
     const gate = gateRequests(page, () => false);
     await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#traitMachine[data-ready="true"]');
     const portraits = Object.values(HOME_THEMES).map(item => item.character.assets.portrait.src.split('/').at(-1));
-    assert.ok(!gate.seen.some(url => portraits.some(file => url.endsWith('/' + file))), '选择之前不应下载人物主图');
-    assert.equal(await page.$eval('html', el => el.dataset.homeTheme), undefined, '旧存储不能使角色预先选定');
     await choose(page, id);
+    assert.equal(await page.$eval('html', el => el.dataset.homeTheme), id, '交接人物应在启动时应用为主题');
     assert.ok(!gate.seen.some(url => url.includes('/master-twin-')), '首页选择完成前不应下载双子对话素材');
     const loaded = await page.evaluate(() => ({
       src: document.querySelector('[data-character-asset="portrait"]').getAttribute('src'),
@@ -159,8 +158,8 @@ try {
   }
   console.log('✓ 选择后才按注册表加载对应人物和场景');
 
-  // Hold the big report engines: trait selection and the scene must remain
-  // usable, and an early exploration tap must be replayed after loading.
+  // Hold the big report engines: the delivered theme and the scene must still
+  // render, and once the engines arrive the idle card leads back to funnel.
   {
     const { page, context, errors } = await openContext('yuchen');
     await page.setRequestInterception(true);
@@ -168,23 +167,21 @@ try {
     await page.goto(base, { waitUntil: 'domcontentloaded', timeout: 15000 });
     await waitForHeld(gate, '/assets/engines-');
     await choose(page, 'yuchen');
-    assert.equal(await page.evaluate(() => typeof window.TJOpenForm), 'undefined');
+    assert.equal(await page.evaluate(() => typeof window.TJOpenForm), 'undefined', '旧表单开关已删除');
     assert.equal(gate.seen.some(url => /\/(wenwen-cinema3d\.webp|sacred-study-(wide|mobile)\.webp|wenwen-lantern\.webp)(?:\?|$)/.test(url)), false);
     assert.deepEqual(gate.external, []);
     assert.equal(await page.$eval('#calculationOverlay', el => el.hidden), true);
-    await page.evaluate(() => window.TJOpenForm?.());
-    await page.waitForSelector('#formModal.open');
-    assert.equal(await page.$eval('#homeCtaMain', el => el.getAttribute('aria-busy')), 'true');
-    assert.match(await page.$eval('#homeCtaMain', el => el.textContent), /加载中/);
     await gate.release();
-    await page.waitForSelector('#formModal.open', { timeout: 15000 });
-    assert.match(await page.$eval('#homeCtaMain', el => el.textContent), /开启探索/);
-    assert.equal(await page.$eval('#homeCtaMain', el => el.hasAttribute('aria-busy')), false);
-    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.getElementById('entryFallback').hidden, { timeout: 15000 });
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+      page.click('#entryFallback .ef-primary'),
+    ]);
+    assert.ok(page.url().includes('funnel.html'), '填写只发生在漏斗页');
     assert.deepEqual(errors, []);
     await context.close();
   }
-  console.log('✓ 主程序慢时可选特质、显示人物并保留提前点击');
+  console.log('✓ 主程序慢时仍应用交接主题与场景，就绪后回漏斗填写');
 
   // Calendar loading is explicit and can take longer than two seconds.
   {
@@ -201,7 +198,7 @@ try {
     });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await choose(page, 'wenwen');
-    await page.click('#homeCtaCal');
+    await page.$eval('#homeCtaCal', el => el.click()); // 漏斗模式下首页隐藏，直接触发其加载排队逻辑
     assert.match(await page.$eval('#homeCtaCal', el => el.textContent), /加载中/);
     releaseEngines = true;
     await Promise.all(engines.splice(0).map(request => request.continue().catch(() => {})));
@@ -280,10 +277,8 @@ try {
     await page.setRequestInterception(true);
     const gate = gateRequests(page, url => url.endsWith('/yuchen-cinema3d.webp'));
     await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#traitMachine[data-ready="true"]');
-    await spinFor(page, 'yuchen');
+    await applyThemeFor(page, 'yuchen');
     await waitForHeld(gate, '/yuchen-cinema3d.webp');
-    assert.equal(await page.$$eval('#traitSpin, #traitLever, #traitConfirm', buttons => buttons.every(button => button.disabled)), true);
     await page.waitForFunction(() => document.documentElement.dataset.homeTheme === 'yuchen', { timeout: 5000 });
     assert.equal(await page.$eval('[data-character-asset="portrait"]', image => getComputedStyle(image).visibility), 'hidden');
     await gate.release();
@@ -295,7 +290,7 @@ try {
   }
   console.log('✓ 极慢素材下锁定本次选择并防止人物闪现');
 
-  // If the main module really fails, leave the selection/scene usable and explain the error.
+  // If the main module really fails, leave the scene usable and explain the error.
   {
     const { page, context } = await openContext();
     await page.setRequestInterception(true);
@@ -306,14 +301,14 @@ try {
     });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await choose(page, 'wenwen');
-    await page.evaluate(() => window.TJOpenForm?.());
-    await page.waitForSelector('#formModal.open');
-    await page.waitForFunction(() => document.querySelector('#homeCtaMain').textContent.includes('请刷新重试'));
-    assert.match(await page.$eval('#homeLoadingStatus', el => el.textContent), /加载失败/);
+    await page.waitForFunction(() => !document.getElementById('entryFallback').hidden &&
+      !document.querySelector('#entryFallback .ef-retry').hidden &&
+      document.querySelector('#entryFallback .ef-primary').disabled, { timeout: 15000 });
+    assert.match(await page.$eval('#entryFallback .ef-desc', el => el.textContent), /加载失败/);
     assert.equal(await page.$eval('#characterScene', el => el.dataset.cameraShot), 'close');
     await context.close();
   }
-  console.log('✓ 主程序加载失败时提示刷新，特质和近景仍可用');
+  console.log('✓ 主程序加载失败时提示重载，主题和近景仍可用');
 
   // No-JavaScript users must receive an explanation instead of an unchosen role.
   {
@@ -321,7 +316,7 @@ try {
     await page.setJavaScriptEnabled(false);
     await page.goto(base, { waitUntil: 'load' });
     const fallback = await page.evaluate(() => ({
-      message: document.querySelector('.trait-noscript')?.textContent,
+      message: document.querySelector('.ef-noscript')?.textContent,
       overlay: getComputedStyle(document.getElementById('calculationOverlay')).display,
       inert: document.getElementById('page1').inert,
     }));
@@ -332,7 +327,7 @@ try {
   }
   console.log('✓ 无 JavaScript 时给出明确提示，不自动分配角色');
 
-  // A refresh asks again but can reuse the selected image and room in cache.
+  // A refresh restores the delivered theme and reuses its cached image and room.
   {
     const { page, context } = await openContext('moonfox');
     const responses = [];
@@ -340,16 +335,15 @@ try {
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await choose(page, 'moonfox');
     await page.reload({ waitUntil: 'domcontentloaded' });
-    assert.equal(await page.$eval('#traitSelection', el => el.hidden), false);
     responses.length = 0;
     await choose(page, 'moonfox');
     for (const name of ['moonfox-cinema3d.webp', 'moon-fox-study-mobile.webp']) {
       const response = responses.find(item => item.url.endsWith('/' + name));
-      assert.ok(response?.cached, `${name} 重新选择应复用浏览器缓存`);
+      assert.ok(response?.cached, `${name} 刷新恢复应复用浏览器缓存`);
     }
     await context.close();
   }
-  console.log('✓ 刷新重选同时复用已有图片缓存');
+  console.log('✓ 刷新恢复交接主题并复用已有图片缓存');
 
   // A constrained real network/CPU must still reach the selected art quickly.
   for (const id of Object.keys(HOME_THEMES)) {
@@ -359,7 +353,6 @@ try {
     await client.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 200 * 1024, uploadThroughput: 200 * 1024 });
     await client.send('Emulation.setCPUThrottlingRate', { rate: 4 });
     await page.goto(base, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForSelector('#traitMachine[data-ready="true"]', { timeout: 30000 });
     const start = Date.now();
     await choose(page, id);
     const elapsed = Date.now() - start;

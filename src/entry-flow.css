@@ -1,4 +1,5 @@
-/* 漏斗单一入口：原首页（含特质轮盘）保留 DOM 供报告复用，但不再是可交互界面。
+/* 漏斗单一入口：原首页人物场景保留 DOM 供报告复用，但不再是可交互界面
+   （特质老虎机与旧表单已彻底移除，填写只发生在 funnel.html）。
    这一条规则是唯一入口开关，取代此前写在 index.html 里的 !important 内联样式。 */
 html[data-entry="funnel"] #page1 { display: none; }
 

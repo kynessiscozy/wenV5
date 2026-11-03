@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 import { HOME_THEMES } from '../src/ui/home-theme.js';
-import { spinFor } from './trait-picker-helper.mjs';
+import { applyThemeFor, submitBirth } from './theme-helper.mjs';
 
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 try {
@@ -11,9 +11,8 @@ try {
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
   await page.goto(process.env.BASE_URL || 'http://localhost:5173/', { waitUntil: 'domcontentloaded' });
   for (const [index, id] of Object.keys(HOME_THEMES).entries()) {
-    if (index) await page.click('#homeTraitReset');
-    await spinFor(page, id);
-    await page.waitForFunction(id => document.documentElement.dataset.homeTheme === id && document.getElementById('traitSelection').hidden, {}, id);
+    await applyThemeFor(page, id);
+    await page.waitForFunction(id => document.documentElement.dataset.homeTheme === id, {}, id);
     await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
     const state = await page.evaluate(id => {
       const idle = document.querySelector('.character-idle-motion');
@@ -35,14 +34,11 @@ try {
     if (state.effect !== null) assert.equal(await page.$eval(`.trait-effect--${id}`, el => getComputedStyle(el).animationName), 'none');
   }
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
-  await page.evaluate(() => document.getElementById('characterPortraitButton').click());
-  assert.equal(await page.$eval('#characterScene', el => el.classList.contains('character-responding')), true);
-  await page.waitForSelector('#formModal.open');
-  assert.equal(await page.$eval('#characterScene', el => el.classList.contains('character-responding')), false);
-  await page.evaluate(() => window.TJCloseForm());
-  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
-  await page.evaluate(() => document.getElementById('characterPortraitButton').click());
-  await page.waitForSelector('#formModal.open');
-  assert.equal(await page.$eval('#characterScene', el => el.classList.contains('character-responding')), false);
-  console.log('✓ 十角色呼吸、专属动效、点击反馈、控制按钮与减少动态');
+  // 点击人物 = 去唯一入口填写出生信息（旧表单已删除，不再本页打开）。
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+    page.evaluate(() => document.getElementById('characterPortraitButton').click()),
+  ]);
+  assert.ok(page.url().includes('funnel.html'), '点击人物应去漏斗填写');
+  console.log('✓ 十角色呼吸、专属动效、控制按钮与减少动态；点人物回漏斗填写');
 } finally { await browser.close(); }

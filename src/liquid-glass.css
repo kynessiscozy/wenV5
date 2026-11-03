@@ -103,7 +103,6 @@ html[data-theme] body[data-glass] .mm-sheet,
 html[data-theme] body[data-glass] .tool-sheet,
 html[data-theme] body[data-glass] .ai-settings-panel,
 html[data-theme] body[data-glass] .lg-panel,
-html[data-theme] body[data-glass] .form-modal-sheet,
 html[data-theme] body[data-glass] .home-card {
   background: var(--glass-tint) !important;
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) !important;
@@ -137,7 +136,6 @@ html[data-theme] body .ai-send,
 html[data-theme] body .save-btn,
 html[data-theme] body .ai-basis-pill,
 html[data-theme] body .mode-top-switch,
-html[data-theme] body .result-style-option,
 html[data-theme] body .tool-cta-btn,
 html[data-theme] body .tool-hub-cta,
 html[data-theme] body .beginner-primary,
@@ -156,7 +154,6 @@ html[data-theme] body .ai-send::before,
 html[data-theme] body .save-btn::before,
 html[data-theme] body .ai-basis-pill::before,
 html[data-theme] body .mode-top-switch::before,
-html[data-theme] body .result-style-option::before,
 html[data-theme] body .tool-cta-btn::before,
 html[data-theme] body .tool-hub-cta::before,
 html[data-theme] body .beginner-primary::before,
@@ -198,7 +195,6 @@ html[data-theme] body .ai-send:hover::before,
 html[data-theme] body .save-btn:hover::before,
 html[data-theme] body .ai-basis-pill:hover::before,
 html[data-theme] body .mode-top-switch:hover::before,
-html[data-theme] body .result-style-option:hover::before,
 html[data-theme] body .tool-cta-btn:hover::before,
 html[data-theme] body .tool-hub-cta:hover::before,
 html[data-theme] body .beginner-primary:hover::before,
@@ -216,7 +212,6 @@ html[data-theme] body .ai-send:active::before,
 html[data-theme] body .save-btn:active::before,
 html[data-theme] body .ai-basis-pill:active::before,
 html[data-theme] body .mode-top-switch:active::before,
-html[data-theme] body .result-style-option:active::before,
 html[data-theme] body .tool-cta-btn:active::before,
 html[data-theme] body .tool-hub-cta:active::before,
 html[data-theme] body .beginner-primary:active::before,
@@ -226,7 +221,6 @@ html[data-theme] body .theme-toggle-home:active::before {
 }
 
 /* active/selected 态保持流动 */
-html[data-theme] body .result-style-option.active::before,
 html[data-theme] body .mode-top-switch.active::before,
 html[data-theme] body .gs-seg .gs-opt.active::before {
   opacity: 0.65;
@@ -578,7 +572,6 @@ html[data-theme] body .theme-toggle-home {
 html[data-theme] body #page2 .glass,
 html[data-theme] body #toolHubRoot .tool-hub,
 html[data-theme] body #toolHubRoot .tool-tile,
-html[data-theme] body .form-modal-sheet,
 html[data-theme] body .ai-sheet,
 html[data-theme] body .chat-card,
 html[data-theme] body .wx-card,
@@ -603,32 +596,6 @@ html[data-theme] body .form-field {
   border-color: var(--glass-border) !important;
 }
 
-/* ---------- 11. 填表页：去除白色层级，改为通透玻璃 ---------- */
-html[data-theme] body .form-modal-sheet.form-modal-sheet {
-  background: color-mix(in srgb, var(--c-surface) 28%, transparent) !important;
-  backdrop-filter: blur(24px) saturate(135%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(135%) !important;
-}
-html[data-theme] body .form-modal-sheet .home-card {
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 0 !important;
-  box-shadow: none !important;
-}
-html[data-theme] body .form-modal-sheet input,
-html[data-theme] body .form-modal-sheet select,
-html[data-theme] body .form-modal-sheet .form-field,
-html[data-theme] body .form-modal-sheet textarea {
-  background: color-mix(in srgb, var(--c-surface-2) 28%, transparent) !important;
-}
-html[data-theme] body .form-modal-sheet .result-style-option {
-  background: color-mix(in srgb, var(--c-surface-3) 30%, transparent) !important;
-}
-html[data-theme] body .form-modal-sheet .result-style-option.active {
-  background: var(--c-accent) !important;
-  color: var(--c-on-accent) !important;
-}
 
 /* ---------- 11.5 工具中心外框：去掉卡片背景框（背景/阴影/玻璃装饰），
    内容直接浮于页面上；内部工具卡片的自身样式不受影响 ---------- */
@@ -641,11 +608,6 @@ html[data-theme] body #toolHubRoot.tool-hub {
 }
 html[data-theme] body #toolHubRoot.tool-hub::before,
 html[data-theme] body #toolHubRoot.tool-hub::after { display: none !important; }
-html[data-theme] body .form-modal-close {
-  background: color-mix(in srgb, var(--c-surface-2) 35%, transparent) !important;
-  backdrop-filter: blur(10px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(120%) !important;
-}
 
 /* ---------- 12. 首页菜单抽屉：去除厚重外框，改用清透玻璃 ---------- */
 html[data-theme] body .home-menu-drawer {
@@ -786,7 +748,6 @@ html[data-theme] body .ai-dialogue-text {
   html[data-theme] body .save-btn::before,
   html[data-theme] body .ai-basis-pill::before,
   html[data-theme] body .mode-top-switch::before,
-  html[data-theme] body .result-style-option::before,
   html[data-theme] body .tool-cta-btn::before,
   html[data-theme] body .tool-hub-cta::before,
   html[data-theme] body .beginner-primary::before,
