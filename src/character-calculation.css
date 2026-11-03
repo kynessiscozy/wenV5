@@ -115,7 +115,7 @@
 .calculation-rune--four { right: 1%; top: 57%; animation-delay: .34s; }
 .calculation-rune--four img { top: -100%; left: -100%; }
 
-/* 玉宸：凤羽从肩后舒展，玉印牵出金玉光纹。 */
+/* 倪克斯神谕：凤羽从肩后舒展，玉印牵出金玉光纹。 */
 .calculation-wing { position: absolute; top: 8%; width: 58%; height: 73%; }
 .calculation-wing img { filter: brightness(.91) drop-shadow(0 0 16px rgba(240,209,132,.34)); }
 .calculation-wing--right { left: 47%; transform-origin: 5% 92%; animation: calculation-wing-right 1.8s cubic-bezier(.2,.7,.2,1) both; }

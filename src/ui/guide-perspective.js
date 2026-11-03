@@ -3,7 +3,7 @@
 const GUIDES = Object.freeze({
   diyan: Object.freeze({ name: '焱绒', focus: '行动与优先级',
     prompt: '从眼前最重要的一件事开始：把它拆成一个今天可以尝试的小步骤。' }),
-  yuchen: Object.freeze({ name: '玉宸', focus: '节奏与资源',
+  yuchen: Object.freeze({ name: '倪克斯神谕', focus: '节奏与资源',
     prompt: '看看现在有哪些支持与空间：安排下一步时，也给休息和调整留出余地。' }),
   moonfox: Object.freeze({ name: '月白', focus: '线索与依据',
     prompt: '先比较这些线索，再打开报告中的详细依据；哪些描述与你的实际经历相符？' }),

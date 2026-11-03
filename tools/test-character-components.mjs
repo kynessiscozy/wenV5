@@ -287,9 +287,9 @@ assert.equal(nodes.get('characterPortraitButton').style.getPropertyValue('--char
 assert.equal(nodes.get('characterScene').dataset.cameraSafeX, '0.23');
 assert.equal(nodes.get('characterScene').dataset.cameraSafeInset, '0.05');
 adapter.setHomeCharacter(JADE_EMPRESS);
-assert.equal(homeName.textContent, '玉宸');
-assert.equal(nodes.get('characterPortraitButton').getAttribute('aria-label'), '点击玉宸，开启探索');
-assert.ok(JADE_EMPRESS.assets.portrait.alt.startsWith('玉宸'));
+assert.equal(homeName.textContent, '倪克斯神谕');
+assert.equal(nodes.get('characterPortraitButton').getAttribute('aria-label'), '点击倪克斯神谕，开启探索');
+assert.ok(JADE_EMPRESS.assets.portrait.alt.startsWith('倪克斯神谕'));
 adapter.setHomeCharacter(EARTHFIRE_SOVEREIGN);
 assert.ok(EARTHFIRE_SOVEREIGN.assets.portrait.alt.startsWith('焱绒'));
 assert.equal(homePortrait.src, EARTHFIRE_SOVEREIGN.assets.portrait.src);

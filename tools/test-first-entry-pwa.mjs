@@ -51,7 +51,7 @@ try {
   assert.equal(await page.evaluate(() => document.activeElement.id), 'personaToggle');
   const paletteGradients = new Set();
   for (const [key, name, video] of [
-    ['diyan', '焱绒', 'diyan-entry2.mp4'], ['yuchen', '玉宸', 'yuchen-entry.mp4'],
+    ['diyan', '焱绒', 'diyan-entry2.mp4'], ['yuchen', '倪克斯神谕', 'yuchen-entry.mp4'],
     ['xiyao', '夕瑶', 'xiyao-entry.mp4'], ['moonfox', '月白', 'yuebai-entry.mp4'],
   ]) {
     await page.click('#personaToggle');

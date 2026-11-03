@@ -58,7 +58,7 @@ ok(DEFAULT_PERSONA === 'moonfox' && personaFor('unknown').key === DEFAULT_PERSON
 ok(themeForPersona('xiyao') === 'xingling', '夕瑶不再静默变成焱绒');
 ok(themeForPersona('moonfox') === 'moonfox', '月白对应狐系主题');
 ok(personaFor('diyan').name === '焱绒' && personaFor('diyan').byline.includes('焱绒'), '原 diyan 标识展示焱绒');
-ok(personaFor('yuchen').name === '玉宸' && personaFor('yuchen').byline.includes('玉宸'), '原 yuchen 标识展示玉宸');
+ok(personaFor('yuchen').name === '倪克斯神谕' && personaFor('yuchen').byline.includes('倪克斯神谕'), '原 yuchen 标识展示倪克斯神谕');
 
 /* ---- 3. 静态不变量：旧的抢屏/强制跳转逻辑不得回流 ---- */
 const html = await read('index.html');

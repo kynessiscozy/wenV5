@@ -286,7 +286,7 @@
     </button>
     <div class="persona-options" id="personaOptions" role="group" aria-label="选择引路人" hidden>
       <button type="button" data-persona="diyan" aria-pressed="false"><span>焱绒<small>行动与优先级</small></span></button>
-      <button type="button" data-persona="yuchen" aria-pressed="false"><span>玉宸<small>节奏与资源</small></span></button>
+      <button type="button" data-persona="yuchen" aria-pressed="false"><span>倪克斯神谕<small>节奏与资源</small></span></button>
       <button type="button" data-persona="moonfox" class="on" aria-pressed="true"><span>月白<small>线索与依据</small></span></button>
       <button type="button" data-persona="xiyao" aria-pressed="false"><span>夕瑶<small>关系与沟通</small></span></button>
     </div>
@@ -690,7 +690,7 @@
   $('#btnBack').addEventListener('click',function(){if(flowLocked)return;if(qi>0)transitionTo(qi-1,-1);});
 
   /* 加载仪式 → 交接 */
-  var LINES_BY_PERSONA={diyan:['焱绒正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，焱绒再看一眼…'],yuchen:['玉宸正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，再看一眼…'],moonfox:['月白正在为你翻册…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一页，月白再替你看一眼…'],xiyao:['夕瑶正在为你看盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一局，夕瑶再替你看一眼…']};
+  var LINES_BY_PERSONA={diyan:['焱绒正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，焱绒再看一眼…'],yuchen:['倪克斯神谕正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，再看一眼…'],moonfox:['月白正在为你翻册…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一页，月白再替你看一眼…'],xiyao:['夕瑶正在为你看盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一局，夕瑶再替你看一眼…']};
   /* 引路人可以在问卷途中切换，加载文案必须在提交那一刻重新读取，
      不能沿用页面加载时缓存的 LINES。 */
   function personaKey(){
@@ -846,9 +846,9 @@ var PERSONAS={
   diyan:{name:'焱绒',focus:'行动与优先级',entry:'./art/diyan-entry2.mp4',entryPoster:'./art/diyan-entry2-poster.webp',
     ritual:'./art/diyan-ritual.mp4',ritualPoster:'./art/diyan-ritual-poster.webp',
     quiz:'./art/diyan-quiz.mp4',poster:'./art/diyan-lord.webp',firstLine:'焱绒正在为你排盘…'},
-  yuchen:{name:'玉宸',focus:'节奏与资源',entry:'./art/yuchen-entry.mp4',entryPoster:'./art/yuchen-lord.webp',
+  yuchen:{name:'倪克斯神谕',focus:'节奏与资源',entry:'./art/yuchen-entry.mp4',entryPoster:'./art/yuchen-lord.webp',
     ritual:'./art/yuchen-ritual.mp4',ritualPoster:'./art/yuchen-lord.webp',
-    quiz:'./art/yuchen-quiz.mp4',poster:'./art/yuchen-lord.webp',firstLine:'玉宸正在为你排盘…'},
+    quiz:'./art/yuchen-quiz.mp4',poster:'./art/yuchen-lord.webp',firstLine:'倪克斯神谕正在为你排盘…'},
   moonfox:{name:'月白',focus:'线索与依据',entry:'./art/yuebai-entry.mp4',entryPoster:'./art/yuebai-lord.webp',
     ritual:'./art/yuebai-ritual.mp4',ritualPoster:'./art/yuebai-lord.webp',
     quiz:'./art/yuebai-quiz.mp4',poster:'./art/yuebai-lord.webp',firstLine:'月白正在为你翻册…'},

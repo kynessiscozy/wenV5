@@ -206,12 +206,12 @@ try {
     assert.equal(await page.$('#traitOptions'), null, '只能通过老虎机选择特质');
     assert.equal(await page.$$('.trait-role').then(els => els.length), 0);
     const pickerText = await page.$eval('#traitSelection', el => el.textContent);
-    assert.ok(!/姜姜|问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言|绒绒|纸鸢/.test(pickerText), '选择页不应暴露人物名称');
+    assert.ok(!/姜姜|问问|月白|地炎|倪克斯|青岚|星绫|陆野|苏言|绒绒|纸鸢/.test(pickerText), '选择页不应暴露人物名称');
     assert.ok(!/让心意|转个方向|直接选择/.test(pickerText), '删除旧标题和直接选择文案');
     const choiceTree = await (await page.createCDPSession()).send('Accessibility.getFullAXTree');
     const choiceNames = choiceTree.nodes.filter(node => !node.ignored && ['button', 'togglebutton'].includes(node.role?.value)).map(node => node.name?.value);
     assert.ok(choiceNames.some(name => name?.includes('转一转')), '屏幕阅读器可以操作随机转轮');
-    assert.ok(!choiceNames.some(name => /姜姜|问问|月白|地炎|玉宸|青岚|星绫|陆野|苏言|绒绒|纸鸢/.test(name || '')), '屏幕阅读器也不暴露角色名');
+    assert.ok(!choiceNames.some(name => /姜姜|问问|月白|地炎|倪克斯|青岚|星绫|陆野|苏言|绒绒|纸鸢/.test(name || '')), '屏幕阅读器也不暴露角色名');
     const fetched = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name));
     assert.ok(!fetched.some(name => /(?:(?:wenwen|moonfox|diyan|yuchen|qinglan|xingling|luye|suyan|rongrong|zhiya)-cinema3d|(?:luye|suyan)-fullbody)\.webp/.test(name)), '未选择前不应预加载任何主图');
     await page.keyboard.press('Tab');
