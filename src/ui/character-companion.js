@@ -5,7 +5,7 @@ import { mountCharacterPrompt } from '../character/companion.js';
 /** Connect a reusable character to exploration and the report's assistant. */
 export function initCharacterCompanion({
   character = JIANGJIANG,
-  openForm = () => {},
+  onExplore = () => {},
   openAsk = () => {},
   deferHomeAssets = false,
 } = {}) {
@@ -70,17 +70,17 @@ export function initCharacterCompanion({
   }
 
   // The portrait and the primary action lead to the same real exploration flow.
-  // Let the brief acknowledgement be visible before the form covers the scene.
+  // Let the brief acknowledgement be visible before leaving for the funnel.
   // Reduced-motion users proceed immediately.
   let feedbackTimer = 0;
   portrait?.addEventListener('click', () => {
     if (feedbackTimer) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { openForm(); return; }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { onExplore(); return; }
     scene?.classList.add('character-responding');
     feedbackTimer = window.setTimeout(() => {
       feedbackTimer = 0;
       scene?.classList.remove('character-responding');
-      openForm();
+      onExplore();
     }, 240);
   });
   document.getElementById('homeCtaMain')?.addEventListener('click', () => {
@@ -89,7 +89,7 @@ export function initCharacterCompanion({
       feedbackTimer = 0;
       scene?.classList.remove('character-responding');
     }
-    openForm();
+    onExplore();
   });
 
   return {

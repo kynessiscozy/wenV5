@@ -1,17 +1,18 @@
 /* 漏斗单一入口的交互状态机。
  *
- * 背景：加入 funnel.html 之后，index.html 尾部曾经挂了三段各自 setInterval
- * 轮询的内联脚本，分别负责「菜单意图 / 自动开表单 / 问卷交接」；main.js 里
- * goBack() 与 TJCloseForm() 又各自用 setTimeout 猜「当前是不是空屏」并强制
- * 跳回 funnel.html。结果：报告按返回会弹回表单、表单按 Esc 又被甩到漏斗页、
- * 交接脚本每 400ms 盲点一次「跳过动画 / 查看报告」、预告页盖住报告却不能退出。
+ * funnel.html 是唯一入口，也是唯一的填表互动；主应用内的旧表单与特质
+ * 老虎机已彻底移除，出生信息只剩两条数据通道：
+ *   1. 漏斗问卷的一次性交接（wen_funnel_v1，未 applied 时）
+ *   2. 档案载入（wen_load_profile_v1 / 档案库点选）
+ * 两条通道都直接把数据交给 calc()，不再经过任何表单 DOM。
  *
- * 现在所有跨层切换都只经过这里的一个 surface 状态：
+ * 所有跨层切换只经过这里的一个 surface 状态：
  *
  *   boot ──app-ready──▶ intent | profile | handoff | idle
- *   form ──calc──▶ calculating ──ok──▶ report ──返回──▶ form ──关闭──▶ report
- *      └────────────────────────────失败──▶ form / idle
- *   idle = 兜底入口卡（永远不会是空白屏，也不会被偷偷重定向）
+ *   handoff/profile ──calc──▶ calculating ──ok──▶ report
+ *        └────────────────失败──▶ idle / report（已有报告时）
+ *   idle = 兜底入口卡（永远不会是空白屏；主按钮回漏斗页填写）
+ *   report ──重新推演──▶ funnel.html（整页离开，不在本页重开表单）
  *
  * 主应用通过 window.__wenFlow 的显式回调报告状态变化，不再由定时器反查 DOM。
  * 唯一保留的定时器是交接的兜底超时：任何异常 20 秒后揭开遮罩并给出可操作界面。
@@ -23,19 +24,18 @@ import {
   isPendingPayload, markApplied, planEntry,
 } from './entry-plan.js';
 import { personaFor } from './entry-personas.js';
+import { goToFunnel } from './funnel-link.js';
 
 const VEIL_ID = 'funnelVeil';
 const FALLBACK_ID = 'entryFallback';
 const HANDOFF_TIMEOUT_MS = 20000;
 const VEIL_FADE_MS = 420;
 
-let surface = 'boot';           // boot | idle | form | calculating | report
-let returnTo = null;            // 'report' when the form was opened from a report
+let surface = 'boot';           // boot | idle | calculating | report
 let teaserOpen = false;
 let handoffActive = false;
 let handoffTimer = null;
 let appReady = false;
-let queuedOpenForm = false;
 let failed = false;
 let fallback = null;
 let statusMessage = '';
@@ -79,7 +79,6 @@ function ensureFallback() {
       <h1 class="ef-title">从出生信息开始</h1>
       <p class="ef-desc"></p>
       <button class="ef-btn ef-primary" type="button"><span>填写出生信息</span><span aria-hidden="true">→</span></button>
-      <button class="ef-btn ef-ghost" type="button">返回入口页</button>
       <button class="ef-btn ef-ghost ef-retry" type="button" hidden>重新加载</button>
       <div class="ef-links">
         <button type="button" data-panel="guide">使用指南</button>
@@ -90,11 +89,8 @@ function ensureFallback() {
   document.body.appendChild(el);
   fallback = el;
 
-  el.querySelector('.ef-primary').addEventListener('click', () => {
-    if (typeof window.TJOpenForm === 'function') window.TJOpenForm();
-    else queuedOpenForm = true; // replayed on tj:app-ready
-  });
-  el.querySelector('.ef-ghost').addEventListener('click', () => { location.href = './funnel.html'; });
+  // 填写动作只发生在漏斗页；这里不再打开任何本页表单。
+  el.querySelector('.ef-primary').addEventListener('click', goToFunnel);
   el.querySelector('.ef-retry').addEventListener('click', () => location.reload());
   el.querySelectorAll('[data-panel]').forEach(button => {
     button.addEventListener('click', () => {
@@ -110,7 +106,7 @@ function showFallback(message, loadFailed) {
   if (typeof message === 'string') statusMessage = message;
   if (typeof loadFailed === 'boolean') failed = loadFailed;
   el.querySelector('.ef-desc').textContent = statusMessage ||
-    '填写日期、时间和出生地点，即可生成一份完整的命盘报告。';
+    '回入口页回答几个小问题，即可生成一份完整的命盘报告。';
   const isFailed = typeof loadFailed === 'boolean' ? loadFailed : failed;
   el.querySelector('.ef-primary').disabled = isFailed;
   el.querySelector('.ef-retry').hidden = !isFailed;
@@ -123,14 +119,12 @@ function hideFallback() {
 
 /** One rule decides whether the base surface is visible. No DOM guessing. */
 function sync() {
-  const busy = surface === 'form' || surface === 'calculating' ||
-    surface === 'report' || teaserOpen;
+  const busy = surface === 'calculating' || surface === 'report' || teaserOpen;
   if (busy) hideFallback();
   else showFallback();
 }
 
 function focusTarget() {
-  if (surface === 'form') return document.getElementById('formModalTitle');
   if (surface === 'report') return document.getElementById('p2MenuBtn');
   if (!fallback?.hidden) {
     return failed ? fallback.querySelector('.ef-retry') : fallback.querySelector('.ef-primary');
@@ -173,7 +167,6 @@ function startHandoff(payload) {
   // Consume immediately: a refresh or a failed module load must never replay
   // this questionnaire as an automatic calculation.
   writePayload(markApplied(payload));
-  window.TJOpenForm?.();
   const result = window.applyEntryPayload?.(payload);
   if (result?.warning) console.info('[entry]', result.warning);
   bumpStat('app_arrive');
@@ -183,7 +176,7 @@ function startHandoff(payload) {
     removeVeil();
     surface = document.body.classList.contains('report-active') ? 'report' : 'idle';
     sync();
-    showFallback('推演还没完成，可以重新填写出生信息，或返回入口页再试一次。');
+    showFallback('推演还没完成，可以回入口页重新填写，再试一次。');
   }, HANDOFF_TIMEOUT_MS);
   window.calc?.();
 }
@@ -200,7 +193,6 @@ function onReady() {
 
   switch (plan.type) {
     case 'intent': {
-      queuedOpenForm = false;
       surface = 'idle';
       sync();
       if (plan.menu) window.toggleHomeMenu?.(true);
@@ -208,9 +200,9 @@ function onReady() {
       break;
     }
     case 'profile': {
-      queuedOpenForm = false;
+      surface = 'calculating';
+      sync();
       removeProfileId();
-      window.TJOpenForm?.();
       // IndexedDB opens asynchronously; loadProfile() is only useful once the
       // profile store is ready. main.js exposes that single promise.
       Promise.resolve(window.__wenProfilesReady).catch(() => {}).then(() => {
@@ -219,17 +211,12 @@ function onReady() {
       break;
     }
     case 'handoff': {
-      queuedOpenForm = false;
       startHandoff(plan.payload);
       break;
     }
     default: {
-      // No auto-opened form: an idle surface that the visitor explicitly
-      // leaves. This also keeps tool dialogs (z-index 200) from being covered
-      // by the form modal (z-index 550) before any calculation has happened.
       surface = 'idle';
       sync();
-      if (queuedOpenForm) { queuedOpenForm = false; window.TJOpenForm?.(); }
     }
   }
 }
@@ -244,22 +231,6 @@ export function initEntryFlow() {
     isAutoAdvance: () => handoffActive,
     focusTarget,
 
-    onFormOpen() {
-      surface = 'form';
-      sync();
-    },
-    onFormClosed() {
-      if (returnTo === 'report') { returnTo = null; restoreReport(); return; }
-      surface = 'idle';
-      sync();
-      if (failed) showFallback('应用加载失败，请检查网络后重新加载。', true);
-      focusSafely(focusTarget());
-    },
-    /** 「重新推演」：报告 → 表单；关闭表单要回到报告，而不是被重定向。 */
-    onReportBack() {
-      returnTo = 'report';
-      window.TJOpenForm?.();
-    },
     onCalcStart() {
       surface = 'calculating';
       sync();
@@ -271,12 +242,13 @@ export function initEntryFlow() {
       surface = 'report';
       sync();
     },
-    onCalcFailed({ formOpen = false } = {}) {
+    onCalcFailed() {
       clearTimeout(handoffTimer);
       handoffActive = false;
       removeVeil();
-      if (returnTo === 'report') { returnTo = null; restoreReport(); return; }
-      surface = formOpen ? 'form' : 'idle';
+      // Keep an already visible report; otherwise return to the idle card.
+      if (document.body.classList.contains('report-active')) { restoreReport(); return; }
+      surface = 'idle';
       sync();
     },
     onTeaserOpen() { teaserOpen = true; sync(); },
@@ -285,7 +257,6 @@ export function initEntryFlow() {
     onAppLoadFailed() {
       clearTimeout(handoffTimer);
       handoffActive = false;
-      queuedOpenForm = false;
       removeVeil();
       surface = 'idle';
       showFallback('应用加载失败，请检查网络后重新加载。', true);

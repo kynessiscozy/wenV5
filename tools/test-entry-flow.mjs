@@ -55,6 +55,7 @@ for (const [key, persona] of Object.entries(FUNNEL_PERSONAS)) {
   ok(themeForPersona(key) === persona.theme, `${key} 主题解析一致`);
 }
 ok(personaFor('unknown').key === DEFAULT_PERSONA, '未知引路人回退默认人物');
+ok(DEFAULT_PERSONA === 'moonfox' && personaFor('unknown').name === '月白', '默认引路人是月白（首屏优先）');
 ok(themeForPersona('xiyao') === 'xingling', '夕瑶不再静默变成地炎君');
 ok(themeForPersona('moonfox') === 'moonfox', '月白对应狐系主题');
 
@@ -81,12 +82,15 @@ ok(html.includes('window.__wenEntryIntent') && html.includes('id="funnelVeil"'),
 ok(html.includes('/src/entry-flow.css') && homeJs.includes('initEntryFlow()'), '状态机在入口模块之前挂载');
 ok(planJs.includes('planEntry') && flowJs.includes('planEntry('), '界面效果与纯决策函数分离');
 
-ok(!mainJs.includes('location.href') && mainJs.includes('window.__wenFlow?.onFormClosed?.()'),
-  '关闭表单不再静默重定向，而是交给状态机');
-ok(navJs.includes('onReportBack') && !navJs.includes('location.href'), '报告返回不再强制跳页');
+ok(!mainJs.includes('TJOpenForm') && !mainJs.includes('formModal') && !html.includes('id="formModal"'),
+  '旧表单已彻底移除，主应用不再有第二套输入界面');
+ok(!html.includes('id="traitSelection"') && !html.includes('trait-selection.css') && !themeJs.includes('traitSpin'),
+  '特质老虎机已彻底移除（DOM / 样式 / 转盘逻辑）');
+ok(navJs.includes('goToFunnel()'), '报告「重新推演」回漏斗页重新填写');
 ok(mainJs.includes('window.__wenProfilesReady'), '档案载入等待 IndexedDB 就绪而非固定延时');
-ok(mainJs.includes('applyEntryPayload') && mainJs.includes('resolveBirthCity()'),
-  '自由填写的城市在表单层解析，避免遮罩后被校验错误困住');
+ok(mainJs.includes('applyEntryPayload') && mainJs.includes('resolveCityByName'),
+  '自由填写的城市在交接层解析，避免无声算错地点');
+ok(mainJs.includes('let birthInput'), '出生信息只经交接/档案进入 calc，不再读表单 DOM');
 ok(mainJs.includes("document.getElementById('funnelTeaser'))return"), '预告页显示时后台快捷键被隔离');
 
 ok(calcJs.includes('autoAdvance') && calcJs.includes("'tj:calculation-ready'"),

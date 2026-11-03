@@ -1,4 +1,4 @@
-import { spinFor } from './trait-picker-helper.mjs';
+import { applyThemeFor, submitBirth } from './theme-helper.mjs';
 import assert from 'node:assert/strict';
 import { createServer, request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
@@ -66,7 +66,6 @@ try {
   page.on('framenavigated', frame => { if (frame === page.mainFrame()) navigations++; });
 
   await page.goto(base, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('#traitMachine[data-ready="true"]');
   assert.ok(homeModule, '应观察到首页角色模块');
 
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
@@ -89,7 +88,7 @@ try {
   try {
     await page.waitForFunction(async name => {
       return (await caches.keys()).includes(name) && !document.documentElement.dataset.staleHome &&
-        document.getElementById('traitMachine')?.dataset.ready === 'true';
+        document.documentElement.dataset.homeReady === 'true';
     }, { timeout: 30000 }, cacheName);
   } catch (error) {
     const state = await page.evaluate(async () => {
@@ -101,8 +100,8 @@ try {
         installing: registration?.installing?.state,
         waiting: registration?.waiting?.state,
         stale: document.documentElement.dataset.staleHome,
-        ready: document.getElementById('traitMachine')?.dataset.ready,
-        status: document.getElementById('traitStatus')?.textContent,
+        ready: document.documentElement.dataset.homeReady,
+        theme: document.documentElement.dataset.homeTheme,
       };
     });
     console.error('缓存升级状态:', { ...state, navigations, staleResponses: staleResponses.length });
@@ -126,15 +125,14 @@ try {
     await cache.put(url, new Response("export function initHomeTheme() { document.documentElement.dataset.staleHome = 'yes'; }", {
       headers: { 'Content-Type': 'application/javascript' },
     }));
-    await cache.put('/src/trait-selection.css', new Response('body { --stale-test: 1; }', {
+    await cache.put('/src/entry-flow.css', new Response('body { --stale-test: 1; }', {
       headers: { 'Content-Type': 'text/css' },
     }));
   }, { url: homeModule, name: cacheName });
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('#traitMachine[data-ready="true"]');
   await page.waitForFunction(() => window._tools2Ready === true, { timeout: 15000 });
   assert.equal(await page.evaluate(() => document.documentElement.dataset.staleHome), undefined);
-  assert.equal(await page.$eval('#traitSelection', element => getComputedStyle(element).position), 'fixed');
+  assert.equal(await page.$('#traitSelection'), null, '老虎机已彻底移除');
   console.log('✓ 开发预览不复用缓存中的旧模块和样式');
 
   const art = '/art/wenwen-reimagined.webp';
@@ -168,10 +166,13 @@ try {
   assert.equal(await page.$eval('#entryFallback', el => el.hidden), false, '更新不破坏待机入口卡');
   console.log('✓ 待机期间更新不会重载或隐藏入口界面');
 
-  // A later update must never interrupt an open form.
-  await page.evaluate(() => window.TJOpenForm?.());
-  await page.waitForSelector('#formModal.open');
-  await page.$eval('#cInp', input => { input.value = '尚未完成的输入'; });
+  // A later update must never interrupt an open report (the old form is gone;
+  // report reading is the busy state that must survive an update).
+  await submitBirth(page);
+  await page.waitForFunction(() => document.getElementById('calculationOverlay')?.dataset.calculationState === 'ready', { timeout: 15000 });
+  await page.click('#calculationContinue');
+  await page.waitForFunction(() => document.body.classList.contains('report-active'));
+  const dayMaster = await page.evaluate(() => window._ctx.dg + window._ctx.dw);
   await page.evaluate(() => {
     window.__controllerChanges = 0;
     navigator.serviceWorker.addEventListener('controllerchange', () => { window.__controllerChanges++; });
@@ -180,26 +181,28 @@ try {
   phase = 'newer';
   await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
   await page.waitForFunction(() => window.__controllerChanges > 0, { timeout: 15000 });
-  assert.equal(navigations, before, '不能因更新重载正在进行的表单会话');
-  assert.equal(await page.$eval('#cInp', input => input.value), '尚未完成的输入');
+  assert.equal(navigations, before, '不能因更新重载正在阅读的报告');
+  assert.equal(await page.evaluate(() => window._ctx.dg + window._ctx.dw), dayMaster, '报告数据不能因更新丢失');
   assert.ok(await page.$eval('html', element => element.dataset.homeTheme), '角色主题仍然可用');
-  assert.equal(await page.$eval('#formModal', element => element.classList.contains('open')), true);
-  console.log('✓ 会话或表单进行中更新不会丢失输入');
+  assert.equal(await page.evaluate(() => document.body.classList.contains('report-active')), true);
+  console.log('✓ 报告阅读中更新不会重载或丢失数据');
 
-  // Closing the form now shows the fallback surface instead of a forced
-  // redirect. A worker update here must not mistake it for a fresh entry page.
-  await page.evaluate(() => window.TJCloseForm());
-  await page.waitForFunction(() => !document.getElementById('formModal').classList.contains('open'));
-  await page.waitForFunction(() => !document.getElementById('entryFallback').hidden);
-  await page.evaluate(() => { window.__controllerChanges = 0; });
+  // Back on the idle fallback surface (after a manual reload the handoff is
+  // already consumed), an update must not reload or redirect either.
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !document.getElementById('entryFallback').hidden, { timeout: 15000 });
+  await page.evaluate(() => {
+    window.__controllerChanges = 0;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { window.__controllerChanges++; });
+  });
+  const beforeIdle = navigations;
   phase = 'reselect';
   await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
   await page.waitForFunction(() => window.__controllerChanges > 0, { timeout: 15000 });
-  assert.equal(navigations, before, '关闭表单后不能因更新重载');
-  assert.equal(await page.evaluate(() => location.pathname), new URL(base).pathname, '关闭表单没有被重定向到漏斗页');
+  assert.equal(navigations, beforeIdle, '待机界面不能因更新重载');
+  assert.equal(await page.evaluate(() => location.pathname), new URL(base).pathname, '待机界面没有被重定向到漏斗页');
   assert.equal(await page.$eval('#entryFallback', el => el.hidden), false);
-  assert.equal(await page.$eval('#cInp', input => input.value), '尚未完成的输入');
-  console.log('✓ 关闭表单后更新不会重载或丢失输入');
+  console.log('✓ 待机界面更新不会重载或跳页');
 
   // A failed installation must leave the previous worker and its cache usable.
   await page.evaluate(async () => {
@@ -216,8 +219,8 @@ try {
   await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
   await page.waitForFunction(() => window.__failedInstall, { timeout: 15000 });
   assert.equal(await page.evaluate(async name => (await caches.keys()).includes(name), cacheName), true);
-  assert.equal(await page.$eval('#cInp', input => input.value), '尚未完成的输入');
-  assert.equal(navigations, before, '失败的更新不能中断当前会话');
+  assert.equal(await page.$eval('#entryFallback', el => el.hidden), false, '当前界面不能因失败更新消失');
+  assert.equal(navigations, beforeIdle, '失败的更新不能中断当前会话');
   const fallbackPage = await browser.newPage();
   await fallbackPage.goto(base, { waitUntil: 'domcontentloaded' });
   await fallbackPage.waitForSelector('#entryFallback:not([hidden])', { timeout: 15000 });

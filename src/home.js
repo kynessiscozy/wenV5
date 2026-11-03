@@ -4,6 +4,7 @@ import { initCharacterCamera } from './ui/character-camera.js';
 import { initCharacterCompanion } from './ui/character-companion.js';
 import { initHomeTheme } from './ui/home-theme.js';
 import { initEntryFlow } from './ui/entry-flow.js';
+import { goToFunnel } from './ui/funnel-link.js';
 
 // The home scene is a small entry point; the report engines can load separately.
 // Keep an early tap rather than silently dropping it while those engines arrive.
@@ -66,16 +67,14 @@ initCharacterCamera();
 
 export const characterCompanion = initCharacterCompanion({
   deferHomeAssets: true,
-  openForm: () => {
-    if (typeof window.TJOpenForm === 'function') window.TJOpenForm();
-    else queueAction('TJOpenForm', [], 'homeCtaMain');
-  },
+  // Birth details are collected only in funnel.html; the old in-app form is gone.
+  onExplore: goToFunnel,
   // A report prompt should never toggle an already open assistant shut.
   openAsk: () => {
     if (!document.getElementById('aiSheet')?.classList.contains('open')) window.openAsk?.();
   },
 });
-export const homeThemePicker = initHomeTheme({ setHomeCharacter: characterCompanion.setHomeCharacter });
+export const homeTheme = initHomeTheme({ setHomeCharacter: characterCompanion.setHomeCharacter });
 
 // Heavy report engines are not required to render or operate the home scene.
 import('./main.js').catch(error => {

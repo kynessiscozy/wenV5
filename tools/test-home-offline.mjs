@@ -51,7 +51,7 @@ try {
   await page.setViewport({ width: 390, height: 844 });
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(base, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => !!window.__wenFlow && typeof window.TJOpenForm === 'function' &&
+  await page.waitForFunction(() => !!window.__wenFlow && typeof window.applyEntryPayload === 'function' &&
     document.getElementById('entryFallback') && !document.getElementById('entryFallback').hidden, { timeout: 20000 });
   console.log('✓ 在线首屏显示可操作的待机入口卡');
 
@@ -103,7 +103,7 @@ try {
 
   await page.setOfflineMode(true);
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => typeof window.TJOpenForm === 'function' &&
+  await page.waitForFunction(() => typeof window.applyEntryPayload === 'function' &&
     !document.getElementById('entryFallback').hidden && !!document.documentElement.dataset.homeTheme, { timeout: 20000 });
   console.log('✓ 离线刷新后主应用与角色主题仍可用');
 
@@ -116,27 +116,23 @@ try {
   await offlineFunnel.close();
   console.log('✓ 离线仍可打开漏斗入口页');
 
-  // The whole funnel-only path works without a network: idle → form → result
-  // scene (explicit confirmation) → report.
-  await page.click('#entryFallback .ef-primary');
-  await page.waitForSelector('#formModal.open');
-  await page.$eval('#bDate', el => { el.value = '1989-03-29'; el.dispatchEvent(new Event('input', { bubbles: true })); });
-  await page.$eval('#bTime', el => { el.value = '11:23'; el.dispatchEvent(new Event('input', { bubbles: true })); });
-  await page.click('.character-form-submit');
+  // The whole funnel-only path works without a network: the handoff channel
+  // feeds the calculation directly (the old in-app form is gone).
+  await page.evaluate(() => { window.__testBirth = { bd: '1989-03-29', timeStr: '11:23' }; });
+  await submitBirth(page);
   await page.waitForFunction(() => document.getElementById('calculationOverlay')?.dataset.calculationState === 'ready', { timeout: 15000 });
   await page.click('#calculationContinue');
   await page.waitForFunction(() => document.body.classList.contains('report-active') &&
     !!document.querySelector('#characterResultHero [data-report-value="day-master"]')?.textContent.trim(), { timeout: 15000 });
   console.log('✓ 离线完成一次真实推演并进入报告');
 
-  // Closing the form from a report restores the report; the fallback card is
-  // never replaced by a silent redirect.
-  await page.evaluate(() => window.goBack());
-  await page.waitForFunction(() => document.getElementById('formModal').classList.contains('open'));
-  assert.equal(await page.evaluate(() => location.pathname), new URL(base).pathname);
-  await page.evaluate(() => window.TJCloseForm());
-  await page.waitForFunction(() => document.body.classList.contains('report-active'));
-  console.log('✓ 离线返回 / 关闭表单不会强制跳页');
+  // 「重新填写」回唯一入口：离线时漏斗页来自缓存，仍可正常到达。
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+    page.evaluate(() => window.goBack()),
+  ]);
+  assert.ok(page.url().includes('funnel.html'), '离线也应回到已缓存的漏斗入口');
+  console.log('✓ 离线返回漏斗入口（来自缓存）');
 
   assert.deepEqual(errors, [], '离线流程不应有页面脚本错误');
   console.log('\n✓ 漏斗单一入口离线链路完整');

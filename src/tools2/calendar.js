@@ -8,6 +8,7 @@
    ============================================================ */
 import { esc, attachToolAI } from './runtime.js';
 import { getCtx } from '../state/context.js';
+import { goToFunnel } from '../ui/funnel-link.js';
 import { getDayGZ, calcLiuRi } from '../engines/liuri.js';
 
 const WD = ['一', '二', '三', '四', '五', '六', '日'];
@@ -212,9 +213,8 @@ export const calendar = {
         S.view = new Date(); S.sel = new Date();
         render();
       });
-      container.querySelector('[data-fill]')?.addEventListener('click', () => {
-        if (typeof window.TJOpenForm === 'function') window.TJOpenForm();
-      });
+      /* 出生信息只在漏斗问卷里填写；交接生成报告后回到这里即是个性化日历。 */
+      container.querySelector('[data-fill]')?.addEventListener('click', goToFunnel);
       container.querySelectorAll('[data-k]').forEach(b =>
         b.addEventListener('click', () => {
           const [yy, mm, dd] = b.dataset.k.split('-').map(Number);

@@ -98,7 +98,7 @@
   font-size: 10px;
 }
 .result-character-demo { padding-left: 6px; border-left: 1px solid rgba(255, 255, 255, .35); }
-.result-character-reselect, .result-character-hint-button {
+.result-character-hint-button {
   min-height: 40px;
   padding: 0 3px;
   border: 0;
@@ -109,8 +109,8 @@
   cursor: pointer;
   pointer-events: auto;
 }
-.result-character-reselect:hover, .result-character-hint-button:hover { text-decoration: underline; }
-.result-character-reselect:focus-visible, .result-character-hint-button:focus-visible {
+.result-character-hint-button:hover { text-decoration: underline; }
+.result-character-hint-button:focus-visible {
   outline: 2px solid #fff !important;
   outline-offset: 2px !important;
 }
@@ -353,14 +353,14 @@ html[data-system-mode="western"] .is-portrait-hidden .result-chapter-figure { vi
   .result-character-scene, .result-chapter-figure, .result-portrait-toggle { display: none; }
   .result-character-chapter::before, .result-character-chapter::after { display: none; }
   .result-character-copy, .result-character-kicker, .result-character-description, .result-chapter-kicker,
-  .result-character-hint-button, .result-character-reselect, .result-character-hint p { color: CanvasText; text-shadow: none; }
+  .result-character-hint-button, .result-character-hint p { color: CanvasText; text-shadow: none; }
   .result-character-title, #page2 #characterResultHero .result-character-overview .qr-title,
   #page2 .result-character-overview .qr-title,
   #page2 .result-character-overview .qr-l, #page2 .result-character-overview .qr-v,
   #page2 .result-character-overview .qr-summary, #page2 .result-character-overview .qr-act { color: CanvasText !important; }
   .result-character-hint, #page2 .result-character-overview .qr-item,
   #page2 .result-character-overview .qr-act { border-color: CanvasText; background: Canvas; }
-  .result-character-reselect:focus-visible, .result-character-hint-button:focus-visible { outline-color: Highlight !important; }
+  .result-character-hint-button:focus-visible { outline-color: Highlight !important; }
   .result-western-theatre { position: relative; }
   #page2 .result-western-theatre .w3d-hero { position: relative; height: auto; background: Canvas; }
   /* Three sets an inline display:block on its canvas; override it in high contrast. */
