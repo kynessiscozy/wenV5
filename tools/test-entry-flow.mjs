@@ -54,9 +54,11 @@ for (const [key, persona] of Object.entries(FUNNEL_PERSONAS)) {
   ok(persona.poster.startsWith('./art/') && persona.video.startsWith('./art/'), `${key} 素材路径为相对地址`);
   ok(themeForPersona(key) === persona.theme, `${key} 主题解析一致`);
 }
-ok(personaFor('unknown').key === DEFAULT_PERSONA, '未知引路人回退默认人物');
-ok(themeForPersona('xiyao') === 'xingling', '夕瑶不再静默变成地炎君');
+ok(DEFAULT_PERSONA === 'moonfox' && personaFor('unknown').key === DEFAULT_PERSONA, '未知引路人回退月白');
+ok(themeForPersona('xiyao') === 'xingling', '夕瑶不再静默变成焱绒');
 ok(themeForPersona('moonfox') === 'moonfox', '月白对应狐系主题');
+ok(personaFor('diyan').name === '焱绒' && personaFor('diyan').byline.includes('焱绒'), '原 diyan 标识展示焱绒');
+ok(personaFor('yuchen').name === '玉宸' && personaFor('yuchen').byline.includes('玉宸'), '原 yuchen 标识展示玉宸');
 
 /* ---- 3. 静态不变量：旧的抢屏/强制跳转逻辑不得回流 ---- */
 const html = await read('index.html');

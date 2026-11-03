@@ -1,26 +1,82 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-funnel-persona="moonfox">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>问问大师 · 地炎君命盘厅</title>
-<meta name="description" content="地炎君在此。不用注册，回答几个小问题，为你起一盘完整的命格报告，全程免费。">
+<title>问问大师 · 命盘厅</title>
+<meta name="description" content="选择同行引路人，回答几个小问题，探索你的命盘报告。">
+<meta name="theme-color" content="#090f17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-twins.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-twins-192.png">
+<script>
+  // Apply the saved palette before the page is painted, including in standalone PWA mode.
+  (function () {
+    var backgrounds = { moonfox: '#090f17', diyan: '#130b0b', yuchen: '#10140e', xiyao: '#100c18' };
+    window.__wenSetFunnelTheme = function (key) {
+      if (!Object.prototype.hasOwnProperty.call(backgrounds, key)) key = 'moonfox';
+      document.documentElement.dataset.funnelPersona = key;
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', backgrounds[key]);
+    };
+    var saved;
+    try { saved = localStorage.getItem('wen_funnel_persona'); } catch (_) {}
+    window.__wenSetFunnelTheme(saved);
+  })();
+</script>
+<script>
+  // This is the PWA start page: register on the first visit, not only after
+  // navigating to index.html. Do not reload while a questionnaire is in use.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').then(function (registration) {
+      return registration.update();
+    }).catch(function () { /* The online experience still works without a worker. */ });
+  }
+</script>
 <style>
-  :root{
-    --bg:#0c0908; --panel:rgba(20,14,12,.82); --line:rgba(216,162,74,.35);
-    --gold:#d8a24a; --gold-soft:#e8c595; --red:#c8452c; --ink:#f3e9dc; --ink-dim:#c9bba6;
-    --card:#1a1210; --card-on:#2a1812;
+  /* Accent values match HOME_THEMES for the mapped report character. */
+  :root, html[data-funnel-persona="moonfox"]{
+    --bg:#090f17; --shade-rgb:9,15,23; --accent-rgb:185,219,239;
+    --panel:rgba(13,25,39,.84); --line:rgba(185,219,239,.38);
+    --gold:#b9dbef; --gold-soft:#d4e8f5; --red:#244e6c;
+    --button-top:#315d7a; --button-bottom:#18374e; --ink:#edf6fa; --ink-dim:#c2d4df;
+    --card:#111f2b; --card-on:#254358;
+    --backdrop-mobile:url('./art/moon-fox-study-mobile.webp'); --backdrop-wide:url('./art/moon-fox-study-wide.webp');
+  }
+  html[data-funnel-persona="diyan"]{
+    --bg:#130b0b; --shade-rgb:19,11,11; --accent-rgb:236,130,120;
+    --panel:rgba(30,15,14,.84); --line:rgba(236,130,120,.4);
+    --gold:#ec8278; --gold-soft:#f5c5bc; --red:#8a2015;
+    --button-top:#8a2015; --button-bottom:#5f130d; --ink:#fff1ed; --ink-dim:#dec3bb;
+    --card:#251411; --card-on:#4a211c;
+    --backdrop-mobile:url('./art/earthfire-hall-mobile.webp'); --backdrop-wide:url('./art/earthfire-hall-wide.webp');
+  }
+  html[data-funnel-persona="yuchen"]{
+    --bg:#10140e; --shade-rgb:16,20,14; --accent-rgb:217,211,169;
+    --panel:rgba(24,30,21,.84); --line:rgba(217,211,169,.4);
+    --gold:#d9d3a9; --gold-soft:#eee9cc; --red:#4d5936;
+    --button-top:#566440; --button-bottom:#313e26; --ink:#f5f5e9; --ink-dim:#d2d5bf;
+    --card:#1d251a; --card-on:#343f29;
+    --backdrop-mobile:url('./art/yuchen-hall-mobile.webp'); --backdrop-wide:url('./art/yuchen-hall-wide.webp');
+  }
+  html[data-funnel-persona="xiyao"]{
+    --bg:#100c18; --shade-rgb:16,12,24; --accent-rgb:212,183,242;
+    --panel:rgba(27,19,38,.84); --line:rgba(212,183,242,.4);
+    --gold:#d4b7f2; --gold-soft:#e8d8f7; --red:#5a3b73;
+    --button-top:#63477a; --button-bottom:#3e2a53; --ink:#f8f1ff; --ink-dim:#d8c8e4;
+    --card:#241b30; --card-on:#40304f;
+    --backdrop-mobile:url('./art/xingling-room-mobile.webp'); --backdrop-wide:url('./art/xingling-room-wide.webp');
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
   body{background:var(--bg);color:var(--ink);font-family:"Noto Serif SC","Songti SC",serif;overflow:hidden}
-  .bg{position:fixed;inset:0;background:url('./art/earthfire-hall-mobile.webp') center/cover no-repeat;filter:brightness(.55)}
-  .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,9,8,.55),rgba(12,9,8,.25) 40%,rgba(12,9,8,.88))}
-  @media (min-aspect-ratio:4/5){.bg{background-image:url('./art/earthfire-hall-wide.webp')}}
+  .bg{position:fixed;inset:0;background:var(--bg) var(--backdrop-mobile) center/cover no-repeat;filter:brightness(.55)}
+  .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(var(--shade-rgb),.55),rgba(var(--shade-rgb),.25) 40%,rgba(var(--shade-rgb),.88))}
+  @media (min-aspect-ratio:4/5){.bg{background-image:var(--backdrop-wide)}}
   /* 整屏交叉淡入：所有页面同层叠放，切换时旧页淡出、新页淡入并轻微回正 */
   .screen{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;overflow-y:auto;
-    padding:28px 22px calc(28px + env(safe-area-inset-bottom));
+    padding:calc(28px + env(safe-area-inset-top, 0px)) 22px calc(28px + env(safe-area-inset-bottom, 0px));
     opacity:0;visibility:hidden;transform:scale(1.018);pointer-events:none;
     transition:opacity .45s cubic-bezier(.22,.9,.24,1),transform .45s cubic-bezier(.22,.9,.24,1),visibility 0s linear .45s}
   .screen.active{opacity:1;visibility:visible;transform:none;pointer-events:auto;
@@ -34,7 +90,7 @@
   /* 入口门：视频全屏铺底，文字与按钮压在画面上 */
   #s-entry{padding:0;text-align:center}
   #s-entry .entry-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
-  #s-entry .entry-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,9,8,.62) 0%,rgba(12,9,8,0) 26%,rgba(12,9,8,0) 42%,rgba(12,9,8,.66) 68%,rgba(12,9,8,.94) 100%)}
+  #s-entry .entry-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(var(--shade-rgb),.62) 0%,rgba(var(--shade-rgb),0) 26%,rgba(var(--shade-rgb),0) 42%,rgba(var(--shade-rgb),.66) 68%,rgba(var(--shade-rgb),.94) 100%)}
   #s-entry .entry-inner{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;
     padding:calc(26px + env(safe-area-inset-top)) 22px calc(24px + env(safe-area-inset-bottom))}
   #s-entry .entry-bottom{margin-top:auto;width:100%;display:flex;flex-direction:column;align-items:center}
@@ -42,9 +98,9 @@
   #s-entry h1 .hl{color:var(--gold)}
   #s-entry .sub{margin-top:12px;font-size:15px;line-height:1.8;color:var(--ink-dim);max-width:34em}
   #s-entry .lead{font-size:13px;letter-spacing:.34em;color:var(--gold-soft)}
-  #s-entry .menu-btn{position:absolute;top:max(14px,env(safe-area-inset-top));left:14px;z-index:6;width:42px;height:42px;border-radius:50%;border:1px solid rgba(233,207,160,.45);background:rgba(10,6,6,.42);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;cursor:pointer}
+  #s-entry .menu-btn{position:absolute;top:max(14px,env(safe-area-inset-top));left:14px;z-index:6;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:rgba(var(--shade-rgb),.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;cursor:pointer}
   #s-entry .brand{margin-left:52px}
-  #s-entry .menu-btn span{display:block;width:18px;height:2px;border-radius:1px;background:#ecdfc0}
+  #s-entry .menu-btn span{display:block;width:18px;height:2px;border-radius:1px;background:var(--gold-soft)}
   .fm-overlay{position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .3s ease}
   .fm-overlay.open{opacity:1;pointer-events:auto}
   .fm-drawer{position:fixed;top:0;left:0;bottom:0;z-index:901;width:min(340px,85vw);background:#f7f2e9;color:#2b2118;transform:translateX(-102%);transition:transform .32s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:4px 0 24px rgba(0,0,0,.25);font-family:inherit}
@@ -80,9 +136,23 @@
   #fmPanels .about-note{background:#f3e8d2;border-radius:12px;padding:12px 14px}
   #fmPanels .about-note b{font-size:13.5px}
   .fm-guide-title{font-size:21px;font-weight:800}
-  .persona-switch{position:absolute;top:max(14px,env(safe-area-inset-top));right:14px;z-index:6;display:flex;gap:4px;background:rgba(8,4,4,.5);border:1px solid rgba(216,178,106,.4);border-radius:999px;padding:4px;backdrop-filter:blur(6px)}
-  .persona-switch button{border:none;background:transparent;color:#d8c9a8;font-size:12.5px;letter-spacing:.08em;padding:7px 13px;border-radius:999px;cursor:pointer;font-family:inherit;white-space:nowrap}
-  .persona-switch button.on{background:linear-gradient(180deg,#8a2015,#5f130d);color:#f5efe2;box-shadow:inset 0 0 0 1px rgba(216,178,106,.55)}
+  .persona-switch{position:absolute;top:max(14px,env(safe-area-inset-top, 0px));right:14px;z-index:6;max-width:calc(100% - 74px);text-align:right}
+  .persona-toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:rgba(var(--shade-rgb),.85);color:var(--ink);font:inherit;font-size:13px;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .persona-toggle .persona-label{color:var(--gold-soft)}
+  .persona-toggle .persona-chevron{font-size:11px;transition:transform .2s ease}
+  .persona-toggle[aria-expanded="true"] .persona-chevron{transform:rotate(180deg)}
+  .persona-options{display:grid;gap:2px;width:min(160px,calc(100vw - 44px));margin:8px 0 0 auto;padding:5px;border:1px solid var(--line);border-radius:16px;background:rgba(var(--shade-rgb),.96);box-shadow:0 12px 32px rgba(0,0,0,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .persona-options[hidden]{display:none}
+  .persona-options button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:42px;border:0;border-radius:11px;background:transparent;color:var(--ink-dim);padding:8px 12px;font:inherit;font-size:13px;text-align:left;cursor:pointer;white-space:nowrap}
+  .persona-options button.on{background:var(--card-on);color:var(--ink)}
+  .persona-options button span{display:grid;gap:2px}
+  .persona-options button small{font-size:11px;line-height:1.3;color:var(--ink-dim);font-weight:400}
+  .persona-perspective{max-width:320px;margin:0 auto;color:var(--ink);font-size:13px;line-height:1.6;text-shadow:0 1px 12px #000}
+  .persona-perspective b{color:var(--gold-soft)}
+  .persona-perspective small{display:block;margin-top:2px;color:var(--ink-dim);font-size:11px}
+
+  .persona-options button.on::after{content:'✓';color:var(--gold-soft)}
+  .persona-switch button:focus-visible{outline:2px solid var(--gold-soft);outline-offset:2px}
   .fm-guide-sub{color:#8a6d3b;font-size:13px;margin:4px 0 14px}
   .fm-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
   .fm-tabs button{padding:7px 13px;border-radius:999px;border:1px solid #e3d9c6;background:#fff;font-size:13px;cursor:pointer;color:#2b2118;font-family:inherit}
@@ -106,14 +176,14 @@
   /* 加载页视频延续 */
   #s-loading .load-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.42)}
   #s-immersion .imm-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  #s-immersion .imm-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,7,6,.42),rgba(10,7,6,.22) 40%,rgba(10,7,6,.7))}
+  #s-immersion .imm-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(var(--shade-rgb),.42),rgba(var(--shade-rgb),.22) 40%,rgba(var(--shade-rgb),.7))}
   #s-immersion .line{position:relative;z-index:1}
   #s-immersion .skip{z-index:2}
   #s-inter .inter-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.55)}
   #s-inter .inter-line{position:relative;z-index:1;margin:auto;text-align:center;padding:0 30px;font-size:clamp(21px,6vw,28px);line-height:1.9;letter-spacing:.14em;color:var(--ink);text-shadow:0 2px 18px rgba(0,0,0,.85)}
   /* 问卷：人物全屏底图 + 黑渐变，无进度条（仿参考） */
   #s-quiz .quiz-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 6%}
-  #s-quiz .quiz-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,7,6,.38) 0%,rgba(10,7,6,.04) 30%,rgba(10,7,6,.52) 56%,rgba(10,7,6,.94) 84%)}
+  #s-quiz .quiz-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(var(--shade-rgb),.38) 0%,rgba(var(--shade-rgb),.04) 30%,rgba(var(--shade-rgb),.52) 56%,rgba(var(--shade-rgb),.94) 84%)}
   #s-quiz .dim{display:none}
   #s-quiz .progress,#s-quiz .qcount{display:none}
   #s-quiz .qwho{display:none}
@@ -128,15 +198,28 @@
   #s-immersion .story-choices.show{opacity:1;transform:none;pointer-events:auto}
   #s-immersion .story-choices button{appearance:none;border:none;cursor:pointer;font:inherit;font-size:15.5px;letter-spacing:.08em;color:#2a1c10;background:rgba(243,233,220,.93);padding:13px 26px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
   #s-loading img{display:none}
-  #s-loading .load-shade{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(12,9,8,.25),rgba(12,9,8,.78))}
+  #s-loading .load-shade{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(var(--shade-rgb),.25),rgba(var(--shade-rgb),.78))}
   #s-loading .load-inner{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-  .cta{margin-top:26px;appearance:none;border:1px solid #c89b5a;background:linear-gradient(180deg,#8a2015,#5f130d);color:#fff;
+  .cta{margin-top:26px;appearance:none;border:1px solid var(--gold);background:linear-gradient(180deg,var(--button-top),var(--button-bottom));color:#fff;
        font:inherit;font-size:17px;letter-spacing:.3em;text-indent:.3em;padding:16px 44px;border-radius:8px;cursor:pointer;
-       box-shadow:inset 0 0 0 3px rgba(20,8,5,.55),inset 0 0 0 4px rgba(200,155,90,.45),0 12px 34px rgba(0,0,0,.5);
+       box-shadow:inset 0 0 0 3px rgba(20,8,5,.55),inset 0 0 0 4px var(--line),0 12px 34px rgba(0,0,0,.5);
        transition:transform .15s ease;animation:ctaPulse 2.8s ease-in-out 1.2s infinite alternate}
-  @keyframes ctaPulse{from{box-shadow:0 0 0 rgba(216,162,74,0)}to{box-shadow:0 0 26px rgba(216,162,74,.28)}}
+  @keyframes ctaPulse{from{box-shadow:0 0 0 rgba(var(--accent-rgb),0)}to{box-shadow:0 0 26px rgba(var(--accent-rgb),.28)}}
   .cta:active{transform:scale(.98)}
-  .fineprint{margin-top:auto;padding-top:22px;font-size:12px;line-height:1.9;color:rgba(201,187,166,.75);text-align:center}
+  .fineprint{margin-top:auto;padding-top:22px;font-size:12px;line-height:1.9;color:var(--ink-dim);opacity:.85;text-align:center}
+  /* An explicit exit remains available throughout data collection. */
+  .funnel-exit{position:fixed;top:calc(14px + env(safe-area-inset-top, 0px));right:16px;z-index:200;min-height:40px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:rgba(var(--shade-rgb),.9);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+  .funnel-exit[hidden]{display:none}
+  html[data-funnel-screen="immersion"] .funnel-exit{right:auto;left:16px}
+  .funnel-exit:focus-visible,.funnel-exit-dialog button:focus-visible{outline:2px solid var(--gold-soft);outline-offset:3px}
+  .funnel-exit-dialog{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.72)}
+  .funnel-exit-dialog[hidden]{display:none}
+  .funnel-exit-card{width:min(100%,380px);padding:24px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.45)}
+  .funnel-exit-card h2{font-size:20px;line-height:1.4}
+  .funnel-exit-card p{margin:10px 0 20px;color:var(--ink-dim);font-size:14px;line-height:1.7}
+  .funnel-exit-actions{display:flex;gap:10px}
+  .funnel-exit-actions button{flex:1;min-height:44px;padding:10px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--ink);font:inherit;cursor:pointer}
+  .funnel-exit-actions .keep{background:var(--red);border-color:var(--gold);color:#fff}
   /* 沉浸过场 */
   #s-immersion{align-items:center;justify-content:center;text-align:center}
   #s-immersion .line{position:relative;z-index:1}
@@ -170,10 +253,10 @@
   .field{margin-top:28px;display:grid;gap:12px}
   .field input{background:var(--panel);border:1px solid var(--line);color:var(--ink);font:inherit;font-size:18px;
        padding:16px 18px;border-radius:14px;width:100%;color-scheme:dark;backdrop-filter:blur(4px)}
-  .field input::placeholder{color:rgba(201,187,166,.5)}
+  .field input::placeholder{color:var(--ink-dim);opacity:.75}
   .rowbtns{display:flex;gap:12px;margin-top:4px}
   .btn{flex:1;appearance:none;font:inherit;font-size:16px;letter-spacing:.12em;padding:15px 10px;border-radius:999px;cursor:pointer}
-  .btn.primary{background:var(--red);border:1px solid #e0654a;color:#fff}
+  .btn.primary{background:var(--red);border:1px solid var(--gold);color:#fff}
   .btn.ghost{background:none;border:1px solid var(--line);color:var(--ink-dim)}
   .btn:active{transform:scale(.98)}
   .err{min-height:22px;font-size:13px;color:#ff9d86;margin-top:10px}
@@ -195,17 +278,23 @@
 <!-- 入口门 -->
 <section class="screen active" id="s-entry">
   <video class="entry-video" id="entryVideo" autoplay muted loop playsinline preload="auto"
-         poster="./art/diyan-entry2-poster.webp" src="./art/diyan-entry2.mp4" aria-label="地炎君"></video>
+         poster="./art/yuebai-lord.webp" src="./art/yuebai-entry.mp4" aria-label="月白"></video>
   <div class="entry-shade"></div>
-  <div class="persona-switch" role="tablist" aria-label="切换角色">
-    <button type="button" data-persona="diyan" class="on" role="tab" aria-selected="true">地炎君</button>
-    <button type="button" data-persona="yuchen" role="tab" aria-selected="false">玉宸神后</button>
-    <button type="button" data-persona="moonfox" role="tab" aria-selected="false">月白</button>
-    <button type="button" data-persona="xiyao" role="tab" aria-selected="false">夕瑶</button>
+  <div class="persona-switch">
+    <button type="button" class="persona-toggle" id="personaToggle" aria-expanded="false" aria-controls="personaOptions" aria-label="当前引路人：月白，切换引路人">
+      <span class="persona-label" id="personaLabel">月白</span><span>切换</span><span class="persona-chevron" aria-hidden="true">⌄</span>
+    </button>
+    <div class="persona-options" id="personaOptions" role="group" aria-label="选择引路人" hidden>
+      <button type="button" data-persona="diyan" aria-pressed="false"><span>焱绒<small>行动与优先级</small></span></button>
+      <button type="button" data-persona="yuchen" aria-pressed="false"><span>玉宸<small>节奏与资源</small></span></button>
+      <button type="button" data-persona="moonfox" class="on" aria-pressed="true"><span>月白<small>线索与依据</small></span></button>
+      <button type="button" data-persona="xiyao" aria-pressed="false"><span>夕瑶<small>关系与沟通</small></span></button>
+    </div>
   </div>
   <div class="entry-inner">
     <button class="menu-btn" id="btnMenu" type="button" aria-label="打开菜单" title="菜单"><span></span><span></span><span></span></button>
     <div class="entry-bottom">
+      <p class="persona-perspective rise" style="--d:.2s"><b id="personaPerspective">月白 · 线索与依据</b><small>引路人改变阅读视角，不改变排盘结果</small></p>
       <button class="cta rise" style="--d:.35s" id="btnStart">进入命盘厅</button>
       <p class="fineprint rise" style="--d:.5s">出生信息只保存在你的设备上，不上传、不注册<br>命理推演仅供文化研究与娱乐参考</p>
     </div>
@@ -214,7 +303,7 @@
 
 <!-- 沉浸过场 -->
 <section class="screen" id="s-immersion">
-  <video class="imm-video" id="immVideo" muted loop playsinline preload="auto" src="./art/diyan-ritual.mp4" aria-hidden="true"></video>
+  <video class="imm-video" id="immVideo" muted loop playsinline preload="auto" src="./art/yuebai-ritual.mp4" poster="./art/yuebai-lord.webp" aria-hidden="true"></video>
   <div class="imm-shade"></div>
   <div class="dim"></div>
   <button class="skip" id="btnSkipStory">跳过</button>
@@ -229,7 +318,7 @@
 
 <!-- 问卷 -->
 <section class="screen" id="s-quiz">
-  <video class="quiz-bg" src="./art/diyan-quiz.mp4" poster="./art/diyan-lord.webp" autoplay muted loop playsinline aria-hidden="true"></video>
+  <video class="quiz-bg" src="./art/yuebai-quiz.mp4" poster="./art/yuebai-lord.webp" autoplay muted loop playsinline aria-hidden="true"></video>
   <div class="quiz-shade"></div>
   <div class="qhead">
     <button class="back" id="btnBack" aria-label="上一题">‹</button>
@@ -237,7 +326,7 @@
     <div class="qcount" id="pcount"></div>
   </div>
   <div class="qbody">
-    <div class="qwho"><img id="qwhoImg" src="./art/diyan-lord.webp" alt=""><span id="qwhoName">地炎君 问</span></div>
+    <div class="qwho"><img id="qwhoImg" src="./art/yuebai-lord.webp" alt=""><span id="qwhoName">月白 问</span></div>
     <h2 class="qtitle" id="qtitle"></h2>
     <p class="qhint" id="qhint"></p>
     <div id="qmount"></div>
@@ -247,21 +336,33 @@
 
 <!-- 问卷中段过场 -->
 <section class="screen" id="s-inter">
-  <video class="inter-video" muted loop playsinline preload="auto" src="./art/diyan-quiz.mp4" aria-hidden="true"></video>
-  <p class="inter-line">根基已定。<br>君，再问你几句。</p>
+  <video class="inter-video" muted loop playsinline preload="auto" src="./art/yuebai-quiz.mp4" poster="./art/yuebai-lord.webp" aria-hidden="true"></video>
+  <p class="inter-line">根基已定。<br>再问你几句。</p>
 </section>
 
 <!-- 加载仪式 -->
 <section class="screen" id="s-loading">
   <video class="load-video" autoplay muted loop playsinline preload="auto"
-         poster="./art/diyan-ritual-poster.webp" src="./art/diyan-ritual.mp4" aria-hidden="true"></video>
+         poster="./art/yuebai-lord.webp" src="./art/yuebai-ritual.mp4" aria-hidden="true"></video>
   <div class="load-shade"></div>
   <div class="load-inner">
-    <img id="loadAvatar" src="./art/diyan-lord.webp" alt="">
-    <p class="ltext" id="ltext">地炎君正在为你排盘…</p>
+    <img id="loadAvatar" src="./art/yuebai-lord.webp" alt="">
+    <p class="ltext" id="ltext">月白正在为你翻册…</p>
     <p class="lsub">问 问 大 师</p>
   </div>
 </section>
+
+<button type="button" class="funnel-exit" id="quitFunnel" hidden>退出填写</button>
+<div class="funnel-exit-dialog" id="funnelExitDialog" role="dialog" aria-modal="true" aria-labelledby="funnelExitTitle" aria-describedby="funnelExitDescription" hidden>
+  <div class="funnel-exit-card">
+    <h2 id="funnelExitTitle">退出本次填写？</h2>
+    <p id="funnelExitDescription">本次填写的信息不会保存，已保存的档案不受影响。</p>
+    <div class="funnel-exit-actions">
+      <button type="button" id="confirmFunnelExit">退出填写</button>
+      <button type="button" class="keep" id="cancelFunnelExit">继续填写</button>
+    </div>
+  </div>
+</div>
 
 <div id="fmPanels">
 <div class="modal fm-guide" id="fmGuide" aria-hidden="true">
@@ -395,7 +496,46 @@
   }
   bump('entry_view');
   var screens={entry:$('#s-entry'),immersion:$('#s-immersion'),quiz:$('#s-quiz'),inter:$('#s-inter'),loading:$('#s-loading')};
-  function show(name){Object.keys(screens).forEach(function(k){screens[k].classList.toggle('active',k===name)});window.scrollTo(0,0);}
+  var exitButton=$('#quitFunnel'),exitDialog=$('#funnelExitDialog');
+  var exitOpen=false,abandoned=false,handoffDue=false,exitFocus=null,exitBackground=[];
+  function show(name){
+    Object.keys(screens).forEach(function(k){screens[k].classList.toggle('active',k===name)});
+    document.documentElement.dataset.funnelScreen=name;
+    exitButton.hidden=name==='entry';
+    window.scrollTo(0,0);
+  }
+  function closeExitDialog(){
+    exitDialog.hidden=true;exitOpen=false;
+    exitBackground.forEach(function(item){if(!item.inert)item.el.removeAttribute('inert');});
+    exitBackground=[];
+    if(handoffDue){completeHandoff();return;}
+    if(exitFocus&&exitFocus.isConnected)exitFocus.focus();
+  }
+  exitButton.addEventListener('click',function(){
+    if(exitOpen)return;
+    exitOpen=true;exitFocus=document.activeElement;
+    exitBackground=Object.keys(screens).map(function(k){return {el:screens[k],inert:screens[k].hasAttribute('inert')};});
+    exitBackground.push({el:exitButton,inert:exitButton.hasAttribute('inert')});
+    exitBackground.forEach(function(item){item.el.setAttribute('inert','');});
+    exitDialog.hidden=false;
+    $('#cancelFunnelExit').focus();
+  });
+  $('#cancelFunnelExit').addEventListener('click',closeExitDialog);
+  $('#confirmFunnelExit').addEventListener('click',function(){
+    abandoned=true;
+    clearInterval(loadingInterval);
+    clearTimeout(handoffTimer);
+    // All draft answers live in memory until handoff. Reloading discards only
+    // this unfinished draft, not the selected guide or any saved profile.
+    location.replace('./funnel.html');
+  });
+  exitDialog.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){e.preventDefault();closeExitDialog();return;}
+    if(e.key!=='Tab')return;
+    var first=$('#confirmFunnelExit'),last=$('#cancelFunnelExit');
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  });
   var A={who:'self',bd:'',timeStr:'',cityName:'',gen:'male',name:'',concerns:[]};
 
   /* 入口 → 过场 */
@@ -500,7 +640,7 @@
         if(q.key==='timeStr')A.timeStr='';if(q.key==='cityName')A.cityName='';if(q.key==='name')A.name='';
         next();
       }));
-      setTimeout(function(){try{inp.focus({preventScroll:true});}catch(e){}},80);
+      setTimeout(function(){if(!exitOpen&&!abandoned)try{inp.focus({preventScroll:true});}catch(e){}},80);
     }
     staggerIn();
   }
@@ -550,32 +690,41 @@
   $('#btnBack').addEventListener('click',function(){if(flowLocked)return;if(qi>0)transitionTo(qi-1,-1);});
 
   /* 加载仪式 → 交接 */
-  var LINES_BY_PERSONA={diyan:['地炎君正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，君再看一眼…'],yuchen:['玉宸正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，再看一眼…'],moonfox:['月白正在为你翻册…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一页，月白再替你看一眼…'],xiyao:['夕瑶正在为你看盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一局，夕瑶再替你看一眼…']};
+  var LINES_BY_PERSONA={diyan:['焱绒正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，焱绒再看一眼…'],yuchen:['玉宸正在为你排盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一处细节，再看一眼…'],moonfox:['月白正在为你翻册…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一页，月白再替你看一眼…'],xiyao:['夕瑶正在为你看盘…','四柱落定，十神归位…','大运流年，逐年拆解中…','最后一局，夕瑶再替你看一眼…']};
   /* 引路人可以在问卷途中切换，加载文案必须在提交那一刻重新读取，
      不能沿用页面加载时缓存的 LINES。 */
   function personaKey(){
-    try{var k=localStorage.getItem('wen_funnel_persona');return LINES_BY_PERSONA[k]?k:'diyan';}catch(e){return 'diyan';}
+    var k=window.__wenSelectedPersona;
+    try{k=k||localStorage.getItem('wen_funnel_persona');}catch(e){}
+    return LINES_BY_PERSONA[k]?k:'moonfox';
   }
-  var finished=false;
+  var finished=false,loadingInterval=null,handoffTimer=null;
+  function completeHandoff(){
+    if(abandoned)return;
+    if(exitOpen){handoffDue=true;return;}
+    handoffDue=false;
+    var payload={
+      v:1,applied:0,trait:personaKey(),who:A.who,bd:A.bd,timeStr:A.timeStr||'',cityName:A.cityName||'',
+      gen:A.gen,name:A.name||'',concerns:A.concerns,ts:Date.now()
+    };
+    /* Do not alter previous data until the visitor actually leaves the flow. */
+    try{localStorage.removeItem('wen_load_profile_v1');}catch(e){}
+    try{localStorage.setItem('wen_funnel_v1',JSON.stringify(payload));}catch(e){}
+    location.href='./index.html';
+  }
   function finish(){
     if(finished)return; finished=true; /* 最后一题双击不能提交两次 */
     bump('quiz_done');
     var LINES=LINES_BY_PERSONA[personaKey()];
-    /* 上一次点档案留下的载入意图会盖过本次问卷交接，先清掉。 */
-    try{localStorage.removeItem('wen_load_profile_v1');}catch(e){}
-    try{localStorage.setItem('wen_funnel_v1',JSON.stringify({
-      v:1,applied:0,trait:personaKey(),who:A.who,bd:A.bd,timeStr:A.timeStr||'',cityName:A.cityName||'',
-      gen:A.gen,name:A.name||'',concerns:A.concerns,ts:Date.now()
-    }));}catch(e){}
     show('loading');
     var lt=$('#ltext');
     var i=0;lt.textContent=LINES[0];
-    var t=setInterval(function(){
+    loadingInterval=setInterval(function(){
       i++;if(i>=LINES.length)return;
       lt.classList.add('fadeout');
       setTimeout(function(){lt.textContent=LINES[i];lt.classList.remove('fadeout');},190);
     },1900);
-    setTimeout(function(){clearInterval(t);location.href='./index.html';},1900*LINES.length+500);
+    handoffTimer=setTimeout(function(){clearInterval(loadingInterval);completeHandoff();},1900*LINES.length+500);
   }
 })();
 
@@ -600,11 +749,23 @@ function fmCard(p,meta){
 }
 function fmRender(){
   var req;
-  try{ req=indexedDB.open('TJ_Bazi',2); }catch(e){ return; }
+  // Keep the version and schema in sync with initDB in src/main.js. Version 3
+  // also repairs empty v2 databases created by older versions of this menu.
+  try{ req=indexedDB.open('TJ_Bazi',3); }catch(e){ return; }
+  req.onupgradeneeded=function(){
+    var db=req.result;
+    var store=db.objectStoreNames.contains('profiles')
+      ? req.transaction.objectStore('profiles')
+      : db.createObjectStore('profiles',{keyPath:'id',autoIncrement:true});
+    if(!store.indexNames.contains('updatedAt'))store.createIndex('updatedAt','updatedAt',{unique:false});
+  };
   req.onsuccess=function(){
     var db=req.result;
-    if(!db.objectStoreNames.contains('profiles'))return;
-    var get=db.transaction('profiles','readonly').objectStore('profiles').getAll();
+    db.onversionchange=function(){db.close();};
+    if(!db.objectStoreNames.contains('profiles')){db.close();return;}
+    var tx=db.transaction('profiles','readonly');
+    tx.oncomplete=tx.onerror=tx.onabort=function(){db.close();};
+    var get=tx.objectStore('profiles').getAll();
     get.onsuccess=function(){
       var list=(get.result||[]).slice().sort(function(a,b){return (b.updatedAt||0)-(a.updatedAt||0);});
       if(!list.length)return;
@@ -680,18 +841,18 @@ document.querySelectorAll('#fmPanels [data-fmclose]').forEach(function(el){
   });
 });
 
-/* 首屏右上角角色切换：地炎君 / 玉宸神后，全漏斗换人 */
+/* 首屏右上角选择引路人，全漏斗换人。 */
 var PERSONAS={
-  diyan:{name:'地炎君',entry:'./art/diyan-entry2.mp4',entryPoster:'./art/diyan-entry2-poster.webp',
+  diyan:{name:'焱绒',focus:'行动与优先级',entry:'./art/diyan-entry2.mp4',entryPoster:'./art/diyan-entry2-poster.webp',
     ritual:'./art/diyan-ritual.mp4',ritualPoster:'./art/diyan-ritual-poster.webp',
-    quiz:'./art/diyan-quiz.mp4',poster:'./art/diyan-lord.webp',firstLine:'地炎君正在为你排盘…'},
-  yuchen:{name:'玉宸神后',entry:'./art/yuchen-entry.mp4',entryPoster:'./art/yuchen-lord.webp',
+    quiz:'./art/diyan-quiz.mp4',poster:'./art/diyan-lord.webp',firstLine:'焱绒正在为你排盘…'},
+  yuchen:{name:'玉宸',focus:'节奏与资源',entry:'./art/yuchen-entry.mp4',entryPoster:'./art/yuchen-lord.webp',
     ritual:'./art/yuchen-ritual.mp4',ritualPoster:'./art/yuchen-lord.webp',
     quiz:'./art/yuchen-quiz.mp4',poster:'./art/yuchen-lord.webp',firstLine:'玉宸正在为你排盘…'},
-  moonfox:{name:'月白',entry:'./art/yuebai-entry.mp4',entryPoster:'./art/yuebai-lord.webp',
+  moonfox:{name:'月白',focus:'线索与依据',entry:'./art/yuebai-entry.mp4',entryPoster:'./art/yuebai-lord.webp',
     ritual:'./art/yuebai-ritual.mp4',ritualPoster:'./art/yuebai-lord.webp',
     quiz:'./art/yuebai-quiz.mp4',poster:'./art/yuebai-lord.webp',firstLine:'月白正在为你翻册…'},
-  xiyao:{name:'夕瑶',entry:'./art/xiyao-entry.mp4',entryPoster:'./art/xiyao-lord.webp',
+  xiyao:{name:'夕瑶',focus:'关系与沟通',entry:'./art/xiyao-entry.mp4',entryPoster:'./art/xiyao-lord.webp',
     ritual:'./art/xiyao-ritual.mp4',ritualPoster:'./art/xiyao-lord.webp',
     quiz:'./art/xiyao-quiz.mp4',poster:'./art/xiyao-lord.webp',firstLine:'夕瑶正在为你看盘…'}
 };
@@ -704,10 +865,12 @@ function fmSetVideo(sel,src,poster){
   }
 }
 function fmPersona(){
-  try{var p=localStorage.getItem('wen_funnel_persona');return PERSONAS[p]?p:'diyan';}catch(e){return 'diyan';}
+  try{var p=localStorage.getItem('wen_funnel_persona');return PERSONAS[p]?p:'moonfox';}catch(e){return 'moonfox';}
 }
 function fmApplyPersona(key){
   var P=PERSONAS[key];if(!P)return;
+  window.__wenSetFunnelTheme(key);
+  window.__wenSelectedPersona=key;
   try{localStorage.setItem('wen_funnel_persona',key);}catch(e){}
   fmSetVideo('#entryVideo',P.entry,P.entryPoster);
   var bn=fm$('#brandName');if(bn)bn.textContent=P.name;
@@ -720,13 +883,32 @@ function fmApplyPersona(key){
   var qn=fm$('#qwhoName');if(qn)qn.textContent=P.name+' 问';
   var la=fm$('#loadAvatar');if(la)la.src=P.poster;
   var lt=fm$('#ltext');if(lt)lt.textContent=P.firstLine;
-  document.querySelectorAll('.persona-switch button').forEach(function(b){
+  fm$('#personaLabel').textContent=P.name;
+  fm$('#personaPerspective').textContent=P.name+' · '+P.focus;
+  fm$('#personaToggle').setAttribute('aria-label','当前引路人：'+P.name+'，切换引路人');
+  document.querySelectorAll('#personaOptions [data-persona]').forEach(function(b){
     var on=b.getAttribute('data-persona')===key;
-    b.classList.toggle('on',on);b.setAttribute('aria-selected',String(on));
+    b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));
   });
 }
-document.querySelectorAll('.persona-switch button').forEach(function(b){
-  b.addEventListener('click',function(){ fmApplyPersona(b.getAttribute('data-persona')); });
+var personaToggle=fm$('#personaToggle'),personaOptions=fm$('#personaOptions');
+function fmSetPersonaOpen(open,restoreFocus){
+  personaOptions.hidden=!open;
+  personaToggle.setAttribute('aria-expanded',String(open));
+  if(restoreFocus)personaToggle.focus();
+}
+personaToggle.addEventListener('click',function(){fmSetPersonaOpen(personaOptions.hidden,false);});
+document.querySelectorAll('#personaOptions [data-persona]').forEach(function(b){
+  b.addEventListener('click',function(){
+    fmApplyPersona(b.getAttribute('data-persona'));
+    fmSetPersonaOpen(false,true);
+  });
+});
+document.addEventListener('click',function(e){
+  if(!personaOptions.hidden&&!e.target.closest('.persona-switch'))fmSetPersonaOpen(false,false);
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&!personaOptions.hidden){e.preventDefault();fmSetPersonaOpen(false,true);}
 });
 fmApplyPersona(fmPersona());
 })();

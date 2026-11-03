@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { selectHomeTrait, openDemoReport } from './test-entry.mjs';
 import puppeteer from 'puppeteer';
-const BASE = process.env.BASE_URL || 'http://localhost:5173/';
+const BASE = process.env.BASE_URL || 'http://localhost:5173/index.html';
 const b = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
 const p = await b.newPage();
 await p.setViewport({ width: 430, height: 932, deviceScaleFactor: 2 });

@@ -26,7 +26,7 @@ try {
       return original(url,opts);
     };
   });
-  await page.goto(process.env.BASE_URL || 'http://localhost:5173/',{waitUntil:'domcontentloaded'});
+  await page.goto(process.env.BASE_URL || 'http://localhost:5173/index.html',{waitUntil:'domcontentloaded'});
   await page.evaluate(async()=>{const store=await import('/src/evolve/store.js');await store.saveGenome({generation:1,enabled:true,topics:{健康:4},lessons:[{id:'test',text:'近期健康私密主题',weight:1}]});});
   await page.reload({waitUntil:'domcontentloaded'});
   await selectHomeTrait(page);

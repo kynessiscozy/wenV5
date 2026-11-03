@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 import { spinFor } from './trait-picker-helper.mjs';
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173/';
+const BASE = process.env.BASE_URL || 'http://localhost:5173/index.html';
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 const errors = [];
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));

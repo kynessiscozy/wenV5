@@ -1,13 +1,13 @@
 /** The fire throne is independent scenery behind this character, not part of his silhouette. */
 export const EARTHFIRE_SOVEREIGN = Object.freeze({
   id: 'diyan',
-  name: '地炎君',
+  name: '焱绒',
   // The sceptre is part of his silhouette and should remain visible in the close shot.
   camera: Object.freeze({ closeScale: 1.7, safeX: .885, safeInset: .06 }),
   assets: Object.freeze({
     portrait: Object.freeze({
       src: './art/diyan-cinema3d.webp',
-      alt: '地炎君手持权杖，坐在燃烧的火焰王座前',
+      alt: '焱绒手持权杖，坐在燃烧的火焰王座前',
       width: 848,
       height: 1264,
     }),

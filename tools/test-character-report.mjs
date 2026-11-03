@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import puppeteer from 'puppeteer';
 import { HOME_THEMES } from '../src/ui/home-theme.js';
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173/';
+const BASE = process.env.BASE_URL || 'http://localhost:5173/index.html';
 const THEMES = {
   wenwen: { trait: '温柔', portrait: 'wenwen-cinema3d.webp', lead: '别急，我们慢慢看。' },
   moonfox: { trait: '神秘', portrait: 'moonfox-cinema3d.webp', lead: '有意思，线索已经浮现。' },
