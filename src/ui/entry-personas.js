@@ -71,7 +71,7 @@ export const FUNNEL_PERSONAS = Object.freeze({
     name: '絮羽',
     theme: 'muse',
     poster: './art/muse-lord.webp',
-    video: './art/muse-invite.mp4?v=67',
+    video: './art/muse-invite.mp4?v=69',
     lead: '让灵感先落在你身上。',
     circle: '是絮羽先替你圈出来的',
     hooksTitle: '絮 羽 先 说 三 句',
